@@ -37,6 +37,15 @@
 - 写 Results 时，每段开头先给问题句，例如“这一组实验检查 X 是否来自 Y”；结果句必须绑定数字、表格或图；解释句要把数字变成机制判断。
 - 写边界时要主动：说明结果在哪些 FPGA、seed、placement、restart 条件下成立，避免把受控实验写成普遍定律。
 
+## 是否统一组织
+
+先说结论：顶刊不是完全统一按一种逐句顺序组织。逐句精确序列往往每篇都不同，但压缩到高层功能后，会出现少数可复用的组织范式。
+
+- `exact_sequence` 是每篇论文真实的逐句功能顺序。
+- `collapsed_sequence` 会把连续重复功能压缩，方便看高层组织方式。
+- `archetype` 是把相近顺序归成一种组织范式，用来回答“有几篇属于这种组织方式”。
+- `venue 偏好` 是每个 venue 的 10 篇样本内分布：6/10 以上称为强倾向，3-5/10 称为混合分布，`*_X 部分证据型` 不用于推断偏爱。
+
 ## Abstract
 
 - 高频主功能：`RESULT`（结果）154 条，`INTERPRET`（解释）143 条，`METHOD`（方法）59 条，`PROBLEM`（问题）59 条，`BG`（背景）38 条，`SETUP`（实验/平台设置）38 条，`GAP`（缺口）16 条，`NEED`（必要性）14 条。
@@ -56,6 +65,49 @@
 ### RO-TRNG 仿写规则
 
 - 摘要不要把每个技术细节都塞进去；目标是 5-8 句内完成“背景、问题、缺口、方法、设置、结果、边界”。
+
+### 组织范式总表
+
+这张表回答：全体 60 篇里，有几篇属于这种组织方式；每种功能平均多少句。
+
+| 范式 | 论文数 | 占比 | 平均句数 | 平均功能句数 | 代表论文 |
+| --- | --- | --- | --- | --- | --- |
+| ABS_A 完整摘要链 | 28 | 47% | 8.9 | INTERPRET=2.6; RESULT=2.0; METHOD=1.4; PROBLEM=1.0; BG=0.7; SETUP=0.6; BOUNDARY=0.2; GAP=0.2; NEED=0.2 | 01_TCASI:paper_01; 01_TCASI:paper_02; 01_TCASI:paper_07 |
+| ABS_B 问题-方法-结果型 | 4 | 7% | 8.5 | RESULT=3.5; METHOD=1.5; PROBLEM=1.0; SETUP=1.0; BG=0.8; GAP=0.5; NEED=0.2 | 01_TCASI:paper_03; 03_TVLSI:paper_08; 04_TC:paper_04 |
+| ABS_C 方法-验证-结果型 | 8 | 13% | 9.2 | RESULT=4.6; INTERPRET=2.2; METHOD=1.2; SETUP=0.6; NEED=0.4; BG=0.1 | 02_TCASII:paper_01; 02_TCASII:paper_02; 02_TCASII:paper_04 |
+| ABS_D 结果密集型 | 6 | 10% | 9.3 | RESULT=5.3; INTERPRET=2.0; BG=0.8; PROBLEM=0.7; BOUNDARY=0.2; GAP=0.2; NEED=0.2 | 01_TCASI:paper_06; 02_TCASII:paper_03; 02_TCASII:paper_08 |
+| ABS_E 压缩/非典型型 | 14 | 23% | 8.6 | INTERPRET=2.9; PROBLEM=1.7; RESULT=1.0; SETUP=0.9; BG=0.7; BOUNDARY=0.5; GAP=0.5; METHOD=0.4; NEED=0.1 | 01_TCASI:paper_04; 01_TCASI:paper_05; 02_TCASII:paper_07 |
+
+### venue 偏好表
+
+这张表回答：某个顶刊类别是不是偏爱某种组织范式。这里的“偏爱”只是当前 10 篇样本内的写法倾向，不是该 venue 的官方规则。
+
+| venue | 范式 | 论文数 | 占比 | 平均功能句数 | 判断 |
+| --- | --- | --- | --- | --- | --- |
+| TC | ABS_A 完整摘要链 | 4/10 | 0.40 | INTERPRET=2.5; METHOD=1.5; RESULT=1.5; PROBLEM=1.0; BG=0.8; BOUNDARY=0.5; SETUP=0.5; GAP=0.2 | mixed_preference：混合分布 |
+| TC | ABS_B 问题-方法-结果型 | 1/10 | 0.10 | BG=1.0; METHOD=1.0; PROBLEM=1.0; RESULT=1.0 | minor_pattern：少数样本 |
+| TC | ABS_C 方法-验证-结果型 | 1/10 | 0.10 | INTERPRET=2.0; RESULT=2.0; METHOD=1.0; SETUP=1.0 | minor_pattern：少数样本 |
+| TC | ABS_D 结果密集型 | 1/10 | 0.10 | RESULT=4.0; INTERPRET=2.0; BG=1.0; PROBLEM=1.0 | minor_pattern：少数样本 |
+| TC | ABS_E 压缩/非典型型 | 3/10 | 0.30 | INTERPRET=2.7; SETUP=2.0; BOUNDARY=1.0; BG=0.7; PROBLEM=0.7; GAP=0.3; RESULT=0.3 | mixed_preference：混合分布 |
+| TCAD | ABS_A 完整摘要链 | 6/10 | 0.60 | INTERPRET=3.7; METHOD=1.5; PROBLEM=1.5; RESULT=1.3; BG=0.8; GAP=0.3; BOUNDARY=0.2; NEED=0.2; SETUP=0.2 | strong_preference：强倾向 |
+| TCAD | ABS_C 方法-验证-结果型 | 1/10 | 0.10 | RESULT=5.0; METHOD=2.0; BG=1.0 | minor_pattern：少数样本 |
+| TCAD | ABS_D 结果密集型 | 1/10 | 0.10 | RESULT=5.0; INTERPRET=3.0; NEED=1.0; PROBLEM=1.0 | minor_pattern：少数样本 |
+| TCAD | ABS_E 压缩/非典型型 | 2/10 | 0.20 | INTERPRET=2.0; RESULT=1.5; BG=1.0; METHOD=1.0; PROBLEM=1.0; SETUP=1.0; GAP=0.5 | minor_pattern：少数样本 |
+| TCAS-I | ABS_A 完整摘要链 | 6/10 | 0.60 | RESULT=2.2; INTERPRET=1.7; METHOD=1.0; BG=0.8; SETUP=0.7; PROBLEM=0.5; GAP=0.3; NEED=0.3 | strong_preference：强倾向 |
+| TCAS-I | ABS_B 问题-方法-结果型 | 1/10 | 0.10 | RESULT=6.0; METHOD=2.0; BG=1.0; PROBLEM=1.0 | minor_pattern：少数样本 |
+| TCAS-I | ABS_D 结果密集型 | 1/10 | 0.10 | RESULT=4.0; INTERPRET=2.0; BG=1.0; BOUNDARY=1.0 | minor_pattern：少数样本 |
+| TCAS-I | ABS_E 压缩/非典型型 | 2/10 | 0.20 | PROBLEM=3.5; INTERPRET=3.0; RESULT=1.5; BG=0.5; METHOD=0.5; NEED=0.5 | minor_pattern：少数样本 |
+| TCAS-II | ABS_A 完整摘要链 | 3/10 | 0.30 | RESULT=3.7; INTERPRET=3.0; BG=1.0; METHOD=1.0; PROBLEM=0.7; NEED=0.3; SETUP=0.3 | mixed_preference：混合分布 |
+| TCAS-II | ABS_C 方法-验证-结果型 | 3/10 | 0.30 | RESULT=4.3; INTERPRET=3.7; METHOD=1.0; NEED=0.7; SETUP=0.3 | mixed_preference：混合分布 |
+| TCAS-II | ABS_D 结果密集型 | 3/10 | 0.30 | RESULT=6.3; INTERPRET=1.7; BG=1.0; PROBLEM=0.7; GAP=0.3 | mixed_preference：混合分布 |
+| TCAS-II | ABS_E 压缩/非典型型 | 1/10 | 0.10 | INTERPRET=7.0; SETUP=2.0; BG=1.0 | minor_pattern：少数样本 |
+| TCHES/CHES | ABS_A 完整摘要链 | 6/10 | 0.60 | INTERPRET=2.3; RESULT=1.8; METHOD=1.7; PROBLEM=1.0; SETUP=1.0; BOUNDARY=0.5; BG=0.3; NEED=0.2 | strong_preference：强倾向 |
+| TCHES/CHES | ABS_B 问题-方法-结果型 | 1/10 | 0.10 | RESULT=3.0; GAP=2.0; METHOD=2.0; BG=1.0; NEED=1.0; PROBLEM=1.0 | minor_pattern：少数样本 |
+| TCHES/CHES | ABS_E 压缩/非典型型 | 3/10 | 0.30 | PROBLEM=2.7; INTERPRET=1.3; BG=0.7; BOUNDARY=0.7; GAP=0.7; METHOD=0.7; SETUP=0.7; RESULT=0.3 | mixed_preference：混合分布 |
+| TVLSI | ABS_A 完整摘要链 | 3/10 | 0.30 | INTERPRET=2.7; RESULT=2.7; METHOD=1.3; PROBLEM=1.0; SETUP=1.0; NEED=0.7; BG=0.3; GAP=0.3 | mixed_preference：混合分布 |
+| TVLSI | ABS_B 问题-方法-结果型 | 1/10 | 0.10 | RESULT=4.0; SETUP=4.0; METHOD=1.0; PROBLEM=1.0 | minor_pattern：少数样本 |
+| TVLSI | ABS_C 方法-验证-结果型 | 3/10 | 0.30 | RESULT=5.7; INTERPRET=1.7; METHOD=1.3; SETUP=1.0; NEED=0.3 | mixed_preference：混合分布 |
+| TVLSI | ABS_E 压缩/非典型型 | 3/10 | 0.30 | INTERPRET=3.7; RESULT=2.0; PROBLEM=1.7; GAP=1.0; BG=0.7; BOUNDARY=0.7; NEED=0.3 | mixed_preference：混合分布 |
 
 ## Introduction
 
@@ -78,6 +130,43 @@
 
 - RO-TRNG 引言建议用 5-7 段：应用背景、实现敏感性、现有测试/论文限制、本文问题定义、实验设计、贡献、文章结构。
 
+### 组织范式总表
+
+这张表回答：全体 60 篇里，有几篇属于这种组织方式；每种功能平均多少句。
+
+| 范式 | 论文数 | 占比 | 平均句数 | 平均功能句数 | 代表论文 |
+| --- | --- | --- | --- | --- | --- |
+| INT_A 背景-问题-缺口-任务-贡献型 | 23 | 38% | 12.0 | INTERPRET=6.4; BG=2.3; RESULT=1.1; PROBLEM=1.0; NEED=0.4; SETUP=0.4; METHOD=0.2; GAP=0.1; BOUNDARY=0.0 | 01_TCASI:paper_01; 01_TCASI:paper_03; 01_TCASI:paper_04 |
+| INT_B 背景解释型 | 12 | 20% | 11.8 | INTERPRET=7.2; BG=2.5; PROBLEM=1.6; BOUNDARY=0.2; SETUP=0.2; ORG=0.1 | 01_TCASI:paper_10; 03_TVLSI:paper_10; 04_TC:paper_02 |
+| INT_C 问题缺口驱动型 | 4 | 7% | 12.0 | INTERPRET=6.2; BG=2.5; PROBLEM=2.0; NEED=0.8; GAP=0.5 | 01_TCASI:paper_02; 01_TCASI:paper_08; 05_TCAD:paper_08 |
+| INT_E 非典型引言型 | 2 | 3% | 12.0 | INTERPRET=8.0; BG=3.0; NEED=1.0 | 05_TCAD:paper_01; 05_TCAD:paper_04 |
+| INT_X 部分证据型 | 19 | 32% | 1.0 | GAP=1.0 | 02_TCASII:paper_01; 02_TCASII:paper_02; 02_TCASII:paper_03 |
+
+### venue 偏好表
+
+这张表回答：某个顶刊类别是不是偏爱某种组织范式。这里的“偏爱”只是当前 10 篇样本内的写法倾向，不是该 venue 的官方规则。
+
+| venue | 范式 | 论文数 | 占比 | 平均功能句数 | 判断 |
+| --- | --- | --- | --- | --- | --- |
+| TC | INT_A 背景-问题-缺口-任务-贡献型 | 5/10 | 0.50 | INTERPRET=6.8; BG=1.8; PROBLEM=1.2; RESULT=1.0; NEED=0.8; SETUP=0.4 | mixed_preference：混合分布 |
+| TC | INT_B 背景解释型 | 5/10 | 0.50 | INTERPRET=7.8; BG=2.6; PROBLEM=1.6 | mixed_preference：混合分布 |
+| TCAD | INT_A 背景-问题-缺口-任务-贡献型 | 5/10 | 0.50 | INTERPRET=6.4; BG=2.4; PROBLEM=1.0; RESULT=1.0; GAP=0.4; NEED=0.4; SETUP=0.4 | mixed_preference：混合分布 |
+| TCAD | INT_B 背景解释型 | 1/10 | 0.10 | INTERPRET=8.0; BG=3.0; PROBLEM=1.0 | minor_pattern：少数样本 |
+| TCAD | INT_C 问题缺口驱动型 | 2/10 | 0.20 | INTERPRET=6.0; BG=2.5; PROBLEM=2.5; NEED=1.0 | minor_pattern：少数样本 |
+| TCAD | INT_E 非典型引言型 | 2/10 | 0.20 | INTERPRET=8.0; BG=3.0; NEED=1.0 | minor_pattern：少数样本 |
+| TCAS-I | INT_A 背景-问题-缺口-任务-贡献型 | 7/10 | 0.70 | INTERPRET=6.6; BG=2.7; RESULT=1.0; PROBLEM=0.7; METHOD=0.6; NEED=0.3; SETUP=0.1 | strong_preference：强倾向 |
+| TCAS-I | INT_B 背景解释型 | 1/10 | 0.10 | INTERPRET=9.0; BG=3.0 | minor_pattern：少数样本 |
+| TCAS-I | INT_C 问题缺口驱动型 | 2/10 | 0.20 | INTERPRET=6.5; BG=2.5; PROBLEM=1.5; GAP=1.0; NEED=0.5 | minor_pattern：少数样本 |
+| TCAS-II | INT_X 部分证据型 | 10/10 | 1.00 | GAP=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
+| TCHES/CHES | INT_A 背景-问题-缺口-任务-贡献型 | 5/10 | 0.50 | INTERPRET=6.2; BG=2.0; PROBLEM=1.2; RESULT=1.2; SETUP=0.8; BOUNDARY=0.2; METHOD=0.2; NEED=0.2 | mixed_preference：混合分布 |
+| TCHES/CHES | INT_B 背景解释型 | 4/10 | 0.40 | INTERPRET=6.2; PROBLEM=2.5; BG=2.2; BOUNDARY=0.5; SETUP=0.5 | mixed_preference：混合分布 |
+| TCHES/CHES | INT_X 部分证据型 | 1/10 | 0.10 | GAP=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
+| TVLSI | INT_A 背景-问题-缺口-任务-贡献型 | 1/10 | 0.10 | INTERPRET=5.0; BG=3.0; RESULT=3.0; NEED=1.0 | minor_pattern：少数样本 |
+| TVLSI | INT_B 背景解释型 | 1/10 | 0.10 | INTERPRET=6.0; BG=2.0; ORG=1.0 | minor_pattern：少数样本 |
+| TVLSI | INT_X 部分证据型 | 8/10 | 0.80 | GAP=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
+
+注意：`部分证据型` 多半表示该篇在当前语料中只有局部 Introduction/Results 功能单元，不能把它解读成该 venue 真喜欢短结构。
+
 ## Results
 
 - 高频主功能：`RESULT`（结果）175 条，`SETUP`（实验/平台设置）62 条，`ORG`（结构安排）21 条，`PROBLEM`（问题）11 条，`NEED`（必要性）2 条，`GAP`（缺口）1 条，`METHOD`（方法）1 条。
@@ -99,6 +188,45 @@
 
 - RO-TRNG 结果段每段最好只回答一个变量问题，例如 sampler-side、placement、restart、routing 或 seed，不要把多个 claim 混进一句长句。
 
+### 组织范式总表
+
+这张表回答：全体 60 篇里，有几篇属于这种组织方式；每种功能平均多少句。
+
+| 范式 | 论文数 | 占比 | 平均句数 | 平均功能句数 | 代表论文 |
+| --- | --- | --- | --- | --- | --- |
+| RES_A 设置-多结果-解释型 | 15 | 25% | 10.0 | RESULT=6.1; SETUP=2.7; ORG=0.9; PROBLEM=0.2; NEED=0.1 | 01_TCASI:paper_02; 01_TCASI:paper_06; 01_TCASI:paper_07 |
+| RES_B 结构化实验段型 | 5 | 8% | 10.0 | RESULT=3.6; SETUP=3.4; ORG=1.4; PROBLEM=1.4; METHOD=0.2 | 04_TC:paper_10; 05_TCAD:paper_09; 06_TCHES_CHES:paper_02 |
+| RES_C 结果密集型 | 2 | 3% | 10.0 | RESULT=9.5; ORG=0.5 | 01_TCASI:paper_10; 05_TCAD:paper_04 |
+| RES_D 短结果链型 | 2 | 3% | 8.5 | RESULT=5.0; SETUP=2.5; GAP=0.5; PROBLEM=0.5 | 01_TCASI:paper_03; 05_TCAD:paper_03 |
+| RES_X 部分证据型 | 36 | 60% | 1.0 | RESULT=1.0 | 01_TCASI:paper_01; 01_TCASI:paper_04; 01_TCASI:paper_05 |
+
+### venue 偏好表
+
+这张表回答：某个顶刊类别是不是偏爱某种组织范式。这里的“偏爱”只是当前 10 篇样本内的写法倾向，不是该 venue 的官方规则。
+
+| venue | 范式 | 论文数 | 占比 | 平均功能句数 | 判断 |
+| --- | --- | --- | --- | --- | --- |
+| TC | RES_A 设置-多结果-解释型 | 5/10 | 0.50 | RESULT=5.8; SETUP=2.8; ORG=1.0; NEED=0.2; PROBLEM=0.2 | mixed_preference：混合分布 |
+| TC | RES_B 结构化实验段型 | 1/10 | 0.10 | SETUP=6.0; RESULT=3.0; ORG=1.0 | minor_pattern：少数样本 |
+| TC | RES_X 部分证据型 | 4/10 | 0.40 | RESULT=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
+| TCAD | RES_A 设置-多结果-解释型 | 2/10 | 0.20 | RESULT=5.5; SETUP=3.5; ORG=1.0 | minor_pattern：少数样本 |
+| TCAD | RES_B 结构化实验段型 | 1/10 | 0.10 | RESULT=4.0; SETUP=4.0; ORG=2.0 | minor_pattern：少数样本 |
+| TCAD | RES_C 结果密集型 | 1/10 | 0.10 | RESULT=9.0; ORG=1.0 | minor_pattern：少数样本 |
+| TCAD | RES_D 短结果链型 | 1/10 | 0.10 | SETUP=5.0; RESULT=4.0; PROBLEM=1.0 | minor_pattern：少数样本 |
+| TCAD | RES_X 部分证据型 | 5/10 | 0.50 | RESULT=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
+| TCAS-I | RES_A 设置-多结果-解释型 | 4/10 | 0.40 | RESULT=7.2; SETUP=2.2; NEED=0.2; ORG=0.2 | mixed_preference：混合分布 |
+| TCAS-I | RES_C 结果密集型 | 1/10 | 0.10 | RESULT=10.0 | minor_pattern：少数样本 |
+| TCAS-I | RES_D 短结果链型 | 1/10 | 0.10 | RESULT=6.0; GAP=1.0 | minor_pattern：少数样本 |
+| TCAS-I | RES_X 部分证据型 | 4/10 | 0.40 | RESULT=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
+| TCAS-II | RES_X 部分证据型 | 10/10 | 1.00 | RESULT=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
+| TCHES/CHES | RES_A 设置-多结果-解释型 | 3/10 | 0.30 | RESULT=6.0; SETUP=2.3; ORG=1.0; PROBLEM=0.7 | mixed_preference：混合分布 |
+| TCHES/CHES | RES_B 结构化实验段型 | 3/10 | 0.30 | RESULT=3.7; PROBLEM=2.3; SETUP=2.3; ORG=1.3; METHOD=0.3 | mixed_preference：混合分布 |
+| TCHES/CHES | RES_X 部分证据型 | 4/10 | 0.40 | RESULT=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
+| TVLSI | RES_A 设置-多结果-解释型 | 1/10 | 0.10 | RESULT=5.0; SETUP=3.0; ORG=2.0 | minor_pattern：少数样本 |
+| TVLSI | RES_X 部分证据型 | 9/10 | 0.90 | RESULT=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
+
+注意：`部分证据型` 多半表示该篇在当前语料中只有局部 Introduction/Results 功能单元，不能把它解读成该 venue 真喜欢短结构。
+
 ## Contribution
 
 - 高频主功能：`CONTRIB`（贡献）61 条。
@@ -116,6 +244,29 @@
 ### RO-TRNG 仿写规则
 
 - RO-TRNG 贡献建议写成 3-4 条，每条以“我们定义/构造/测量/发布或审计”开头，并能在正文找到对应章节和证据。
+
+### 组织范式总表
+
+这张表回答：全体 60 篇里，有几篇属于这种组织方式；每种功能平均多少句。
+
+| 范式 | 论文数 | 占比 | 平均句数 | 平均功能句数 | 代表论文 |
+| --- | --- | --- | --- | --- | --- |
+| CON_A 单条贡献块 | 59 | 98% | 1.0 | CONTRIB=1.0 | 01_TCASI:paper_01; 01_TCASI:paper_02; 01_TCASI:paper_03 |
+| CON_B 多条贡献块 | 1 | 2% | 2.0 | CONTRIB=2.0 | 04_TC:paper_07 |
+
+### venue 偏好表
+
+这张表回答：某个顶刊类别是不是偏爱某种组织范式。这里的“偏爱”只是当前 10 篇样本内的写法倾向，不是该 venue 的官方规则。
+
+| venue | 范式 | 论文数 | 占比 | 平均功能句数 | 判断 |
+| --- | --- | --- | --- | --- | --- |
+| TC | CON_A 单条贡献块 | 9/10 | 0.90 | CONTRIB=1.0 | strong_preference：强倾向 |
+| TC | CON_B 多条贡献块 | 1/10 | 0.10 | CONTRIB=2.0 | minor_pattern：少数样本 |
+| TCAD | CON_A 单条贡献块 | 10/10 | 1.00 | CONTRIB=1.0 | strong_preference：强倾向 |
+| TCAS-I | CON_A 单条贡献块 | 10/10 | 1.00 | CONTRIB=1.0 | strong_preference：强倾向 |
+| TCAS-II | CON_A 单条贡献块 | 10/10 | 1.00 | CONTRIB=1.0 | strong_preference：强倾向 |
+| TCHES/CHES | CON_A 单条贡献块 | 10/10 | 1.00 | CONTRIB=1.0 | strong_preference：强倾向 |
+| TVLSI | CON_A 单条贡献块 | 10/10 | 1.00 | CONTRIB=1.0 | strong_preference：强倾向 |
 
 ## 分 venue 读法
 

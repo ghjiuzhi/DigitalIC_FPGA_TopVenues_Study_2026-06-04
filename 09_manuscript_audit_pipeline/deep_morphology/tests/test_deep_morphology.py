@@ -94,6 +94,80 @@ class DeepMorphologyTests(unittest.TestCase):
             finally:
                 os.chmod(path, stat.S_IWRITE | stat.S_IREAD)
 
+    def test_abstract_complete_chain_classifies_as_abs_a(self):
+        module = load_module()
+        result = module.classify_section_archetype(
+            "Abstract",
+            ["BG", "PROBLEM", "GAP", "METHOD", "SETUP", "RESULT", "INTERPRET"],
+            "full_sequence",
+        )
+        self.assertEqual(result["archetype_id"], "ABS_A")
+        self.assertIn("完整摘要链", result["archetype_name"])
+
+    def test_results_single_sentence_is_partial_evidence(self):
+        module = load_module()
+        result = module.classify_section_archetype("Results", ["RESULT"], "partial/notes-derived")
+        self.assertEqual(result["archetype_id"], "RES_X")
+        self.assertIn("部分证据", result["archetype_name"])
+        self.assertEqual(result["evidence_quality"], "partial/notes-derived")
+
+    def test_function_counts_are_formatted_for_reading(self):
+        module = load_module()
+        text = module.format_function_counts({"RESULT": 3, "SETUP": 1})
+        self.assertEqual(text, "RESULT=3; SETUP=1")
+
+    def test_venue_preference_labels_strong_and_mixed(self):
+        module = load_module()
+        strong_rows = [
+            {"venue": "TCAS-I", "section_type": "Abstract", "archetype_id": "ABS_A", "archetype_name": "完整摘要链", "sentence_count": "7", "function_counts": "RESULT=2", "paper_id": f"p{i}", "evidence_quality": "full_sequence"}
+            for i in range(6)
+        ] + [
+            {"venue": "TCAS-I", "section_type": "Abstract", "archetype_id": "ABS_C", "archetype_name": "方法-验证-结果型", "sentence_count": "6", "function_counts": "RESULT=3", "paper_id": f"q{i}", "evidence_quality": "full_sequence"}
+            for i in range(4)
+        ]
+        mixed_rows = [
+            {"venue": "TC", "section_type": "Abstract", "archetype_id": "ABS_A", "archetype_name": "完整摘要链", "sentence_count": "7", "function_counts": "RESULT=2", "paper_id": f"a{i}", "evidence_quality": "full_sequence"}
+            for i in range(4)
+        ] + [
+            {"venue": "TC", "section_type": "Abstract", "archetype_id": "ABS_C", "archetype_name": "方法-验证-结果型", "sentence_count": "6", "function_counts": "RESULT=3", "paper_id": f"b{i}", "evidence_quality": "full_sequence"}
+            for i in range(3)
+        ] + [
+            {"venue": "TC", "section_type": "Abstract", "archetype_id": "ABS_D", "archetype_name": "结果密集型", "sentence_count": "6", "function_counts": "RESULT=4", "paper_id": f"c{i}", "evidence_quality": "full_sequence"}
+            for i in range(3)
+        ]
+
+        matrix = module.build_venue_archetype_matrix(strong_rows + mixed_rows)
+        notes = {(row["venue"], row["archetype_id"]): row["note"] for row in matrix}
+
+        self.assertIn("strong_preference", notes[("TCAS-I", "ABS_A")])
+        self.assertIn("mixed_preference", notes[("TC", "ABS_A")])
+
+    def test_profile_includes_venue_archetype_language(self):
+        module = load_module()
+        corpus = []
+        for i in range(6):
+            for j, function in enumerate(["BG", "PROBLEM", "GAP", "METHOD", "RESULT", "INTERPRET"], start=1):
+                corpus.append(
+                    {
+                        "paper_id": f"p{i}",
+                        "title": f"Paper {i}",
+                        "venue": "TCAS-I",
+                        "year": "2026",
+                        "section_type": "Abstract",
+                        "sentence_index": str(j),
+                        "sentence_function": function,
+                        "has_number": "False",
+                        "has_figure_reference": "False",
+                        "has_table_reference": "False",
+                        "confidence": "high",
+                    }
+                )
+        text = module.build_topvenue_profile_text(corpus, [])
+        self.assertIn("不是完全统一", text)
+        self.assertIn("venue 偏好", text)
+        self.assertIn("强倾向", text)
+        self.assertIn("有几篇属于这种组织方式", text)
+
 
 if __name__ == "__main__":
     unittest.main()

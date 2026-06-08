@@ -98,6 +98,36 @@ CORPUS_FIELDS = [
     "transition_pattern",
 ]
 
+PAPER_ARCHETYPE_FIELDS = [
+    "paper_id",
+    "title",
+    "venue",
+    "year",
+    "section_type",
+    "sentence_count",
+    "exact_sequence",
+    "collapsed_sequence",
+    "archetype_id",
+    "archetype_name",
+    "function_counts",
+    "evidence_quality",
+]
+
+VENUE_ARCHETYPE_FIELDS = [
+    "section_type",
+    "venue",
+    "archetype_id",
+    "archetype_name",
+    "paper_count",
+    "total_papers",
+    "share",
+    "avg_sentence_count",
+    "avg_function_counts",
+    "representative_papers",
+    "evidence_quality",
+    "note",
+]
+
 CITATION_FIELDS = [
     "sentence_id",
     "section_id",
@@ -485,7 +515,9 @@ def corpus_records():
             records.append(
                 {
                     "paper_id": row["paper_id"],
+                    "title": row.get("title", ""),
                     "venue": row["venue"],
+                    "year": row.get("year", ""),
                     "section_type": row["section_type"],
                     "paragraph_index": "",
                     "sentence_index": row["unit_index"],
@@ -501,6 +533,8 @@ def corpus_records():
                     "hedging_pattern": ";".join(words_present(sentence, HEDGE_WORDS)),
                     "punctuation_pattern": punctuation_pattern_text(sentence),
                     "transition_pattern": row["function_chain"],
+                    "confidence": row.get("confidence", ""),
+                    "evidence_source": row.get("evidence_source", ""),
                 }
             )
     return records
@@ -517,7 +551,7 @@ def active_manuscript_path():
 
 def render_csv_text(fields, rows):
     buffer = io.StringIO(newline="")
-    writer = csv.DictWriter(buffer, fieldnames=fields)
+    writer = csv.DictWriter(buffer, fieldnames=fields, extrasaction="ignore")
     writer.writeheader()
     writer.writerows(rows)
     return buffer.getvalue()
@@ -550,7 +584,239 @@ def section_rows(corpus, section):
     return [row for row in corpus if row.get("section_type") == section]
 
 
+def venue_display_name(venue):
+    if venue == "IEEE Transactions on Circuits and Systems II: Express Briefs":
+        return "TCAS-II"
+    return venue
+
+
+def sort_key_index(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+def collapse_sequence(sequence):
+    collapsed = []
+    for function in sequence:
+        if function and (not collapsed or collapsed[-1] != function):
+            collapsed.append(function)
+    return collapsed
+
+
+def format_sequence(sequence):
+    return " -> ".join(sequence)
+
+
+def format_function_counts(counts):
+    if not counts:
+        return ""
+    items = sorted(counts.items(), key=lambda item: (-int(item[1]), item[0]))
+    return "; ".join(f"{key}={value}" for key, value in items)
+
+
+def parse_function_counts(text):
+    counts = Counter()
+    if not text:
+        return counts
+    for part in text.split(";"):
+        if "=" not in part:
+            continue
+        key, value = part.strip().split("=", 1)
+        try:
+            counts[key.strip()] += float(value.strip())
+        except ValueError:
+            continue
+    return counts
+
+
+def format_avg_function_counts(rows):
+    if not rows:
+        return ""
+    totals = Counter()
+    for row in rows:
+        totals.update(parse_function_counts(row.get("function_counts", "")))
+    averaged = {key: round(value / len(rows), 1) for key, value in totals.items()}
+    if not averaged:
+        return ""
+    items = sorted(averaged.items(), key=lambda item: (-item[1], item[0]))
+    return "; ".join(f"{key}={value:.1f}" for key, value in items)
+
+
+def classify_section_archetype(section_type, sequence, evidence_quality="full_sequence"):
+    sequence = [function for function in sequence if function]
+    functions = set(sequence)
+    sentence_count = len(sequence)
+    result_ratio = sequence.count("RESULT") / max(sentence_count, 1)
+
+    archetype_id = "OTHER"
+    archetype_name = "其他"
+
+    if section_type == "Abstract":
+        if ({"BG", "PROBLEM", "GAP"} & functions) and ({"METHOD", "SETUP"} & functions) and "RESULT" in functions and ({"INTERPRET", "BOUNDARY"} & functions):
+            archetype_id, archetype_name = "ABS_A", "完整摘要链"
+        elif ({"PROBLEM", "GAP"} & functions) and ({"METHOD", "SETUP"} & functions) and "RESULT" in functions:
+            archetype_id, archetype_name = "ABS_B", "问题-方法-结果型"
+        elif ({"METHOD", "SETUP"} & functions) and "RESULT" in functions and not ({"PROBLEM", "GAP"} & functions):
+            archetype_id, archetype_name = "ABS_C", "方法-验证-结果型"
+        elif sequence.count("RESULT") >= 4 or result_ratio >= 0.5:
+            archetype_id, archetype_name = "ABS_D", "结果密集型"
+        else:
+            archetype_id, archetype_name = "ABS_E", "压缩/非典型型"
+    elif section_type == "Introduction":
+        if sentence_count <= 2 or evidence_quality == "partial/notes-derived":
+            archetype_id, archetype_name = "INT_X", "部分证据型"
+        elif ({"BG", "PROBLEM", "GAP", "NEED"} & functions) and ({"METHOD", "RESULT", "CONTRIB"} & functions):
+            archetype_id, archetype_name = "INT_A", "背景-问题-缺口-任务-贡献型"
+        elif "BG" in functions and "INTERPRET" in functions and not ({"GAP", "NEED"} & functions):
+            archetype_id, archetype_name = "INT_B", "背景解释型"
+        elif {"PROBLEM", "GAP"} & functions:
+            archetype_id, archetype_name = "INT_C", "问题缺口驱动型"
+        elif {"RESULT", "CONTRIB"} & functions:
+            archetype_id, archetype_name = "INT_D", "结果预告型"
+        else:
+            archetype_id, archetype_name = "INT_E", "非典型引言型"
+    elif section_type == "Results":
+        if sentence_count <= 2 or evidence_quality == "partial/notes-derived":
+            archetype_id, archetype_name = "RES_X", "部分证据型"
+        elif "SETUP" in functions and sequence.count("RESULT") >= 5:
+            archetype_id, archetype_name = "RES_A", "设置-多结果-解释型"
+        elif "ORG" in functions and "SETUP" in functions:
+            archetype_id, archetype_name = "RES_B", "结构化实验段型"
+        elif sequence.count("RESULT") >= 7:
+            archetype_id, archetype_name = "RES_C", "结果密集型"
+        else:
+            archetype_id, archetype_name = "RES_D", "短结果链型"
+    elif section_type == "Contribution":
+        if sentence_count <= 1:
+            archetype_id, archetype_name = "CON_A", "单条贡献块"
+        else:
+            archetype_id, archetype_name = "CON_B", "多条贡献块"
+
+    return {"archetype_id": archetype_id, "archetype_name": archetype_name, "evidence_quality": evidence_quality}
+
+
+def infer_evidence_quality(section_type, rows):
+    if section_type in {"Introduction", "Results"}:
+        if len(rows) <= 2:
+            return "partial/notes-derived"
+        sources = " ".join(row.get("evidence_source", "") for row in rows).lower()
+        if "notes" in sources:
+            return "partial/notes-derived"
+        if rows and all(row.get("confidence") == "low" for row in rows):
+            return "partial/notes-derived"
+    return "full_sequence"
+
+
+def build_paper_sequence_archetypes(corpus):
+    grouped = defaultdict(list)
+    for row in corpus:
+        key = (row.get("paper_id", ""), row.get("venue", ""), row.get("section_type", ""))
+        grouped[key].append(row)
+
+    records = []
+    for (paper_id, venue, section_type), rows in sorted(grouped.items()):
+        rows = sorted(rows, key=lambda row: sort_key_index(row.get("sentence_index")))
+        sequence = [row.get("sentence_function", "") for row in rows if row.get("sentence_function")]
+        counts = Counter(sequence)
+        evidence_quality = infer_evidence_quality(section_type, rows)
+        archetype = classify_section_archetype(section_type, sequence, evidence_quality)
+        records.append(
+            {
+                "paper_id": paper_id,
+                "title": rows[0].get("title", ""),
+                "venue": venue_display_name(venue),
+                "year": rows[0].get("year", ""),
+                "section_type": section_type,
+                "sentence_count": len(sequence),
+                "exact_sequence": format_sequence(sequence),
+                "collapsed_sequence": format_sequence(collapse_sequence(sequence)),
+                "archetype_id": archetype["archetype_id"],
+                "archetype_name": archetype["archetype_name"],
+                "function_counts": format_function_counts(counts),
+                "evidence_quality": archetype["evidence_quality"],
+            }
+        )
+    return records
+
+
+def preference_note(total_papers, paper_count, archetype_id, evidence_quality):
+    if archetype_id.endswith("_X") or evidence_quality == "partial/notes-derived":
+        return "insufficient_evidence：部分证据型，不用于推断 venue 偏好"
+    if total_papers and paper_count >= 6:
+        return "strong_preference：强倾向"
+    if total_papers and 3 <= paper_count <= 5:
+        return "mixed_preference：混合分布"
+    return "minor_pattern：少数样本"
+
+
+def build_venue_archetype_matrix(paper_archetypes):
+    grouped = defaultdict(list)
+    section_venue_totals = Counter((row["section_type"], row["venue"]) for row in paper_archetypes)
+    for row in paper_archetypes:
+        key = (row["section_type"], row["venue"], row["archetype_id"], row["archetype_name"])
+        grouped[key].append(row)
+
+    records = []
+    for (section_type, venue, archetype_id, archetype_name), rows in sorted(grouped.items()):
+        total = section_venue_totals[(section_type, venue)]
+        count = len(rows)
+        evidence_values = Counter(row.get("evidence_quality", "") for row in rows)
+        evidence_quality = evidence_values.most_common(1)[0][0] if evidence_values else ""
+        records.append(
+            {
+                "section_type": section_type,
+                "venue": venue,
+                "archetype_id": archetype_id,
+                "archetype_name": archetype_name,
+                "paper_count": count,
+                "total_papers": total,
+                "share": f"{count / total:.2f}" if total else "0.00",
+                "avg_sentence_count": f"{sum(float(row.get('sentence_count', 0) or 0) for row in rows) / count:.1f}",
+                "avg_function_counts": format_avg_function_counts(rows),
+                "representative_papers": "; ".join(row["paper_id"] for row in rows[:3]),
+                "evidence_quality": evidence_quality,
+                "note": preference_note(total, count, archetype_id, evidence_quality),
+            }
+        )
+    return records
+
+
+def archetype_summary_rows(paper_archetypes, section_type):
+    grouped = defaultdict(list)
+    for row in paper_archetypes:
+        if row["section_type"] == section_type:
+            grouped[(row["archetype_id"], row["archetype_name"])].append(row)
+    rows = []
+    total = sum(len(items) for items in grouped.values())
+    for (archetype_id, archetype_name), items in sorted(grouped.items()):
+        rows.append(
+            {
+                "archetype_id": archetype_id,
+                "archetype_name": archetype_name,
+                "paper_count": len(items),
+                "share": f"{len(items) / total:.0%}" if total else "0%",
+                "avg_sentence_count": f"{sum(float(row['sentence_count']) for row in items) / len(items):.1f}",
+                "avg_function_counts": format_avg_function_counts(items),
+                "representative_papers": "; ".join(row["paper_id"] for row in items[:3]),
+            }
+        )
+    return rows
+
+
+def markdown_table(headers, rows):
+    if not rows:
+        return ["暂无记录。"]
+    lines = ["| " + " | ".join(headers) + " |", "| " + " | ".join(["---"] * len(headers)) + " |"]
+    for row in rows:
+        lines.append("| " + " | ".join(str(row.get(header, "")) for header in headers) + " |")
+    return lines
+
+
 def build_topvenue_profile_text(corpus, manuscript):
+    paper_archetypes = build_paper_sequence_archetypes(corpus)
+    venue_matrix = build_venue_archetype_matrix(paper_archetypes)
     by_section = defaultdict(list)
     for row in corpus:
         by_section[row.get("section_type", "")].append(row.get("sentence_function", ""))
@@ -596,6 +862,15 @@ def build_topvenue_profile_text(corpus, manuscript):
             "- 写 Introduction 时，每段只推进一个功能：背景段负责建立任务，问题段负责暴露不确定性，缺口段负责指出现有评价缺什么，方法段负责说明本文如何隔离变量。",
             "- 写 Results 时，每段开头先给问题句，例如“这一组实验检查 X 是否来自 Y”；结果句必须绑定数字、表格或图；解释句要把数字变成机制判断。",
             "- 写边界时要主动：说明结果在哪些 FPGA、seed、placement、restart 条件下成立，避免把受控实验写成普遍定律。",
+            "",
+            "## 是否统一组织",
+            "",
+            "先说结论：顶刊不是完全统一按一种逐句顺序组织。逐句精确序列往往每篇都不同，但压缩到高层功能后，会出现少数可复用的组织范式。",
+            "",
+            "- `exact_sequence` 是每篇论文真实的逐句功能顺序。",
+            "- `collapsed_sequence` 会把连续重复功能压缩，方便看高层组织方式。",
+            "- `archetype` 是把相近顺序归成一种组织范式，用来回答“有几篇属于这种组织方式”。",
+            "- `venue 偏好` 是每个 venue 的 10 篇样本内分布：6/10 以上称为强倾向，3-5/10 称为混合分布，`*_X 部分证据型` 不用于推断偏爱。",
             "",
         ]
     )
@@ -678,6 +953,56 @@ def build_topvenue_profile_text(corpus, manuscript):
         for move in guide["moves"]:
             lines.append(f"- {move}")
         lines.extend(["", f"### RO-TRNG 仿写规则", "", f"- {guide['imitate']}", ""])
+        summary_rows = [
+            {
+                "范式": f"{row['archetype_id']} {row['archetype_name']}",
+                "论文数": row["paper_count"],
+                "占比": row["share"],
+                "平均句数": row["avg_sentence_count"],
+                "平均功能句数": row["avg_function_counts"],
+                "代表论文": row["representative_papers"],
+            }
+            for row in archetype_summary_rows(paper_archetypes, section)
+        ]
+        lines.extend(
+            [
+                "### 组织范式总表",
+                "",
+                "这张表回答：全体 60 篇里，有几篇属于这种组织方式；每种功能平均多少句。",
+                "",
+            ]
+        )
+        lines.extend(markdown_table(["范式", "论文数", "占比", "平均句数", "平均功能句数", "代表论文"], summary_rows))
+        section_venue_rows = [
+            {
+                "venue": row["venue"],
+                "范式": f"{row['archetype_id']} {row['archetype_name']}",
+                "论文数": f"{row['paper_count']}/{row['total_papers']}",
+                "占比": row["share"],
+                "平均功能句数": row["avg_function_counts"],
+                "判断": row["note"],
+            }
+            for row in venue_matrix
+            if row["section_type"] == section
+        ]
+        lines.extend(
+            [
+                "",
+                "### venue 偏好表",
+                "",
+                "这张表回答：某个顶刊类别是不是偏爱某种组织范式。这里的“偏爱”只是当前 10 篇样本内的写法倾向，不是该 venue 的官方规则。",
+                "",
+            ]
+        )
+        lines.extend(markdown_table(["venue", "范式", "论文数", "占比", "平均功能句数", "判断"], section_venue_rows))
+        if section in {"Introduction", "Results"}:
+            lines.extend(
+                [
+                    "",
+                    "注意：`部分证据型` 多半表示该篇在当前语料中只有局部 Introduction/Results 功能单元，不能把它解读成该 venue 真喜欢短结构。",
+                ]
+            )
+        lines.append("")
 
     lines.extend(
         [
@@ -865,7 +1190,11 @@ def citation_records(manuscript):
 def main():
     corpus = corpus_records()
     manuscript = manuscript_records(active_manuscript_path())
+    paper_archetypes = build_paper_sequence_archetypes(corpus)
+    venue_archetypes = build_venue_archetype_matrix(paper_archetypes)
     write_csv(MODULE_DIR / "corpus" / "topvenue_sentence_morphology.csv", CORPUS_FIELDS, corpus)
+    write_csv(MODULE_DIR / "corpus" / "topvenue_paper_sequence_archetypes.csv", PAPER_ARCHETYPE_FIELDS, paper_archetypes)
+    write_csv(MODULE_DIR / "corpus" / "topvenue_venue_archetype_matrix.csv", VENUE_ARCHETYPE_FIELDS, venue_archetypes)
     write_csv(MODULE_DIR / "manuscript" / "manuscript_sentence_morphology.csv", SENTENCE_FIELDS, manuscript)
     write_csv(MODULE_DIR / "manuscript" / "citation_function_matrix.csv", CITATION_FIELDS, citation_records(manuscript))
     write_profiles(corpus, manuscript)
