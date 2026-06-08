@@ -1,16 +1,16 @@
-# Punctuation Morphology Schema
+# 标点形态学 Schema
 
-Punctuation is audited per sentence because punctuation changes claim structure and technical register.
+标点要按句子审计，而不是只统计全文数量。标点会改变句子 claim 的结构和技术论文的语气。
 
-| Mark | Field | Correct IEEE-style use | Suspicious use | Replacement rule |
+| 标点 | 字段 | IEEE 风格中的合理用途 | 可疑用途 | 修订规则 |
 | --- | --- | --- | --- | --- |
-| `-` | `hyphen_count` | Compound modifier, e.g. `sampler-side`, `restart-based`. | Hyphen used as dash or over-stacked modifiers. | Keep technical compounds; replace dash use with comma, colon, or en dash. |
-| `–` | `en_dash_count` | Range or relation, e.g. `W4-W5` if normalized to en dash in final typesetting. | Used as decorative interruption. | Use only for ranges/relations. |
-| `—` | `em_dash_count` | Rare explanatory insertion. | AI-like aside or dramatic contrast. | Replace with comma, parentheses, or a separate sentence. |
-| `:` | `colon_count` | Introduce list, definition, or explicit explanation. | Repeated template-like setup. | Use once when it sharpens structure. |
-| `;` | `semicolon_count` | Join closely related independent clauses. | Long sentence hiding two claims. | Split if both sides carry separate claims. |
-| `?` | `question_mark_count` | Rare research-question framing. | Rhetorical question in technical body. | Convert to declarative task sentence. |
-| `()` | `parentheses_count` | Abbreviation, condition, or short clarification. | Hiding important constraints. | Move important conditions into main sentence. |
-| `/` | `slash_count` | Compact alternatives or units. | Rough pairing such as `method/result`. | Replace with explicit conjunction when meaning matters. |
-| `,` | `comma_count` | Clause separation and lists. | Overloaded sentence with too many clauses. | Split or simplify when comma count is high. |
+| `-` | `hyphen_count` | 复合修饰词，如 `sampler-side`、`restart-based`。 | 把 hyphen 当 dash 用，或堆太多复合词。 | 技术复合词保留；连接长插入语时改成逗号、冒号或拆句。 |
+| `–` | `en_dash_count` | 范围或关系，如 W4-W5。 | 当装饰性插入符使用。 | 只用于范围/关系。 |
+| `—` | `em_dash_count` | 极少量插入说明。 | AI 味强、像演讲稿。 | 改成逗号、括号或独立句。 |
+| `:` | `colon_count` | 引出列表、定义或解释。 | 每段都用冒号制造模板感。 | 只有在结构明显更清楚时保留。 |
+| `;` | `semicolon_count` | 连接强相关的两个独立分句。 | 把两个 claim 硬塞进一句。 | 两边都是 claim 时拆句。 |
+| `?` | `question_mark_count` | 很少用于正文，可用于明确 research question。 | 技术正文里像口语提问。 | 改成陈述式任务句。 |
+| `()` | `parentheses_count` | 缩写、条件、短说明。 | 把重要边界藏进括号。 | 重要条件移到主句。 |
+| `/` | `slash_count` | 单位或紧凑并列。 | `method/result` 这类粗糙并列。 | 改成明确连接词。 |
+| `,` | `comma_count` | 分隔从句和列表。 | 逗号过多说明句子 overload。 | 拆句或简化从句。 |
 

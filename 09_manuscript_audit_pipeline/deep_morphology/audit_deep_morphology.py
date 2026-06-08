@@ -108,6 +108,95 @@ CITATION_FIELDS = [
     "issue",
 ]
 
+FUNCTION_ZH = {
+    "BG": "背景",
+    "PROBLEM": "问题",
+    "GAP": "缺口",
+    "NEED": "必要性",
+    "METHOD": "方法",
+    "SETUP": "实验/平台设置",
+    "RESULT": "结果",
+    "OBSERVATION": "观察",
+    "QUANTIFICATION": "定量结果",
+    "INTERPRET": "解释",
+    "INTERPRETATION": "解释",
+    "BOUNDARY": "边界",
+    "CONTRIB": "贡献",
+    "CONTRIBUTION": "贡献",
+    "ORG": "结构安排",
+    "ORGANIZATION": "结构安排",
+}
+
+RELATION_ZH = {
+    "none": "无上一句",
+    "contrasts": "转折/对比上一句",
+    "narrows": "收窄上一句",
+    "interprets": "解释上一句结果",
+    "evidences": "用证据承接上一句",
+    "elaborates": "展开上一句",
+    "jumps": "跳跃，缺少桥接",
+}
+
+CLAIM_ZH = {
+    "descriptive": "描述性 claim",
+    "causal/generalization": "因果/泛化 claim",
+    "comparative": "比较 claim",
+    "method": "方法 claim",
+    "measurement": "测量/结果 claim",
+    "limitation": "限制/边界 claim",
+    "novelty": "新颖性 claim",
+}
+
+STRENGTH_ZH = {
+    "none": "无明显 claim",
+    "low": "低",
+    "medium": "中",
+    "high": "高",
+    "very_high": "很高",
+}
+
+OPERATION_ZH = {
+    "KEEP": "保留",
+    "ADD_EVIDENCE_ANCHOR": "补证据锚点",
+    "WEAKEN_CLAIM": "削弱 claim",
+    "REPLACE_RISK_VERB": "替换高风险动词/泛词",
+    "CHANGE_PUNCTUATION": "调整标点",
+    "ADD_BOUNDARY": "补边界条件",
+}
+
+
+def zh_function(value):
+    return FUNCTION_ZH.get(value, value)
+
+
+def zh_relation(value):
+    return RELATION_ZH.get(value, value)
+
+
+def zh_claim(value):
+    return CLAIM_ZH.get(value, value)
+
+
+def zh_strength(value):
+    return STRENGTH_ZH.get(value, value)
+
+
+def zh_operations(value):
+    return "；".join(OPERATION_ZH.get(part, part) for part in value.split(";") if part) or "保留"
+
+
+def zh_evidence(value):
+    if not value or value == "None":
+        return "无"
+    mapping = {
+        "Figure": "图",
+        "Table": "表",
+        "Equation": "公式",
+        "Citation": "引用",
+        "Experiment setup": "实验设置",
+    }
+    return "；".join(mapping.get(part, part) for part in value.split(";"))
+
 
 def read_text(path):
     for encoding in ("utf-8-sig", "utf-8", "latin-1"):
@@ -438,35 +527,37 @@ def write_profiles(corpus, manuscript):
     by_section = defaultdict(list)
     for row in corpus:
         by_section[row["section_type"]].append(row["sentence_function"])
-    lines = ["# Top-Venue Function Sequence Profiles", ""]
+    lines = ["# 顶刊句子功能序列画像", ""]
+    lines.append("这个文件把本地顶刊语料里的句子功能做成可模仿的序列画像。字段名保持英文是为了脚本稳定，正文说明全部用中文。")
+    lines.append("")
     for section in ["Abstract", "Introduction", "Results", "Contribution"]:
         seq = by_section.get(section, [])
         counts = Counter(seq)
         lines.append(f"## {section}")
         lines.append("")
-        lines.append("Observed dominant functions: " + ", ".join(f"`{k}` {v}" for k, v in counts.most_common(8)))
+        lines.append("高频主功能：" + "，".join(f"`{k}`（{zh_function(k)}）{v} 条" for k, v in counts.most_common(8)))
         if section == "Abstract":
             lines.append("")
-            lines.append("Target sequence: `BG -> PROBLEM -> GAP -> TASK/METHOD -> SETUP -> RESULT -> INTERPRET/BOUNDARY`.")
+            lines.append("目标序列：`BG -> PROBLEM -> GAP -> TASK/METHOD -> SETUP -> RESULT -> INTERPRET/BOUNDARY`。")
         elif section == "Results":
             lines.append("")
-            lines.append("Target paragraph sequence: `QUESTION -> FIGURE/TABLE -> OBSERVATION -> QUANTIFICATION -> INTERPRETATION -> BOUNDARY -> TRANSITION`.")
+            lines.append("目标结果段序列：`QUESTION -> FIGURE/TABLE -> OBSERVATION -> QUANTIFICATION -> INTERPRETATION -> BOUNDARY -> TRANSITION`。")
         lines.append("")
     lines.extend(
         [
-            "## Full-Section Templates",
+            "## 全章节功能模板",
             "",
-            "- Related Work: `CATEGORY -> REPRESENTATIVE WORKS -> COMMON CAPABILITY -> COMMON LIMITATION -> OUR DIFFERENCE`.",
-            "- Background: `DEFINE -> MECHANISM -> RELEVANCE -> LIMIT`.",
-            "- Method: `GOAL -> PRINCIPLE -> STRUCTURE -> FIXED VARIABLES -> CHANGED VARIABLES -> OUTPUT`.",
-            "- Experimental Setup: `PURPOSE -> PLATFORM -> TOOLCHAIN -> CONTROL -> VARIABLE -> METRIC -> REPEAT -> PROCESSING`.",
-            "- Discussion: `FINDING SYNTHESIS -> ALTERNATIVE EXPLANATION -> LIMITATION -> IMPLICATION`.",
-            "- Conclusion: `PROBLEM RECAP -> METHOD RECAP -> FINDING -> IMPLICATION -> BOUNDARY/FUTURE`.",
+            "- Related Work：`类别 -> 代表性工作 -> 共同能力 -> 共同限制 -> 本文差异`。",
+            "- Background：`定义 -> 机制 -> 相关性 -> 限制`。",
+            "- Method：`目标 -> 原理 -> 结构 -> 固定变量 -> 改变变量 -> 输出`。",
+            "- Experimental Setup：`目的 -> 平台 -> 工具链 -> 控制项 -> 变量 -> 指标 -> 重复次数 -> 处理方法`。",
+            "- Discussion：`发现综合 -> 替代解释 -> 限制 -> 含义`。",
+            "- Conclusion：`问题回顾 -> 方法回顾 -> 发现 -> 含义 -> 边界/未来工作`。",
             "",
-            "## Corpus-to-Manuscript Coverage",
+            "## 语料和当前稿件覆盖",
             "",
-            f"- Top-venue sentence records: {len(corpus)}.",
-            f"- Manuscript sentence records: {len(manuscript)}.",
+            f"- 顶刊逐句记录：{len(corpus)} 条。",
+            f"- 当前稿件逐句记录：{len(manuscript)} 条。",
         ]
     )
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -476,16 +567,16 @@ def report_alignment(manuscript):
     out = MODULE_DIR / "reports" / "deep_morphology_alignment_report.md"
     issues = [row for row in manuscript if row["mismatch_type"] != "none" or row["previous_sentence_relation"] == "jumps"]
     lines = [
-        "# Deep Morphology Alignment Report",
+        "# 深度形态学对齐报告",
         "",
-        "This report audits the current manuscript at sentence level. It does not rewrite the manuscript.",
+        "这个报告按句子级审计当前稿件。它只指出位置、功能、风险和修订动作，不直接改写原稿。",
         "",
-        "## Summary",
+        "## 总览",
         "",
-        f"- Sentence records: {len(manuscript)}.",
-        f"- Sentences with mismatch or jump relation: {len(issues)}.",
+        f"- 逐句记录：{len(manuscript)} 条。",
+        f"- 存在 mismatch 或上下句跳跃的句子：{len(issues)} 条。",
         "",
-        "## Highest-Priority Sentence Records",
+        "## 优先检查的句子记录",
         "",
     ]
     for row in issues[:40]:
@@ -493,17 +584,17 @@ def report_alignment(manuscript):
             [
                 f"### {row['sentence_id']}",
                 "",
-                f"Text: {row['sentence_text']}",
+                f"原句：{row['sentence_text']}",
                 "",
-                f"- Dominant function: `{row['dominant_function']}`",
-                f"- Expected top-venue role: `{row['expected_topvenue_role']}`",
-                f"- Previous relation: `{row['previous_sentence_relation']}`",
-                f"- Claim type/strength: `{row['claim_type']}` / `{row['claim_strength']}`",
-                f"- Evidence anchor: `{row['evidence_anchor']}`",
-                f"- Risk words: `{row['risk_words'] or 'None'}`",
-                f"- Punctuation: `{row['punctuation_pattern'] or 'OK'}`",
-                f"- Mismatch: `{row['mismatch_type']}`",
-                f"- Revision operation: `{row['revision_operation']}`",
+                f"- 主功能：`{row['dominant_function']}`（{zh_function(row['dominant_function'])}）",
+                f"- 顶刊期望角色：`{row['expected_topvenue_role']}`",
+                f"- 和上一句关系：`{row['previous_sentence_relation']}`（{zh_relation(row['previous_sentence_relation'])}）",
+                f"- claim 类型/强度：`{row['claim_type']}`（{zh_claim(row['claim_type'])}） / `{row['claim_strength']}`（{zh_strength(row['claim_strength'])}）",
+                f"- 证据锚点：`{row['evidence_anchor']}`（{zh_evidence(row['evidence_anchor'])}）",
+                f"- 风险词：`{row['risk_words'] or '无'}`",
+                f"- 标点模式：`{row['punctuation_pattern'] or 'OK'}`",
+                f"- 问题类型：`{row['mismatch_type']}`",
+                f"- 建议动作：`{row['revision_operation']}`（{zh_operations(row['revision_operation'])}）",
                 "",
             ]
         )
@@ -516,11 +607,11 @@ def report_abstract(manuscript):
     abs_rows = [row for row in manuscript if row["section_id"] == "Abstract"]
     seq = " -> ".join(row["dominant_function"] for row in abs_rows)
     lines = [
-        "# Abstract Deep Sentence Morphology",
+        "# 摘要逐句深度形态学报告",
         "",
-        "Target sequence: `BG -> PROBLEM -> GAP -> METHOD -> SETUP -> RESULT -> BOUNDARY`.",
+        "顶刊目标序列：`BG -> PROBLEM -> GAP -> METHOD -> SETUP -> RESULT -> BOUNDARY`。",
         "",
-        f"Current sequence: `{seq}`.",
+        f"当前摘要序列：`{seq}`。",
         "",
     ]
     for row in abs_rows:
@@ -528,18 +619,18 @@ def report_abstract(manuscript):
             [
                 f"## {row['sentence_id']}",
                 "",
-                f"Text: {row['sentence_text']}",
+                f"原句：{row['sentence_text']}",
                 "",
-                f"- Function: `{row['dominant_function']}`",
-                f"- Expected role: `{row['expected_topvenue_role']}`",
-                f"- Claim: `{row['claim_type']}` / `{row['claim_strength']}`",
-                f"- Evidence: `{row['evidence_anchor']}`",
-                f"- Risk words: `{row['risk_words'] or 'None'}`",
-                f"- Operation: `{row['revision_operation']}`",
+                f"- 当前功能：`{row['dominant_function']}`（{zh_function(row['dominant_function'])}）",
+                f"- 该位置期望功能：`{row['expected_topvenue_role']}`",
+                f"- claim：`{row['claim_type']}`（{zh_claim(row['claim_type'])}） / `{row['claim_strength']}`（{zh_strength(row['claim_strength'])}）",
+                f"- 证据锚点：`{row['evidence_anchor']}`（{zh_evidence(row['evidence_anchor'])}）",
+                f"- 风险词：`{row['risk_words'] or '无'}`",
+                f"- 建议动作：`{row['revision_operation']}`（{zh_operations(row['revision_operation'])}）",
                 "",
             ]
         )
-    lines.extend(["## Revised Function Plan Before Rewriting", "", "`BG -> PROBLEM -> GAP -> METHOD -> SETUP -> RESULT -> BOUNDARY`.", ""])
+    lines.extend(["## 改写前的功能计划", "", "`BG -> PROBLEM -> GAP -> METHOD -> SETUP -> RESULT -> BOUNDARY`。", ""])
     out.write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -550,21 +641,25 @@ def report_results(manuscript):
     for row in result_rows:
         by_para[row["paragraph_id"]].append(row)
     lines = [
-        "# Results Deep Paragraph Morphology",
+        "# Results 段落深度形态学报告",
         "",
-        "Target paragraph sequence: `QUESTION -> FIGURE/TABLE -> OBSERVATION -> QUANTIFICATION -> INTERPRETATION -> BOUNDARY`.",
+        "顶刊成熟实验段落的目标序列：`QUESTION -> FIGURE/TABLE -> OBSERVATION -> QUANTIFICATION -> INTERPRETATION -> BOUNDARY`。",
         "",
     ]
     for para, rows in list(by_para.items())[:40]:
         seq = " -> ".join(row["dominant_function"] for row in rows)
-        role = "main result"
+        role = "主结果"
         if any("counterfactual" in row["section_id"].lower() for row in rows):
-            role = "counterfactual"
+            role = "反事实实验"
         elif any("diagnosis" in row["section_id"].lower() for row in rows):
-            role = "mechanism diagnosis"
-        lines.extend([f"## {para}", "", f"- Paragraph role: `{role}`", f"- Current sequence: `{seq}`", ""])
+            role = "机制诊断"
+        lines.extend([f"## {para}", "", f"- 段落角色：`{role}`", f"- 当前句子功能序列：`{seq}`", ""])
         for row in rows:
-            lines.append(f"- `{row['sentence_id']}` {row['dominant_function']} | evidence `{row['evidence_anchor']}` | operation `{row['revision_operation']}`")
+            lines.append(
+                f"- `{row['sentence_id']}` {row['dominant_function']}（{zh_function(row['dominant_function'])}）"
+                f" | 证据 `{zh_evidence(row['evidence_anchor'])}`"
+                f" | 动作 `{zh_operations(row['revision_operation'])}`"
+            )
         lines.append("")
     out.write_text("\n".join(lines), encoding="utf-8")
 
@@ -575,18 +670,18 @@ def citation_function(row):
     if row["citation_anchor"] == "None":
         return ""
     if function in {"BG", "PROBLEM"}:
-        return "background support"
+        return "背景支撑"
     if function in {"GAP", "LIMITATION"} or "background" in section:
-        return "prior limitation"
+        return "前人限制"
     if function == "METHOD":
-        return "prior method"
+        return "前人方法"
     if function == "SETUP":
-        return "standard/test reference"
+        return "标准/测试依据"
     if function == "RESULT":
-        return "comparison baseline"
+        return "比较基线"
     if row["claim_strength"] in {"high", "very_high"}:
-        return "claim support"
-    return "definition source"
+        return "claim 支撑"
+    return "定义来源"
 
 
 def citation_records(manuscript):
