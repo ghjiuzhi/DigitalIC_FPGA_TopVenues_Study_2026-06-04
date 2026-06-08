@@ -1,4 +1,5 @@
 import csv
+import io
 import re
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -514,37 +515,181 @@ def active_manuscript_path():
     return preferred if preferred.exists() else base / "main_eval_boundary_r23.tex"
 
 
+def render_csv_text(fields, rows):
+    buffer = io.StringIO(newline="")
+    writer = csv.DictWriter(buffer, fieldnames=fields)
+    writer.writeheader()
+    writer.writerows(rows)
+    return buffer.getvalue()
+
+
 def write_csv(path, fields, rows):
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8-sig", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fields)
-        writer.writeheader()
-        writer.writerows(rows)
+    text = render_csv_text(fields, rows)
+    data = text.encode("utf-8-sig")
+    if path.exists() and path.read_bytes() == data:
+        return
+    path.write_bytes(data)
 
 
-def write_profiles(corpus, manuscript):
-    out = MODULE_DIR / "corpus" / "topvenue_function_sequence_profiles.md"
+def truthy(value):
+    return str(value).strip().lower() == "true"
+
+
+def count_true(rows, field):
+    return sum(1 for row in rows if truthy(row.get(field, "")))
+
+
+def function_count_text(counts, limit=8):
+    if not counts:
+        return "暂无记录"
+    return "，".join(f"`{k}`（{zh_function(k)}）{v} 条" for k, v in counts.most_common(limit))
+
+
+def section_rows(corpus, section):
+    return [row for row in corpus if row.get("section_type") == section]
+
+
+def build_topvenue_profile_text(corpus, manuscript):
     by_section = defaultdict(list)
     for row in corpus:
-        by_section[row["section_type"]].append(row["sentence_function"])
+        by_section[row.get("section_type", "")].append(row.get("sentence_function", ""))
+    unique_papers = {row.get("paper_id") for row in corpus if row.get("paper_id")}
+    venue_counts = Counter(row.get("venue", "未知 venue") for row in corpus)
+
     lines = ["# 顶刊句子功能序列画像", ""]
-    lines.append("这个文件把本地顶刊语料里的句子功能做成可模仿的序列画像。字段名保持英文是为了脚本稳定，正文说明全部用中文。")
-    lines.append("")
-    for section in ["Abstract", "Introduction", "Results", "Contribution"]:
-        seq = by_section.get(section, [])
-        counts = Counter(seq)
-        lines.append(f"## {section}")
-        lines.append("")
-        lines.append("高频主功能：" + "，".join(f"`{k}`（{zh_function(k)}）{v} 条" for k, v in counts.most_common(8)))
-        if section == "Abstract":
-            lines.append("")
-            lines.append("目标序列：`BG -> PROBLEM -> GAP -> TASK/METHOD -> SETUP -> RESULT -> INTERPRET/BOUNDARY`。")
-        elif section == "Results":
-            lines.append("")
-            lines.append("目标结果段序列：`QUESTION -> FIGURE/TABLE -> OBSERVATION -> QUANTIFICATION -> INTERPRETATION -> BOUNDARY -> TRANSITION`。")
-        lines.append("")
     lines.extend(
         [
+            "这个文件把本地 01-06 顶刊语料里的句子功能做成可模仿的序列画像。字段名保持英文是为了脚本稳定，正文说明全部用中文。",
+            "",
+            "## 这份文档怎么读",
+            "",
+            "- 它不是论文内容综述，而是写法结构说明：每一句在 Abstract、Introduction、Results、Contribution 里承担什么功能。",
+            "- `154 条` 这类数字表示句子/功能单元数量，不是论文数量，也不是实验数量。例如看到 `RESULT 154 条`，意思是语料中有 154 个摘要句子或功能单元被标成结果句。",
+            "- 高频功能说明顶刊在该章节最常做什么；它是写作重心提示，不是要求你机械照抄比例。",
+            "- 标签名保留英文，便于和 CSV 对照；括号里的中文告诉你它在论文中的实际作用。",
+            "",
+            "## 数字怎么理解",
+            "",
+            f"- 当前顶刊语料逐句记录：{len(corpus)} 条。",
+            f"- 当前稿件逐句记录：{len(manuscript)} 条。",
+            f"- 覆盖论文数量：{len(unique_papers) if unique_papers else '未在样例中提供 paper_id'} 篇。",
+            "- `sentence_function`：这句话的主功能，例如背景、问题、缺口、方法、设置、结果、解释、边界。",
+            "- `claim_type`：这句话在提出哪类 claim，例如描述、方法、测量、因果、比较、泛化或限制。",
+            "- `claim_strength`：claim 的力度。`low/medium` 多用于描述和受限结论；`high/very_high` 需要数字、图表、实验或引用支撑。",
+            "- `has_number`：是否含数字。数字多不等于写得好；顶刊通常把数字放在 RESULT 或 SETUP 句里，用来支撑比较和边界。",
+            "- `punctuation_pattern`：标点形态，例如逗号过多、分号、破折号。它帮助判断句子是否塞了太多功能。",
+            "- `transition_pattern`：句子功能链，例如 `METHOD/SETUP` 或 `RESULT/INTERPRET`，用于判断一句话是在铺方法、给结果，还是从结果转解释。",
+            "",
+            "## 顶刊怎么写",
+            "",
+            "顶刊的共同特征不是句子华丽，而是每句话有明确任务：先让读者知道问题为什么重要，再说明已有方法哪里不够，然后交代本文做什么、怎么验证、结果说明什么、边界在哪里。",
+            "",
+            "- 好的 Abstract 像压缩版论文：背景很短，问题和缺口清楚，方法不展开细节，结果必须有信息量，最后给解释或边界。",
+            "- 好的 Introduction 像论证链：背景不是堆知识，而是不断收窄到本文问题；每段都要把读者推向“为什么必须做本文”。",
+            "- 好的 Results 段不是堆数字：先说要回答的问题，再给实验设置或图表，再观察现象、量化差异、解释原因，最后说明适用边界。",
+            "- 好的 Contribution block 很短但很硬：每条贡献都要能映射到一个概念、方法、实证结果或 artifact/audit 产物。",
+            "",
+            "## RO-TRNG 仿写",
+            "",
+            "- 写 Abstract 时，不要一开始讲太多 FPGA/TRNG 常识；先用 1 句背景接住读者，再用 1-2 句指出 sampler-side、placement、restart 或 entropy boundary 的问题。",
+            "- 写 Introduction 时，每段只推进一个功能：背景段负责建立任务，问题段负责暴露不确定性，缺口段负责指出现有评价缺什么，方法段负责说明本文如何隔离变量。",
+            "- 写 Results 时，每段开头先给问题句，例如“这一组实验检查 X 是否来自 Y”；结果句必须绑定数字、表格或图；解释句要把数字变成机制判断。",
+            "- 写边界时要主动：说明结果在哪些 FPGA、seed、placement、restart 条件下成立，避免把受控实验写成普遍定律。",
+            "",
+        ]
+    )
+
+    section_guides = {
+        "Abstract": {
+            "target": "`BG -> PROBLEM -> GAP -> METHOD/SETUP -> RESULT -> INTERPRET/BOUNDARY`",
+            "why": "摘要的任务是让读者在很短时间内看懂：领域背景是什么、本文抓住哪个未解决问题、用什么方法隔离或验证、结果给出什么证据、结论边界在哪里。",
+            "moves": [
+                "`BG`：给读者最小背景，不讲教材。RO-TRNG 可写成“FPGA TRNG 的熵质量受实现细节影响”。",
+                "`PROBLEM`：把背景压成具体麻烦。RO-TRNG 可写 sampler、placement、restart 或评价协议会改变可观测熵。",
+                "`GAP`：指出现有工作没隔离什么变量，不能只说“研究不足”。",
+                "`METHOD/SETUP`：说明本文如何构造对照、平台、指标和审计流程。",
+                "`RESULT`：给可验证发现，优先绑定数字、表格或明确比较对象。",
+                "`INTERPRET/BOUNDARY`：说明结果意味着什么，以及在哪些条件下成立。",
+            ],
+            "imitate": "摘要不要把每个技术细节都塞进去；目标是 5-8 句内完成“背景、问题、缺口、方法、设置、结果、边界”。",
+        },
+        "Introduction": {
+            "target": "`BG -> PROBLEM -> GAP -> NEED -> TASK/METHOD -> RESULT/CONTRIB -> ORG`",
+            "why": "引言不是加长版摘要。顶刊引言会反复解释为什么这个问题值得做，所以 `INTERPRET` 往往很多：它们负责把背景事实翻译成研究动机、评价缺口和本文设计选择。",
+            "moves": [
+                "`BG`：建立读者共同知识，但只保留会导向本文问题的背景。",
+                "`PROBLEM`：从系统、电路、工具链或安全评价中抽出具体矛盾。",
+                "`GAP`：说明已有论文、标准测试或工具流程没有解决哪个判断问题。",
+                "`NEED`：把 gap 变成必要性，告诉读者为什么现在必须做这件事。",
+                "`TASK/METHOD`：提前给出本文任务和变量隔离思路。",
+                "`RESULT/CONTRIB`：用短句预告核心发现和贡献，不展开所有数据。",
+                "`ORG`：最后一两句安排论文结构。",
+            ],
+            "imitate": "RO-TRNG 引言建议用 5-7 段：应用背景、实现敏感性、现有测试/论文限制、本文问题定义、实验设计、贡献、文章结构。",
+        },
+        "Results": {
+            "target": "`QUESTION -> SETUP/FIGURE/TABLE -> OBSERVATION -> QUANTIFICATION -> INTERPRETATION -> BOUNDARY -> TRANSITION`",
+            "why": "结果段的核心不是“我们测了很多”，而是“每组实验回答一个问题”。`RESULT` 数量高说明顶刊把观察和量化判断写得很密；`SETUP` 数量也高，说明读者必须先知道比较条件。",
+            "moves": [
+                "`QUESTION`：段首明确本段回答什么问题。",
+                "`SETUP/FIGURE/TABLE`：交代平台、变量、指标、图表或表格。",
+                "`OBSERVATION`：描述图表里最明显的趋势。",
+                "`QUANTIFICATION`：给数字、差值、比例或排序。",
+                "`INTERPRETATION`：解释为什么会这样，连接到机制。",
+                "`BOUNDARY`：说明哪些条件下不能外推。",
+                "`TRANSITION`：把本段发现导向下一组实验。",
+            ],
+            "imitate": "RO-TRNG 结果段每段最好只回答一个变量问题，例如 sampler-side、placement、restart、routing 或 seed，不要把多个 claim 混进一句长句。",
+        },
+        "Contribution": {
+            "target": "`CONCEPTUAL CONTRIBUTION -> METHOD CONTRIBUTION -> EMPIRICAL CONTRIBUTION -> ARTIFACT/AUDIT CONTRIBUTION`",
+            "why": "贡献块数量少，是因为它通常集中在引言末尾或摘要末尾；但每条贡献必须可核验，不能只是换个说法重复“本文提出一种方法”。",
+            "moves": [
+                "概念贡献：重新定义问题、威胁模型、评价边界或解释框架。",
+                "方法贡献：提出可复现实验设计、变量隔离方法、审计流程或工具链。",
+                "实证贡献：报告跨平台、跨配置、跨指标的发现。",
+                "artifact/audit 贡献：给出数据、脚本、流程、检查清单或复现实验资产。",
+            ],
+            "imitate": "RO-TRNG 贡献建议写成 3-4 条，每条以“我们定义/构造/测量/发布或审计”开头，并能在正文找到对应章节和证据。",
+        },
+    }
+
+    for section in ["Abstract", "Introduction", "Results", "Contribution"]:
+        rows = section_rows(corpus, section)
+        counts = Counter(row.get("sentence_function", "") for row in rows)
+        number_count = count_true(rows, "has_number")
+        fig_count = count_true(rows, "has_figure_reference")
+        table_count = count_true(rows, "has_table_reference")
+        guide = section_guides[section]
+        lines.extend(
+            [
+                f"## {section}",
+                "",
+                f"- 高频主功能：{function_count_text(counts)}。",
+                f"- 数字句：{number_count} 条；图引用句：{fig_count} 条；表引用句：{table_count} 条。",
+                f"- 目标功能链：{guide['target']}。",
+                f"- 这一节为什么这样写：{guide['why']}",
+                "",
+                "### 功能拆解",
+                "",
+            ]
+        )
+        for move in guide["moves"]:
+            lines.append(f"- {move}")
+        lines.extend(["", f"### RO-TRNG 仿写规则", "", f"- {guide['imitate']}", ""])
+
+    lines.extend(
+        [
+            "## 分 venue 读法",
+            "",
+            "这些差异是写法倾向，不是硬规则。写 RO-TRNG 时应该按目标 venue 的读者期待调整重心。",
+            "",
+            f"- TCAS-I/TCAS-II：强调电路、方法、验证的紧凑链条。本地记录中相关句子约 {venue_counts.get('TCAS-I', 0) + venue_counts.get('IEEE Transactions on Circuits and Systems II: Express Briefs', 0)} 条；可模仿其“模型/电路 -> 验证 -> 应用或解释”的压缩写法。",
+            f"- TVLSI/TCAD：强调设计约束、工具/流程、实验设置。本地记录中 TVLSI {venue_counts.get('TVLSI', 0)} 条、TCAD {venue_counts.get('TCAD', 0)} 条；RO-TRNG 若强调 FPGA 实现和可复现实验，应多学这类写法。",
+            f"- TC：强调系统问题、比较基线、实证结果。本地记录中 TC {venue_counts.get('TC', 0)} 条；适合学习如何把实验发现写成系统层结论。",
+            f"- TCHES/CHES：强调威胁模型、攻击/防御边界、可复现实验。本地记录中 TCHES/CHES {venue_counts.get('TCHES/CHES', 0)} 条；适合学习安全评价中如何主动写边界和复现条件。",
+            "",
             "## 全章节功能模板",
             "",
             "- Related Work：`类别 -> 代表性工作 -> 共同能力 -> 共同限制 -> 本文差异`。",
@@ -554,13 +699,20 @@ def write_profiles(corpus, manuscript):
             "- Discussion：`发现综合 -> 替代解释 -> 限制 -> 含义`。",
             "- Conclusion：`问题回顾 -> 方法回顾 -> 发现 -> 含义 -> 边界/未来工作`。",
             "",
-            "## 语料和当前稿件覆盖",
+            "## 使用提醒",
             "",
-            f"- 顶刊逐句记录：{len(corpus)} 条。",
-            f"- 当前稿件逐句记录：{len(manuscript)} 条。",
+            "- 先看功能链，再看数字：数字告诉你顶刊常写什么，功能链告诉你应该按什么顺序写。",
+            "- 不要把高频功能当配方比例：例如 Introduction 的 `INTERPRET` 很多，不代表要写很多空泛解释，而是每段都要解释“这个事实如何导向本文问题”。",
+            "- 仿写时优先检查每段第一句和最后一句：第一句要立问题，最后一句要给解释、边界或转场。",
         ]
     )
-    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return "\n".join(lines) + "\n"
+
+
+def write_profiles(corpus, manuscript):
+    out = MODULE_DIR / "corpus" / "topvenue_function_sequence_profiles.md"
+    text = build_topvenue_profile_text(corpus, manuscript)
+    out.write_text(text, encoding="utf-8")
 
 
 def report_alignment(manuscript):
