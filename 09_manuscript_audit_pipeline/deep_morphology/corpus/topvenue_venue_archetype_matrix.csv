@@ -8,11 +8,11 @@ Abstract,TCAD,ABS_A,完整摘要链,6,10,0.60,9.7,INTERPRET=3.7; METHOD=1.5; PRO
 Abstract,TCAD,ABS_C,方法-验证-结果型,1,10,0.10,8.0,RESULT=5.0; METHOD=2.0; BG=1.0,05_TCAD:paper_04,full_sequence,minor_pattern：少数样本
 Abstract,TCAD,ABS_D,结果密集型,1,10,0.10,10.0,RESULT=5.0; INTERPRET=3.0; NEED=1.0; PROBLEM=1.0,05_TCAD:paper_03,full_sequence,minor_pattern：少数样本
 Abstract,TCAD,ABS_E,压缩/非典型型,2,10,0.20,8.0,INTERPRET=2.0; RESULT=1.5; BG=1.0; METHOD=1.0; PROBLEM=1.0; SETUP=1.0; GAP=0.5,05_TCAD:paper_01; 05_TCAD:paper_06,full_sequence,minor_pattern：少数样本
-Abstract,TCAS-I,ABS_A,完整摘要链,6,10,0.60,7.5,RESULT=2.2; INTERPRET=1.7; METHOD=1.0; BG=0.8; SETUP=0.7; PROBLEM=0.5; GAP=0.3; NEED=0.3,01_TCASI:paper_01; 01_TCASI:paper_02; 01_TCASI:paper_07,full_sequence,strong_preference：强倾向
+Abstract,TCAS-I,ABS_A,完整摘要链,5,10,0.50,7.6,INTERPRET=1.8; RESULT=1.8; METHOD=1.0; BG=0.8; SETUP=0.8; PROBLEM=0.6; GAP=0.4; NEED=0.4,01_TCASI:paper_01; 01_TCASI:paper_02; 01_TCASI:paper_07,full_sequence,mixed_preference：混合分布
 Abstract,TCAS-I,ABS_B,问题-方法-结果型,1,10,0.10,10.0,RESULT=6.0; METHOD=2.0; BG=1.0; PROBLEM=1.0,01_TCASI:paper_03,full_sequence,minor_pattern：少数样本
-Abstract,TCAS-I,ABS_D,结果密集型,1,10,0.10,8.0,RESULT=4.0; INTERPRET=2.0; BG=1.0; BOUNDARY=1.0,01_TCASI:paper_06,full_sequence,minor_pattern：少数样本
+Abstract,TCAS-I,ABS_D,结果密集型,2,10,0.20,6.5,RESULT=3.5; INTERPRET=1.5; BG=1.0; BOUNDARY=0.5,01_TCASI:paper_06; 01_TCASI:paper_08,full_sequence,minor_pattern：少数样本
 Abstract,TCAS-I,ABS_E,压缩/非典型型,2,10,0.20,9.5,PROBLEM=3.5; INTERPRET=3.0; RESULT=1.5; BG=0.5; METHOD=0.5; NEED=0.5,01_TCASI:paper_04; 01_TCASI:paper_05,full_sequence,minor_pattern：少数样本
-Abstract,TCAS-II,ABS_A,完整摘要链,3,10,0.30,10.0,RESULT=3.7; INTERPRET=3.0; BG=1.0; METHOD=1.0; PROBLEM=0.7; NEED=0.3; SETUP=0.3,02_TCASII:paper_05; 02_TCASII:paper_06; 02_TCASII:paper_10,full_sequence,mixed_preference：混合分布
+Abstract,TCAS-II,ABS_A,完整摘要链,3,10,0.30,9.7,RESULT=3.7; INTERPRET=2.7; BG=1.0; METHOD=1.0; PROBLEM=0.7; NEED=0.3; SETUP=0.3,02_TCASII:paper_05; 02_TCASII:paper_06; 02_TCASII:paper_10,full_sequence,mixed_preference：混合分布
 Abstract,TCAS-II,ABS_C,方法-验证-结果型,3,10,0.30,10.0,RESULT=4.3; INTERPRET=3.7; METHOD=1.0; NEED=0.7; SETUP=0.3,02_TCASII:paper_01; 02_TCASII:paper_02; 02_TCASII:paper_04,full_sequence,mixed_preference：混合分布
 Abstract,TCAS-II,ABS_D,结果密集型,3,10,0.30,10.0,RESULT=6.3; INTERPRET=1.7; BG=1.0; PROBLEM=0.7; GAP=0.3,02_TCASII:paper_03; 02_TCASII:paper_08; 02_TCASII:paper_09,full_sequence,mixed_preference：混合分布
 Abstract,TCAS-II,ABS_E,压缩/非典型型,1,10,0.10,10.0,INTERPRET=7.0; SETUP=2.0; BG=1.0,02_TCASII:paper_07,full_sequence,minor_pattern：少数样本
@@ -30,37 +30,39 @@ Contribution,TCAS-I,CON_A,单条贡献块,10,10,1.00,1.0,CONTRIB=1.0,01_TCASI:pa
 Contribution,TCAS-II,CON_A,单条贡献块,10,10,1.00,1.0,CONTRIB=1.0,02_TCASII:paper_01; 02_TCASII:paper_02; 02_TCASII:paper_03,full_sequence,strong_preference：强倾向
 Contribution,TCHES/CHES,CON_A,单条贡献块,10,10,1.00,1.0,CONTRIB=1.0,06_TCHES_CHES:paper_01; 06_TCHES_CHES:paper_02; 06_TCHES_CHES:paper_03,full_sequence,strong_preference：强倾向
 Contribution,TVLSI,CON_A,单条贡献块,10,10,1.00,1.0,CONTRIB=1.0,03_TVLSI:paper_01; 03_TVLSI:paper_02; 03_TVLSI:paper_03,full_sequence,strong_preference：强倾向
-Introduction,TC,INT_A,背景-问题-缺口-任务-贡献型,5,10,0.50,12.0,INTERPRET=6.8; BG=1.8; PROBLEM=1.2; RESULT=1.0; NEED=0.8; SETUP=0.4,04_TC:paper_01; 04_TC:paper_03; 04_TC:paper_06,full_sequence,mixed_preference：混合分布
-Introduction,TC,INT_B,背景解释型,5,10,0.50,12.0,INTERPRET=7.8; BG=2.6; PROBLEM=1.6,04_TC:paper_02; 04_TC:paper_04; 04_TC:paper_05,full_sequence,mixed_preference：混合分布
-Introduction,TCAD,INT_A,背景-问题-缺口-任务-贡献型,5,10,0.50,12.0,INTERPRET=6.4; BG=2.4; PROBLEM=1.0; RESULT=1.0; GAP=0.4; NEED=0.4; SETUP=0.4,05_TCAD:paper_02; 05_TCAD:paper_03; 05_TCAD:paper_05,full_sequence,mixed_preference：混合分布
-Introduction,TCAD,INT_B,背景解释型,1,10,0.10,12.0,INTERPRET=8.0; BG=3.0; PROBLEM=1.0,05_TCAD:paper_10,full_sequence,minor_pattern：少数样本
-Introduction,TCAD,INT_C,问题缺口驱动型,2,10,0.20,12.0,INTERPRET=6.0; BG=2.5; PROBLEM=2.5; NEED=1.0,05_TCAD:paper_08; 05_TCAD:paper_09,full_sequence,minor_pattern：少数样本
-Introduction,TCAD,INT_E,非典型引言型,2,10,0.20,12.0,INTERPRET=8.0; BG=3.0; NEED=1.0,05_TCAD:paper_01; 05_TCAD:paper_04,full_sequence,minor_pattern：少数样本
-Introduction,TCAS-I,INT_A,背景-问题-缺口-任务-贡献型,7,10,0.70,12.0,INTERPRET=6.6; BG=2.7; RESULT=1.0; PROBLEM=0.7; METHOD=0.6; NEED=0.3; SETUP=0.1,01_TCASI:paper_01; 01_TCASI:paper_03; 01_TCASI:paper_04,full_sequence,strong_preference：强倾向
-Introduction,TCAS-I,INT_B,背景解释型,1,10,0.10,12.0,INTERPRET=9.0; BG=3.0,01_TCASI:paper_10,full_sequence,minor_pattern：少数样本
-Introduction,TCAS-I,INT_C,问题缺口驱动型,2,10,0.20,12.0,INTERPRET=6.5; BG=2.5; PROBLEM=1.5; GAP=1.0; NEED=0.5,01_TCASI:paper_02; 01_TCASI:paper_08,full_sequence,minor_pattern：少数样本
+Introduction,TC,INT_A,背景-问题-缺口-任务-贡献型,5,10,0.50,9.8,INTERPRET=4.6; BG=1.8; PROBLEM=1.2; RESULT=1.0; NEED=0.8; SETUP=0.4,04_TC:paper_01; 04_TC:paper_03; 04_TC:paper_06,full_sequence,mixed_preference：混合分布
+Introduction,TC,INT_B,背景解释型,5,10,0.50,9.0,INTERPRET=5.0; BG=2.6; PROBLEM=1.4,04_TC:paper_02; 04_TC:paper_04; 04_TC:paper_05,full_sequence,mixed_preference：混合分布
+Introduction,TCAD,INT_A,背景-问题-缺口-任务-贡献型,5,10,0.50,9.4,INTERPRET=4.2; BG=2.0; PROBLEM=1.0; RESULT=1.0; GAP=0.4; NEED=0.4; SETUP=0.4,05_TCAD:paper_02; 05_TCAD:paper_03; 05_TCAD:paper_05,full_sequence,mixed_preference：混合分布
+Introduction,TCAD,INT_B,背景解释型,2,10,0.20,8.5,INTERPRET=5.0; BG=3.0; PROBLEM=0.5,05_TCAD:paper_01; 05_TCAD:paper_10,full_sequence,minor_pattern：少数样本
+Introduction,TCAD,INT_C,问题缺口驱动型,2,10,0.20,9.0,INTERPRET=3.0; BG=2.5; PROBLEM=2.5; NEED=1.0,05_TCAD:paper_08; 05_TCAD:paper_09,full_sequence,minor_pattern：少数样本
+Introduction,TCAD,INT_E,非典型引言型,1,10,0.10,9.0,INTERPRET=5.0; BG=3.0; NEED=1.0,05_TCAD:paper_04,full_sequence,minor_pattern：少数样本
+Introduction,TCAS-I,INT_A,背景-问题-缺口-任务-贡献型,7,10,0.70,9.7,INTERPRET=4.9; BG=2.4; RESULT=1.0; PROBLEM=0.7; METHOD=0.4; NEED=0.1; SETUP=0.1,01_TCASI:paper_01; 01_TCASI:paper_03; 01_TCASI:paper_04,full_sequence,strong_preference：强倾向
+Introduction,TCAS-I,INT_B,背景解释型,1,10,0.10,9.0,INTERPRET=7.0; BG=2.0,01_TCASI:paper_10,full_sequence,minor_pattern：少数样本
+Introduction,TCAS-I,INT_C,问题缺口驱动型,2,10,0.20,9.5,INTERPRET=4.0; BG=2.5; PROBLEM=1.5; GAP=1.0; NEED=0.5,01_TCASI:paper_02; 01_TCASI:paper_08,full_sequence,minor_pattern：少数样本
 Introduction,TCAS-II,INT_X,部分证据型,10,10,1.00,1.0,GAP=1.0,02_TCASII:paper_01; 02_TCASII:paper_02; 02_TCASII:paper_03,partial/notes-derived,insufficient_evidence：部分证据型，不用于推断 venue 偏好
-Introduction,TCHES/CHES,INT_A,背景-问题-缺口-任务-贡献型,5,10,0.50,12.0,INTERPRET=6.2; BG=2.0; PROBLEM=1.2; RESULT=1.2; SETUP=0.8; BOUNDARY=0.2; METHOD=0.2; NEED=0.2,06_TCHES_CHES:paper_03; 06_TCHES_CHES:paper_04; 06_TCHES_CHES:paper_05,full_sequence,mixed_preference：混合分布
-Introduction,TCHES/CHES,INT_B,背景解释型,4,10,0.40,12.0,INTERPRET=6.2; PROBLEM=2.5; BG=2.2; BOUNDARY=0.5; SETUP=0.5,06_TCHES_CHES:paper_02; 06_TCHES_CHES:paper_06; 06_TCHES_CHES:paper_07,full_sequence,mixed_preference：混合分布
+Introduction,TCHES/CHES,INT_A,背景-问题-缺口-任务-贡献型,5,10,0.50,11.2,INTERPRET=5.8; BG=1.6; PROBLEM=1.2; RESULT=1.2; SETUP=0.8; BOUNDARY=0.2; METHOD=0.2; NEED=0.2,06_TCHES_CHES:paper_03; 06_TCHES_CHES:paper_04; 06_TCHES_CHES:paper_05,full_sequence,mixed_preference：混合分布
+Introduction,TCHES/CHES,INT_B,背景解释型,4,10,0.40,11.5,INTERPRET=5.8; PROBLEM=2.5; BG=2.2; BOUNDARY=0.5; SETUP=0.5,06_TCHES_CHES:paper_02; 06_TCHES_CHES:paper_06; 06_TCHES_CHES:paper_07,full_sequence,mixed_preference：混合分布
 Introduction,TCHES/CHES,INT_X,部分证据型,1,10,0.10,1.0,GAP=1.0,06_TCHES_CHES:paper_01,partial/notes-derived,insufficient_evidence：部分证据型，不用于推断 venue 偏好
-Introduction,TVLSI,INT_A,背景-问题-缺口-任务-贡献型,1,10,0.10,12.0,INTERPRET=5.0; BG=3.0; RESULT=3.0; NEED=1.0,03_TVLSI:paper_08,full_sequence,minor_pattern：少数样本
-Introduction,TVLSI,INT_B,背景解释型,1,10,0.10,9.0,INTERPRET=6.0; BG=2.0; ORG=1.0,03_TVLSI:paper_10,full_sequence,minor_pattern：少数样本
+Introduction,TVLSI,INT_A,背景-问题-缺口-任务-贡献型,1,10,0.10,9.0,INTERPRET=4.0; BG=3.0; RESULT=2.0,03_TVLSI:paper_08,full_sequence,minor_pattern：少数样本
+Introduction,TVLSI,INT_B,背景解释型,1,10,0.10,7.0,INTERPRET=4.0; BG=2.0; ORG=1.0,03_TVLSI:paper_10,full_sequence,minor_pattern：少数样本
 Introduction,TVLSI,INT_X,部分证据型,8,10,0.80,1.0,GAP=1.0,03_TVLSI:paper_01; 03_TVLSI:paper_02; 03_TVLSI:paper_03,partial/notes-derived,insufficient_evidence：部分证据型，不用于推断 venue 偏好
-Results,TC,RES_A,设置-多结果-解释型,5,10,0.50,10.0,RESULT=5.8; SETUP=2.8; ORG=1.0; NEED=0.2; PROBLEM=0.2,04_TC:paper_02; 04_TC:paper_04; 04_TC:paper_05,full_sequence,mixed_preference：混合分布
+Results,TC,RES_A,设置-多结果-解释型,4,10,0.40,9.8,RESULT=5.8; SETUP=2.2; ORG=1.2; NEED=0.2; PROBLEM=0.2,04_TC:paper_02; 04_TC:paper_04; 04_TC:paper_05,full_sequence,mixed_preference：混合分布
 Results,TC,RES_B,结构化实验段型,1,10,0.10,10.0,SETUP=6.0; RESULT=3.0; ORG=1.0,04_TC:paper_10,full_sequence,minor_pattern：少数样本
+Results,TC,RES_D,短结果链型,1,10,0.10,8.0,SETUP=5.0; RESULT=3.0,04_TC:paper_06,full_sequence,minor_pattern：少数样本
 Results,TC,RES_X,部分证据型,4,10,0.40,1.0,RESULT=1.0,04_TC:paper_01; 04_TC:paper_03; 04_TC:paper_08,partial/notes-derived,insufficient_evidence：部分证据型，不用于推断 venue 偏好
 Results,TCAD,RES_A,设置-多结果-解释型,2,10,0.20,10.0,RESULT=5.5; SETUP=3.5; ORG=1.0,05_TCAD:paper_06; 05_TCAD:paper_07,full_sequence,minor_pattern：少数样本
 Results,TCAD,RES_B,结构化实验段型,1,10,0.10,10.0,RESULT=4.0; SETUP=4.0; ORG=2.0,05_TCAD:paper_09,full_sequence,minor_pattern：少数样本
-Results,TCAD,RES_C,结果密集型,1,10,0.10,10.0,RESULT=9.0; ORG=1.0,05_TCAD:paper_04,full_sequence,minor_pattern：少数样本
-Results,TCAD,RES_D,短结果链型,1,10,0.10,10.0,SETUP=5.0; RESULT=4.0; PROBLEM=1.0,05_TCAD:paper_03,full_sequence,minor_pattern：少数样本
+Results,TCAD,RES_C,结果密集型,1,10,0.10,9.0,RESULT=8.0; ORG=1.0,05_TCAD:paper_04,full_sequence,minor_pattern：少数样本
+Results,TCAD,RES_D,短结果链型,1,10,0.10,9.0,SETUP=5.0; RESULT=3.0; PROBLEM=1.0,05_TCAD:paper_03,full_sequence,minor_pattern：少数样本
 Results,TCAD,RES_X,部分证据型,5,10,0.50,1.0,RESULT=1.0,05_TCAD:paper_01; 05_TCAD:paper_02; 05_TCAD:paper_05,partial/notes-derived,insufficient_evidence：部分证据型，不用于推断 venue 偏好
-Results,TCAS-I,RES_A,设置-多结果-解释型,4,10,0.40,10.0,RESULT=7.2; SETUP=2.2; NEED=0.2; ORG=0.2,01_TCASI:paper_02; 01_TCASI:paper_06; 01_TCASI:paper_07,full_sequence,mixed_preference：混合分布
+Results,TCAS-I,RES_A,设置-多结果-解释型,2,10,0.20,9.5,RESULT=7.5; SETUP=2.0,01_TCASI:paper_06; 01_TCASI:paper_08,full_sequence,minor_pattern：少数样本
+Results,TCAS-I,RES_B,结构化实验段型,1,10,0.10,9.0,RESULT=4.0; SETUP=3.0; NEED=1.0; ORG=1.0,01_TCASI:paper_07,full_sequence,minor_pattern：少数样本
 Results,TCAS-I,RES_C,结果密集型,1,10,0.10,10.0,RESULT=10.0,01_TCASI:paper_10,full_sequence,minor_pattern：少数样本
-Results,TCAS-I,RES_D,短结果链型,1,10,0.10,7.0,RESULT=6.0; GAP=1.0,01_TCASI:paper_03,full_sequence,minor_pattern：少数样本
+Results,TCAS-I,RES_D,短结果链型,2,10,0.20,6.5,RESULT=5.0; SETUP=1.0; GAP=0.5,01_TCASI:paper_02; 01_TCASI:paper_03,full_sequence,minor_pattern：少数样本
 Results,TCAS-I,RES_X,部分证据型,4,10,0.40,1.0,RESULT=1.0,01_TCASI:paper_01; 01_TCASI:paper_04; 01_TCASI:paper_05,partial/notes-derived,insufficient_evidence：部分证据型，不用于推断 venue 偏好
 Results,TCAS-II,RES_X,部分证据型,10,10,1.00,1.0,RESULT=1.0,02_TCASII:paper_01; 02_TCASII:paper_02; 02_TCASII:paper_03,partial/notes-derived,insufficient_evidence：部分证据型，不用于推断 venue 偏好
-Results,TCHES/CHES,RES_A,设置-多结果-解释型,3,10,0.30,10.0,RESULT=6.0; SETUP=2.3; ORG=1.0; PROBLEM=0.7,06_TCHES_CHES:paper_01; 06_TCHES_CHES:paper_08; 06_TCHES_CHES:paper_10,full_sequence,mixed_preference：混合分布
-Results,TCHES/CHES,RES_B,结构化实验段型,3,10,0.30,10.0,RESULT=3.7; PROBLEM=2.3; SETUP=2.3; ORG=1.3; METHOD=0.3,06_TCHES_CHES:paper_02; 06_TCHES_CHES:paper_04; 06_TCHES_CHES:paper_07,full_sequence,mixed_preference：混合分布
+Results,TCHES/CHES,RES_A,设置-多结果-解释型,2,10,0.20,10.0,RESULT=6.5; SETUP=3.0; ORG=0.5,06_TCHES_CHES:paper_01; 06_TCHES_CHES:paper_10,full_sequence,minor_pattern：少数样本
+Results,TCHES/CHES,RES_B,结构化实验段型,4,10,0.40,9.5,RESULT=3.5; PROBLEM=2.2; SETUP=2.0; ORG=1.5; METHOD=0.2,06_TCHES_CHES:paper_02; 06_TCHES_CHES:paper_04; 06_TCHES_CHES:paper_07,full_sequence,mixed_preference：混合分布
 Results,TCHES/CHES,RES_X,部分证据型,4,10,0.40,1.0,RESULT=1.0,06_TCHES_CHES:paper_03; 06_TCHES_CHES:paper_05; 06_TCHES_CHES:paper_06,partial/notes-derived,insufficient_evidence：部分证据型，不用于推断 venue 偏好
 Results,TVLSI,RES_A,设置-多结果-解释型,1,10,0.10,10.0,RESULT=5.0; SETUP=3.0; ORG=2.0,03_TVLSI:paper_10,full_sequence,minor_pattern：少数样本
 Results,TVLSI,RES_X,部分证据型,9,10,0.90,1.0,RESULT=1.0,03_TVLSI:paper_01; 03_TVLSI:paper_02; 03_TVLSI:paper_03,partial/notes-derived,insufficient_evidence：部分证据型，不用于推断 venue 偏好

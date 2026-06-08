@@ -168,6 +168,119 @@ class DeepMorphologyTests(unittest.TestCase):
         self.assertIn("强倾向", text)
         self.assertIn("有几篇属于这种组织方式", text)
 
+    def test_corpus_noise_filter_removes_metadata_and_fragments(self):
+        module = load_module()
+        noisy = [
+            "Manuscript received 1 January 2024; revised 2 March 2024.",
+            "This work was supported in part by the National Science Foundation.",
+            "E-mail: author@example.com",
+            "0 0.2 0.4 0.6 0.8",
+            "Voltage Time Entropy Restart",
+            "The proposed TRNG is evaluated on FPGA devices under controlled placement.",
+        ]
+
+        kept, removed, stats = module.filter_corpus_units(
+            [{"unit_text_short": text, "section_type": "Introduction"} for text in noisy]
+        )
+
+        self.assertEqual(len(kept), 1)
+        self.assertIn("controlled placement", kept[0]["unit_text_short"])
+        self.assertGreaterEqual(stats["removed_total"], 5)
+        self.assertIn("manuscript_metadata", stats["removed_by_reason"])
+
+    def test_revision_operation_blocks_false_keep_for_jumps_and_missing_evidence(self):
+        module = load_module()
+        mismatch, operation = module.mismatch_and_operation(
+            "RESULT",
+            "medium",
+            "None",
+            [],
+            {},
+            previous_sentence_relation="jumps",
+            expected_role="METHOD",
+            section_type="Abstract",
+        )
+
+        self.assertNotEqual(operation, "KEEP")
+        self.assertIn("ADD_BRIDGE", operation)
+        self.assertIn("ADD_EVIDENCE_ANCHOR", operation)
+        self.assertIn("REFUNCTION_SENTENCE", operation)
+
+    def test_anchor_extraction_ignores_latex_position_brackets(self):
+        module = load_module()
+        anchor = module.anchors(r"\begin{figure}[t]\includegraphics[width=.9\linewidth]{x}\end{figure}")
+        self.assertFalse(anchor["has_citation"])
+        self.assertEqual(anchor["citation_anchor"], "None")
+
+    def test_clause_records_flag_overloaded_sentence(self):
+        module = load_module()
+        sentence = {
+            "sentence_id": "RESULTS.P1.S1",
+            "section_id": "Results",
+            "sentence_text": "Although the design passes NIST tests, the sampler-side placement changes the entropy estimate, which suggests a boundary condition, and the result should not be generalized.",
+            "claim_strength": "medium",
+            "dominant_function": "RESULT",
+            "evidence_anchor": "None",
+            "risk_words": "generalized",
+            "punctuation_pattern": "comma_count=4",
+        }
+
+        clauses = module.clause_records([sentence])
+
+        self.assertGreaterEqual(len(clauses), 2)
+        self.assertTrue(any(row["recommended_action"] != "KEEP" for row in clauses))
+        self.assertTrue(any("multi_claim" in row["issue"] or "hidden_boundary" in row["issue"] for row in clauses))
+
+    def test_figure_table_inventory_extracts_caption_and_first_mention(self):
+        module = load_module()
+        tex = r"""
+        Figure~\ref{fig:flow} shows the audit workflow and the body explains the takeaway.
+        \begin{figure}
+        \caption{Audit workflow under controlled restart conditions.}
+        \label{fig:flow}
+        \end{figure}
+        \begin{table}
+        \caption{Entropy comparison across placements.}
+        \label{tab:entropy}
+        \end{table}
+        """
+        manuscript = [
+            {
+                "sentence_id": "INTRO.P1.S1",
+                "sentence_text": "Figure fig:flow shows the audit workflow and the body explains the takeaway.",
+                "figure_table_anchor": "Figure fig:flow",
+            }
+        ]
+
+        inventory = module.figure_table_inventory(tex, manuscript)
+
+        ids = {row["id"] for row in inventory}
+        self.assertIn("fig:flow", ids)
+        self.assertIn("tab:entropy", ids)
+        fig = next(row for row in inventory if row["id"] == "fig:flow")
+        self.assertEqual(fig["first_mention_sentence_id"], "INTRO.P1.S1")
+        self.assertIn("OBJECT", fig["caption_function_sequence"])
+
+    def test_gold_label_template_samples_50_sentences(self):
+        module = load_module()
+        manuscript = [
+            {
+                "sentence_id": f"ABS.S{i}",
+                "section_id": "Abstract" if i < 20 else "Results",
+                "sentence_text": f"Sentence {i} reports a controlled result.",
+                "dominant_function": "RESULT",
+                "claim_type": "measurement",
+                "revision_operation": "ADD_EVIDENCE_ANCHOR",
+            }
+            for i in range(60)
+        ]
+
+        rows = module.gold_label_template_records(manuscript, [])
+
+        self.assertEqual(len(rows), 50)
+        self.assertIn("gold_function", rows[0])
+        self.assertEqual(rows[0]["gold_action"], "")
+
 
 if __name__ == "__main__":
     unittest.main()

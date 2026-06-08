@@ -11,7 +11,7 @@
 
 ## 数字怎么理解
 
-- 当前顶刊语料逐句记录：1377 条。
+- 当前顶刊语料逐句记录：1271 条。
 - 当前稿件逐句记录：292 条。
 - 覆盖论文数量：60 篇。
 - `sentence_function`：这句话的主功能，例如背景、问题、缺口、方法、设置、结果、解释、边界。
@@ -48,8 +48,8 @@
 
 ## Abstract
 
-- 高频主功能：`RESULT`（结果）154 条，`INTERPRET`（解释）143 条，`METHOD`（方法）59 条，`PROBLEM`（问题）59 条，`BG`（背景）38 条，`SETUP`（实验/平台设置）38 条，`GAP`（缺口）16 条，`NEED`（必要性）14 条。
-- 数字句：163 条；图引用句：0 条；表引用句：0 条。
+- 高频主功能：`RESULT`（结果）153 条，`INTERPRET`（解释）142 条，`PROBLEM`（问题）59 条，`METHOD`（方法）58 条，`BG`（背景）38 条，`SETUP`（实验/平台设置）38 条，`GAP`（缺口）16 条，`NEED`（必要性）14 条。
+- 数字句：161 条；图引用句：0 条；表引用句：0 条。
 - 目标功能链：`BG -> PROBLEM -> GAP -> METHOD/SETUP -> RESULT -> INTERPRET/BOUNDARY`。
 - 这一节为什么这样写：摘要的任务是让读者在很短时间内看懂：领域背景是什么、本文抓住哪个未解决问题、用什么方法隔离或验证、结果给出什么证据、结论边界在哪里。
 
@@ -72,10 +72,10 @@
 
 | 范式 | 论文数 | 占比 | 平均句数 | 平均功能句数 | 代表论文 |
 | --- | --- | --- | --- | --- | --- |
-| ABS_A 完整摘要链 | 28 | 47% | 8.9 | INTERPRET=2.6; RESULT=2.0; METHOD=1.4; PROBLEM=1.0; BG=0.7; SETUP=0.6; BOUNDARY=0.2; GAP=0.2; NEED=0.2 | 01_TCASI:paper_01; 01_TCASI:paper_02; 01_TCASI:paper_07 |
+| ABS_A 完整摘要链 | 27 | 45% | 9.0 | INTERPRET=2.6; RESULT=2.0; METHOD=1.4; PROBLEM=1.0; BG=0.7; SETUP=0.6; NEED=0.3; BOUNDARY=0.2; GAP=0.2 | 01_TCASI:paper_01; 01_TCASI:paper_02; 01_TCASI:paper_07 |
 | ABS_B 问题-方法-结果型 | 4 | 7% | 8.5 | RESULT=3.5; METHOD=1.5; PROBLEM=1.0; SETUP=1.0; BG=0.8; GAP=0.5; NEED=0.2 | 01_TCASI:paper_03; 03_TVLSI:paper_08; 04_TC:paper_04 |
 | ABS_C 方法-验证-结果型 | 8 | 13% | 9.2 | RESULT=4.6; INTERPRET=2.2; METHOD=1.2; SETUP=0.6; NEED=0.4; BG=0.1 | 02_TCASII:paper_01; 02_TCASII:paper_02; 02_TCASII:paper_04 |
-| ABS_D 结果密集型 | 6 | 10% | 9.3 | RESULT=5.3; INTERPRET=2.0; BG=0.8; PROBLEM=0.7; BOUNDARY=0.2; GAP=0.2; NEED=0.2 | 01_TCASI:paper_06; 02_TCASII:paper_03; 02_TCASII:paper_08 |
+| ABS_D 结果密集型 | 7 | 12% | 8.7 | RESULT=5.0; INTERPRET=1.9; BG=0.9; PROBLEM=0.6; BOUNDARY=0.1; GAP=0.1; NEED=0.1 | 01_TCASI:paper_06; 01_TCASI:paper_08; 02_TCASII:paper_03 |
 | ABS_E 压缩/非典型型 | 14 | 23% | 8.6 | INTERPRET=2.9; PROBLEM=1.7; RESULT=1.0; SETUP=0.9; BG=0.7; BOUNDARY=0.5; GAP=0.5; METHOD=0.4; NEED=0.1 | 01_TCASI:paper_04; 01_TCASI:paper_05; 02_TCASII:paper_07 |
 
 ### venue 偏好表
@@ -93,11 +93,11 @@
 | TCAD | ABS_C 方法-验证-结果型 | 1/10 | 0.10 | RESULT=5.0; METHOD=2.0; BG=1.0 | minor_pattern：少数样本 |
 | TCAD | ABS_D 结果密集型 | 1/10 | 0.10 | RESULT=5.0; INTERPRET=3.0; NEED=1.0; PROBLEM=1.0 | minor_pattern：少数样本 |
 | TCAD | ABS_E 压缩/非典型型 | 2/10 | 0.20 | INTERPRET=2.0; RESULT=1.5; BG=1.0; METHOD=1.0; PROBLEM=1.0; SETUP=1.0; GAP=0.5 | minor_pattern：少数样本 |
-| TCAS-I | ABS_A 完整摘要链 | 6/10 | 0.60 | RESULT=2.2; INTERPRET=1.7; METHOD=1.0; BG=0.8; SETUP=0.7; PROBLEM=0.5; GAP=0.3; NEED=0.3 | strong_preference：强倾向 |
+| TCAS-I | ABS_A 完整摘要链 | 5/10 | 0.50 | INTERPRET=1.8; RESULT=1.8; METHOD=1.0; BG=0.8; SETUP=0.8; PROBLEM=0.6; GAP=0.4; NEED=0.4 | mixed_preference：混合分布 |
 | TCAS-I | ABS_B 问题-方法-结果型 | 1/10 | 0.10 | RESULT=6.0; METHOD=2.0; BG=1.0; PROBLEM=1.0 | minor_pattern：少数样本 |
-| TCAS-I | ABS_D 结果密集型 | 1/10 | 0.10 | RESULT=4.0; INTERPRET=2.0; BG=1.0; BOUNDARY=1.0 | minor_pattern：少数样本 |
+| TCAS-I | ABS_D 结果密集型 | 2/10 | 0.20 | RESULT=3.5; INTERPRET=1.5; BG=1.0; BOUNDARY=0.5 | minor_pattern：少数样本 |
 | TCAS-I | ABS_E 压缩/非典型型 | 2/10 | 0.20 | PROBLEM=3.5; INTERPRET=3.0; RESULT=1.5; BG=0.5; METHOD=0.5; NEED=0.5 | minor_pattern：少数样本 |
-| TCAS-II | ABS_A 完整摘要链 | 3/10 | 0.30 | RESULT=3.7; INTERPRET=3.0; BG=1.0; METHOD=1.0; PROBLEM=0.7; NEED=0.3; SETUP=0.3 | mixed_preference：混合分布 |
+| TCAS-II | ABS_A 完整摘要链 | 3/10 | 0.30 | RESULT=3.7; INTERPRET=2.7; BG=1.0; METHOD=1.0; PROBLEM=0.7; NEED=0.3; SETUP=0.3 | mixed_preference：混合分布 |
 | TCAS-II | ABS_C 方法-验证-结果型 | 3/10 | 0.30 | RESULT=4.3; INTERPRET=3.7; METHOD=1.0; NEED=0.7; SETUP=0.3 | mixed_preference：混合分布 |
 | TCAS-II | ABS_D 结果密集型 | 3/10 | 0.30 | RESULT=6.3; INTERPRET=1.7; BG=1.0; PROBLEM=0.7; GAP=0.3 | mixed_preference：混合分布 |
 | TCAS-II | ABS_E 压缩/非典型型 | 1/10 | 0.10 | INTERPRET=7.0; SETUP=2.0; BG=1.0 | minor_pattern：少数样本 |
@@ -111,8 +111,8 @@
 
 ## Introduction
 
-- 高频主功能：`INTERPRET`（解释）276 条，`BG`（背景）99 条，`PROBLEM`（问题）49 条，`RESULT`（结果）26 条，`GAP`（缺口）23 条，`NEED`（必要性）15 条，`SETUP`（实验/平台设置）11 条，`METHOD`（方法）5 条。
-- 数字句：275 条；图引用句：0 条；表引用句：3 条。
+- 高频主功能：`INTERPRET`（解释）199 条，`BG`（背景）92 条，`PROBLEM`（问题）48 条，`RESULT`（结果）25 条，`GAP`（缺口）23 条，`NEED`（必要性）12 条，`SETUP`（实验/平台设置）11 条，`METHOD`（方法）4 条。
+- 数字句：213 条；图引用句：0 条；表引用句：2 条。
 - 目标功能链：`BG -> PROBLEM -> GAP -> NEED -> TASK/METHOD -> RESULT/CONTRIB -> ORG`。
 - 这一节为什么这样写：引言不是加长版摘要。顶刊引言会反复解释为什么这个问题值得做，所以 `INTERPRET` 往往很多：它们负责把背景事实翻译成研究动机、评价缺口和本文设计选择。
 
@@ -136,10 +136,10 @@
 
 | 范式 | 论文数 | 占比 | 平均句数 | 平均功能句数 | 代表论文 |
 | --- | --- | --- | --- | --- | --- |
-| INT_A 背景-问题-缺口-任务-贡献型 | 23 | 38% | 12.0 | INTERPRET=6.4; BG=2.3; RESULT=1.1; PROBLEM=1.0; NEED=0.4; SETUP=0.4; METHOD=0.2; GAP=0.1; BOUNDARY=0.0 | 01_TCASI:paper_01; 01_TCASI:paper_03; 01_TCASI:paper_04 |
-| INT_B 背景解释型 | 12 | 20% | 11.8 | INTERPRET=7.2; BG=2.5; PROBLEM=1.6; BOUNDARY=0.2; SETUP=0.2; ORG=0.1 | 01_TCASI:paper_10; 03_TVLSI:paper_10; 04_TC:paper_02 |
-| INT_C 问题缺口驱动型 | 4 | 7% | 12.0 | INTERPRET=6.2; BG=2.5; PROBLEM=2.0; NEED=0.8; GAP=0.5 | 01_TCASI:paper_02; 01_TCASI:paper_08; 05_TCAD:paper_08 |
-| INT_E 非典型引言型 | 2 | 3% | 12.0 | INTERPRET=8.0; BG=3.0; NEED=1.0 | 05_TCAD:paper_01; 05_TCAD:paper_04 |
+| INT_A 背景-问题-缺口-任务-贡献型 | 23 | 38% | 10.0 | INTERPRET=4.8; BG=2.0; RESULT=1.1; PROBLEM=1.0; SETUP=0.4; NEED=0.3; METHOD=0.2; GAP=0.1; BOUNDARY=0.0 | 01_TCASI:paper_01; 01_TCASI:paper_03; 01_TCASI:paper_04 |
+| INT_B 背景解释型 | 13 | 22% | 9.5 | INTERPRET=5.3; BG=2.5; PROBLEM=1.4; BOUNDARY=0.2; SETUP=0.2; ORG=0.1 | 01_TCASI:paper_10; 03_TVLSI:paper_10; 04_TC:paper_02 |
+| INT_C 问题缺口驱动型 | 4 | 7% | 9.2 | INTERPRET=3.5; BG=2.5; PROBLEM=2.0; NEED=0.8; GAP=0.5 | 01_TCASI:paper_02; 01_TCASI:paper_08; 05_TCAD:paper_08 |
+| INT_E 非典型引言型 | 1 | 2% | 9.0 | INTERPRET=5.0; BG=3.0; NEED=1.0 | 05_TCAD:paper_04 |
 | INT_X 部分证据型 | 19 | 32% | 1.0 | GAP=1.0 | 02_TCASII:paper_01; 02_TCASII:paper_02; 02_TCASII:paper_03 |
 
 ### venue 偏好表
@@ -148,29 +148,29 @@
 
 | venue | 范式 | 论文数 | 占比 | 平均功能句数 | 判断 |
 | --- | --- | --- | --- | --- | --- |
-| TC | INT_A 背景-问题-缺口-任务-贡献型 | 5/10 | 0.50 | INTERPRET=6.8; BG=1.8; PROBLEM=1.2; RESULT=1.0; NEED=0.8; SETUP=0.4 | mixed_preference：混合分布 |
-| TC | INT_B 背景解释型 | 5/10 | 0.50 | INTERPRET=7.8; BG=2.6; PROBLEM=1.6 | mixed_preference：混合分布 |
-| TCAD | INT_A 背景-问题-缺口-任务-贡献型 | 5/10 | 0.50 | INTERPRET=6.4; BG=2.4; PROBLEM=1.0; RESULT=1.0; GAP=0.4; NEED=0.4; SETUP=0.4 | mixed_preference：混合分布 |
-| TCAD | INT_B 背景解释型 | 1/10 | 0.10 | INTERPRET=8.0; BG=3.0; PROBLEM=1.0 | minor_pattern：少数样本 |
-| TCAD | INT_C 问题缺口驱动型 | 2/10 | 0.20 | INTERPRET=6.0; BG=2.5; PROBLEM=2.5; NEED=1.0 | minor_pattern：少数样本 |
-| TCAD | INT_E 非典型引言型 | 2/10 | 0.20 | INTERPRET=8.0; BG=3.0; NEED=1.0 | minor_pattern：少数样本 |
-| TCAS-I | INT_A 背景-问题-缺口-任务-贡献型 | 7/10 | 0.70 | INTERPRET=6.6; BG=2.7; RESULT=1.0; PROBLEM=0.7; METHOD=0.6; NEED=0.3; SETUP=0.1 | strong_preference：强倾向 |
-| TCAS-I | INT_B 背景解释型 | 1/10 | 0.10 | INTERPRET=9.0; BG=3.0 | minor_pattern：少数样本 |
-| TCAS-I | INT_C 问题缺口驱动型 | 2/10 | 0.20 | INTERPRET=6.5; BG=2.5; PROBLEM=1.5; GAP=1.0; NEED=0.5 | minor_pattern：少数样本 |
+| TC | INT_A 背景-问题-缺口-任务-贡献型 | 5/10 | 0.50 | INTERPRET=4.6; BG=1.8; PROBLEM=1.2; RESULT=1.0; NEED=0.8; SETUP=0.4 | mixed_preference：混合分布 |
+| TC | INT_B 背景解释型 | 5/10 | 0.50 | INTERPRET=5.0; BG=2.6; PROBLEM=1.4 | mixed_preference：混合分布 |
+| TCAD | INT_A 背景-问题-缺口-任务-贡献型 | 5/10 | 0.50 | INTERPRET=4.2; BG=2.0; PROBLEM=1.0; RESULT=1.0; GAP=0.4; NEED=0.4; SETUP=0.4 | mixed_preference：混合分布 |
+| TCAD | INT_B 背景解释型 | 2/10 | 0.20 | INTERPRET=5.0; BG=3.0; PROBLEM=0.5 | minor_pattern：少数样本 |
+| TCAD | INT_C 问题缺口驱动型 | 2/10 | 0.20 | INTERPRET=3.0; BG=2.5; PROBLEM=2.5; NEED=1.0 | minor_pattern：少数样本 |
+| TCAD | INT_E 非典型引言型 | 1/10 | 0.10 | INTERPRET=5.0; BG=3.0; NEED=1.0 | minor_pattern：少数样本 |
+| TCAS-I | INT_A 背景-问题-缺口-任务-贡献型 | 7/10 | 0.70 | INTERPRET=4.9; BG=2.4; RESULT=1.0; PROBLEM=0.7; METHOD=0.4; NEED=0.1; SETUP=0.1 | strong_preference：强倾向 |
+| TCAS-I | INT_B 背景解释型 | 1/10 | 0.10 | INTERPRET=7.0; BG=2.0 | minor_pattern：少数样本 |
+| TCAS-I | INT_C 问题缺口驱动型 | 2/10 | 0.20 | INTERPRET=4.0; BG=2.5; PROBLEM=1.5; GAP=1.0; NEED=0.5 | minor_pattern：少数样本 |
 | TCAS-II | INT_X 部分证据型 | 10/10 | 1.00 | GAP=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
-| TCHES/CHES | INT_A 背景-问题-缺口-任务-贡献型 | 5/10 | 0.50 | INTERPRET=6.2; BG=2.0; PROBLEM=1.2; RESULT=1.2; SETUP=0.8; BOUNDARY=0.2; METHOD=0.2; NEED=0.2 | mixed_preference：混合分布 |
-| TCHES/CHES | INT_B 背景解释型 | 4/10 | 0.40 | INTERPRET=6.2; PROBLEM=2.5; BG=2.2; BOUNDARY=0.5; SETUP=0.5 | mixed_preference：混合分布 |
+| TCHES/CHES | INT_A 背景-问题-缺口-任务-贡献型 | 5/10 | 0.50 | INTERPRET=5.8; BG=1.6; PROBLEM=1.2; RESULT=1.2; SETUP=0.8; BOUNDARY=0.2; METHOD=0.2; NEED=0.2 | mixed_preference：混合分布 |
+| TCHES/CHES | INT_B 背景解释型 | 4/10 | 0.40 | INTERPRET=5.8; PROBLEM=2.5; BG=2.2; BOUNDARY=0.5; SETUP=0.5 | mixed_preference：混合分布 |
 | TCHES/CHES | INT_X 部分证据型 | 1/10 | 0.10 | GAP=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
-| TVLSI | INT_A 背景-问题-缺口-任务-贡献型 | 1/10 | 0.10 | INTERPRET=5.0; BG=3.0; RESULT=3.0; NEED=1.0 | minor_pattern：少数样本 |
-| TVLSI | INT_B 背景解释型 | 1/10 | 0.10 | INTERPRET=6.0; BG=2.0; ORG=1.0 | minor_pattern：少数样本 |
+| TVLSI | INT_A 背景-问题-缺口-任务-贡献型 | 1/10 | 0.10 | INTERPRET=4.0; BG=3.0; RESULT=2.0 | minor_pattern：少数样本 |
+| TVLSI | INT_B 背景解释型 | 1/10 | 0.10 | INTERPRET=4.0; BG=2.0; ORG=1.0 | minor_pattern：少数样本 |
 | TVLSI | INT_X 部分证据型 | 8/10 | 0.80 | GAP=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
 
 注意：`部分证据型` 多半表示该篇在当前语料中只有局部 Introduction/Results 功能单元，不能把它解读成该 venue 真喜欢短结构。
 
 ## Results
 
-- 高频主功能：`RESULT`（结果）175 条，`SETUP`（实验/平台设置）62 条，`ORG`（结构安排）21 条，`PROBLEM`（问题）11 条，`NEED`（必要性）2 条，`GAP`（缺口）1 条，`METHOD`（方法）1 条。
-- 数字句：152 条；图引用句：5 条；表引用句：14 条。
+- 高频主功能：`RESULT`（结果）162 条，`SETUP`（实验/平台设置）62 条，`ORG`（结构安排）21 条，`PROBLEM`（问题）11 条，`NEED`（必要性）2 条，`GAP`（缺口）1 条，`METHOD`（方法）1 条。
+- 数字句：140 条；图引用句：4 条；表引用句：10 条。
 - 目标功能链：`QUESTION -> SETUP/FIGURE/TABLE -> OBSERVATION -> QUANTIFICATION -> INTERPRETATION -> BOUNDARY -> TRANSITION`。
 - 这一节为什么这样写：结果段的核心不是“我们测了很多”，而是“每组实验回答一个问题”。`RESULT` 数量高说明顶刊把观察和量化判断写得很密；`SETUP` 数量也高，说明读者必须先知道比较条件。
 
@@ -194,10 +194,10 @@
 
 | 范式 | 论文数 | 占比 | 平均句数 | 平均功能句数 | 代表论文 |
 | --- | --- | --- | --- | --- | --- |
-| RES_A 设置-多结果-解释型 | 15 | 25% | 10.0 | RESULT=6.1; SETUP=2.7; ORG=0.9; PROBLEM=0.2; NEED=0.1 | 01_TCASI:paper_02; 01_TCASI:paper_06; 01_TCASI:paper_07 |
-| RES_B 结构化实验段型 | 5 | 8% | 10.0 | RESULT=3.6; SETUP=3.4; ORG=1.4; PROBLEM=1.4; METHOD=0.2 | 04_TC:paper_10; 05_TCAD:paper_09; 06_TCHES_CHES:paper_02 |
-| RES_C 结果密集型 | 2 | 3% | 10.0 | RESULT=9.5; ORG=0.5 | 01_TCASI:paper_10; 05_TCAD:paper_04 |
-| RES_D 短结果链型 | 2 | 3% | 8.5 | RESULT=5.0; SETUP=2.5; GAP=0.5; PROBLEM=0.5 | 01_TCASI:paper_03; 05_TCAD:paper_03 |
+| RES_A 设置-多结果-解释型 | 11 | 18% | 9.8 | RESULT=6.1; SETUP=2.6; ORG=0.9; NEED=0.1; PROBLEM=0.1 | 01_TCASI:paper_06; 01_TCASI:paper_08; 03_TVLSI:paper_10 |
+| RES_B 结构化实验段型 | 7 | 12% | 9.6 | RESULT=3.6; SETUP=3.0; ORG=1.4; PROBLEM=1.3; METHOD=0.1; NEED=0.1 | 01_TCASI:paper_07; 04_TC:paper_10; 05_TCAD:paper_09 |
+| RES_C 结果密集型 | 2 | 3% | 9.5 | RESULT=9.0; ORG=0.5 | 01_TCASI:paper_10; 05_TCAD:paper_04 |
+| RES_D 短结果链型 | 4 | 7% | 7.5 | RESULT=4.0; SETUP=3.0; GAP=0.2; PROBLEM=0.2 | 01_TCASI:paper_02; 01_TCASI:paper_03; 04_TC:paper_06 |
 | RES_X 部分证据型 | 36 | 60% | 1.0 | RESULT=1.0 | 01_TCASI:paper_01; 01_TCASI:paper_04; 01_TCASI:paper_05 |
 
 ### venue 偏好表
@@ -206,21 +206,23 @@
 
 | venue | 范式 | 论文数 | 占比 | 平均功能句数 | 判断 |
 | --- | --- | --- | --- | --- | --- |
-| TC | RES_A 设置-多结果-解释型 | 5/10 | 0.50 | RESULT=5.8; SETUP=2.8; ORG=1.0; NEED=0.2; PROBLEM=0.2 | mixed_preference：混合分布 |
+| TC | RES_A 设置-多结果-解释型 | 4/10 | 0.40 | RESULT=5.8; SETUP=2.2; ORG=1.2; NEED=0.2; PROBLEM=0.2 | mixed_preference：混合分布 |
 | TC | RES_B 结构化实验段型 | 1/10 | 0.10 | SETUP=6.0; RESULT=3.0; ORG=1.0 | minor_pattern：少数样本 |
+| TC | RES_D 短结果链型 | 1/10 | 0.10 | SETUP=5.0; RESULT=3.0 | minor_pattern：少数样本 |
 | TC | RES_X 部分证据型 | 4/10 | 0.40 | RESULT=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
 | TCAD | RES_A 设置-多结果-解释型 | 2/10 | 0.20 | RESULT=5.5; SETUP=3.5; ORG=1.0 | minor_pattern：少数样本 |
 | TCAD | RES_B 结构化实验段型 | 1/10 | 0.10 | RESULT=4.0; SETUP=4.0; ORG=2.0 | minor_pattern：少数样本 |
-| TCAD | RES_C 结果密集型 | 1/10 | 0.10 | RESULT=9.0; ORG=1.0 | minor_pattern：少数样本 |
-| TCAD | RES_D 短结果链型 | 1/10 | 0.10 | SETUP=5.0; RESULT=4.0; PROBLEM=1.0 | minor_pattern：少数样本 |
+| TCAD | RES_C 结果密集型 | 1/10 | 0.10 | RESULT=8.0; ORG=1.0 | minor_pattern：少数样本 |
+| TCAD | RES_D 短结果链型 | 1/10 | 0.10 | SETUP=5.0; RESULT=3.0; PROBLEM=1.0 | minor_pattern：少数样本 |
 | TCAD | RES_X 部分证据型 | 5/10 | 0.50 | RESULT=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
-| TCAS-I | RES_A 设置-多结果-解释型 | 4/10 | 0.40 | RESULT=7.2; SETUP=2.2; NEED=0.2; ORG=0.2 | mixed_preference：混合分布 |
+| TCAS-I | RES_A 设置-多结果-解释型 | 2/10 | 0.20 | RESULT=7.5; SETUP=2.0 | minor_pattern：少数样本 |
+| TCAS-I | RES_B 结构化实验段型 | 1/10 | 0.10 | RESULT=4.0; SETUP=3.0; NEED=1.0; ORG=1.0 | minor_pattern：少数样本 |
 | TCAS-I | RES_C 结果密集型 | 1/10 | 0.10 | RESULT=10.0 | minor_pattern：少数样本 |
-| TCAS-I | RES_D 短结果链型 | 1/10 | 0.10 | RESULT=6.0; GAP=1.0 | minor_pattern：少数样本 |
+| TCAS-I | RES_D 短结果链型 | 2/10 | 0.20 | RESULT=5.0; SETUP=1.0; GAP=0.5 | minor_pattern：少数样本 |
 | TCAS-I | RES_X 部分证据型 | 4/10 | 0.40 | RESULT=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
 | TCAS-II | RES_X 部分证据型 | 10/10 | 1.00 | RESULT=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
-| TCHES/CHES | RES_A 设置-多结果-解释型 | 3/10 | 0.30 | RESULT=6.0; SETUP=2.3; ORG=1.0; PROBLEM=0.7 | mixed_preference：混合分布 |
-| TCHES/CHES | RES_B 结构化实验段型 | 3/10 | 0.30 | RESULT=3.7; PROBLEM=2.3; SETUP=2.3; ORG=1.3; METHOD=0.3 | mixed_preference：混合分布 |
+| TCHES/CHES | RES_A 设置-多结果-解释型 | 2/10 | 0.20 | RESULT=6.5; SETUP=3.0; ORG=0.5 | minor_pattern：少数样本 |
+| TCHES/CHES | RES_B 结构化实验段型 | 4/10 | 0.40 | RESULT=3.5; PROBLEM=2.2; SETUP=2.0; ORG=1.5; METHOD=0.2 | mixed_preference：混合分布 |
 | TCHES/CHES | RES_X 部分证据型 | 4/10 | 0.40 | RESULT=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
 | TVLSI | RES_A 设置-多结果-解释型 | 1/10 | 0.10 | RESULT=5.0; SETUP=3.0; ORG=2.0 | minor_pattern：少数样本 |
 | TVLSI | RES_X 部分证据型 | 9/10 | 0.90 | RESULT=1.0 | insufficient_evidence：部分证据型，不用于推断 venue 偏好 |
@@ -272,10 +274,10 @@
 
 这些差异是写法倾向，不是硬规则。写 RO-TRNG 时应该按目标 venue 的读者期待调整重心。
 
-- TCAS-I/TCAS-II：强调电路、方法、验证的紧凑链条。本地记录中相关句子约 403 条；可模仿其“模型/电路 -> 验证 -> 应用或解释”的压缩写法。
-- TVLSI/TCAD：强调设计约束、工具/流程、实验设置。本地记录中 TVLSI 158 条、TCAD 277 条；RO-TRNG 若强调 FPGA 实现和可复现实验，应多学这类写法。
-- TC：强调系统问题、比较基线、实证结果。本地记录中 TC 270 条；适合学习如何把实验发现写成系统层结论。
-- TCHES/CHES：强调威胁模型、攻击/防御边界、可复现实验。本地记录中 TCHES/CHES 269 条；适合学习安全评价中如何主动写边界和复现条件。
+- TCAS-I/TCAS-II：强调电路、方法、验证的紧凑链条。本地记录中相关句子约 370 条；可模仿其“模型/电路 -> 验证 -> 应用或解释”的压缩写法。
+- TVLSI/TCAD：强调设计约束、工具/流程、实验设置。本地记录中 TVLSI 153 条、TCAD 246 条；RO-TRNG 若强调 FPGA 实现和可复现实验，应多学这类写法。
+- TC：强调系统问题、比较基线、实证结果。本地记录中 TC 241 条；适合学习如何把实验发现写成系统层结论。
+- TCHES/CHES：强调威胁模型、攻击/防御边界、可复现实验。本地记录中 TCHES/CHES 261 条；适合学习安全评价中如何主动写边界和复现条件。
 
 ## 全章节功能模板
 

@@ -139,6 +139,52 @@ CITATION_FIELDS = [
     "issue",
 ]
 
+CLAUSE_FIELDS = [
+    "sentence_id",
+    "clause_index",
+    "clause_text",
+    "clause_type",
+    "function",
+    "claim_type",
+    "claim_strength",
+    "evidence_support",
+    "risk_words",
+    "issue",
+    "recommended_action",
+]
+
+FIGURE_TABLE_FIELDS = [
+    "id",
+    "kind",
+    "caption",
+    "caption_sentence_count",
+    "caption_function_sequence",
+    "first_mention_sentence_id",
+    "distance_from_first_mention",
+    "role",
+    "body_claim_linked",
+    "body_explains_what_to_look_for",
+    "body_quantifies_after_reference",
+    "caption_body_consistency",
+    "table_note_needed",
+    "unit_or_abbreviation_issue",
+    "caption_storyline_note",
+]
+
+GOLD_LABEL_FIELDS = [
+    "sentence_id",
+    "sentence_text",
+    "model_function",
+    "gold_function",
+    "model_claim_type",
+    "gold_claim_type",
+    "model_action",
+    "gold_action",
+    "notes",
+]
+
+CORPUS_QUALITY = {}
+
 FUNCTION_ZH = {
     "BG": "背景",
     "PROBLEM": "问题",
@@ -273,6 +319,70 @@ def words_present(sentence, vocabulary):
     return sorted(term for term in vocabulary if re.search(rf"\b{re.escape(term)}\b", lower))
 
 
+def corpus_noise_reason(text, section_type=""):
+    raw = text or ""
+    clean = clean_text(raw)
+    lower = clean.lower()
+    tokens = re.findall(r"[A-Za-z0-9]+", clean)
+    if not clean or len(clean) < 12:
+        return "too_short_or_empty"
+    if re.search(r"\bmanuscript\s+(received|revised|accepted)\b", lower):
+        return "manuscript_metadata"
+    if re.search(r"\b(this work was supported|supported in part|funding|grant|corresponding author)\b", lower):
+        return "funding_or_correspondence"
+    if re.search(r"\b(e-?mail|email|@|affiliation|department of|school of|university|institute of)\b", lower):
+        return "affiliation_or_email"
+    if section_type == "Contribution":
+        return ""
+    if re.search(r"[\u4e00-\u9fff]", clean):
+        return ""
+    if re.search(r"\bfig(?:ure)?\.?\s*\d+\b", lower) and len(tokens) < 8:
+        return "figure_fragment"
+    if re.search(r"\b(table|row|column|axis|legend|xlabel|ylabel)\b", lower) and len(tokens) < 10:
+        return "table_or_figure_fragment"
+    if re.fullmatch(r"[\d\s,.;:+\-/%()]+", clean):
+        return "numeric_or_punctuation_fragment"
+    if tokens:
+        short_tokens = sum(1 for token in tokens if len(token) <= 2)
+        digit_tokens = sum(1 for token in tokens if re.fullmatch(r"\d+(?:\.\d+)?", token))
+        if digit_tokens / len(tokens) > 0.45:
+            return "numeric_or_punctuation_fragment"
+        if short_tokens / len(tokens) > 0.70 and len(tokens) >= 5:
+            return "single_letter_or_axis_tokens"
+    if re.search(r"(?:[A-Za-z]\s){6,}[A-Za-z]", clean):
+        return "abnormal_character_spacing"
+    if section_type not in {"FigureCaption", "TableCaption"} and re.match(r"(?i)^(fig\.|figure|table)\s+\d+", clean):
+        return "caption_or_caption_fragment"
+    if len(tokens) < 5 and not re.search(r"[.!?]$", clean):
+        return "ocr_fragment"
+    return ""
+
+
+def filter_corpus_units(rows):
+    kept = []
+    removed = []
+    removed_by_reason = Counter()
+    retained_by_section = Counter()
+    for row in rows:
+        reason = corpus_noise_reason(row.get("unit_text_short") or row.get("sentence_text") or "", row.get("section_type", ""))
+        if reason:
+            removed_row = dict(row)
+            removed_row["remove_reason"] = reason
+            removed.append(removed_row)
+            removed_by_reason[reason] += 1
+        else:
+            kept.append(row)
+            retained_by_section[row.get("section_type", "")] += 1
+    stats = {
+        "raw_total": len(rows),
+        "retained_total": len(kept),
+        "removed_total": len(removed),
+        "removed_by_reason": dict(removed_by_reason),
+        "retained_by_section": dict(retained_by_section),
+    }
+    return kept, removed, stats
+
+
 def classify_claim(sentence):
     lower = sentence.lower()
     claim_type = "descriptive"
@@ -371,7 +481,8 @@ def relation(prev_sentence, sentence):
 
 def anchors(sentence):
     citations = re.findall(r"\\cite\w*\{([^{}]+)\}", sentence)
-    citations.extend(re.findall(r"\[[0-9,\-\s]+\]|\[[A-Za-z0-9_,:;_\-\s]+\]", sentence))
+    bracket_candidates = re.findall(r"\[([A-Za-z0-9_,:;_\-\s]+)\]", sentence)
+    citations.extend(candidate for candidate in bracket_candidates if is_citation_bracket(candidate))
     figures = re.findall(r"(?:Fig\.|Figure|Figs\.)\s*~?\\?ref\{[^{}]+\}|(?:Fig\.|Figure|Figs\.)\s*[A-Za-z0-9_:.\-]+", sentence)
     tables = re.findall(r"(?:Table|Tables)\s*~?\\?ref\{[^{}]+\}|(?:Table|Tables)\s*[A-Za-z0-9_:.\-]+", sentence)
     equations = re.findall(r"(?:Eq\.|Equation)\s*~?\\?ref\{[^{}]+\}|(?:Eq\.|Equation)\s*[A-Za-z0-9_:.\-]+", sentence)
@@ -396,21 +507,75 @@ def anchors(sentence):
     }
 
 
-def mismatch_and_operation(function, claim_strength, evidence_anchor, risk_words, punctuation):
+def is_citation_bracket(value):
+    text = value.strip()
+    if not text:
+        return False
+    if text.lower() in {"t", "b", "h", "ht", "htbp", "right", "left", "above", "below", "width", "scale"}:
+        return False
+    if "=" in text or "\\" in text:
+        return False
+    if re.fullmatch(r"\d+(?:\s*[-,]\s*\d+)*", text):
+        return True
+    if ":" in text or "," in text or re.search(r"\b(?:20\d{2}|19\d{2}|nist|ieee|ches|tcas|tcad|tvlsi)\b", text, re.I):
+        return True
+    return False
+
+
+def expected_role_matches(function, expected_role):
+    if not expected_role or expected_role == "SECTION_SPECIFIC":
+        return True
+    norm_function = function.replace("INTERPRETATION", "INTERPRET").replace("CONTRIBUTION", "CONTRIB").replace("ORGANIZATION", "ORG")
+    expected_tokens = set(re.findall(r"[A-Z_]+", expected_role.replace("FIGURE_TABLE", "RESULT")))
+    if not expected_tokens:
+        return True
+    if norm_function in expected_tokens:
+        return True
+    if norm_function == "RESULT" and {"OBSERVATION", "QUANTIFICATION", "FIGURE", "TABLE"} & expected_tokens:
+        return True
+    return False
+
+
+def mismatch_and_operation(
+    function,
+    claim_strength,
+    evidence_anchor,
+    risk_words,
+    punctuation,
+    previous_sentence_relation="",
+    expected_role="",
+    section_type="",
+):
     issues = []
     operations = []
-    if claim_strength in {"high", "very_high"} and evidence_anchor == "None":
+    if previous_sentence_relation == "jumps":
+        issues.append("sentence_jump")
+        operations.append("ADD_BRIDGE")
+    if claim_strength in {"medium", "high", "very_high"} and evidence_anchor == "None":
         issues.append("unsupported_claim")
         operations.append("ADD_EVIDENCE_ANCHOR")
+        if claim_strength in {"high", "very_high"}:
+            operations.append("WEAKEN_CLAIM")
     if claim_strength == "very_high":
         issues.append("overstrong_claim")
         operations.append("WEAKEN_CLAIM")
     if risk_words:
         issues.append("risk_word")
         operations.append("REPLACE_RISK_VERB")
-    if punctuation.get("em_dash_count", 0) or punctuation.get("question_mark_count", 0):
+    if (
+        punctuation.get("em_dash_count", 0)
+        or punctuation.get("question_mark_count", 0)
+        or punctuation.get("semicolon_count", 0)
+        or punctuation.get("colon_count", 0) > 1
+        or punctuation.get("comma_count", 0) > 3
+    ):
         issues.append("punctuation_issue")
-        operations.append("CHANGE_PUNCTUATION")
+        operations.append("SPLIT_SENTENCE" if punctuation.get("comma_count", 0) > 3 or punctuation.get("semicolon_count", 0) else "CHANGE_PUNCTUATION")
+    if section_type in {"Abstract", "Results"} or re.search(r"(?i)result|characterization|counterfactual|diagnosis", section_type or ""):
+        if not expected_role_matches(function, expected_role):
+            issues.append("role_mismatch")
+            operations.append("REFUNCTION_SENTENCE")
+            operations.append("REORDER_SENTENCE")
     if function in {"INTERPRETATION", "BOUNDARY"} and evidence_anchor == "None":
         operations.append("ADD_BOUNDARY")
     return ";".join(dict.fromkeys(issues)) or "none", ";".join(dict.fromkeys(operations)) or "KEEP"
@@ -472,8 +637,19 @@ def manuscript_records(manuscript_path):
                 risk = sorted(set(words_present(clean_sentence, STRONG_WORDS | AI_WORDS | VAGUE_WORDS)))
                 hedge = sorted(set(words_present(clean_sentence, HEDGE_WORDS)))
                 function = dominant_function(clean_sentence, section_title)
-                mismatch, operation = mismatch_and_operation(function, claim_strength, anchor["evidence_anchor"], risk, punc)
                 sentence_id = f"{section_slug}.P{p_index}.S{s_index}" if section_title != "Abstract" else f"ABS.S{s_index}"
+                prev_relation = relation(previous, clean_sentence)
+                expected = expected_role(section_title, s_index)
+                mismatch, operation = mismatch_and_operation(
+                    function,
+                    claim_strength,
+                    anchor["evidence_anchor"],
+                    risk,
+                    punc,
+                    previous_sentence_relation=prev_relation,
+                    expected_role=expected,
+                    section_type=section_title,
+                )
                 records.append(
                     {
                         "section_id": section_title,
@@ -484,7 +660,7 @@ def manuscript_records(manuscript_path):
                         "sentence_position": s_index,
                         "dominant_function": function,
                         "secondary_function": "",
-                        "previous_sentence_relation": relation(previous, clean_sentence),
+                        "previous_sentence_relation": prev_relation,
                         "next_sentence_relation": "",
                         "claim_type": claim_type,
                         "claim_strength": claim_strength,
@@ -496,7 +672,7 @@ def manuscript_records(manuscript_path):
                         "risk_words": ";".join(risk),
                         "punctuation_pattern": punctuation_pattern_text(clean_sentence),
                         "sentence_skeleton": sentence_skeleton(clean_sentence),
-                        "expected_topvenue_role": expected_role(section_title, s_index),
+                        "expected_topvenue_role": expected,
                         "mismatch_type": mismatch,
                         "revision_operation": operation,
                     }
@@ -506,9 +682,24 @@ def manuscript_records(manuscript_path):
 
 
 def corpus_records():
-    records = []
+    global CORPUS_QUALITY
+    raw_rows = []
     with TOPVENUE_MATRIX.open("r", encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f):
+            raw_rows.append(row)
+    clean_rows, removed_rows, stats = filter_corpus_units(raw_rows)
+    stats["removed_examples"] = [
+        {"text": row.get("unit_text_short", ""), "reason": row.get("remove_reason", ""), "section_type": row.get("section_type", "")}
+        for row in removed_rows[:20]
+    ]
+    stats["retained_examples"] = [
+        {"text": row.get("unit_text_short", ""), "section_type": row.get("section_type", "")}
+        for row in clean_rows[:20]
+    ]
+    CORPUS_QUALITY = stats
+
+    records = []
+    for row in clean_rows:
             sentence = row["unit_text_short"]
             claim_type, claim_strength = classify_claim(sentence)
             anchor = anchors(sentence)
@@ -573,6 +764,251 @@ def truthy(value):
 def count_true(rows, field):
     return sum(1 for row in rows if truthy(row.get(field, "")))
 
+
+def parse_punctuation_text(text):
+    values = defaultdict(int)
+    for part in (text or "").split(";"):
+        if "=" not in part:
+            continue
+        key, value = part.strip().split("=", 1)
+        try:
+            values[key.strip()] = int(value.strip())
+        except ValueError:
+            values[key.strip()] = 0
+    return values
+
+
+def sentence_needs_clause_audit(row):
+    sentence = row.get("sentence_text", "")
+    punc = parse_punctuation_text(row.get("punctuation_pattern", ""))
+    return (
+        ";" in sentence
+        or ":" in sentence
+        or re.search(r"\b(which|that|while|whereas|although)\b", sentence, re.I)
+        or len(sentence.split()) > 35
+        or punc.get("comma_count", sentence.count(",")) > 3
+        or row.get("claim_strength") in {"medium", "high", "very_high"}
+    )
+
+
+def split_clauses(sentence):
+    parts = re.split(r"(?i)(;|:|\balthough\b|\bwhereas\b|\bwhile\b|\bwhich\b|\bthat\b)", sentence)
+    clauses = []
+    current = ""
+    for part in parts:
+        if not part:
+            continue
+        if re.fullmatch(r"(?i);|:|\balthough\b|\bwhereas\b|\bwhile\b|\bwhich\b|\bthat\b", part.strip()):
+            if current.strip():
+                clauses.append(current.strip())
+            current = part.strip() + " "
+        else:
+            current += part
+    if current.strip():
+        clauses.append(current.strip())
+    return [clause.strip(" ,") for clause in clauses if len(clause.strip()) > 8] or [sentence]
+
+
+def clause_type(clause, index):
+    lower = clause.lower()
+    if index == 1:
+        return "main_clause"
+    if lower.startswith(("which", "that")):
+        return "relative_clause"
+    if lower.startswith(("although", "while", "whereas")):
+        return "subordinate_clause"
+    if clause.startswith("(") or clause.endswith(")"):
+        return "parenthetical_clause"
+    if ":" in clause:
+        return "colon_clause"
+    return "appositive_or_coordinate_clause"
+
+
+def clause_records(manuscript):
+    records = []
+    for row in manuscript:
+        if not sentence_needs_clause_audit(row):
+            continue
+        sentence = row.get("sentence_text", "")
+        clauses = split_clauses(sentence)
+        multi_claim = len(clauses) > 1 and row.get("claim_strength") in {"medium", "high", "very_high"}
+        for index, clause in enumerate(clauses, 1):
+            ctype = clause_type(clause, index)
+            claim_type, claim_strength = classify_claim(clause)
+            anchor = anchors(clause)
+            risk = sorted(set(words_present(clause, STRONG_WORDS | AI_WORDS | VAGUE_WORDS)))
+            issues = []
+            actions = []
+            if multi_claim:
+                issues.append("multi_claim_sentence")
+                actions.append("SPLIT_SENTENCE")
+            if claim_strength in {"medium", "high", "very_high"} and anchor["evidence_anchor"] == "None":
+                issues.append("implication_without_evidence")
+                actions.append("ADD_EVIDENCE_ANCHOR")
+            if ctype == "relative_clause" and claim_strength in {"high", "very_high"}:
+                issues.append("relative_clause_overclaim")
+                actions.append("WEAKEN_CLAIM")
+            if re.search(r"\((?:under|within|only|except|condition)", clause, re.I) or re.search(r"\b(under|within|condition)\b", clause, re.I):
+                issues.append("hidden_boundary")
+                actions.append("ADD_BOUNDARY")
+            if ":" in sentence and index > 1:
+                issues.append("colon_sentence_split_check")
+                actions.append("SPLIT_SENTENCE")
+            if risk:
+                issues.append("risk_word")
+                actions.append("REPLACE_RISK_VERB")
+            records.append(
+                {
+                    "sentence_id": row.get("sentence_id", ""),
+                    "clause_index": index,
+                    "clause_text": clause,
+                    "clause_type": ctype,
+                    "function": dominant_function(clause, row.get("section_id", "")),
+                    "claim_type": claim_type,
+                    "claim_strength": claim_strength,
+                    "evidence_support": anchor["evidence_anchor"],
+                    "risk_words": ";".join(risk),
+                    "issue": ";".join(dict.fromkeys(issues)) or "none",
+                    "recommended_action": ";".join(dict.fromkeys(actions)) or "KEEP",
+                }
+            )
+    return records
+
+
+def caption_function_sequence(caption):
+    sentences = split_sentences(caption) or [clean_text(caption)]
+    labels = []
+    for sentence in sentences:
+        lower = sentence.lower()
+        labels.append("OBJECT")
+        if re.search(r"\b(under|using|across|for each|condition|setup|configuration)\b", lower):
+            labels.append("CONDITION")
+        if re.search(r"\b(show|shows|compare|comparison|result|entropy|increase|decrease|higher|lower)\b", lower):
+            labels.append("TAKEAWAY")
+        if re.search(r"\b(note|unit|bold|missing|abbreviation)\b", lower):
+            labels.append("NOTE")
+    return " -> ".join(collapse_sequence(labels))
+
+
+def figure_table_role(kind, caption):
+    lower = caption.lower()
+    if re.search(r"\b(workflow|pipeline|procedure|flow)\b", lower):
+        return "workflow"
+    if re.search(r"\b(architecture|block diagram|implementation)\b", lower):
+        return "architecture"
+    if re.search(r"\b(setup|platform|configuration)\b", lower):
+        return "setup"
+    if re.search(r"\b(result|entropy|comparison|throughput|area|power|latency)\b", lower):
+        return "result" if kind == "figure" else "comparison"
+    if re.search(r"\b(audit|check|diagnosis)\b", lower):
+        return "audit"
+    return "concept"
+
+
+def extract_float_environments(tex_text):
+    floats = []
+    for kind in ["figure", "table"]:
+        pattern = rf"\\begin\{{{kind}\}}(.*?)\\end\{{{kind}\}}"
+        for match in re.finditer(pattern, tex_text, flags=re.S | re.I):
+            body = match.group(1)
+            caption_match = re.search(r"\\caption(?:\[[^\]]*\])?\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}", body, flags=re.S)
+            label_match = re.search(r"\\label\{([^{}]+)\}", body)
+            caption = clean_text(caption_match.group(1)) if caption_match else ""
+            label = label_match.group(1) if label_match else f"{kind}:{len(floats)+1}"
+            floats.append({"id": label, "kind": kind, "caption": caption, "position": match.start()})
+    return sorted(floats, key=lambda row: row["position"])
+
+
+def figure_table_inventory(tex_text, manuscript):
+    floats = extract_float_environments(tex_text)
+    inventory = []
+    for float_index, item in enumerate(floats, 1):
+        label = item["id"]
+        first_mention = ""
+        first_mention_index = None
+        body_sentence = ""
+        for index, row in enumerate(manuscript, 1):
+            haystack = f"{row.get('figure_table_anchor', '')} {row.get('sentence_text', '')}"
+            if label in haystack or label.split(":")[-1] in haystack:
+                first_mention = row.get("sentence_id", "")
+                first_mention_index = index
+                body_sentence = row.get("sentence_text", "")
+                break
+        caption = item["caption"]
+        role = figure_table_role(item["kind"], caption)
+        explains = bool(re.search(r"\b(show|shows|indicate|look|observe|compare|summarize)\b", body_sentence, re.I))
+        quantifies = bool(re.search(r"\d", body_sentence))
+        caption_terms = set(re.findall(r"[A-Za-z][A-Za-z\-]{4,}", caption.lower()))
+        body_terms = set(re.findall(r"[A-Za-z][A-Za-z\-]{4,}", body_sentence.lower()))
+        consistency = "consistent" if not caption_terms or caption_terms & body_terms else "check_caption_body_takeaway"
+        unit_issue = "check_units_or_abbreviations" if re.search(r"\b(ns|MHz|Mbps|LUT|FF|bit|%)\b", caption) and not re.search(r"\b(unit|units|defined|denote)\b", caption, re.I) else "none"
+        table_note_needed = "yes" if item["kind"] == "table" and re.search(r"\b(bold|dash|n/a|missing|best)\b", caption, re.I) else "no"
+        inventory.append(
+            {
+                "id": label,
+                "kind": item["kind"],
+                "caption": caption,
+                "caption_sentence_count": len(split_sentences(caption) or ([caption] if caption else [])),
+                "caption_function_sequence": caption_function_sequence(caption),
+                "first_mention_sentence_id": first_mention or "MISSING",
+                "distance_from_first_mention": "" if first_mention_index is None else float_index - first_mention_index,
+                "role": role,
+                "body_claim_linked": "yes" if first_mention else "no",
+                "body_explains_what_to_look_for": "yes" if explains else "no",
+                "body_quantifies_after_reference": "yes" if quantifies else "no",
+                "caption_body_consistency": consistency,
+                "table_note_needed": table_note_needed,
+                "unit_or_abbreviation_issue": unit_issue,
+                "caption_storyline_note": f"{item['kind']} {label}: {role}; {caption_function_sequence(caption)}",
+            }
+        )
+    return inventory
+
+
+def gold_label_template_records(manuscript, figure_table_rows):
+    selected = []
+
+    def add_from(predicate, limit):
+        for row in manuscript:
+            if len([item for item in selected if predicate(item)]) >= limit:
+                break
+            if predicate(row) and row not in selected:
+                selected.append(row)
+
+    add_from(lambda row: row.get("section_id") in {"Abstract", "Introduction"}, 20)
+    add_from(lambda row: any(token in row.get("section_id", "").lower() for token in ["result", "discussion", "characterization", "diagnosis", "counterfactual"]), 20)
+    for fig in figure_table_rows[:10]:
+        selected.append(
+            {
+                "sentence_id": f"CAPTION:{fig.get('id', '')}",
+                "section_id": "Caption",
+                "sentence_text": fig.get("caption", ""),
+                "dominant_function": fig.get("caption_function_sequence", ""),
+                "claim_type": "caption",
+                "revision_operation": "CHECK_CAPTION_BODY_LINK",
+            }
+        )
+    for row in manuscript:
+        if len(selected) >= 50:
+            break
+        if row not in selected:
+            selected.append(row)
+    records = []
+    for row in selected[:50]:
+        records.append(
+            {
+                "sentence_id": row.get("sentence_id", ""),
+                "sentence_text": row.get("sentence_text", ""),
+                "model_function": row.get("dominant_function", ""),
+                "gold_function": "",
+                "model_claim_type": row.get("claim_type", ""),
+                "gold_claim_type": "",
+                "model_action": row.get("revision_operation", ""),
+                "gold_action": "",
+                "notes": "",
+            }
+        )
+    return records
 
 def function_count_text(counts, limit=8):
     if not counts:
@@ -1141,6 +1577,200 @@ def report_results(manuscript):
     out.write_text("\n".join(lines), encoding="utf-8")
 
 
+def report_corpus_quality():
+    out = MODULE_DIR / "reports" / "corpus_extraction_quality_report.md"
+    stats = CORPUS_QUALITY or {}
+    lines = [
+        "# 顶刊语料抽取质量报告",
+        "",
+        "这个报告用于判断顶刊 corpus 是否干净。它统计抽取后删除了哪些非论文正文噪声，并给出人工抽查样例。",
+        "",
+        "## 总览",
+        "",
+        f"- 原始抽取句子/功能单元：{stats.get('raw_total', 0)} 条。",
+        f"- 删除噪声：{stats.get('removed_total', 0)} 条。",
+        f"- 保留进入 corpus：{stats.get('retained_total', 0)} 条。",
+        "",
+        "## 删除原因统计",
+        "",
+    ]
+    removed_by_reason = stats.get("removed_by_reason", {})
+    if removed_by_reason:
+        for reason, count in sorted(removed_by_reason.items(), key=lambda item: (-item[1], item[0])):
+            lines.append(f"- `{reason}`：{count} 条。")
+    else:
+        lines.append("- 未删除任何记录。")
+    lines.extend(["", "## 保留记录按 section 统计", ""])
+    retained_by_section = stats.get("retained_by_section", {})
+    if retained_by_section:
+        for section, count in sorted(retained_by_section.items()):
+            lines.append(f"- `{section}`：{count} 条。")
+    else:
+        lines.append("- 暂无保留记录。")
+    lines.extend(["", "## 删除样例（最多 20 条）", ""])
+    for row in stats.get("removed_examples", [])[:20]:
+        lines.append(f"- `{row.get('remove_reason') or row.get('reason')}` / `{row.get('section_type', '')}`：{row.get('text', '')[:180]}")
+    lines.extend(["", "## 保留样例（最多 20 条）", ""])
+    for row in stats.get("retained_examples", [])[:20]:
+        lines.append(f"- `{row.get('section_type', '')}`：{row.get('text', '')[:180]}")
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def report_clause_claim_risk(clauses):
+    out = MODULE_DIR / "reports" / "clause_claim_risk_report.md"
+    risky = [row for row in clauses if row.get("recommended_action") != "KEEP"]
+    issue_counts = Counter()
+    for row in risky:
+        for issue in row.get("issue", "").split(";"):
+            if issue and issue != "none":
+                issue_counts[issue] += 1
+    lines = [
+        "# 从句级 claim 风险报告",
+        "",
+        "这个报告只检查需要从句级审计的句子：长句、冒号/分号句、relative clause、条件从句、多逗号句或中高强度 claim。",
+        "",
+        "## 总览",
+        "",
+        f"- 从句记录：{len(clauses)} 条。",
+        f"- 需要动作的从句：{len(risky)} 条。",
+        "",
+        "## issue 统计",
+        "",
+    ]
+    if issue_counts:
+        for issue, count in issue_counts.most_common():
+            lines.append(f"- `{issue}`：{count} 条。")
+    else:
+        lines.append("- 暂无从句级 issue。")
+    lines.extend(["", "## 优先检查样例", ""])
+    for row in risky[:60]:
+        lines.extend(
+            [
+                f"### {row['sentence_id']} C{row['clause_index']}",
+                "",
+                f"从句：{row['clause_text']}",
+                "",
+                f"- 从句类型：`{row['clause_type']}`",
+                f"- 功能：`{row['function']}`（{zh_function(row['function'])}）",
+                f"- claim：`{row['claim_type']}` / `{row['claim_strength']}`",
+                f"- 证据：`{row['evidence_support']}`（{zh_evidence(row['evidence_support'])}）",
+                f"- issue：`{row['issue']}`",
+                f"- 建议动作：`{row['recommended_action']}`（{zh_operations(row['recommended_action'])}）",
+                "",
+            ]
+        )
+    out.write_text("\n".join(lines), encoding="utf-8")
+
+
+def report_figure_table_elements(inventory):
+    out = MODULE_DIR / "reports" / "figure_table_element_morphology_report.md"
+    lines = [
+        "# 图表元素级形态报告",
+        "",
+        "这个报告检查图表是否承担清楚的论文叙事功能：caption 是否有对象/条件/结论/备注，正文是否先引用再解释，caption 和正文 claim 是否一致。",
+        "",
+        "## 总览",
+        "",
+        f"- 图表记录：{len(inventory)} 个。",
+        f"- 缺少正文 first mention：{sum(1 for row in inventory if row['first_mention_sentence_id'] == 'MISSING')} 个。",
+        f"- caption/body 需要核对：{sum(1 for row in inventory if row['caption_body_consistency'] != 'consistent')} 个。",
+        "",
+        "## 图表逐项审计",
+        "",
+    ]
+    for row in inventory:
+        lines.extend(
+            [
+                f"### {row['kind']} `{row['id']}`",
+                "",
+                f"caption：{row['caption']}",
+                "",
+                f"- caption 功能序列：`{row['caption_function_sequence']}`",
+                f"- 角色：`{row['role']}`",
+                f"- first mention：`{row['first_mention_sentence_id']}`",
+                f"- 正文是否解释看什么：`{row['body_explains_what_to_look_for']}`",
+                f"- 正文是否给定量：`{row['body_quantifies_after_reference']}`",
+                f"- caption/body 一致性：`{row['caption_body_consistency']}`",
+                f"- 表格 note 需求：`{row['table_note_needed']}`",
+                f"- 单位/缩写问题：`{row['unit_or_abbreviation_issue']}`",
+                "",
+            ]
+        )
+    lines.extend(["## caption-only storyline", ""])
+    if inventory:
+        for row in inventory:
+            lines.append(f"- `{row['id']}`：{row['caption_storyline_note']}")
+    else:
+        lines.append("- 未抽取到 figure/table 环境。")
+    out.write_text("\n".join(lines), encoding="utf-8")
+
+
+def annotation_accuracy_rows(gold_rows):
+    filled = [row for row in gold_rows if row.get("gold_function") or row.get("gold_claim_type") or row.get("gold_action")]
+    if not filled:
+        return {
+            "filled": 0,
+            "function_accuracy": "待标注",
+            "claim_type_accuracy": "待标注",
+            "false_keep_cases": 0,
+            "confusions": Counter(),
+        }
+    function_total = sum(1 for row in filled if row.get("gold_function"))
+    function_match = sum(1 for row in filled if row.get("gold_function") and row.get("gold_function") == row.get("model_function"))
+    claim_total = sum(1 for row in filled if row.get("gold_claim_type"))
+    claim_match = sum(1 for row in filled if row.get("gold_claim_type") and row.get("gold_claim_type") == row.get("model_claim_type"))
+    false_keep = sum(1 for row in filled if row.get("model_action") == "KEEP" and row.get("gold_action") and row.get("gold_action") != "KEEP")
+    confusions = Counter(
+        f"{row.get('model_function')} -> {row.get('gold_function')}"
+        for row in filled
+        if row.get("gold_function") and row.get("gold_function") != row.get("model_function")
+    )
+    return {
+        "filled": len(filled),
+        "function_accuracy": f"{function_match / function_total:.2f}" if function_total else "待标注",
+        "claim_type_accuracy": f"{claim_match / claim_total:.2f}" if claim_total else "待标注",
+        "false_keep_cases": false_keep,
+        "confusions": confusions,
+    }
+
+
+def report_annotation_accuracy(gold_rows):
+    out = MODULE_DIR / "reports" / "annotation_accuracy_report.md"
+    stats = annotation_accuracy_rows(gold_rows)
+    lines = [
+        "# 人工校准准确率报告",
+        "",
+        "这个报告等待人工填写 `calibration/gold_sentence_labels_template.csv` 中的 gold 字段后再产生真实准确率。当前先提供模板覆盖和待标注状态。",
+        "",
+        "## 总览",
+        "",
+        f"- 模板句子数：{len(gold_rows)} 条。",
+        f"- 已填写 gold 的句子数：{stats['filled']} 条。",
+        f"- function accuracy：{stats['function_accuracy']}",
+        f"- claim_type accuracy：{stats['claim_type_accuracy']}",
+        f"- false KEEP cases：{stats['false_keep_cases']}",
+        "",
+        "## 系统性混淆模式",
+        "",
+    ]
+    if stats["confusions"]:
+        for confusion, count in stats["confusions"].most_common():
+            lines.append(f"- `{confusion}`：{count} 条。")
+    else:
+        lines.append("- gold labels 尚未填写，暂无混淆统计。")
+    lines.extend(
+        [
+            "",
+            "## 使用方法",
+            "",
+            "- 请人工填写 `gold_function`、`gold_claim_type`、`gold_action`。",
+            "- 重点观察 `SETUP vs RESULT`、`BG vs INTERPRETATION`、false KEEP、overclaim 漏检。",
+            "- 填完后重新运行 pipeline，即可更新准确率报告。",
+        ]
+    )
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def citation_function(row):
     section = row["section_id"].lower()
     function = row["dominant_function"]
@@ -1168,9 +1798,9 @@ def citation_records(manuscript):
             continue
         cfun = citation_function(row)
         issue = "none"
-        if row["dominant_function"] == "RESULT" and cfun != "comparison baseline":
+        if row["dominant_function"] == "RESULT" and cfun != "比较基线":
             issue = "result_sentence_citation_check"
-        if row["claim_strength"] in {"high", "very_high"} and cfun not in {"claim support", "comparison baseline"}:
+        if row["claim_strength"] in {"high", "very_high"} and cfun not in {"claim 支撑", "比较基线"}:
             issue = "high_claim_citation_role_check"
         records.append(
             {
@@ -1189,18 +1819,30 @@ def citation_records(manuscript):
 
 def main():
     corpus = corpus_records()
-    manuscript = manuscript_records(active_manuscript_path())
+    manuscript_path = active_manuscript_path()
+    manuscript_tex = read_text(manuscript_path)
+    manuscript = manuscript_records(manuscript_path)
+    clauses = clause_records(manuscript)
+    figure_tables = figure_table_inventory(manuscript_tex, manuscript)
+    gold_rows = gold_label_template_records(manuscript, figure_tables)
     paper_archetypes = build_paper_sequence_archetypes(corpus)
     venue_archetypes = build_venue_archetype_matrix(paper_archetypes)
     write_csv(MODULE_DIR / "corpus" / "topvenue_sentence_morphology.csv", CORPUS_FIELDS, corpus)
     write_csv(MODULE_DIR / "corpus" / "topvenue_paper_sequence_archetypes.csv", PAPER_ARCHETYPE_FIELDS, paper_archetypes)
     write_csv(MODULE_DIR / "corpus" / "topvenue_venue_archetype_matrix.csv", VENUE_ARCHETYPE_FIELDS, venue_archetypes)
     write_csv(MODULE_DIR / "manuscript" / "manuscript_sentence_morphology.csv", SENTENCE_FIELDS, manuscript)
+    write_csv(MODULE_DIR / "manuscript" / "manuscript_clause_morphology.csv", CLAUSE_FIELDS, clauses)
+    write_csv(MODULE_DIR / "manuscript" / "figure_table_inventory.csv", FIGURE_TABLE_FIELDS, figure_tables)
     write_csv(MODULE_DIR / "manuscript" / "citation_function_matrix.csv", CITATION_FIELDS, citation_records(manuscript))
+    write_csv(MODULE_DIR / "calibration" / "gold_sentence_labels_template.csv", GOLD_LABEL_FIELDS, gold_rows)
     write_profiles(corpus, manuscript)
+    report_corpus_quality()
     report_alignment(manuscript)
     report_abstract(manuscript)
     report_results(manuscript)
+    report_clause_claim_risk(clauses)
+    report_figure_table_elements(figure_tables)
+    report_annotation_accuracy(gold_rows)
     print(f"topvenue_records={len(corpus)}")
     print(f"manuscript_records={len(manuscript)}")
 

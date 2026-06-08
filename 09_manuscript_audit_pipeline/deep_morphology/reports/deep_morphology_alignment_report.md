@@ -5,9 +5,23 @@
 ## 总览
 
 - 逐句记录：292 条。
-- 存在 mismatch 或上下句跳跃的句子：110 条。
+- 存在 mismatch 或上下句跳跃的句子：208 条。
 
 ## 优先检查的句子记录
+
+### ABS.S1
+
+原句：FPGA ring-oscillator true random number generators are commonly evaluated from oscillator-array structure and final output statistics.
+
+- 主功能：`SETUP`（实验/平台设置）
+- 顶刊期望角色：`BG`
+- 和上一句关系：`none`（无上一句）
+- claim 类型/强度：`method`（方法 claim） / `low`（低）
+- 证据锚点：`None`（无）
+- 风险词：`无`
+- 标点模式：`hyphen_count=2`
+- 问题类型：`role_mismatch`
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
 
 ### ABS.S2
 
@@ -20,8 +34,8 @@
 - 证据锚点：`None`（无）
 - 风险词：`无`
 - 标点模式：`hyphen_count=3; colon_count=1`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump;unsupported_claim;role_mismatch`
+- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;REFUNCTION_SENTENCE;REORDER_SENTENCE`（ADD_BRIDGE；补证据锚点；REFUNCTION_SENTENCE；REORDER_SENTENCE）
 
 ### ABS.S3
 
@@ -34,8 +48,50 @@
 - 证据锚点：`Experiment setup`（实验设置）
 - 风险词：`large`
 - 标点模式：`hyphen_count=4; comma_count=1`
-- 问题类型：`risk_word`
-- 建议动作：`REPLACE_RISK_VERB`（替换高风险动词/泛词）
+- 问题类型：`risk_word;role_mismatch`
+- 建议动作：`REPLACE_RISK_VERB;REFUNCTION_SENTENCE;REORDER_SENTENCE`（替换高风险动词/泛词；REFUNCTION_SENTENCE；REORDER_SENTENCE）
+
+### ABS.S4
+
+原句：Restart measurements then show that continuous-stream balance is not enough: warmup bytes 8 and 10 trigger fixed-position diagnostic flags, while warmup bytes 11, 12, and 16 do not.
+
+- 主功能：`RESULT`（结果）
+- 顶刊期望角色：`METHOD`
+- 和上一句关系：`elaborates`（展开上一句）
+- claim 类型/强度：`measurement`（测量/结果 claim） / `medium`（中）
+- 证据锚点：`Experiment setup`（实验设置）
+- 风险词：`无`
+- 标点模式：`hyphen_count=2; colon_count=1; comma_count=3`
+- 问题类型：`role_mismatch`
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
+
+### ABS.S5
+
+原句：The central evidence is a bidirectional sampler-side counterfactual on the primary board, plus a repeated second-board check: imposing the restart-oriented sample-RO lock changes a compact sampler configuration toward biased restart behavior on both boards, with board-specific magnitudes.
+
+- 主功能：`BG`（背景）
+- 顶刊期望角色：`SETUP`
+- 和上一句关系：`elaborates`（展开上一句）
+- claim 类型/强度：`causal/generalization`（因果/泛化 claim） / `low`（低）
+- 证据锚点：`None`（无）
+- 风险词：`无`
+- 标点模式：`hyphen_count=5; colon_count=1; comma_count=2`
+- 问题类型：`role_mismatch`
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
+
+### ABS.S6
+
+原句：On the second board, three-run forward warmup-4 and warmup-5 means are $p_1=0.450792$ and 0.445222, while the reverse compact-lock warmup-4 mean is 0.498300.
+
+- 主功能：`BG`（背景）
+- 顶刊期望角色：`RESULT`
+- 和上一句关系：`elaborates`（展开上一句）
+- claim 类型/强度：`descriptive`（描述性 claim） / `low`（低）
+- 证据锚点：`None`（无）
+- 风险词：`无`
+- 标点模式：`hyphen_count=5; comma_count=2`
+- 问题类型：`role_mismatch`
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
 
 ### ABS.S7
 
@@ -48,8 +104,8 @@
 - 证据锚点：`None`（无）
 - 风险词：`small`
 - 标点模式：`OK`
-- 问题类型：`risk_word`
-- 建议动作：`REPLACE_RISK_VERB`（替换高风险动词/泛词）
+- 问题类型：`sentence_jump;unsupported_claim;risk_word;role_mismatch`
+- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;REPLACE_RISK_VERB;REFUNCTION_SENTENCE;REORDER_SENTENCE`（ADD_BRIDGE；补证据锚点；替换高风险动词/泛词；REFUNCTION_SENTENCE；REORDER_SENTENCE）
 
 ### ABS.S8
 
@@ -62,8 +118,22 @@
 - 证据锚点：`None`（无）
 - 风险词：`无`
 - 标点模式：`hyphen_count=10; colon_count=1; slash_count=1; comma_count=5`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump;unsupported_claim;punctuation_issue;role_mismatch`
+- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;SPLIT_SENTENCE;REFUNCTION_SENTENCE;REORDER_SENTENCE`（ADD_BRIDGE；补证据锚点；SPLIT_SENTENCE；REFUNCTION_SENTENCE；REORDER_SENTENCE）
+
+### ABS.S9
+
+原句：These measurements support a diagnostic claim rather than a certification claim: sampler-side physical implementation is not passive readout in the evaluated implementations and should be included in the measured entropy-source boundary.
+
+- 主功能：`RESULT`（结果）
+- 顶刊期望角色：`BOUNDARY`
+- 和上一句关系：`elaborates`（展开上一句）
+- claim 类型/强度：`method`（方法 claim） / `medium`（中）
+- 证据锚点：`Experiment setup`（实验设置）
+- 风险词：`无`
+- 标点模式：`hyphen_count=2; colon_count=1`
+- 问题类型：`role_mismatch`
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
 
 ### INTRODUCTION.P1.S3
 
@@ -76,8 +146,8 @@
 - 证据锚点：`None`（无）
 - 风险词：`无`
 - 标点模式：`comma_count=5`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump;unsupported_claim;punctuation_issue`
+- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;SPLIT_SENTENCE`（ADD_BRIDGE；补证据锚点；SPLIT_SENTENCE）
 
 ### INTRODUCTION.P1.S5
 
@@ -90,8 +160,8 @@
 - 证据锚点：`None`（无）
 - 风险词：`无`
 - 标点模式：`hyphen_count=1`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump`
+- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
 
 ### INTRODUCTION.P3.S2
 
@@ -104,8 +174,8 @@
 - 证据锚点：`Experiment setup`（实验设置）
 - 风险词：`无`
 - 标点模式：`comma_count=1`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump`
+- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
 
 ### INTRODUCTION.P3.S3
 
@@ -118,8 +188,8 @@
 - 证据锚点：`Experiment setup`（实验设置）
 - 风险词：`无`
 - 标点模式：`hyphen_count=2; comma_count=1`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump`
+- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
 
 ### INTRODUCTION.P3.S4
 
@@ -160,8 +230,22 @@
 - 证据锚点：`None`（无）
 - 风险词：`无`
 - 标点模式：`comma_count=1`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump`
+- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+
+### INTRODUCTION.P6.S3
+
+原句：A bidirectional primary-board sampler-side counterfactual, with a three-run second-board repeat check, showing that a sampler-centered physical perturbation can move restart behavior toward biased outcomes and restore near-balanced behavior in the reverse direction.
+
+- 主功能：`BG`（背景）
+- 顶刊期望角色：`BG/PROBLEM/GAP/METHOD/CONTRIBUTION`
+- 和上一句关系：`elaborates`（展开上一句）
+- claim 类型/强度：`measurement`（测量/结果 claim） / `medium`（中）
+- 证据锚点：`None`（无）
+- 风险词：`无`
+- 标点模式：`hyphen_count=6; comma_count=2`
+- 问题类型：`unsupported_claim`
+- 建议动作：`ADD_EVIDENCE_ANCHOR`（补证据锚点）
 
 ### INTRODUCTION.P6.S4
 
@@ -174,8 +258,8 @@
 - 证据锚点：`None`（无）
 - 风险词：`无`
 - 标点模式：`hyphen_count=2`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump`
+- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
 
 ### INTRODUCTION.P6.S5
 
@@ -188,8 +272,8 @@
 - 证据锚点：`None`（无）
 - 风险词：`无`
 - 标点模式：`hyphen_count=7; slash_count=1; comma_count=4`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump;punctuation_issue`
+- 建议动作：`ADD_BRIDGE;SPLIT_SENTENCE`（ADD_BRIDGE；SPLIT_SENTENCE）
 
 ### INTRODUCTION.P7.S2
 
@@ -202,8 +286,8 @@
 - 证据锚点：`Experiment setup`（实验设置）
 - 风险词：`无`
 - 标点模式：`OK`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump`
+- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
 
 ### INTRODUCTION.P7.S5
 
@@ -216,8 +300,8 @@
 - 证据锚点：`None`（无）
 - 风险词：`无`
 - 标点模式：`hyphen_count=4; comma_count=4`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump;punctuation_issue`
+- 建议动作：`ADD_BRIDGE;SPLIT_SENTENCE`（ADD_BRIDGE；SPLIT_SENTENCE）
 
 ### INTRODUCTION.P7.S6
 
@@ -230,8 +314,22 @@
 - 证据锚点：`Experiment setup`（实验设置）
 - 风险词：`无`
 - 标点模式：`hyphen_count=1; comma_count=2`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump`
+- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+
+### BACKGROUND_AND_MEASUREMENT_GAP.P1.S1
+
+原句：FPGA {}s use oscillator-derived timing uncertainty, sampling logic, and combining or conditioning logic to generate random bits [Sunar_2007,Fischer_2008,Wold_2009,Bochard_2009].
+
+- 主功能：`SETUP`（实验/平台设置）
+- 顶刊期望角色：`SECTION_SPECIFIC`
+- 和上一句关系：`none`（无上一句）
+- claim 类型/强度：`limitation`（限制/边界 claim） / `low`（低）
+- 证据锚点：`Citation`（引用）
+- 风险词：`无`
+- 标点模式：`hyphen_count=1; comma_count=5`
+- 问题类型：`punctuation_issue`
+- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P1.S3
 
@@ -244,8 +342,8 @@
 - 证据锚点：`Citation`（引用）
 - 风险词：`无`
 - 标点模式：`hyphen_count=1; comma_count=6`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump;punctuation_issue`
+- 建议动作：`ADD_BRIDGE;SPLIT_SENTENCE`（ADD_BRIDGE；SPLIT_SENTENCE）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P1.S4
 
@@ -258,8 +356,8 @@
 - 证据锚点：`Citation`（引用）
 - 风险词：`无`
 - 标点模式：`hyphen_count=2; comma_count=2`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump`
+- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P2.S2
 
@@ -272,8 +370,8 @@
 - 证据锚点：`Citation;Experiment setup`（引用；实验设置）
 - 风险词：`some`
 - 标点模式：`hyphen_count=4; slash_count=2; comma_count=8`
-- 问题类型：`risk_word`
-- 建议动作：`REPLACE_RISK_VERB`（替换高风险动词/泛词）
+- 问题类型：`sentence_jump;risk_word;punctuation_issue`
+- 建议动作：`ADD_BRIDGE;REPLACE_RISK_VERB;SPLIT_SENTENCE`（ADD_BRIDGE；替换高风险动词/泛词；SPLIT_SENTENCE）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P2.S3
 
@@ -286,8 +384,22 @@
 - 证据锚点：`None`（无）
 - 风险词：`无`
 - 标点模式：`hyphen_count=1; comma_count=3`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump`
+- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+
+### BACKGROUND_AND_MEASUREMENT_GAP.P3.S1
+
+原句：These foundations cover RO construction, statistical assessment, standards-oriented entropy-source evaluation, active perturbation, and TDC instrumentation.
+
+- 主功能：`BG`（背景）
+- 顶刊期望角色：`SECTION_SPECIFIC`
+- 和上一句关系：`none`（无上一句）
+- claim 类型/强度：`method`（方法 claim） / `low`（低）
+- 证据锚点：`None`（无）
+- 风险词：`无`
+- 标点模式：`hyphen_count=2; comma_count=4`
+- 问题类型：`punctuation_issue`
+- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P3.S2
 
@@ -300,8 +412,36 @@
 - 证据锚点：`Experiment setup`（实验设置）
 - 风险词：`无`
 - 标点模式：`hyphen_count=1; comma_count=2`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump`
+- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+
+### BACKGROUND_AND_MEASUREMENT_GAP.P3.S3
+
+原句：A final bitstream is not merely an abstract RTL object; it is a routed physical implementation with local interconnect, resource placement, control logic, and measurement readout.
+
+- 主功能：`SETUP`（实验/平台设置）
+- 顶刊期望角色：`SECTION_SPECIFIC`
+- 和上一句关系：`elaborates`（展开上一句）
+- claim 类型/强度：`method`（方法 claim） / `low`（低）
+- 证据锚点：`Experiment setup`（实验设置）
+- 风险词：`无`
+- 标点模式：`semicolon_count=1; comma_count=3`
+- 问题类型：`punctuation_issue`
+- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+
+### BACKGROUND_AND_MEASUREMENT_GAP.P3.S4
+
+原句：If an evaluation records only final output statistics, it may miss which physical substructure shaped those statistics.
+
+- 主功能：`BG`（背景）
+- 顶刊期望角色：`SECTION_SPECIFIC`
+- 和上一句关系：`elaborates`（展开上一句）
+- claim 类型/强度：`descriptive`（描述性 claim） / `medium`（中）
+- 证据锚点：`None`（无）
+- 风险词：`无`
+- 标点模式：`comma_count=1`
+- 问题类型：`unsupported_claim`
+- 建议动作：`ADD_EVIDENCE_ANCHOR`（补证据锚点）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P3.S5
 
@@ -311,11 +451,11 @@
 - 顶刊期望角色：`SECTION_SPECIFIC`
 - 和上一句关系：`jumps`（跳跃，缺少桥接）
 - claim 类型/强度：`measurement`（测量/结果 claim） / `medium`（中）
-- 证据锚点：`Citation;Experiment setup`（引用；实验设置）
+- 证据锚点：`Experiment setup`（实验设置）
 - 风险词：`无`
 - 标点模式：`hyphen_count=2`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump`
+- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P4.S2
 
@@ -328,8 +468,8 @@
 - 证据锚点：`Citation;Experiment setup`（引用；实验设置）
 - 风险词：`substantial`
 - 标点模式：`comma_count=4`
-- 问题类型：`risk_word`
-- 建议动作：`REPLACE_RISK_VERB`（替换高风险动词/泛词）
+- 问题类型：`risk_word;punctuation_issue`
+- 建议动作：`REPLACE_RISK_VERB;SPLIT_SENTENCE`（替换高风险动词/泛词；SPLIT_SENTENCE）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P4.S3
 
@@ -342,8 +482,22 @@
 - 证据锚点：`None`（无）
 - 风险词：`无`
 - 标点模式：`hyphen_count=1; colon_count=1; comma_count=3`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump`
+- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+
+### BACKGROUND_AND_MEASUREMENT_GAP.P5.S2
+
+原句：Existing {} analysis can separate oscillator source, sampler, post-processing, and validation boundary for modeling or certification.
+
+- 主功能：`BG`（背景）
+- 顶刊期望角色：`SECTION_SPECIFIC`
+- 和上一句关系：`elaborates`（展开上一句）
+- claim 类型/强度：`descriptive`（描述性 claim） / `medium`（中）
+- 证据锚点：`None`（无）
+- 风险词：`无`
+- 标点模式：`hyphen_count=1; comma_count=3`
+- 问题类型：`unsupported_claim`
+- 建议动作：`ADD_EVIDENCE_ANCHOR`（补证据锚点）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P1.S2
 
@@ -356,8 +510,50 @@
 - 证据锚点：`None`（无）
 - 风险词：`无`
 - 标点模式：`hyphen_count=2; comma_count=3`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump`
+- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+
+### DESIGN_AND_MEASUREMENT_WORKFLOW.P1.S3
+
+原句：With the evaluated parameters, the sampled-data vector has 64 bits, formed from eight data ROs sampled across eight sample-RO phases; the final output bit is the XOR reduction of that vector.
+
+- 主功能：`BG`（背景）
+- 顶刊期望角色：`SECTION_SPECIFIC`
+- 和上一句关系：`elaborates`（展开上一句）
+- claim 类型/强度：`method`（方法 claim） / `low`（低）
+- 证据锚点：`None`（无）
+- 风险词：`无`
+- 标点模式：`hyphen_count=2; semicolon_count=1; comma_count=2`
+- 问题类型：`punctuation_issue`
+- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+
+### DESIGN_AND_MEASUREMENT_WORKFLOW.P2.S1
+
+原句：Operationally, this paper uses ``measured entropy-source boundary'' to mean the set of physical and temporal implementation elements whose controlled or observed variation can materially change measured output behavior under the evaluated protocol.
+
+- 主功能：`METHOD`（方法）
+- 顶刊期望角色：`SECTION_SPECIFIC`
+- 和上一句关系：`none`（无上一句）
+- claim 类型/强度：`causal/generalization`（因果/泛化 claim） / `medium`（中）
+- 证据锚点：`None`（无）
+- 风险词：`无`
+- 标点模式：`hyphen_count=1; comma_count=1`
+- 问题类型：`unsupported_claim`
+- 建议动作：`ADD_EVIDENCE_ANCHOR`（补证据锚点）
+
+### DESIGN_AND_MEASUREMENT_WORKFLOW.P2.S2
+
+原句：Under that definition, the boundary is not a certification boundary; it is the boundary needed to interpret the hardware measurements.
+
+- 主功能：`BOUNDARY`（边界）
+- 顶刊期望角色：`SECTION_SPECIFIC`
+- 和上一句关系：`elaborates`（展开上一句）
+- claim 类型/强度：`measurement`（测量/结果 claim） / `low`（低）
+- 证据锚点：`Experiment setup`（实验设置）
+- 风险词：`无`
+- 标点模式：`semicolon_count=1; comma_count=1`
+- 问题类型：`punctuation_issue`
+- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P2.S4
 
@@ -370,201 +566,5 @@
 - 证据锚点：`None`（无）
 - 风险词：`无`
 - 标点模式：`hyphen_count=2; slash_count=2; comma_count=4`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
-
-### DESIGN_AND_MEASUREMENT_WORKFLOW.P2.S5
-
-原句：FIFO buffering after entropy-bit formation, UART readout, host capture, and offline analysis are outside the entropy source, but they are part of the measurement chain and must be documented for reproducibility.
-
-- 主功能：`SETUP`（实验/平台设置）
-- 顶刊期望角色：`SECTION_SPECIFIC`
-- 和上一句关系：`jumps`（跳跃，缺少桥接）
-- claim 类型/强度：`measurement`（测量/结果 claim） / `low`（低）
-- 证据锚点：`Experiment setup`（实验设置）
-- 风险词：`无`
-- 标点模式：`hyphen_count=1; comma_count=4`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
-
-### EXPERIMENTAL_SETUP_AND_ANALYSIS_RULES.P3.S2
-
-原句：It is not used as a complete {} validation.
-
-- 主功能：`BG`（背景）
-- 顶刊期望角色：`SECTION_SPECIFIC`
-- 和上一句关系：`jumps`（跳跃，缺少桥接）
-- claim 类型/强度：`descriptive`（描述性 claim） / `low`（低）
-- 证据锚点：`None`（无）
-- 风险词：`无`
-- 标点模式：`OK`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
-
-### EXPERIMENTAL_SETUP_AND_ANALYSIS_RULES.P3.S3
-
-原句：The 1000-row restart body follows the restart input shape used by the local {ea\_restart} flow, not an argument that 1000 rows alone is sufficient for certification.
-
-- 主功能：`BG`（背景）
-- 顶刊期望角色：`SECTION_SPECIFIC`
-- 和上一句关系：`jumps`（跳跃，缺少桥接）
-- claim 类型/强度：`descriptive`（描述性 claim） / `low`（低）
-- 证据锚点：`None`（无）
-- 风险词：`无`
-- 标点模式：`hyphen_count=1; comma_count=1`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
-
-### EXPERIMENTAL_SETUP_AND_ANALYSIS_RULES.P4.S4
-
-原句：Table tab:warmup reports the cutoff, maximum count, and resulting diagnostic outcome to keep the table compact; the diagnostic still inspects many fixed positions jointly and is not a collection of independent single-position claims.
-
-- 主功能：`RESULT`（结果）
-- 顶刊期望角色：`SECTION_SPECIFIC`
-- 和上一句关系：`evidences`（用证据承接上一句）
-- claim 类型/强度：`measurement`（测量/结果 claim） / `low`（低）
-- 证据锚点：`Table`（表）
-- 风险词：`many`
-- 标点模式：`hyphen_count=1; semicolon_count=1; colon_count=1; comma_count=2`
-- 问题类型：`risk_word`
-- 建议动作：`REPLACE_RISK_VERB`（替换高风险动词/泛词）
-
-### PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P1.S2
-
-原句：The contrast between {} and {} is the simplest entry point.
-
-- 主功能：`BG`（背景）
-- 顶刊期望角色：`QUESTION/FIGURE_TABLE/OBSERVATION/QUANTIFICATION/INTERPRETATION/BOUNDARY`
-- 和上一句关系：`jumps`（跳跃，缺少桥接）
-- claim 类型/强度：`descriptive`（描述性 claim） / `low`（低）
-- 证据锚点：`None`（无）
-- 风险词：`无`
-- 标点模式：`OK`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
-
-### PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P1.S3
-
-原句：In the 10 MiB rows, {} has $p_1=0.337316$, absolute bias 0.162684, and bit min-entropy 0.593606.
-
-- 主功能：`BG`（背景）
-- 顶刊期望角色：`QUESTION/FIGURE_TABLE/OBSERVATION/QUANTIFICATION/INTERPRETATION/BOUNDARY`
-- 和上一句关系：`jumps`（跳跃，缺少桥接）
-- claim 类型/强度：`descriptive`（描述性 claim） / `low`（低）
-- 证据锚点：`None`（无）
-- 风险词：`无`
-- 标点模式：`hyphen_count=1; comma_count=3`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
-
-### PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P2.S2
-
-原句：The same-column placement is near balanced by $p_1$ and bit min-entropy, but its adjacent-equal ratio differs from the strongest placements.
-
-- 主功能：`SETUP`（实验/平台设置）
-- 顶刊期望角色：`QUESTION/FIGURE_TABLE/OBSERVATION/QUANTIFICATION/INTERPRETATION/BOUNDARY`
-- 和上一句关系：`jumps`（跳跃，缺少桥接）
-- claim 类型/强度：`descriptive`（描述性 claim） / `low`（低）
-- 证据锚点：`None`（无）
-- 风险词：`无`
-- 标点模式：`hyphen_count=3; comma_count=1`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
-
-### PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P2.S3
-
-原句：This motivates the restart and mechanism measurements: a single continuous-stream statistic cannot define the physical entropy-source boundary.
-
-- 主功能：`NEED`（必要性）
-- 顶刊期望角色：`QUESTION/FIGURE_TABLE/OBSERVATION/QUANTIFICATION/INTERPRETATION/BOUNDARY`
-- 和上一句关系：`jumps`（跳跃，缺少桥接）
-- claim 类型/强度：`measurement`（测量/结果 claim） / `low`（低）
-- 证据锚点：`Experiment setup`（实验设置）
-- 风险词：`无`
-- 标点模式：`hyphen_count=2; colon_count=1`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
-
-### PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P4.S2
-
-原句：The summarized measurements report a maximum 10 MiB/repeat bit-min-entropy mean delta of 0.00841786 among paired placement rows.
-
-- 主功能：`SETUP`（实验/平台设置）
-- 顶刊期望角色：`QUESTION/FIGURE_TABLE/OBSERVATION/QUANTIFICATION/INTERPRETATION/BOUNDARY`
-- 和上一句关系：`jumps`（跳跃，缺少桥接）
-- claim 类型/强度：`measurement`（测量/结果 claim） / `low`（低）
-- 证据锚点：`Experiment setup`（实验设置）
-- 风险词：`无`
-- 标点模式：`hyphen_count=2; slash_count=1`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
-
-### RESTART_AND_WARMUP_CHARACTERIZATION.P4.S3
-
-原句：Repeated warmup scans place the observed transition at $10 < {WARMUP\_BYTES} 11$, with warmup 11 still a boundary observation rather than a large-margin engineering rule.
-
-- 主功能：`RESULT`（结果）
-- 顶刊期望角色：`QUESTION/FIGURE_TABLE/OBSERVATION/QUANTIFICATION/INTERPRETATION/BOUNDARY`
-- 和上一句关系：`elaborates`（展开上一句）
-- claim 类型/强度：`measurement`（测量/结果 claim） / `low`（低）
-- 证据锚点：`None`（无）
-- 风险词：`large`
-- 标点模式：`hyphen_count=1; comma_count=1`
-- 问题类型：`risk_word`
-- 建议动作：`REPLACE_RISK_VERB`（替换高风险动词/泛词）
-
-### RESTART_AND_WARMUP_CHARACTERIZATION.P6.S3
-
-原句：The repeated warmup-10 flagged outcomes and warmup-11 no-flag outcomes support a narrow measured transition, but they should not be generalized as a universal warmup threshold across boards, placements, PVT conditions, or tool runs.
-
-- 主功能：`RESULT`（结果）
-- 顶刊期望角色：`QUESTION/FIGURE_TABLE/OBSERVATION/QUANTIFICATION/INTERPRETATION/BOUNDARY`
-- 和上一句关系：`jumps`（跳跃，缺少桥接）
-- claim 类型/强度：`measurement`（测量/结果 claim） / `very_high`（很高）
-- 证据锚点：`None`（无）
-- 风险词：`universal`
-- 标点模式：`hyphen_count=3; comma_count=4`
-- 问题类型：`unsupported_claim;overstrong_claim;risk_word`
-- 建议动作：`ADD_EVIDENCE_ANCHOR;WEAKEN_CLAIM;REPLACE_RISK_VERB`（补证据锚点；削弱 claim；替换高风险动词/泛词）
-
-### SAMPLER_SIDE_COUNTERFACTUALS.P4.S2
-
-原句：Each row summarizes three 1000-row restart artifacts on the same second board; these are capture repeats under the listed condition, not additional boards or PVT points.} tab:board2counter {tabular}{llrrrrrl} Condition & Warmup & $n$ & Mean $p_1$ & Std. $p_1$ & Min.
-
-- 主功能：`BOUNDARY`（边界）
-- 顶刊期望角色：`QUESTION/FIGURE_TABLE/OBSERVATION/QUANTIFICATION/INTERPRETATION/BOUNDARY`
-- 和上一句关系：`jumps`（跳跃，缺少桥接）
-- claim 类型/强度：`limitation`（限制/边界 claim） / `low`（低）
-- 证据锚点：`None`（无）
-- 风险词：`无`
-- 标点模式：`hyphen_count=1; semicolon_count=1; colon_count=1; comma_count=1`
-- 问题类型：`none`
-- 建议动作：`ADD_BOUNDARY`（补边界条件）
-
-### SAMPLER_SIDE_COUNTERFACTUALS.P4.S3
-
-原句：Min-H & Max worst $x$ & Reading \\ {} compact baseline & 4 & 3 & 0.494077 & 0.000501 & 0.981366 & 556 & compact reference \\ {} compact baseline & 5 & 3 & 0.522394 & 0.001229 & 0.933152 & 576 & compact reference, high-side \\ {} compact baseline & 11 & 3 & 0.490700 & 0.000272 & 0.972532 & 562 & compact reference \\ {} forward lock & 4 & 3 & 0.450792 & 0.001106 & 0.861432 & 719 & repeated biased shift \\ {} forward lock & 5 & 3 & 0.445222 & 0.000603 & 0.848214 & 666 & repeated biased shift \\ {} forward lock & 11 & 3 & 0.411363 & 0.000294 & 0.763719 & 663 & stronger biased shift \\ {} reverse lock & 4 & 3 & 0.498300 & 0.000544 & 0.993649 & 573 & reverse near balance \\ {tabular} {table*}
-
-- 主功能：`RESULT`（结果）
-- 顶刊期望角色：`QUESTION/FIGURE_TABLE/OBSERVATION/QUANTIFICATION/INTERPRETATION/BOUNDARY`
-- 和上一句关系：`evidences`（用证据承接上一句）
-- claim 类型/强度：`descriptive`（描述性 claim） / `low`（低）
-- 证据锚点：`None`（无）
-- 风险词：`high`
-- 标点模式：`hyphen_count=2; comma_count=1`
-- 问题类型：`risk_word`
-- 建议动作：`REPLACE_RISK_VERB`（替换高风险动词/泛词）
-
-### SAMPLER_SIDE_COUNTERFACTUALS.P6.S3
-
-原句：At warmup 4, changing from the compact {} reference to the forward {} lock moves the mean $p_1$ from 0.494077 to 0.450792 and raises the maximum worst fixed-position count from 556 to 719.
-
-- 主功能：`BG`（背景）
-- 顶刊期望角色：`QUESTION/FIGURE_TABLE/OBSERVATION/QUANTIFICATION/INTERPRETATION/BOUNDARY`
-- 和上一句关系：`jumps`（跳跃，缺少桥接）
-- claim 类型/强度：`descriptive`（描述性 claim） / `low`（低）
-- 证据锚点：`None`（无）
-- 风险词：`无`
-- 标点模式：`hyphen_count=1; comma_count=1`
-- 问题类型：`none`
-- 建议动作：`KEEP`（保留）
+- 问题类型：`sentence_jump;punctuation_issue`
+- 建议动作：`ADD_BRIDGE;SPLIT_SENTENCE`（ADD_BRIDGE；SPLIT_SENTENCE）
