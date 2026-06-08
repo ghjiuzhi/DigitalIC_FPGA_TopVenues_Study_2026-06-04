@@ -1,0 +1,910 @@
+                    This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS                                                                                                       1
+
+
+
+
+       High-Throughput Bilinear Pairing Processor for
+              Server-Side FPGA Applications
+             Junichi Sakamoto , Daisuke Fujimoto , Senior Member, IEEE, Riku Anzai, Naoki Yoshida ,
+                                     and Tsutomu Matsumoto, Member, IEEE
+
+
+   Abstract— This study focuses on the acceleration of crypto-                        the amount of data flowing through a network, aggregate
+graphic pairing operations on field-programmable gate arrays                          signatures [1] that reduce the number of transactions have
+(FPGAs) for server-side applications. Previous studies on FPGA                        been proposed. In addition, for the demand to increase data
+pairing implementations focused on area efficiency for embedded
+devices, trying to achieve maximum performance with minimal                           confidentiality, searchable cryptography has been introduced
+circuit resources. However, their architectures are likely to be                      to enable searching in the ciphertext state [2]. Some of these
+inefficient for server-side applications, where the primary interest                  advanced cryptographies are based on an operation known
+is maximum performance when FPGA resources are finished.                              as the (elliptic curve-based) bilinear pairing. A cryptographic
+Their architectures are inefficient for two reasons: low utilization                  system based on pairing is known as pairing-based cryptogra-
+of the digital signal processor (DSP) and low operation frequency.
+In this study, we propose a high-throughput pairing processor                         phy (PBC). However, the pairing is computationally intensive,
+architecture for server-side FPGAs, taking full advantage of                          typically requiring more than 10 000 modular multiplications
+DSPs. First, we propose a loop-unrolled modular multiplication                        on a finite field [3]. Key-size update due to recent theoretical
+algorithm that is suitable for a server-side FPGA. The algorithm                      attack [4] also increases the computational complexity of
+shows the highest throughput and area efficiency compared to
+                                                                                      the pairing. For PBC to be widely used worldwide, it is
+algorithms from previous studies. Second, we design a pair-
+ing processor architecture that embeds the proposed modular                           important to accelerate the pairing computations. In this
+multiplier, thus, maintaining its high throughput by supporting                       study, we focus on PBC for server-side applications such as
+redundant adders and interleaved executions. We evaluate BN254                        aggregate signature verification in Section II-B) that requires
+and BLS12_381 pairings on the proposed processor architecture                         a large number of pairing computations in a batch manner.
+and the evaluation results show that it achieves good throughput
+                                                                                      Field-programmable gate array (FPGA) implementation is a
+that is approximately two and five times faster than that from
+previous studies, respectively.                                                       promising option for accelerating cryptographic operations
+                                                                                      for server-side applications. Server-side FPGAs such as the
+  Index Terms— Bilinear pairing, BLS12_381, BN254, field-
+programmable gate array (FPGA), Montgomery multiplication,
+                                                                                      Xilinx Virtex Ultrascale+ XVU9P used in AWS, Alibaba, and
+multiplier.                                                                           Huawei clouds [5], [6] have significantly huge resources for
+                                                                                      a single crypto core; therefore, increasing throughput with a
+                      I. I NTRODUCTION                                                multicore strategy [7] is an important factor. However, existing
+                                                                                      studies of FPGA-based pairing processors are unsuitable for
+W       ITH the advent of the Internet of Things (IoT) society,
+        the demand for cryptosystem functions is becoming
+increasingly diverse. For example, for the demand to reduce
+                                                                                      multicore strategy in server-side applications for the following
+                                                                                      two reasons.
+
+  Manuscript received 28 November 2023; revised 12 March 2024;                        A. Utilized Resource Imbalance
+accepted 20 April 2024. This work was supported in part by the Cabinet Office
+(CAO) through the Cross-Ministerial Strategic Innovation Promotion Program               Several types of circuit resources are available in FPGAs,
+(SIP) “Cyber Physical Security for IoT Society” under Grant JPNP18015                 including look-up tables (LUTs), flip-flops (FFs), and, digital
+(funding agency: NEDO) and in part by JSPS KAKENHI under Grant                        signal processors (DSPs). If the utilization of these resources
+JP22K17893. (Corresponding author: Junichi Sakamoto.)
+  Junichi Sakamoto and Tsutomu Matsumoto are with the Institute of                    is unbalanced (if the utilization of one of the resources is
+Advanced Sciences, Yokohama National University, Yokohama 240-8501,                   high), the number of cores in a multicore implementation will
+Japan, and also with the National Institute of Advanced Industrial Science and        be bounded by that resource, implying that some resources
+Technology, Tokyo 100-8921, Japan (e-mail: sakamoto-junichi@aist.go.jp;
+tsutomu@ynu.ac.jp).                                                                   are unused and do not contribute to performance (see Fig. 1).
+  Daisuke Fujimoto is with the Graduate School of Science and Technology,             Existing studies of FPGA pairing processors [8], [9], [10],
+Nara Institute of Science and Technology, Nara 630-0192, Japan, and also              [11], [12], [13], [14] evaluate only single-core performance;
+with the National Institute of Advanced Industrial Science and Technology,
+Tokyo 100-8921, Japan (e-mail: fujimoto@is.naist.jp).                                 thus, do not take into account the utilized resource balance for
+  Riku Anzai was with the Graduate School of Environment and Information              multicore performance.
+Sciences, Yokohama National University, Yokohama 240-8501, Japan (e-mail:
+rikumannjuu@gmail.com).
+  Naoki Yoshida is with the Institute of Advanced Sciences, Yokohama
+                                                                                      B. Low Operating Frequency
+National University, Yokohama 240-8501, Japan (e-mail: yoshida-naoki-jb@                 Existing pairing processors on FPGAs [8], [9], [10], [11],
+ynu.ac.jp).                                                                           [14], [15] run at 200–300 MHz, which is lower than the maxi-
+  Color versions of one or more figures in this article are available at
+https://doi.org/10.1109/TVLSI.2024.3402164.                                           mum operating frequency of the FPGAs, 600–800 MHz. This
+  Digital Object Identifier 10.1109/TVLSI.2024.3402164                                is mainly because the existing studies focus on low-latency
+                              © 2024 The Authors. This work is licensed under a Creative Commons Attribution 4.0 License.
+                                         For more information, see https://creativecommons.org/licenses/by/4.0/
+                    This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+2                                                                                  IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS
+
+
+
+                                                                                      functions previously implemented in slices into the DSP. The
+                                                                                      low SDR of the modular multiplier allows us to implement
+                                                                                      other components for the pairing computation, such as the
+                                                                                      modular adders, with a large number of logic slices to improve
+                                                                                      performance. Although adders and sequencers can typically be
+                                                                                      a performance bottleneck, our pairing processor architecture
+                                                                                      avoids the performance degradation through deep pipelining
+                                                                                      and the use of redundant adders that consume a large number
+                                                                                      of logic slices, resulting in high throughput of the entire
+                                                                                      pairing computation.
+                                                                                         As a demonstration of our proposed method, we show that
+                                                                                      the proposed modular multiplier achieves a low SDR of less
+                                                                                      than 22, an operating frequency of over 600 MHz, and at least
+Fig. 1.      Abstract images of multicore implementation with (a) high                more than twice the throughput per area compared to previous
+SDR (≫ 43) cores and (b) low SDR (< 43) cores. (a) Large unused regions               studies. Furthermore, we evaluate the pairing processor using
+including many DSPs, indicating that the FPGA does not achieve maximum                the proposed modular multiplier on BN254 and BLS12_381
+performance. (b) Use most of the DSP resources. The remaining unused slices
+are effectively available for other peripherals such as I/O interfaces.               curve pairings. The evaluation results show that our imple-
+                                                                                      mentation have the good SDRs (46.96 and 41.24) and achieve
+                                                                                      approximately 2 and 5 times multi-core throughput, compared
+computation. Whereas server-side applications require high
+                                                                                      to those from previous studies. Our source code is available
+throughput rather than low latency to respond to a large
+                                                                                      on the web.2
+numbers of cryptographic requests.
+                                                                                         The remainder of this article is organized as follows.
+   To solve these problems, this article: 1) introduces a metric,
+                                                                                      Section II discusses the preliminaries for this study, includ-
+the slice DSP ratio (SDR), that maximizes the use of circuit
+                                                                                      ing pairing mathematical background and related works.
+resources on an FPGA and 2) uses the SDR metric, proposes a
+                                                                                      Section III discusses the proposed method and the ways in
+methodology to maximize the performance of the crypto core
+                                                                                      which it achieved a high performance on server-side FPGAs.
+for server-side applications.
+                                                                                      Section IV presents the evaluation results of our proposed
+   To implement a cryptographic core on an FPGA, we can
+                                                                                      method on XVU9P FPGA and comparisons with results from
+primarily use two resources: a logic slice, consisting of
+                                                                                      previous studies. Finally, Section VI concludes this article.
+LUTs and FFs, and a DSP, a dedicated unit for sum-of-
+product operations. Balanced utilization of these two resources
+leads to maximize the performance under multicore strategy.                                                       II. P RELIMINARIES
+We introduce the SDR as a metric for resource utilization                             A. Pairing
+imbalance. Xilinx Virtex Ultrascale+ XVU9P, which is a stan-                             The map below e
+dard server-side FPGA adopted in AWS, Alibaba, and Huawei
+cloud, provides 295 000 slices and 6840 DSPs. The closer                                                           e : G1 × G2 → G3                                    (1)
+the SDR of a cryptographic core is to 431 = 295 000/6840,                                                              e(P, Q) 7→ R                                    (2)
+the more “balanced” the resource utilization, resulting in high
+performance due to the full resource utilization as shown in                          is called (admissible) “pairing” if it satisfies the following
+Fig. 1. In the previous studies [8], [9], [11], most pairing                          three properties.
+cores had SDR > 43, which is not preferable for maximizing                               1) Non-degeneracy: For ∀P (∀Q), if e(P, Q) = 1, then
+multicore performance in terms of not taking full advantage                                  Q = 0 (P = 0).
+of FPGA resources (DSPs).                                                                2) Bilinearity: e([a]P, [b]Q) = e([b]P, [a]Q) =
+   Our methodology for getting the SDR of the pairing circuit                               e(P, Q)ab .
+close to 43 is to construct the modular multiplier with as                               3) Computability: Efficiently computable in polynomial
+few slices as possible (with low SDR). Since the components                                 time.
+of the pairing circuit other than the modular multiplier (e.g.,                       In the above expression, G1 and G2 are represented additive,
+modular adders and sequencers) are composed only of slices,                           and G3 multiplicative. [a]P represents the scalar multiplica-
+the SDR of the entire pairing circuit is balanced by the low                          tion of P by an integer a.
+SDR modular multiplier and the high SDR other components.                                Let p be a prime number, E be an elliptic curve defined
+   In order to reduce the SDR of the modular multiplier,                              over F p , and k is the embedding degree. Our target pair-
+we propose a new modular multiplication algorithm designed                            ing is the optimal Ate pairing [18], where G1 , G2 are
+for the DSP of the cloud FPGA. This algorithm is carefully                            defined as subgroups of elliptic curve group E(F p ), and
+designed to take full advantage of various DSP functions,                             G3 is a subgroup of F∗pk . Although the unique property
+asymmetric multiplier, ternary post-adder, and pipeline reg-                          of the pairing—bilinearity—produces various functionalities
+isters, achieving high throughput at low SDR by integrating                           in advanced cryptography, the security parameters for using
+                                                                                      the pairing securely have not been decided yet with solid
+   1 This is a device-dependent value. We believe that using this value is
+justified because XVU9P is a de facto standard in cloud FPGAs.                          2 https://github.com/ankoman/HTBPA
+                    This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+SAKAMOTO et al.: HIGH-THROUGHPUT BILINEAR PAIRING PROCESSOR                                                                                                            3
+
+
+
+                                                                                      B. BLS Signature
+                                                                                         The BLS digital signature scheme [1], [23] is an example of
+                                                                                      PBC. The BLS digital signature has a short signature length
+                                                                                      than the conventional elliptic curve digital signature algorithm
+                                                                                      (ECDSA) and a signature aggregation function, which can
+                                                                                      aggregate multiple signatures into a single signature. Accord-
+                                                                                      ing to these advantages, some decentralized applications, such
+                                                                                      as DFINITY [24] and Ethereum [25], adopt the BLS signature
+                                                                                      to compress data and storage size.
+                                                                                         G1 and G2 are elliptic curve groups, which have the same
+                                                                                      prime order p; g1 and g2 are the generators of G1 and G2 ,
+                                                                                      respectively, and H0 is a hash function such that H0 : M →
+                                                                                      G1 . The BLS signature consists of three functions, KeyGen,
+                                                                                      Sign, and Verify.
+                                                                                         1) KeyGen(λ): For security parameter λ, it outputs secret
+                                                                                                      $
+                                                                                            key sk ←  − Z p and public key pk ← [sk]g2 ∈ G2 .
+Fig. 2. Typical operations required for optimal Ate pairing computation.                 2) Sign(sk, m): For an input message m ∈ M, it outputs
+Hardware architecture suitable for F p2 operations is effective in speeding up              signature σ ← [sk]H0 (m) ∈ G1 .
+the pairing since all operations can be decomposed into F p2 operations.
+                                                                                         3) Verify( pk, m, σ ): Outputs “accept” if e(H0 (m), pk) =
+                                                                                            e(σ, g2), otherwise “reject.”
+consensus in the research community. In 2018, Razvan and                              The Verify function determines whether the signature is
+Sylvain [4] updated the security-bit length for the secure                            acceptable using the pairing’s property of bilinearity.
+pairing computation. The parameters can be updated again in                              In addition, the BLS signature allows the following Agg
+the future.                                                                           and AggVerify functions.
+   Over the optimal Ate pairing [18], the Barreto-Naehrig                                1) Agg(σ1 , . . . , σn ): For input n signatures, outputs S ←
+(BN) curve [19] satisfies a 100-bit security level, if it                                   σ1 + · · · + σn .
+adopts parameters with 254-bit prime characteristics, while                              2) AggVerify(( pk1 , m 1 ), . . . , ( pkn , m n ), S): For n tuples
+the Boneh–Lynn–Shacham (BLS) curve [20] satisfies a 128-                                    of public keys and messages, outputs “accept” if
+bit security level, if it adopts parameters with 381-bit prime                              e(S, g2 ) = e(H0 (m 1 ), pk1 ), . . . , e(H0 (m n ), pkn ), other-
+characteristics [21].                                                                       wise “reject.”
+   Because these curves have the embedding degree k = 12,
+                                                                                      Because the BLS signature can compress multiple signature
+the pairing computation involves performing the F p12 arith-
+                                                                                      data into one, owing to the Agg function, the BLS signature
+metic. We use the following extension:
+                                                                                      is expected to be used to reduce network traffic and storage
+         F p2 = F p [i]/ i 2 − β , where β = −1                                       size.
+                                
+                                                            (3)
+        F p12 = F p2 [w]/ w − ξ , where ξ = i + 1.
+                              6
+                                  
+                                                            (4)                       C. Importance of Server-Side FPGAs to Accelerate
+Since F p12 is constructed on F p2 , it is important to accelerate                    Pairing Computations
+the F p2 operation in the optimal Ate pairing architecture.                              The main bottleneck of the BLS signature is n + 1 pairing
+    Fig. 2 shows a top-down view of the operations required                           computations involved in the AggVerify. As an example of
+for a typical optimal Ate pairing computation. The opti-                              the BLS signature application [26], [27], we take a wireless
+mal Ate pairing can be decomposed into two functions:                                 sensor network (WSN), where millions of sensor nodes sense
+ f , called the Miller loop, and its power of p k − 1/r ,                             some physical quantities and the sensed data is accumulated
+called the final exponentiation, where r is the order of the                          onto server nodes. Signing the sensed data on the sensor
+elliptic curve group. Each function is decomposed into finer-                         nodes provides the ability for authenticity verification on the
+grained operations: elliptic curve operations, F p12 operations,                      server nodes. This prevents the data poisoning attack and
+and F p2 operations. The lowest-level operation is the prime                          the adversarial example attack. However, the signature length
+field (F p ) operation, i.e., addition and multiplication modulo                      (64 B in typical ECDSA, for instance) is significantly larger
+p, which can be implemented with log p-bit adders and                                 than the sensed data (we estimate a few bytes in many cases).
+modular multipliers. According to [22], the pairing com-                              The load on the network bandwidth must be addressed when
+putation for a 254-bit prime requires approximately 10 000                            many nodes send signed data. Introducing the BLS signature
+F p multiplications and 57 000 F p additions, indicating that                         onto the WSN significantly saves the network bandwidth by
+high-throughput adders and modular multipliers are effective                          aggregating multiple signatures on intermediate nodes such
+in speeding up the pairing computation. Because most oper-                            as gateways. The server nodes must process n + 1 pairing
+ations for pairing can be decomposed into F p2 operations,                            computation to verify the aggregated signature, which can
+as shown in Fig. 2, we design a hardware architecture opti-                           become a bottleneck.
+mized for F p2 operations by combining modular adders and                                Hardware implementation is a promising approach
+multipliers.                                                                          for accelerating pairing computation. Among hardware
+                This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+4                                                                              IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS
+
+
+
+implementations, we focus on reconfigurable FPGA because
+security parameters can be updated. The server side can use
+high-performance FPGAs, compared to IoT end devices.
+FPGAs have recently become available for cloud services
+with the Xilinx Virtex Ultrascale+ XVU9P. Our goal is,
+therefore, to implement a high-throughput implementation
+on the Xilinx Virtex Ultrascale+ XVU9P. We propose a
+high-throughput implementation that can handle many pairing
+requests, focusing on the fact that the pairing requests on the
+server nodes occur in a batch-like manner when an aggregated
+signature arrives.
+
+D. Related Studies
+   Sakamoto et al. [15] proposed a pairing processor based
+on Yao et al.’s work [8], and their pairing processors
+have similar architectures. While Sakamoto et al. aimed to
+develop a low-latency and large-scale pairing processor with
+fully unrolled quotient pipelining Montgomery multiplication
+(QPMM), Yao et al. aimed to achieve a good area-speed
+efficiency with the residue number system (RNS). These stud-
+ies have implemented pairing processors with 16–18 pipeline                       Fig. 3. Abstract overall architecture of the proposed pairing processor. The
+stages on FPGAs, and they demonstrated that their pairing                         brackets [, ) represent the range of the output values of each module, where
+                                                                                  M̃ is a constant for the modular multiplier algorithm. This architecture adopts
+processor can use the pipeline at high efficiencies of approxi-                   the lazy-reduction technique for fast modular additions; hence, modules other
+mately 100%. This indicates that the pairing computation has                      than the QPMM extend the output ranges. The QPMM module performs all
+fewer computation dependencies, and we can maintain the                           reduction operations, in which a value up to 1024 M̃ − 1 is reduced to up to
+                                                                                  2 M̃ − 1.
+performance if we implement a deeper pipeline. We believe
+that we can improve the throughput of a pairing processor
+while maintaining the latency even when the pipeline stages                       designed appropriately to maintain a high operating frequency.
+are deepened to maximize the DSP operating frequency.                             In their study, the operating frequency of the elliptic curve
+   Accelerating modular multiplication is a major topic in                        processor was decreased from 349 to 298 MHz.
+cryptography research, as modular multiplication is the dom-
+inant operation in computing many public key cryptosystems.                           III. P ROPOSED PAIRING P ROCESSOR A RCHITECTURE
+Barrett reduction [28] and Montgomery reduction [29] are the
+most well-known modular multiplication algorithms, with the                       A. Architecture Overview
+latter being the mainstream method.                                                  Fig. 3 shows the overall architecture of our pairing pro-
+   The key point to implementing modular multiplication in                        cessor, which is an improved version of the one from our
+FPGAs is effectively using DSPs, the dedicated hardware                           previous study [15]. This architecture is mainly designed
+elements for performing multiplications. The operating fre-                       to accelerate the F p2 arithmetic frequently appearing in the
+quency of the DSP is crucial in implementing a fast modular                       pairing computation. For example, we can efficiently calculate
+multiplier. Some studies [16], [17] aimed to operate the DSPs                     the F p2 multiplication and squaring using a Karatsuba-like
+at the maximum frequency written in datasheets.                                   formula as the following:
+   Suzuki [16] implemented a modular multiplier that oper-
+                                                                                       z 0 + z 1 i = (x0 + x1 i) · (y0 + y1 i)
+ates at a maximum operating frequency of 400 MHz on
+Virtex-4 devices by adequately assigning the QPMM [30]                                             = x0 y0 − x1 y1
+algorithm to 17 DSPs. Gallin and Tisserand [17] implemented                                          + ((x0 + x1 ) · (y0 + y1 ) − x0 y0 − x1 y1 )i                 (5)
+a 128-bit modular multiplier operating at 349 MHz, compared                            z 0 + z 1 i = (x0 + x1 i)     2
+to the maximum operating frequency of 390 MHz for the
+                                                                                                   = (x0 + x1 ) · (x0 − x1 ) + 2x0 x1 i                            (6)
+Spartan-6 device, by adequately assigning the coarsely inte-
+grated operand scanning (CIOS)-Montgomery multiplication                          where z 0 , z 1 , x0 , x1 , y0 , y1 ∈ F p . Fig. 4 shows the ways in
+to nine DSPs. Although these studies proposed methodologies                       which the above equations are processed in the proposed
+for maximizing the DSP operating frequency, their results                         architecture. As shown in Fig. 4, the architecture enables the
+were validated only on small-scale (older generation) FPGAs.                      calculation of F p2 multiplication or squaring by three or two
+We should take advantage of many resources (thousands of                          cycles on average, respectively. In Sections III-B and III-C,
+DSPs) in modern large-scale FPGAs used in cloud services.                         we explain ways in which this architecture achieves both high
+   Gallin and Tisserand [17] implemented an elliptic curve                        performance and a low SDR.
+processor using their proposed modular multiplier. The elliptic                      The pairing computation is performed on a finite field; there-
+curve processor requires adders and memories, and not only                        fore, all additions in the architecture require modular adders
+a modular multiplier. The adders and memories must also be                        rather than simple adders. Because the modular arithmetic
+                     This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+SAKAMOTO et al.: HIGH-THROUGHPUT BILINEAR PAIRING PROCESSOR                                                                                                             5
+
+
+
+
+Fig. 4. Proposed architecture’s pipeline data flow when processing F p2 through multiplication and squaring for three and two cycles on average, respectively.
+The sequencer module first issues three opcodes (control signals) for the F p2 multiplication, followed by two opcodes for F p2 squaring. This figure shows
+the computation process according to the control signals. In the figure, all computations are in the same-sized boxes, but the computation time is different.
+This figure is not cycle-accurate, and the interleaved execution is omitted to simplify the explanation; τ data are read from the BRAMs for an issued opcode
+when enabling an interleaved execution (we can also say that this figure shows the situation in which all threads are processing the same data).
+
+
+
+usually involves a comparison operation, the addition results                          the modular multiplier to the next input (γ = 8 bits are
+must be determined before the comparison. This implies that                            sufficient for our scheduling). These saved carry bits are
+we cannot take advantage of a fast redundant adder such as                             used by the ToUint module in multiple cycles to maintain
+a carry-save adder (CSA), and it is difficult to increase the                          a high operation frequency. We implemented a 256-bit two-
+operation frequency owing to the long carry chain. To solve                            input RCA on an xcvu9p-2l device and found that it operates
+this problem, we adopted the lazy-reduction technique into                             at approximately 400 MHz. Because the BLS12_381 pairing
+the architecture, which separates modulo operations from the                           requires a 381-bit addition, we selected κ = 4 with an
+modular adders and pushes all the modulo operations to the                             operating margin.
+modular multiplier. This enables all adders in the architecture
+to be converted to redundant adders, thus increasing the                               B. Operation Modules
+operating frequency.                                                                      1) Sequencer: The sequencer issues control signals to
+   Although CSA is the most popular redundant adder that can                           control the operation of each module. The sequencer has a
+eliminate a long carry chain, it has a disadvantage of doubling                        built-in ROM with 2048 entries, which contains a pairing
+the number of used FFs. Consequently, for Xilinx FPGAs                                 computation program optimized for the 18-stage pipeline
+that have dedicated logic for carry propagation (CARRY8),                              architecture [15]. Because the pipeline of our architecture
+a ripple-carry adder (RCA) is often more efficient. To avoid                           has more than 18 stages (89 stages for BN254 pairing and
+a full carry chain of RCA, we employ the partially redundant                           121 stages for BLS12_381 pairing), this program cannot run
+partitioned adder (PRPA) that divides an adder into κ sub-                             efficiently. We make our architecture to support an interleaved
+adders and saves a γ -bit carry for each sub-adder. For a                              execution (multithreading), where a core can concurrently
+non-redundant, R-bit integer A represented as                                          execute multiple pairings. For the number of threads τ , the
+                      κ−1                                                              sequencer issues the control signal every τ cycles and issues
+                      X
+                             ai · 2r ·i    ai ∈ 0, 2r − 1                              the memory address for corresponding threads every cycle.
+                                                        
+                A=                                                             (7)
+                       i=0                                                                Let σ be the number of pipeline stages of the entire pairing
+                                                                                       processor. Our program works under the condition that σ <
+we define a partially redundant κ-partitioned integer Â as                            18τ ; therefore, we set τ = 5 for the BN254 pairing and
+follows:                                                                               τ = 7 for the BLS12_381 pairing. Our pairing program is
+                     κ−1
+                     X                                                                 optimized by various techniques described in [3], including
+                           aˆi · 2r ·i    aˆi ∈ 0, 2r +γ − 1
+                                                           
+              Â =                                                             (8)     twisted elliptic curves, sparse multiplication, and compressed
+                     i=0                                                               squaring techniques (see [15] for the detailed scheduling).
+where r = R/κ (we assume κ|R). In the PRPA, each                                          2) Preadder: The preadder shown in Fig. 5 is a two-input
+sub-addition is performed with r + γ -bit width to eliminate                           two-output module for generating the input to the subsequent
+the original R-bit carry chain. The length of the each carry                           modular multiplier. The data path is divided into two parts: the
+bit depends on the number of additions from the output of                              left and right sides produce the multiplicand and multiplier
+                     This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+6                                                                                   IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS
+
+
+
+
+Fig. 5. Preadder block diagram. A preadder has three operational modes
+controlled by the control signal csigpre : 1) pass-through mode that directly
+outputs di when csigpre = 0; 2) one-step-delay mode that outputs the sum of
+dipre,l and di pre,r of τ -cycles-before when csigpre = 1; and 3) two-step-delay
+mode that outputs the sum of dipre,l and dipre,r of 2τ -cycles-before when
+csigpre = 2.
+
+
+
+of the modular multiplier, respectively. The main arithmetic
+                                                                                       Fig. 6. Postadder block diagram. This module has three accumulators; each
+units of the preadder are four adders (adders 1–4 constructed                          consists of the PRPA, two selectors, and a register. The operational mode
+as the PRPAs), where adder 3 is a subtractor taking two’s                              of an accumulator depends on the selector outputs controlled by the control
+complement value as the right-side input. This module has                              signal csigpost,1 . When a sub signal which is a bit of csigpost,1 equals one, the
+                                                                                       right-hand selector selects one of the inverted inputs, realizing a subtraction
+three operational modes as shown in Fig. 5. First-in first-out                         operation using two’s complement value. The postadder output is selected
+FIFO registers are for supporting τ interleaved execution.                             from three accumulators by the control signal csigpost,out .
+   3) ToUint Module: The ToUint module is a two-input two-
+output module responsible for converting the PRPA form                                    7) QPMM: The improvement of the modular multiplier
+values to non-redundant form and making the values unsigned.                           module is the main part of our proposed method. The detailed
+We realize the unsigned operation by adding 512 M̃ to the                              description is presented in Section III-C. So far, we discussed
+input values because the minimum input value is −512 M̃ by                             that our architecture consumes many slices for adders to
+carrying up the redundant γ bits, taking κ = 4 cycles to                               accelerate F p2 operations and FFs to support the interleaved
+eliminate the long carry propagation.                                                  execution. Therefore, to maximize the throughput in multicore
+   4) Cmul: The Cmul module is a two-input two-output mod-                             implementations, the modular multiplier must be implemented
+ule responsible for multiplying by constants α ∈ {2, 3, 4, 6},                         with a small SDR by efficiently utilizing the functions of DSP
+which consist of constant shifters and the PRPA. Multiplica-                           primitives.
+tion by two is useful for accelerating F p2 squaring which, has
+a term of 2x0 x1 [see (6)]. Multiplications by 3, 4, and 6 are                         C. Low-SDR High-Throughput Modular
+useful for accelerating F p12 and elliptic curve operations.                           Multiplication Algorithm
+   5) Postadder: The postadder module shown in Fig. 6 is                                  The basic idea of lowering the SDR is to improve per-
+a one-input one-output module responsible for accumulating                             formance while consuming a large amount of DSP with
+the output of the QPMM. The postadder consists of three                                loop-unrolled implementation. Sections III-C1 and III-C2
+accumulators, two of them are mainly used for producing                                first describes the features of the Xilinx DSP48E2 primitive
+the two terms of an F p2 element, as shown in Fig. 4, and                              and proposes a modular multiplication algorithm suitable for
+the remainder is used for calculating F p12 elements. Each                             using its asymmetric multiplier and sum-of-products arith-
+accumulator has eight modes of operations controlled as shown                          metic functions.
+in Fig. 6. Similar to the preadder, the postadder has FIFO                                1) DSP48E2: Many FPGAs contain DSP hardware macros
+registers to support the interleaved execution.                                        to accelerate signal-processing applications. The specifications
+   6) F p Inverter: In our pairing implementation, an F p                              of the DSP vary by vendor and device. Virtex Ultrascale+
+inversion occurs only once per pairing; however, the inverse                           devices are the mainstream FPGAs available on many cloud
+operation can be a bottleneck if executed on the QPMM                                  services, AWS F1, Huawei, and Alibaba cloud. This study
+by Fermat’s little theorem, because the computation causes                             proposes a modular multiplication algorithm for DSP48E2,
+many pipeline bubbles. To solve this bottleneck, our pairing                           which is the DSP primitive on Virtex Ultrascale+ FPGAs.
+processor has a dedicated module for F p inversion, which                                 A simplified block diagram of DSP48E2 is shown in Fig. 7.
+implements the Montgomery inverse algorithm [31] with                                  DSP48E2 takes 27-bit A, 18-bit B, 48-bit C, and PCIN as
+τ -stage pipeline.                                                                     inputs and outputs 48-bit P and PCOUT. PCIN is a dedicated
+                    This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+SAKAMOTO et al.: HIGH-THROUGHPUT BILINEAR PAIRING PROCESSOR                                                                                                               7
+
+
+                                                                                      Algorithm 1 QPMM [30]
+
+
+
+
+                                                                                         Consider all values except B in the 2ℓ -radix representation.
+                                                                                      The sum of qi−d M e and bi A becomes the sum of products of
+                                                                                      the same index j as follows:
+Fig. 7.   Simplified block diagram of the DSP48E2 primitive.
+                                                                                                                             m−1
+                                                                                                                             X
+                                                                                                                                   fj qi−d + a j bi · 2 jℓ .
+                                                                                                                                                   
+line connected to PCOUT of the adjacent DSP, and it is used
+                                                                                                           e + bi A =
+                                                                                                      qi−d M                       m                                   (10)
+                                                                                                                             j=0
+to input the results of the adjacent DSP with a minimum delay.
+DSP48E2 is a typical multiply-accumulate (MAC) unit, with a                           For c = ℓ − k (k ≤ ℓ)
+27 × 18-bit signed multiplier (26 × 17-bit unsigned multiplier)                                                                    m−1
+                                                                                                                                         si, j · 2c · 2ℓ( j−1)
+                                                                                                                                   X
+and a 48-bit three-input adder followed by the multiplier.                                              Si /2k = si,0 /2k +                                            (11)
+DSP48E2 has optional pipeline registers at various locations,                                                                      j=1
+which can be used to increase the operating frequency instead
+                                                                                                      fj qi−d + a j bi , then the sum of (10) and (11) is
+                                                                                      and let ti, j = m
+of the latency. The maximum operating frequency of the DSP
+is listed in the datasheet [32], for example, up to 644 MHz                                                              m−1
+                                                                                                                                si, j · 2c + ti, j−1 · 2ℓ( j−1) .
+                                                                                                                         X
+                                                                                          L 2 : Si+1 = si,0 /2k +
+                                                                                                                                                    
+for Virtex Ultrascale+ xcvu9p-2l devices that are available on                                                                                                         (12)
+the cloud services.                                                                                                      j=1
+
+   2) High-Throughput Modular Multiplication Algorithm for                            DSP48E2 can calculate (12) easily; however, the length of si, j
+DSP48E2: We propose a modified QPMM algorithm [30,                                    increases by c bits as index i progresses. Let the lower 2k bits
+Algorithm 4] suitable for DSP48E2. The naive QPMM                                     of si, j be sli, j = si, j mod 22k and the remaining upper bits be
+algorithm is shown in Algorithm 1. QPMM is a variant                                  su i, j = si, j /22k . Equation (11) is rewritten as follows:
+of Montgomery multiplication that eliminates computational
+                                                                                                                       m−1
+dependency in the conventional high-radix Montgomery
+                                                                                                                             sli, j + su i, j · 22k · 2c · 2ℓ( j−1)
+                                                                                                                       X
+                                                                                            Si /2 = si,0 /2 +
+                                                                                                  k            k
+                                                                                                                                                   
+multiplication algorithm [30, Algorithm 1]. The essential
+                                                                                                                       j=1
+improvement of QPMM is the ability to delay the timing
+                                                                                                                       m−1
+when qi is required by d cycles. This eliminates the com-                                                              X
+                                                                                                      = si,0 /2k +           sli, j + su i, j · 22k+c+ℓ( j−1) .
+                                                                                                                                             
+                                                                                                                                                                       (13)
+putational dependency between L 1 and L 2 and allows them
+                                                                                                                       j=1
+to be executed in parallel. A larger value of d makes the
+multiplication width long; therefore, d should be minimal.                            Because 2k + c + ℓ( j − 1) = ℓ−c + ℓj = k + ℓj
+Moreover, because qi is the lower k bits of Si , carry bits must                                                        m−1
+                                                                                                                               sli, j · 2c + su i, j−1 · 2k · 2ℓ( j−1)
+                                                                                                                        X
+                                                                                             Si /2k = sli,0 /2k +
+                                                                                                                                                           
+not be propagated to more than k bits during L 2 calculation.
+Thus, we can efficiently calculate most additions during the                                                             j=1
+L 2 calculation using redundant representation adders such as                                                                                                          (14)
+the CSA.
+                                                                                         L 2 : Si+1 = sli,0 /2     k
+   To execute the QPMM algorithm on the DSP48E2, we must
+                                                                                                             m−1
+replace the L 2 calculation with a multiple-precision operation
+                                                                                                                   sli, j · 2c + su i, j−1 · 2k + ti, j−1 · 2ℓ( j−1)
+                                                                                                             X                                           
+matched to the DSP48E2 operation width. Because the multi-                                               +
+                                                                                                             j=1
+plier of DSP48E2 is asymmetric, we represent multiplicand A
+and multiplier B using the different radixes 2ℓ and 2k (typically                                                                                                      (15)
+ℓ = 26, k = 17), respectively, as the following:                                      where each si, j is at most k + ℓ + 1 bits or less. When ℓ =
+                      m−1
+                               j                n
+                                                         i                           26, k = 17, k +ℓ+1 = 44. DSP48E2 can output up to 48 bits;
+                             2ℓ a j ,
+                      X                          X
+                A=                        B=           2k bi .                (9)     therefore, we can efficiently calculate these sum-of-products
+                       j=0                       i=0                                  operation within the DSP.
+                     This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+8                                                                                   IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS
+
+
+
+
+Fig. 8.   PE designs for four types of latency λPE . (a) λPE = 1 PE design. (b) λPE = 2 PE design. (c) λPE = 3 PE design. (d) λPE = 4 PE design.
+
+
+Algorithm 2 d = 0 QPMM for DSP48E2                                                     and performance explore synthesis strategies for the modu-
+                                                                                       lar multiplier and the pairing core evaluation, respectively.
+                                                                                       The VCU118 board contained a 16-nm Virtex UltraScale+
+                                                                                       xcvu9p-2l FPGA, which has 147 780 CLBs (1 182 240 six-
+                                                                                       input LUTs and 2 364 480 FFs), 6840 DSPs, and 2160 36-kb
+                                                                                       block random access memories (BRAMs). The xcvu9p is
+                                                                                       a high-performance large-scale FPGA for use in server-side
+                                                                                       applications and is adopted in Alibaba, Huawei, and AWS
+                                                                                       clouds. Because the notations of the area differ between
+                                                                                       Ultrascale and other devices, we converted certain values
+                                                                                       in the implemented results, such that one RAMB36 = two
+                                                                                       RAMB18s and one CLB = two slices.
+
+
+                                                                                       B. Modular Multiplier Evaluation
+                                                                                          We implemented Algorithm 2 with a fully unrolled manner
+                                                                                       on the VCU118 board. The performance evaluation results for
+                                                                                       BN254 and BLS12_381 (254- and 381-bit multipliers) on each
+                                                                                       PE latency are shown in Table I. As the latency increased, the
+                                                                                       operating frequency improved, and when λPE = 4, the 256-bit
+   We propose a QPMM variant algorithm using (14), as shown                            modular multiplier operated at 623 MHz, which is close to the
+in Algorithm 2. Assigning the four-term sum-of-products at                             maximum operating frequency of 644 MHz [32]. The latency
+Line 6 to two DSPs, as shown in Fig. 8, we can complete                                and the resource consumption worsened as λPE was increased;
+most QPMM operations within the DSPs. We refer to the                                  however, we do not consider these to be problems as our goal
+combination of these two DSPs as a processing element (PE).                            is to maximize throughput. Even at λPE = 4, the SDR remains
+Fig. 8 shows four different latency PEs using optional registers                       below 43, around 20, indicating that the DSP is being used
+in the DSPs. The overall image of the unrolled implementation                          effectively. For these results, we adopted a λPE = 4 design that
+of Algorithm 2 using these PEs is shown in Fig. 9. The                                 has the best throughput, for the pairing processor evaluation
+demultiplexers (DeMUXs) virtually have no cost because it                              in Section IV.
+is a distribution of wires, and most functions except for few                             Table II shows the comparisons of our proposed multipliers
+adders can be completed within the DSP, which is expected                              (λPE = 4) to those from previous studies. The proposed
+to contribute to a low SDR.                                                            method achieved the highest throughput with the largest slice
+   The algorithm parameters are k = 17, ℓ = 26, n = 17, m =                            and DSP resource consumption compared to the existing meth-
+11 for BN254, and k = 17, ℓ = 26, n = 25, m = 16 for                                   ods. The latency of the proposed method is also comparable
+BLS12_381, selected for extending R to perform the lazy                                to other methods. The proposed method also has the best
+reduction (R = 2289 for BN254 and R = 2425 for BLS12_381).                             TP/ESlices, a measure of area efficiency, indicating that it
+Ma et al. [33] reported that increasing 2 bits in R can extend                         is suitable for server-side FPGAs, where many resources are
+the range of QPMM input A and B twice. These parameters                                available. Furthermore, the proposed method achieved the
+extend the maximum input of Algorithm 2 from 2 M̃ to                                   lowest SDR. This indicates that the slice consumption does
+1024 M̃.                                                                               not become a bottleneck when the proposed multiplier is
+                                                                                       embedded in a pairing processor that spends many slices for
+                     IV. E VALUATION R ESULTS                                          accelerating modular adders.
+                                                                                          The papers [34] and [35] evaluate modular multipliers
+A. Evaluation Platform                                                                 on the same generation devices as ours. Reference [35]
+   We implemented the proposed method on a VCU118 evalu-                               is a low-latency architecture that uses a large number of
+ation board and evaluated area and timing performances after                           DSPs and LUTs to complete the modular multiplication in
+place and route (PAR) by Vivado 2020.1. We use default                                 a single cycle, achieving a latency of about 15% of our
+                    This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+SAKAMOTO et al.: HIGH-THROUGHPUT BILINEAR PAIRING PROCESSOR                                                                                                            9
+
+
+
+
+Fig. 9. Fully unrolled QPMM design (see Algorithm 2) using PEs. DeMUX elements can be implemented as wire splitting with no cost. Hence, although the
+right-most adders and the final four-cycle addition should be implemented with few slice resources, almost the entire QPMM circuit can be implemented with
+DSP resources. This is the reason this module achieves a low SDR and high performance. This module can exhibit the DSP‘s maximum frequency without
+making the slices a bottleneck.
+
+
+                                                            TABLE I
+P ERFORMANCE E VALUATION R ESULTS OF O UR P ROPOSED 254- AND 381-bit M ODULAR M ULTIPLIERS I MPLEMENTED ON VCU118. λPE AND λMUL
+                   R EPRESENT THE L ATENCY OF THE DSP AND THE E NTIRE M ODULAR M ULTIPLICATION , R ESPECTIVELY
+
+
+
+
+implementation. Meanwhile, the throughput is less than a                              our implementation and number of DSPs. In this case, our
+tenth of our implementation, making it unsuitable for server-                         implementation achieves 1.5 times the throughput with about
+side applications. To compare our implementation with [34],                           1/12 and 1/3 of the LUTs and FFs.
+we need to take into account the resource utilization; however,                         The comparisons in Table II do not consider the difference
+we cannot use the SDR and ESlice metrics of resource                                  of device generations. The proposed method has been eval-
+utilization because Noyez et al. [34] do not provide the number                       uated on the latest FPGA, Virtex Ultrascale+, whereas most
+of slices information. If [34] were implemented with 62 cores                         existing methods have been evaluated on Virtex-7, which is
+in parallel, the throughput and resource utilization would be                         two generations older. The manufacturing process has been
+approximately 62 times larger, and thus throughput/LUTs/FFs/                          shrunk from 28 to 14 nm between these generations; therefore,
+DSPs = 78.05/39.618/81.158/372, which is comparable to                                we should consider the increase in the operating frequency.
+                This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+10                                                                             IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS
+
+
+
+                                                                          TABLE II
+               P ERFORMANCE C OMPARISONS OF THE P ROPOSED M ODULAR M ULTIPLIERS AND T HOSE F ROM P REVIOUS S TUDIES
+
+
+
+
+                                                                          TABLE III
+                                                 S INGLE -C ORE PAIRING P ERFORMANCE E VALUATION
+
+
+
+
+Considering the maximum operating frequency of the DSPs,                          Opasatian and Ikeda’s implementation [13] shows the best
+Ultrascale+ is 644 MHz while Virtex-7 is 650 MHz, and there                       latency and throughput performance. They implemented a
+is no significant difference. If the operating frequency from a                   low latency core using an LUT modular reduction technique
+previous study running near the DSP’s maximum frequency                           and evaluated it on the same generation FPGA as ours. The
+was evaluated on VCU118 [17], it would be bounced to                              throughput of their implementation exceeds our implementa-
+the maximum frequency and almost have a similar perfor-                           tion by approximately 4%. However, their implementation uses
+mance. Conversely, it is difficult to predict the increase in                     a large number of LUTs to perform modular reduction, which
+the performance of implementations that are not near the                          means that it has the SDR more than 43, expecting to make
+maximum frequency limit. As an example, we estimate the                           worse the performance of multicore implementation. Since
+frequency difference in one device generation to be at most                       their paper shows only LUT utilization (225 607), we esti-
+1.22 times, based on the results [36], which are from evalu-                      mated their slice utilization as 56 401 = 225 607/4. Using
+ations of the same multipliers on different FPGAs, Virtex-6                       this value, the SDR of their implementation is calculated as
+and Virtex-7. Even when assuming a frequency difference of                        87.03, which is more than twice of our implementation‘s,
+two generations (1.48×), our implementation achieves the best                     indicating that the number of slices restricts the number of
+TP/ESlices.                                                                       cores under multicore implementation, and lots of DSPs cannot
+                                                                                  be used. On the other hand, our implementation has a good
+C. Pairing Processor Evaluation                                                   SDR (41.24) and are expected to perform better performance
+   1) Single-Core Evaluation: Table III shows the perfor-                         under multicore evaluation. Actual multicore performance
+mance comparison of the single-core pairing implementation.                       comparisons are given in Section IV-C2.
+In Table III, our pairing processors are evaluated using λPE =                       Devlin [11] implemented a large-scale, server-side pairing
+4 because this parameter has the best throughput and the                          processor and evaluated their implementation on xcvu37p,
+closest SDR to 43. Note that we can adjust the trade-off                          which is the same generation device to our xcvu9p. These
+between latency and throughput of the pairing computation                         devices have almost the same performance and circuit
+using the different design modular multipliers with λPE =                         resources; thus, their work is most comparable to our imple-
+{1, 2, 3}.                                                                        mentation results. Our implementation achieved approximately
+   Our implementation executes τ = 7 pairings concurrently                        9.8 times throughput and 0.71 times latency, compared to
+and completes them with 452 µs. As shown in Table III,                            Devlin’s implementation. Although our implementation uses
+                 This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+SAKAMOTO et al.: HIGH-THROUGHPUT BILINEAR PAIRING PROCESSOR                                                                                                         11
+
+
+
+                                                                           TABLE IV
+M ULTICORE P ERFORMANCE E VALUATION . VALUES IN I TALIC A RE O UR ROUGH ( THE B EST-C ASE E STIMATION ) E STIMATION . T HROUGHPUT IN THE
+                                         B RACKET I S THE S TRICT (W ORST C ASE ) E STIMATION
+
+
+
+
+more than twice as much DSPs as Devlin’s, the slice usage is                          2) Multicore Evaluation: This section compares multicore
+less than 1/2; therefore, their implementation had a slice bot-                    performance for the pairing on the target FPGA xcvu9p (see
+tleneck and did not take advantage of the fast DSP primitives.                     Table IV). While the performance of our implementation
+Furthermore, our implementation has SDR = 41.24, whereas                           is an actual PAR result, most of the values in Table IV
+theirs has SDR = 236.95, meaning the performance difference                        are ideal estimates, as few previous studies have provided
+will be spread for multicore implementations. Compared to the                      multicore evaluation results. These estimations are based on
+state-of-the-art software implementation [42], our implemen-                       the assumption that circuit resources and throughput are
+tation shows a better performance of approximately ten times                       proportional to the number of cores, and that the frequency
+throughput and 0.7 times latency.                                                  remains constant as the number of cores increases. The
+   For the BN254 curve, our implementation runs at 590 MHz,                        number of cores is determined by the maximum number
+which is close to 644 MHz of the DSP’s maximum frequency,                          of pairing processor cores implementable on an xcvu9p in
+and completes τ = 5 pairings in 187 µs. Compared to                                terms of FPGA resources. Formally, the number of cores
+the previous studies, our pairing implementation achieved                          #Cores = min(⌊295 560/#LUTs⌋, ⌊6840/#DSPs⌋), where
+the best throughput, comparable latency, and the best area                         295 560 and 6840 are the number of slices and DSPs available
+efficiency (TP/ESlices). Previous work [15] is the only one                        on the xcvu9p, respectively. For Devlin‘s design [11], for
+that shows the evaluation results on the same device. It aims                      example, #Cores = min(⌊295 560/81 750⌋, ⌊6840/345⌋) =
+for a low-latency pairing implementation and achieves the best                     min(3, 19) = 3, where slice resources limit the #Cores.
+latency of 102 µs. The proposed method improves throughput                            As shown in Table IV, our implementations present the
+by 2.7 times at the cost of 1.8 times worse latency. This seems                    best throughput for both BN254 and BLS12_381 pairings.
+like a good compromise. Note that our implementation allows                        Comparisons with [11], [13], and [14], evaluated on FPGAs
+the trade-off between latency and throughput to be tuned                           of the same generation, are important for fair evaluation.
+by changing the number of pipeline stages in the modular                           Devlin [11] uses too many slices (81 750/295 560), which
+multiplier.                                                                        limits the number of cores it can implement to three. Our
+   It is difficult to directly compare performance on different                    implementations achieve better latency and several times bet-
+generation FPGAs (Virtex-6 or -7), but we can highlight some                       ter throughput compared to [11] and [14]. With the SDR
+of the advantages of our architecture. First, our implementation                   close to 43, our architecture can maximize performance in
+has the SDR, which is a device-generation-independent metric,                      multicore environments. For the comparison with Opasatian’s
+close to 43; this indicates a good balance of DSP and slice                        implementation [13], which is the most comparative to our
+usage. In addition, because operating frequency is the main                        implementation, we estimated his performance under two
+difference when the same architecture is implemented on                            conditions (the best and worst cases). Since their study only
+different FPGAs, we can predict the performance of other                           provides the number of LUTs as resource utilization, we need
+FPGAs by considering the frequency difference between dif-                         to estimate their slice utilization to calculate their multicore
+ferent FPGAs. In [36], a modular multiplier was evaluated                          performance. In the best case, the number of slices utilized
+on Virtex-6 and -7 devices, and the frequency difference was                       is converted as four LUTs = one slice; #Cores = 5 and the
+approximately 1.22 times. Assuming 1.22 times frequency                            throughput is 80 385. However, typical synthesis results do
+difference in one generation, we can infer a difference of                         not follow such an ideal case. For the synthesis results of our
+approximately 1.82 times in three generations. If the proposed                     implementation, the ratio between LUT and slice is 0.76:1,
+architecture is implemented on a Virtex-6 FPGA, which is a                         using this ratio, the #Cores and throughput of Opasatian’s
+three generation older device than ultrascale+, the frequency                      implementation are estimated as 1 and 16 077, respectively.
+can be estimated to be 324 MHz. The throughput would be                               As a result, our implementations show several times bet-
+14 616 pairings/s. Even in this case, the throughput of the                        ter throughput than the previous studies for a multicore
+proposed architecture is the largest among existing studies.                       implementation using the maximum resources of the xcvu9p.
+                 This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+12                                                                              IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS
+
+
+
+                                                                           TABLE V
+              P OWER AND E NERGY C OMPARISONS OF THE S INGLE -C ORE P ROPOSED PAIRING P ROCESSOR AND P REVIOUS S TUDIES
+
+
+
+
+Furthermore, we do not consider the negative effects, such as                      cryptocurrencies, the payers sign their transaction and send
+the increase in routing delay caused by multicore implemen-                        it to the blockchain’s peer-to-peer network. Each peer on
+tation, in the performance estimation for the previous studies.                    the blockchain verifies the signature and adds it to the next
+Taking this into account will result in greater performance                        block if the verification result is valid. Because signature
+differences.                                                                       verification requires pairing, the speed of pairing is directly
+   3) Energy Consumption Evaluation: Table V presents the                          related to the number of transactions the blockchain can
+power and energy consumption of the proposed architecture as                       handle. The maximum throughput of 124 216 transactions in
+estimated on Vivado. For previous studies that did not provide                     our BLS12_381 implementation exceeds the current VISA
+power data, we estimated it based on the following CMOS                            credit-card transaction capacity of 65 000 transactions per
+power equation [44, eq. (5.10)]:                                                   second [45, p. 8]. If blockchain payments are used as much
+                                                                                   or more than VISA credit cards, the proposed architecture
+                            P = αf CV 2                                  (16)      will be able to handle all transactions. In terms of latency,
+where P, α, f, C, and V denote the power, switching rate,                          the proposed architecture will be attractive in the future when
+clock frequency, switching capacitance of the total circuit, and                   blockchain payments are used for latency-critical payments.
+supply voltage. Assuming that α and V are the same for all
+implementations enables us to estimate power as P ∝ f C.                           B. Evaluation as a PBC Accelerator
+We furthermore assume that C is proportional to the circuit                           When we use an FPGA as an accelerator for a
+area. As a metrics of circuit area to calculate the C values,                      general-purpose CPU rather than as a standalone encryption
+we use equivalent slices (ESlices = #Slices + 43 × #DSPs),                         circuit, there is an overhead due to the connection interface
+where 43 (the ratio of the number of slices to the number of                       between the FPGA and the CPU. We have experimentally esti-
+DSPs on the xcvu9p) is used as a weight to convert a DSP                           mated this overhead in a system where the FPGA is connected
+to slices. As a result, we can estimate the power of previous                      to the server PC via PCIe 3.0 × 16. The experimental results
+works as the ratio of frequency and ESlices. Vivado estimated                      show that 2 × 320 bits and 256 × 320 bits data transfers
+the dynamic power at 458 MHz to be 12.035 W for our                                take, independent of the transfer direction, about 17 and 22 µs,
+BLS12_381 implementation. We can estimate the power con-                           respectively, where 320 bits is the size of an F p element for
+sumption of [11] as 12.035 × (200/458) × (96 585/66 552) =                         BN254 pairing. The transfer time t [µs] can be interpolated as
+7.62 W. Table V shows that our architecture consumes a                             (5/81.280)x +16.96, where x is the number of bits transferred.
+significant amount of power, but the energy per pairing is                         This implies the CPU execution time of the operating system
+comparative to other studies. Note that our architecture is                        or application is more dominant than the physical data transfer;
+designed for cloud FPGAs. Such cloud FPGAs are charged                             the transfer time is not proportional to the amount of data.
+per FPGA; therefore, users do not need to worry about the                             Using the above equation, we estimate the performance of
+power consumption, and using as much circuit resources as                          the pairing accelerator. Our τ = 7 core BLS12_381 pairing
+possible is reasonable.                                                            implementation takes 6 × 7 F p elements as an input and 12 ×
+                                                                                   7 F p elements as an output, where the size of an F p element
+                         V. D ISCUSSION                                            is 436 bits. Assuming the input and output data transfer time
+                                                                                   is 18 and 19 µs, the latency and throughput will be about 7%
+A. Performance Requirement for the Pairing Computation                             worse to 581 µs and 84 337 pairings/s, respectively.
+   Blockchain-based cryptocurrency is one of the applications                         To achieve the same throughput with a CPU, whose
+that actively uses PBC. Some modern blockchains [24], [25]                         single-core throughput is 1538 as shown in Table III,
+use the BLS signature, which requires a pairing computation                        ⌊84 337/1538⌋ = 52 CPU cores must be operated in parallel.
+for signature verification, to check the validity of trans-                        With some recent high-end CPUs, it is not impossible to
+actions. When a transaction is issued in blockchain-based                          achieve the same throughput as FPGAs; however, it is not
+                 This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+SAKAMOTO et al.: HIGH-THROUGHPUT BILINEAR PAIRING PROCESSOR                                                                                                         13
+
+
+
+reasonable to devote all computational resources to pairing                                                     VI. C ONCLUSION
+computations because server CPUs must also provide many
+                                                                                      First, we proposed an unrolled QPMM algorithm [30]
+services other than cryptographic operations. In addition,
+                                                                                   that is suitable for a server-side FPGA, XVU9P, which has
+FPGA accelerators have an advantage in power consumption.
+                                                                                   DSP48E2 primitives as dedicated multipliers. The proposed
+Intel Xeon 8592+ CPU with 64 cores has a thermal design
+                                                                                   method took full advantage of DSP48E2’s functions such
+power of 350 W, which is tens of times higher than that of
+                                                                                   as the asymmetric multiplier and three-input post-adder, and
+FPGAs (see Table V). When all cores are used, the expected
+                                                                                   successfully completed most of the algorithms using only the
+performance may not be achieved due to thermal throttling.
+                                                                                   DSP, achieving the highest throughput (188.98 Gb/s), area
+C. Applicability to Post-Quantum and Other Cryptography                            efficiency (6873 TP/ESlice), and low SDR (20.16).
+                                                                                      We further designed a pairing processor architecture that
+   Our pairing architecture is designed to efficiently perform                     embeds the proposed modular multiplier. By supporting
+the F p and F p2 operations, which are the primitive operations                    redundant adders and interleaved executions, the proposed
+for the elliptic curve-based pairing computation. Therefore,                       architecture successfully maintained a high frequency and
+our architecture can efficiently execute the cryptosystems                         achieved BLS12_381 pairing throughput (15 477 pairings/s).
+constructed over F p , such as isogeny-based cryptography and                      In addition, the proposed pairing architecture has a good SDR
+elliptic curve cryptography. Isogeny-based cryptography is one                     (41.24), indicating that it maximizes the performance under
+of the post-quantum cryptography (PQC). SQISign [46] is an                         multicore implementation. The multicore evaluation showed
+isogeny-based signature scheme and submitted to NIST as a                          that the throughput of the proposed method was more than
+candidate for PQC standardization. SQISign has the advantage                       five times faster than that from previous studies.
+of small key and signature size and the disadvantage of high
+computational complexity, typically taking tens to thousands
+of milliseconds on a standard CPU. We believe that FPGA                                                             R EFERENCES
+acceleration is a promising solution to this disadvantage, sim-                     [1] D. Boneh, C. Gentry, B. Lynn, and H. Shacham, “Aggregate and
+                                                                                        verifiably encrypted signatures from bilinear maps,” in Advances
+ilar to the pairing computation in this article. Our architecture                       in Cryptology—EUROCRYPT (Lecture Notes in Computer Science),
+basically suitable for SQISign that is constructed over Fp2                             vol. 2656. Berlin, Germany: Springer, 2003, pp. 416–432, doi:
+just modifying instruction scheduling allows us to execute                              10.1007/3-540-39200-9_26.
+                                                                                    [2] P. Yanguo, C. Jiangtao, P. Changgen, and Y. Zuobin, “Certificateless
+SQISign. Since SQISign uses 252–506-bits p depending on                                 public key encryption with keyword search,” China Commun., vol. 11,
+the security level, the data path width must be wider to support                        no. 11, pp. 100–113, Nov. 2014, doi: 10.1109/CC.2014.7004528.
+high-security levels (our BL12_381 implementation supports                          [3] D. F. Aranha, K. Karabina, P. Longa, C. H. Gebotys, and J. López,
+up to 381-bits p).                                                                      “Faster explicit formulas for computing pairings over ordinary curves,”
+                                                                                        in Advances in Cryptology—EUROCRYPT (Lecture Notes in Computer
+                                                                                        Science), vol. 6632. Berlin, Germany: Springer, 2011, pp. 48–68, doi:
+D. Tamper Resistance                                                                    10.1007/978-3-642-20465-4_5.
+   The pairing architecture proposed in this article is primar-                     [4] R. Barbulescu and S. Duquesne, “Updating key size estimations for
+                                                                                        pairings,” J. Cryptol., vol. 32, no. 4, pp. 1298–1336, Oct. 2019, doi:
+ily designed to maximize throughput, and it has no tamper                               10.1007/s00145-018-9280-5.
+resistance to physical attacks. However, recent studies report                      [5] X. Wang, Y. Niu, F. Liu, and Z. Xu, “When FPGA meets cloud: A
+that attackers can remotely perform side-channel [47] and                               first look at performance,” IEEE Trans. Cloud Comput., vol. 10, no. 2,
+                                                                                        pp. 1344–1357, Apr. 2022, doi: 10.1109/TCC.2020.2992548.
+fault attacks [48] against FPGAs in the cloud, embedding                            [6] Valtix. (2019). How and Why on FPGA-Based AWS EC2 F1 Instances
+tamper-resistant techniques into our architecture stays remains                         for Cloud Network Security. [Online]. Available: https://valtix.com/
+for one of the future works.                                                            blog/valtix_ec2_f1_sc19/
+                                                                                    [7] T. Güneysu and C. Paar, “Ultra high performance ECC over NIST primes
+   Side-channel attacks include timing attacks, which exploit                           on commercial FPGAs,” in Cryptographic Hardware and Embedded
+differences in processing time, and differential power analysis                         Systems—CHES (Lecture Notes in Computer Science), vol. 5154. Berlin,
+(DPA)-type attacks, which focus on differences in power con-                            Germany: Springer, 2008, pp. 62–78, doi: 10.1007/978-3-540-85053-3.
+sumption. Most of the pairing computations in this study are                        [8] G. X. Yao, J. Fan, R. C. C. Cheung, and I. Verbauwhede, “Faster pair-
+                                                                                        ing coprocessor architecture,” in Pairing-Based Cryptography—Pairing
+implemented using constant-time algorithms, which are secure                            (Lecture Notes in Computer Science), vol. 7708. Berlin, Germany:
+against timing attacks because there are no timing differences.                         Springer, 2012, pp. 160–176, doi: 10.1007/978-3-642-36334-4.
+The F p inversion is the only variable-time part. To make it                        [9] A. Lavice, N. E. Mrabet, A. Berzati, J.-B. Rigaud, and J. Proy,
+                                                                                        “Hardware implementations of pairings at updated security levels,” in
+secure, it is necessary to ensure that the computation always                           Smart Card Research and Advanced Applications—CARDIS (Lecture
+completes in the same cycles by inserting dummy processes.                              Notes in Computer Science), vol. 13173. Cham, Switzerland: Springer,
+   Against DPA-type attacks and fault attacks, Kim et al. [49]                          2022, pp. 189–209, doi: 10.1007/978-3-030-97348-3_11.
+                                                                                   [10] A. Sghaier, M. Zeghid, L. Ghammam, S. Duquesne, M. Machhout,
+propose the use of the randomized projective coordinate,                                and H. Y. Ahmed, “High speed and efficient area optimal ate
+where a pairing input is represented as a kind of randomized                            pairing processor implementation over BN and BLS12 curves on
+redundant form. To apply this countermeasure to our architec-                           FPGA,” Microprocess. Microsyst., vol. 61, pp. 227–241, Sep. 2018, doi:
+                                                                                        10.1016/j.micpro.2018.06.001.
+ture, we need to implement a process to add a random number
+                                                                                   [11] B. Devlin. (Sep. 2019). Zcash FPGA Acceleration Engine. Version 1.4.2
+to the input. This can be done by changing the instruction                              Release. [Online]. Available: https://github.com/ZcashFoundation/zcash-
+scheduling and is expected to have a time overhead of a                                 fpga
+few percent at most. The FPGA resource consumption for                             [12] A. Bag, D. B. Roy, S. Patranabis, and D. Mukhopadhyay, “FlexiPair:
+                                                                                        An automated programmable framework for pairing cryptosystems,”
+the random number generator is predicted to be negligible                               IEEE Trans. Comput., vol. 71, no. 3, pp. 506–519, Mar. 2022, doi:
+compared to the relatively large multicore pairing circuit.                             10.1109/TC.2021.3058345.
+                    This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+14                                                                                 IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS
+
+
+
+[13] A. Opasatian and M. Ikeda, “High-performance BLS12-381 pair-                     [32] Virtex UltraScale+ FPGA Data Sheet: DC and AC Switching Charac-
+     ing engine on FPGA,” in Proc. IEEE 15th Int. Conf. ASIC                               teristics, document DS923, Version 1.19, Xilinx, San Jose, CA, USA,
+     (ASICON), Oct. 2023, pp. 1–4, doi: 10.1109/ASICON58565.2023.                          2021. [Online]. Available: https://docs.xilinx.com/v/u/en-U.S./ds923-
+     10396122.                                                                             virtex-ultrascale-plus
+[14] M. Bahadori and K. Järvinen, “Compact and programmable yet high-                 [33] Y. Ma, Z. Liu, W. Pan, and J. Jing, “A high-speed elliptic curve cryp-
+     performance SoC architecture for cryptographic pairings,” in Proc.                    tographic processor for generic curves over GF( p),” in Selected Areas
+     30th Int. Conf. Field-Programmable Log. Appl. (FPL), Aug. 2020,                       in Cryptography—SAC (Lecture Notes in Computer Science), vol. 8282.
+     pp. 176–184, doi: 10.1109/FPL50879.2020.00038.                                        Berlin, Germany: Springer, 2013, pp. 421–437, doi: 10.1007/978-3-662-
+[15] J. Sakamoto, Y. Nagahama, D. Fujimoto, Y. Okuaki, and T. Matsumoto,                   43414-7_21.
+     “Low-latency pairing processor architecture using fully-unrolled quo-            [34] L. Noyez, N. E. Mrabet, O. Potin, and P. Veron, “Montgomery multipli-
+     tient pipelining Montgomery multiplier,” in Proc. Asian Hardw.                        cation scalable systolic designs optimized for DSP48E2,” ACM Trans.
+     Oriented Secur. Trust Symp. (AsianHOST), Dec. 2019, pp. 1–6, doi:                     Reconfigurable Technol. Syst., vol. 17, no. 1, pp. 1–31, Mar. 2024, doi:
+     10.1109/AsianHOST47458.2019.9006671.                                                  10.1145/3624571.
+[16] D. Suzuki, “How to maximize the potential of FPGA resources for                  [35] E. Öztürk, “Design and implementation of a low-latency modular multi-
+     modular exponentiation,” in Cryptographic Hardware and Embedded                       plication algorithm,” IEEE Trans. Circuits Syst. I, Reg. Papers, vol. 67,
+     Systems—CHES (Lecture Notes in Computer Science), vol. 4727.                          no. 6, pp. 1902–1911, Jun. 2020, doi: 10.1109/TCSI.2020.2966755.
+     Berlin, Germany: Springer, 2007, pp. 272–288, doi: 10.1007/978-3-540-            [36] A. A. H. Abd-Elkader, M. Rashdan, E. A. M. Hasaneen, and
+     74735-2.                                                                              H. F. A. Hamed, “FPGA-based optimized design of Montgomery mod-
+[17] G. Gallin and A. Tisserand, “Generation of finely-pipelined GF(PP)                    ular multiplier,” IEEE Trans. Circuits Syst. II, Exp. Briefs, vol. 68, no. 6,
+     multipliers for flexible curve based cryptography on FPGAs,” IEEE                     pp. 2137–2141, Jun. 2021, doi: 10.1109/TCSII.2020.3040665.
+     Trans. Comput., vol. 68, no. 11, pp. 1612–1622, Nov. 2019, doi:                  [37] D. B. Roy, D. Mukhopadhyay, M. Izumi, and J. Takahashi, “Tile
+     10.1109/TC.2019.2920352.                                                              before multiplication: An efficient strategy to optimize DSP multiplier
+[18] F. Vercauteren, “Optimal pairings,” IEEE Trans. Inf. Theory, vol. 56,                 for accelerating prime field ECC for NIST curves,” in Proc. 51st
+     no. 1, pp. 455–461, Jan. 2010, doi: 10.1109/TIT.2009.2034881.                         ACM/EDAC/IEEE Design Autom. Conf. (DAC), Jun. 2014, pp. 1–6.
+[19] P. S. L. M. Barreto and M. Naehrig, “Pairing-friendly elliptic curves of         [38] D. Basu Roy and D. Mukhopadhyay, “High-speed implementation of
+     prime order,” in Selected Areas in Cryptography—SAC (Lecture Notes                    ECC scalar multiplication in GF( p) for generic Montgomery curves,”
+     in Computer Science), vol. 3897. Berlin, Germany: Springer, 2005,                     IEEE Trans. Very Large Scale Integr. (VLSI) Syst., vol. 27, no. 7,
+     pp. 319–331, doi: 10.1007/11693383_22.                                                pp. 1587–1600, Jul. 2019, doi: 10.1109/TVLSI.2019.2905899.
+[20] P. S. L. M. Barreto, B. Lynn, and M. Scott, “Constructing elliptic               [39] D. Mukhopadhyay and D. B. Roy, “Revisiting FPGA implementation of
+     curves with prescribed embedding degrees,” in Security in Communica-                  Montgomery multiplier in redundant number system for efficient ECC
+     tion Networks—SCN (Lecture Notes in Computer Science), vol. 2576.                     application in GF( p),” in Proc. 28th Int. Conf. Field Program. Log. Appl.
+     Berlin, Germany: Springer, 2003, pp. 257–267, doi: 10.1007/3-540-                     (FPL), Aug. 2018, pp. 323–333, doi: 10.1109/FPL.2018.00061.
+     36413-7_19.                                                                      [40] Z. Ni, D.-E.-S. Kundi, M. O’Neill, and W. Liu, “High-performance
+[21] Y. Sakemi, T. Kobayashi, T. Saito, and R. S. Wahby. (2022). Draft-                    systolic array Montgomery multiplier for SIKE,” in Proc. IEEE
+     irtf-cfrg-pairing-friendly-curves-11. [Online]. Available: https://www.               Int. Symp. Circuits Syst. (ISCAS), May 2021, pp. 1–5, doi:
+     ietf.org/archive/id/draft-irtf-cfrg-pairing-friendly-curves-11.txt                    10.1109/ISCAS51556.2021.9401062.
+[22] D. F. Aranha, P. S. L. M. Barreto, P. Longa, and J. E. Ricardini,                [41] S. Ghosh, I. Verbauwhede, and D. Roychowdhury, “Core based archi-
+     “The realm of the pairings,” in Selected Areas in Cryptography—SAC                    tecture to speed up optimal ate pairing on FPGA platform,” in
+     (Lecture Notes in Computer Science), vol. 8282, 2013, pp. 3–25, doi:                  Pairing-Based Cryptography—Pairing (Lecture Notes in Computer Sci-
+     10.1007/978-3-662-43414-7_1.                                                          ence), vol. 7708. Berlin, Germany: Springer, 2012, pp. 141–159, doi:
+[23] D. Boneh, B. Lynn, and H. Shacham, “Short signatures from the                         10.1007/978-3-642-36334-4_9.
+     Weil pairing,” in Advances in Cryptology—ASIACRYPT (Lecture Notes                [42] Herumi. (Nov. 7, 2018). Mcl: A Portable and Fast Pairing-based
+     in Computer Science), vol. 2248. Berlin, Germany: Springer, 2001,                     Cryptography Library. Accessed: May 23, 2024. [Online]. Available:
+     pp. 513–532, doi: 10.1007/3-540-45682-1_30.                                           https://github.com/herumi/mcl
+[24] T. Hanke, M. Movahedi, and D. Williams, “DFINITY technology                      [43] X. Hu, D. He, M. Luo, C. Peng, Q. Feng, and X. Huang, “High-
+     overview series consensus system,” 2018, arXiv:1805.04548.                            performance implementation of the identity-based signature scheme in
+[25] R. Jordan. (2018). Ethereum 2.0 Development Update #17—Prysmatic                      IEEE P1363 on GPU,” ACM Trans. Embedded Comput. Syst., vol. 22,
+     Labs. [Online]. Available: https://medium.com/prysmatic-labs/ethereum-                no. 2, pp. 1–35, Mar. 2023, doi: 10.1145/3564784.
+     2-0-development-update-17-prysmatic-labs-ed5bcf82ec00                            [44] N. H. E. Weste and D. Harris, CMOS VLSI Design: A Circuits and
+[26] C. Gentry and Z. Ramzan, “Identity-based aggregate signatures,” in                    Systems Perspective, 4th ed. Reading, MA, USA: Addison-Wesley, 2010.
+     Public Key Cryptography—PKC (Lecture Notes in Computer Sci-                      [45] Visa. (2016). VISA Annual Report. [Online]. Available: https://s1.
+     ence), vol. 3958. Berlin, Germany: Springer, 2006, pp. 257–273, doi:                  q4cdn.com/050606653/files/doc_financials/annual/Visa-2016-Annual-
+     10.1007/11745853_17.                                                                  Report.pdf
+[27] L. Shen, J. Ma, X. Liu, F. Wei, and M. Miao, “A secure and efficient             [46] L. D. Feo, D. Kohel, A. Leroux, C. Petit, and B. Wesolowski, “SQISign:
+     ID-based aggregate signature scheme for wireless sensor networks,”                    Compact post-quantum signatures from quaternions and isogenies,” in
+     IEEE Internet Things J., vol. 4, no. 2, pp. 546–554, Apr. 2017, doi:                  Advances in Cryptology—ASIACRYPT (Lecture Notes in Computer
+     10.1109/JIOT.2016.2557487.                                                            Science), vol. 12491. Cham, Switzerland: Springer, 2020, pp. 64–93,
+[28] P. Barrett, “Implementing the Rivest Shamir and Adleman public key                    doi: 10.1007/978-3-030-64837-4_3.
+     encryption algorithm on a standard digital signal processor,” in Advances        [47] M. Zhao and G. E. Suh, “FPGA-based remote power side-channel
+     in Cryptology—CRYPTO (Lecture Notes in Computer Science), vol. 263.                   attacks,” in Proc. IEEE Symp. Secur. Privacy (SP), May 2018,
+     Berlin, Germany: Springer, 2000, pp. 311–323, doi: 10.1007/3-540-                     pp. 229–244, doi: 10.1109/SP.2018.00049.
+     47721-7_24.                                                                      [48] J. Krautter, D. R. E. Gnad, and M. B. Tahoori, “FPGAhammer: Remote
+[29] P. L. Montgomery, “Modular multiplication without trial division,” Math.              voltage fault attacks on shared FPGAs, suitable for DFA on AES,”
+     Comput., vol. 44, no. 170, pp. 519–521, Apr. 1985.                                    IACR Trans. Cryptograph. Hardw. Embedded Syst., vol. 2018, no. 3,
+[30] H. Orup, “Simplifying quotient determination in high-radix modular                    pp. 44–68, 2018, doi: 10.13154/tches.v2018.i3.44-68.
+     multiplication,” in Proc. 12th Symp. Comput. Arithmetic, Jul. 1995,              [49] T. H. Kim, T. Takagi, DG. Han, H. W. Kim, and J. Lim, “Side channel
+     pp. 193–199, doi: 10.1109/ARITH.1995.465359.                                          attacks and countermeasures on pairing based cryptosystems over binary
+[31] E. Savaş and Ç. K. Koç, “Montgomery inversion,” J. Cryptograph.                      fields,” in Cryptology and Network Security—CANS (Lecture Notes
+     Eng., vol. 8, no. 3, pp. 201–210, Sep. 2018, doi: 10.1007/s13389-017-                 in Computer Science), vol. 4301. Berlin, Germany: Springer, 2006,
+     0161-x.                                                                               pp. 168–181, doi: 10.1007/11935070_11.
+

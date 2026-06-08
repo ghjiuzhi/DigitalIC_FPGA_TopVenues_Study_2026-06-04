@@ -1,0 +1,1215 @@
+                                                                                                                                                 1
+
+
+
+
+   An Energy Efficient Soft SIMD Microarchitecture
+       and Its Application on Quantized CNNs
+    Pengbo Yu∗ , Flavio Ponzina∗ , Alexandre Levisse∗ , Mohit Gupta† , Dwaipayan Biswas† , Giovanni Ansaloni∗ ,
+                                        David Atienza∗ , Francky Catthoor†
+
+
+
+   Abstract—The ever-increasing computational complexity and                     support operations with subwords separated by multiplexers on
+energy consumption of today’s applications, such as Machine                      the datapath. However, typical Hardware SIMD (Hard SIMD)
+Learning (ML) algorithms, not only strain the capabilities of                    architectures can only support a small set of subword sizes,
+the underlying hardware but also significantly restrict their
+wide deployment at the edge. Addressing these challenges, novel                  such as 8-, 16-, 32-, 64-bit [6], because (i) the subword
+architecture solutions are required by leveraging opportuni-                     separation relies on multiplexers and can not be extended to
+ties exposed by algorithms, e.g., robustness to small-bitwidth                   more SIMD modes once the hardware implementation is fixed,
+operand quantization and high intrinsic data-level parallelism.                  and (ii) adding many SIMD modes (e.g., 3-, 4-, 6-bit, etc.) is
+However, traditional Hardware Single Instruction Multiple Data                   costly in terms of hardware (e.g., area, speed).
+(Hard SIMD) architectures only support a small set of operand
+bitwidths, limiting performance improvement. To fill the gap,                       These downsides are significantly critical to further im-
+this manuscript introduces a novel pipelined processor microar-                  proving computation performance, especially for algorithms
+chitecture for arithmetic computing based on the Software-                       that have (i) intrinsic redundancy to support aggressive quan-
+defined SIMD (Soft SIMD) paradigm that can define arbitrary                      tization, (ii) a high degree of data-level parallelism, and
+SIMD modes through control instructions at run-time. This                        (iii) varying accuracy requirements in different computation
+microarchitecture is optimized for parallel fine-grained fixed-
+point arithmetic, such as shift/add. It can also efficiently execute             phases. For these cases, supporting operations with flexible
+sequential shift-add-based multiplication over SIMD subwords,                    bitwidths can fully leverage the advantages of quantization
+thanks to zero-skipping and Canonical Signed Digit (CSD)                         and parallelism to promote computation performance.
+coding. A lightweight repacking unit allows changing subword                        For example, Convolutional Neural Networks (CNNs) ex-
+bitwidth dynamically. These features are implemented within a                    hibit a high degree of robustness against operand approxi-
+tight energy and area budget. An energy consumption model is
+established through post-synthesis for performance assessment.                   mation, allowing them to maintain sufficient accuracy when
+We select heterogeneously quantized Convolutional Neural Net-                    quantized with fixed-point data representation. Thus, quan-
+works (CNNs) from the ML domain as the benchmark and map                         tized CNNs have been widely adopted in edge inference,
+it onto our microarchitecture. Experimental results showcase                     which is a scenario with constrained resources and energy
+that our approach dramatically outperforms traditional Hard                      budget [7] [8], to significantly increase energy efficiency and
+SIMD Multiplier-Adder regarding area and energy requirements.
+In particular, our microarchitecture occupies up to 59.9% less                   reduce resource requirements, such as 8-/16-bit quantization
+area than a Hard SIMD that supports fewer SIMD bitwidths,                        in [9]–[15]. CNNs can further be heterogeneously quantized
+while consuming up to 50.1% less energy on average to execute                    to arbitrarily bitwidths, such as 3-, 4-, 6-bit, etc. [16], and
+heterogeneously quantized CNNs.                                                  result in more model compression and data-level parallelism
+   Index Terms—Energy Efficient Computing, Software-defined                      improvement. However, this approach has not yet been ex-
+Single Instruction Multiple Data, Data-level Parallelism, Canonic                plored since most hardware resources do not allow for such
+Signed Digit Coding, Heterogeneously Quantized Convolutional                     small-bitwidth operations.
+Neural Networks.                                                                    To overcome the limited bitwidths support of the Hard
+                                                                                 SIMD approach, we therefore present a novel pipelined pro-
+                        I. INTRODUCTION                                          cessor microarchitecture for arithmetic computing based on the
+  Single Instruction Multiple Data (SIMD) is a well-known                        Software-defined SIMD (Soft SIMD) paradigm. Soft SIMD,
+approach to enhance hardware computing efficiency through                        detailed in Section II-A, divides the boundaries of the subword
+data-level parallelism [1] [2] when executing a ubiquitous                       at the software level through control instructions, enabling
+computational pattern in many domains ranging from scientific                    support for operations at arbitrary bitwidths with little added
+computing [3] to machine learning (ML) [4] [5]. SIMD im-                         cost, opening the way for the highly efficient use of data-level
+plementations employ wide registers and processing units that                    parallelism down to very small bitwidths.
+                                                                                    The proposed microarchitecture features a fine-grained con-
+   Pengbo Yu, Flavio Ponzina, Alexandre Levisse, Giovanni Ansa-                  figurability of SIMD bitwidths that can be defined at run-
+loni, and David Atienza, are with the Embedded Systems Laboratory,               time. It can adapt to any desired computation precision in
+École Polytechnique Fédérale de Lausanne (EPFL), Lausanne, Switzer-
+land. Email: {pengbo.yu, flavio.ponzina, alexandre.levisse, giovanni.ansaloni,   targeted domains, such as different layers in quantized CNNs.
+david.atienza}@epfl.ch.                                                          It also allows seamless transitions among different SIMD
+   Mohit Gupta, Dwaipayan Biswas, and Francky Catthoor, are                      formats using a dedicated Data Pack Unit (DPU). Furthermore,
+with     Interuniversity  Microelectronics    Centre     (IMEC),      Leuven,
+Belgium. Email: mohitgupta.imec@gmail.com and {Dwaipayan.Biswas,                 this microarchitecture can efficiently perform parallel shift/add
+Francky.Catthoor}@imec.be.                                                       operations, the basis of arithmetic computing, as well as shift-
+                                                                                                                                                                                                                  2
+
+
+
+                                                                                                              Muxes-based                      Guardbits-based
+add-based parallel multiplication that uses Canonic Signed
+Digit (CSD) coding for the multiplier to reduce iteration                                                        baseline                              Our approach
+                                                                                 Signed
+                                                                                                              (Section IV-C)                           (Section III)
+cycles. We evaluate this microarchitecture with an example
+benchmark in the ML domain, the quantized CNNs, which
+                                                                                 Unsigned                         [19][20]                              [18]-[21]
+have been quantized heterogeneously per layer under a maxi-
+mum accuracy degradation constraint of 1%. The result shows          Fig. 1. Topology of Soft SIMD design. Our approach supports signed arith-
+that our Soft SIMD microarchitecture significantly outper-           metic, such as required computations for convolutional and fully connected
+forms the Hard SIMD alternative on both energy and area.             layers of CNNs, while employing a low-overhead guardbits-based solution.
+   In summary, our contributions are as follows:                                                                       Guardbits-based Soft SIMD
+   • We introduce a novel pipelined processor microarchitec-                          (a) Set g as 0 for addition                                      (b) Set g as 1 for subtraction
+      ture for arithmetic computing based on Soft SIMD. It                           0         1         1         0        1         1                 0         1         1        0         1         1
+                                                                     Mask
+      supports a fine-grained configurability of SIMD bitwidths
+      at run-time through instruction control and has very high      A               g=0 a4              a3       g=0       a1        a0               g=1 a4               a3       g=1 a1              a0
+                                                                             +                                                                 _
+      and flexible data-level parallelism with little added cost.
+                                                                     B               g=0 b4              b3       g=0       b1        b0               g=1 b4               b3       g=1 b1              b0
+   • We apply CSD coding and shift-add iteration to efficiently
+      perform parallel 2’s complement multiplications under                      0        C4        C3        0        C1        C0        0       1         C4        C3        1        C1        C0        1
+                                                                     Carry
+      the Soft SIMD paradigm. We also explore the multipli-          Sum             s5        s4        s3       s2        s1        s0                s5        s4        s3       s2        s1        s0
+      cation performance and resource requirement versus the
+      maximum bit shift range when using CSD multiplier.             Fig. 2. Soft SIMD can adapt the subword bitwidth to the data size
+                                                                     requirements by instruction control at the software level, therefore maximizing
+   • We present a Data Pack Unit to repack the data size by
+                                                                     data-level parallelism and word space utilization. Here is an example of
+      bridging different SIMD formats, and show its design           arithmetic operations based on Soft SIMD. In the 3-bit subwords, the guardbits
+      trade-off between flexibility and hardware cost.               are (a) set as ’0’ in addition, (b) set as ’1’ in subtraction, to avoid overflows
+                                                                     among subwords and guarantee correct carry propagation.
+   • We choose heterogeneously quantized CNNs as an exam-
+      ple benchmark set from the ML domain to evaluate the           data representation precision changes in different computation
+      area, energy, and performance of our microarchitecture         phases. These features are common in many domains, such as
+      through a complete post-synthesis exploration. We show         heterogeneously quantized CNNs in the ML domain.
+      that our design requires up to 59.9% less area and 50.1%          As opposed to our novel design, previous Soft SIMD
+      (on average) less energy than a Hard SIMD alternative.         implementations [17]–[21] only support unsigned arithmetic,
+   • This work also fills the gap in supporting heterogeneously      limiting their applicability. We categorize them as unsigned
+      quantized CNNs from both software and hardware levels.         Soft SIMD in Figure 1. Moreover, they neither explore the
+   The paper proceeds as follows. In Section II, we introduce        strategy and hardware-cost vs. flexibility trade-off of con-
+the fundamental concepts that provide the basis for our design       version between different SIMD bitwidths, nor assess their
+choice. Then, the proposed microarchitecture is detailed in          effectiveness on ML workloads. In contrast, our proposed
+Section III. Next, the experimental setup is given in Section IV.    signed Soft SIMD approach supports 2’s complement op-
+Finally, the analysis of the results follows in Section V, and       erations (addition/subtraction/shift/multiplication/etc.) that are
+the key conclusions are summarized in Section VI.                    fundamental for running CNNs.
+                                                                        There are two implementation methods for signed or
+                                                                     unsigned Soft SIMD. A straightforward solution is to in-
+                     II. BACKGROUND
+                                                                     sert multiplexers for all bit positions on the datapath (e.g.,
+A. Soft SIMD                                                         adder carry propagation chain) to support arbitrary SIMD
+   The implementation of typical Hard SIMD entails using             bitwidth [19] [20]. However, by doing so, a large number of
+wide registers hosting a fixed number of subwords with               multiplexers are placed on the critical path, resulting in lower
+corresponding sizes, and processing units performing vector          performance. Another striking alternative is to use guardbits
+operations among subwords, such as the Arithmetic Logic              to separate subwords on the datapath [18]–[21]. As indicated
+Unit. Hard SIMD is constrained in supporting many SIMD               in Figure 1, we herein adopt the second approach for our
+bitwidths since it relies on the multiplexers on the datapath to     proposed microarchitecture in Section III while using the first
+separate the adjacent subwords and control the carry propaga-        one to build an alternative as a baseline in Section IV-C.
+tion in arithmetic operations.                                          In the rest of the paper, we only consider signed Soft SIMD
+   In contrast, Soft SIMD supports basic operations (e.g.,           implementations and their application to CNNs. For brevity,
+addition, shift) with variable bitwidths and composes them           we name the baseline Muxes-based Soft SIMD and our
+to derive more complex operations, such as multiplication. In        proposed method Guardbits-based Soft SIMD, respectively.
+this way, Soft SIMD allows the partitioning of data registers           As the example of the Guardbits-based Soft SIMD arith-
+into subword bit fields of arbitrary size. It can achieve flexible   metic operations shown in Figure 2, operands A and B have
+SIMD configurations by the control instructions at run-time          guardbits marked and identified by the mask vector (‘0’
+on the software level (hence the name) with a small hard-            for guardbits and ‘1’ for non-guardbits), which is decoded
+ware cost. Thus, it is particularly appealing when a strongly        from control instructions and defines the SIMD mode on the
+heterogeneous fine-grained control of bitwidths is beneficial,       software level at run-time. During addition or subtraction,
+the employed bitwidths are small (<16-bit), and the desired          the guardbits are set to ‘0’ or ‘1’ by the logic operation to
+                                                                                                                                                                                     3
+
+
+                                                                       TABLE I
+                                       C HARACTERISTICS OF OUR PROPOSED DESIGN AND THE RELATED STATE OF THE ART
+                                                                    [9], [10]               [11]          [12]         [13], [14]                     Our design
+                           Subword Separation                     multiplexers          multiplexers multiplexers      guardbits                       guardbits
+                               SIMD Mode                           8,16 bits              16 bits       8 bits           8 bits        arbitrary bits, e.g., 3,4,6,8,12,16,24 bits
+                          Multiplication Method            bit-serial, multiple shifts bit-serial      bit-serial     bit-parallel     bit-serial, CSD coding, multiple shifts
+                         Multiplicand Operand Size                 8,16 bits              16 bits       8 bits           8 bits        arbitrary bits, e.g., 3,4,6,8,12,16,24 bits
+                         Multiplier Operand Size                   1-16 bits             1-16 bits     1-16 bits         8 bits                        1-16 bits
+                     Average Cycles for N-bit multiplier              N/2                    N            N         1 + extra cycles                      N/3
+                     Accumulation Overflow Management                 no                    no            no              yes                             yes
+
+
+         (a) 2's complement                (b) Canonic Signed Digit (CSD)                            C. Quantization of CNN models
+   0      1    1    1      1      1             1    0       0       0      0       -                   Quantization is a class of optimization methods highly
+                                                                                                     investigated in the literature and largely employed in Edge
+   -25    24   23   22     21     20         25      24      23      22     21      20               Machine Learning [30] [31]. In general terms, quantization
+         -0×25 + 1×24 + 1×23+                                                                        restricts the set of representable values of a baseline data
+                                                         1×25 -1×20=31
+         1×22 +1×21+1×20=31                                                                          representation (e.g., 32-bit floating-point) to more compact
+Fig. 3. Reduce the number of non-zero bits from (a) 2’s complement to (b)                            integer formats. In doing so, it inevitably introduces an approx-
+Canonic Signed Digit (CSD).                                                                          imation of the original representation. However, the intrinsic
+ensure the correct propagation of the carry between adjacent                                         redundancy and robustness of AI models like CNNs allow
+subwords. Similarly, shift and multiplication operations can                                         quantization methods to be practical tools to reduce computing
+be performed on the basis of guardbits, as detailed in Sec-                                          complexity and required resources, with minimal impact on the
+tion III-B. Contrary to Muxes-based Soft SIMD, the timing                                            precision of a floating-point baseline [15], [32].
+overhead (hence the hardware cost) of Guardbits-based Soft                                              The most common approach to quantizing CNN models
+SIMD is minimal, since the extra logic operations introduced                                         is that of uniform quantization, where the same quantization
+are not on the critical path.                                                                        scheme is applied to weights and activations of all convolu-
+                                                                                                     tional and fully-connected layers [33]. Typical uniform quanti-
+B. Canonical Signed Digit Coding                                                                     zation levels employ 8- or 16-bit activations and 8-bit weights,
+                                                                                                     without degrading the accuracy of the model [9] [10] [15] [34].
+   CSD representation [22] is a binary encoding method to
+                                                                                                     A more recent quantization strategy is that of heterogeneous
+reduce the number of non-zero bits for 2’s complement. It
+                                                                                                     quantization, which does not restrict the whole application
+employs three symbols for each digit: ‘1’, ‘0’, and ‘-’, where
+                                                                                                     to use the same quantization scheme [16] [35]. In particular,
+‘-’ indicates that the bit value is -1. Figure 3 gives an example
+                                                                                                     this quantization strategy is generally applied to CNN models
+of how the CSD number is generated. The 2’s complement 31
+                                                                                                     per layer, with the most robust layers represented with more
+(“011111”) in CSD notation equals (“10000-”, 32 − 1 = 31),
+                                                                                                     compact formats [9]. This approach suits hardware-software
+reducing non-zero bits from five to two by eliminating two
+                                                                                                     co-design strategies well [10] [36] since it can (i) enable more
+or more consecutive ‘1’ iteratively from right to left. In CSD
+                                                                                                     fine-grained optimizations of the CNN models, leveraging the
+formats, 32 of the digits are zero on average [23].
+                                                                                                     robustness of each layer to maximize the achieved compres-
+   As detailed in Section III-B, our proposed microarchitecture                                      sion, and (ii) adapt to the underlying resources by allowing,
+performs multiplications as a sequence of arithmetic shifts                                          in each layer, quantization schemes that can be effectively
+and additions. Since additions are only executed when the                                            exploited in hardware to get maximum efficiency gains.
+multiplier bit is non-zero, multiple multiplier bits can be                                             Thus, heterogeneously quantized CNNs are employed in this
+processed in one clock cycle for bit patterns with trailing zeros                                    work as an example benchmark to evaluate the performance
+such as “10”, “100”, “1000”, etc. CSD coding can significantly                                       of the proposed microarchitecture, detailed in Section IV-A.
+increase the frequency of such bit patterns for the multiplier
+operands. Therefore, we apply it to the Soft SIMD paradigm,                                          D. Motivation and related works
+speeding up shift-add-based 2’s complement multiplication.                                              Taking the accelerator for quantized CNNs as an example,
+   The CSD encodings are generated by the compiler when                                              we compare the differences between our proposed Soft SIMD
+the multipliers are known constants or by an online decoder                                          paradigm and related state of the art, as summarized in
+if they are unknown variables. Strategies for online methods                                         Table I. Similar to our design, bit-serial (shift-add-based)
+of computing CSD multiplier operands have been proposed                                              multiplication is also used in the works of [9]–[12], and they
+in [24]–[29]. They are compatible with our design with a                                             support a broad range of multiplier operand size as well.
+negligible hardware cost. For example, a 16-bit CSD decoder                                          However, the multiplicand operand size can only be either 8-
+only requires 431µm2 under 130nm technology in [29], which                                           or 16-bit, while our design provides super flexible multiplicand
+is 21% of the 48-bit Soft SIMD area under 28nm technology                                            bitwidths. Hence, these works only release the quantization
+in this work. For advanced technology nodes (e.g., 28nm)                                             space of weights (multipliers) but can not leverage that of
+and a larger datapath (e.g., 192-bit), the area overhead is less                                     activations (multiplicands) due to the limited operand size,
+than 5%. This work focuses on the constant multipliers and                                           restricting further acceleration for quantized CNNs. Moreover,
+considers CSD multiplier operands as inputs to our proposed                                          the average multiplication cycles for N-bit multiplier is N
+microarchitecture.
+                                                                                                                                                4
+
+
+
+                              Stage 1                       Stage 2
+                                                                              stage can be read from registers R1 and R4, or memory. The
+                                                    R
+                                                                              output of the first stage can be written (i) to register R4 as the
+               R                                    2                         input for the first stage in the next cycle, (ii) to register R2 or
+Read
+
+
+
+                                                              Data
+               1             AU         +                                     R3 as the input for the second stage, or (iii) back to memory.
+                                                              Pack
+                                                    R         Unit            Details of the first stages are introduced in Section III-B.
+                             >>                     3                            The second stage (DPU) is instead devoted to repacking
+                                                                              data, namely, translating values between bitwidths across
+                       R
+                                                                              computation phases to adopt different SIMD modes. In the
+                       4                                                      second stage, the input is read from register R2 or/and R3,
+                                                                              and the output can be written (i) to register R4 as the next
+Write
+
+
+
+
+                                                                              cycle’s input in the first stage or (ii) back to memory. The
+                                                                              second stage can be bypassed if no data conversion is required.
+Fig. 4. Block scheme of the proposed Soft SIMD microarchitecture. The first   Details of the second stage are described in Section III-C.
+stage is an Arithmetic Unit (AU), and the second stage is a Data Pack Unit
+(DPU). R1 to R4 are registers.                                                B. Arithmetic Unit
+in [11] [12], N/2 in [9] [10], while just N/3 in our design
+                                                                                 This section details the first pipeline stage (AU) by (i) Soft
+thanks to CSD coding, as detailed in Figure 14. Finally, our
+                                                                              SIMD supported shift and addition/subtraction, (b) shift-add-
+work explores how to prevent overflow during accumulation,
+                                                                              based multiplication, and (iii) overflow management and word
+which has not been discussed in these works.
+                                                                              space utilization using guardbits.
+   The work in [13] [14] also presents a method to realize
+                                                                                 1) Soft SIMD Supported Shift and Addition: As illustrated
+SIMD operations that map operands in non-conflicting bit
+                                                                              in Figure 5(a), the AU consists of a shifter and an adder
+ranges and use guardbits to separate subwords. Nonetheless,
+                                                                              in series. Figure 5(b) shows that the shifter is a logarithmic
+their approach requires extra cycles and resources for operand
+                                                                              topology circuit consisting of multiple layers. The number of
+packing and output correction (e.g., two shifts, one addition,
+                                                                              layers dictates the maximum bit-shift that can be performed in
+one multiplication and one output correction for an 8-bit*8-bit
+                                                                              a single operation. For example, a two-layer logarithmic shifter
+multiplication with two subwords), making it difficult to scale
+                                                                              would allow a maximum bit-shift of 3 (as a combination of
+beyond a few typical supported SIMD formats.
+                                                                              shift 1-bit and shift 2-bit, i.e., 1+2), while a three-layer design
+        III. ARITHMETIC MICROARCHITECTURE                                     would allow 7 (1+2+4).
+   This section details the implementation of the proposed                       In order to show the details of the shifter and adder more
+pipelined processor microarchitecture for arithmetic comput-                  clearly, we use the 1-bit schematic as an example, as presented
+ing based on Guardbits-based Soft SIMD. First, Section III-A                  in Figure 5(c,d). In the two schematics, signal ‘Ai ’ and ‘Bi ’
+shows the overview of the block scheme. Then, Section III-B                   are two input operands, signal ‘Vi ’ is the mask vector to define
+introduces how to build the Arithmetic Unit (AU, the first stage              SIMD mode and identify guardbits (‘0’ represents guardbits
+of the pipeline) and perform arithmetic operations such as                    while ‘1’ non-guardbits), signal ‘Ctrli ’ is the control of the
+addition, shift, and multiplication. Then, Section III-C presents             shifter, and signal ‘Mi ’ is the combinatorial logic output of
+the data conversion strategy among different SIMD bitwidths                   ‘Ai ’, ‘Bi ’, and ‘Vi ’. The following shift and add operations
+and the trade-off between flexibility and cost for the Data Pack              use one guardbit in each subword, similar to the example
+Unit (DPU, the second stage of the pipeline) to perform such                  in Figure 2.
+conversions. Finally, Section III-D shows a mapping example                      As Figure 5(c) shows, the 1-bit shifter consists of a
+with the proposed pipeline microarchitecture.                                 multiplexer. The shifter control signal, ‘Ctrli ’, executes an
+                                                                              AND operation with signal ‘Vi ’ to generate the selection
+A. Microarchitecture Overview                                                 signal for the multiplexer, which identifies the guardbits when
+   A block scheme of the proposed microarchitecture is il-                    shifting. Thus, if ‘Vi =1’, the shifter performs regular right
+lustrated in Figure 4. It consists of two pipeline stages, AU                 shift (selection signal is ‘1’, ‘Shif ti ’ <= ‘Ai+1 ’) for non-
+and DPU, respectively. Four registers are employed at their                   guardbits, while the sign bit extension (selection signal is ‘0’,
+boundaries. The register R1 stores the data fetched from the                  ‘Shif ti ’ <= ‘Ai ’) for guardbits to prevent being affected by
+memory when such data needs to be used multiple times.                        adjacent subwords.
+The R2 and R3 are pipeline registers between the two stages.                     The adder, depicted in Figure 5(d), consists of a standard
+The register R4 keeps the output from the first or second                     adder cell and peripheral logic gates. When performing ad-
+stage as intermediate values for data reuse in the first stage.               dition, both the operands ‘Ai ’ and ‘Bi ’ perform an AND
+The datapath can be interfaced with the typical memory                        operation with ‘Vi ’ to ensure that the carry-out signal of
+hierarchy or with Very Wide Registers (VWR) [37] [38] for                     each guardbit, which is the carry-in for the least significant
+high computational throughput.                                                bit (LSB) of the subsequent subword, is ‘0’ (0 + 0). When
+   The first stage (AU) is dedicated to parallel iterative shift-             performing subtraction, they perform an OR operation with
+add operations, sequentially performing multiplications or ac-                the inverse of ‘Vi ’ to ensure that the carry-out signal of
+cumulations. It can flexibly support different SIMD bitwidths                 each guardbit is instead ‘1’ (1 + 1), as required by signed
+by being configured on the software level at run-time. Accord-                arithmetic in 2’s complement. The final XOR operation checks
+ing to different functional requirements, the input of the first              and guarantees the correctness of the output. The logic gates
+                                                                                                                                                                                      5
+
+
+
+                            (a)                                           (b)               Ai                                                           Multiplier in CSD
+                                        AU                                                                               Multiplicand
+                                                                          Ctrl_shift1 1-bit shifter                (2×8-bit, Q1.6, 1 guardbit)        (8-bit, Q1.7, no guardbit)
+                                       Shifter                            Ctrl_shift2 2-bit shifter
+                                                                                                                  X1 = 0.9375 X2 = -0.953125 Y = 0.8515625 (01101101)
+
+                                                                          Ctrl_shift3 4-bit shifter              00111100 11000011                    ×    100-0-01
+                                       Adder                              …               ……
+
+                                                                                          Shifti
+                                                                                                            =      0       +   (X1 X2) * (+1)
+
+
+                              biti+1                        biti                             biti-1                >>2     +   (X1 X2) * (-1)
+                              Ai+1     (c)                   Ai                              Ai--1
+                                                                                                                   >>2     +   (X1 X2) * (-1)
+            1-bit Shifter
+
+
+
+
+                                       Ctrli
+                                       Vi                                                                          >>3     +   (X1 X2) * (+1)
+                                                       Shifti
+
+                                                                                                            = 00110011 11001100
+ 1-bit AU
+
+
+
+
+                                       (d)       Vi         Vi       Bi     Vi
+
+                                                                                                              0.796875 (-0.2%) -0.8125 (+0.1%)
+                              …                                                                  …
+                                                                                                                  (2×8-bit, Q1.6, 1 guardbit)
+            1-bit Adder
+
+
+
+
+                                                                                                        Fig. 6. Example of iterative shift-add-based multiplication. Operands are a
+                              Ci                 1-bit adder standard cell                       Ci-1   multiplicand in two subwords with Q1.X 2’s complement format (X=6 in the
+                                                               Mi                                       example, with 1 guardbit), and a multiplier in Q1.Y CSD format (Y=7 in
+                                                                                                        the example). At each step, partial results are computed by right shift and
+                                                                                                        addition/subtraction. Multiple bit-fields of the multipliers containing trailing
+                                                                                                        zeros can be processed in one cycle. The output is also in Q1.X (X=6) 2’s
+                                                                Si                                      complement format (with 1 guardbit). A total of three cycles are needed since
+                                                                                                        the shift-add corresponding to the 1st and 2nd non-zero bits can be merged
+Fig. 5. Block schemes of the first pipeline stage. (a) The AU consists of a                             in one cycle.
+shifter and an adder. (b) The shifter has a logarithmic topology, consisting of                         (with 1 guardbit). In each cycle, from right to left, the non-
+multiple layers, and can support multiple shifts. (c) 1-bit shifter: it implements                      zero bits of the multiplier are processed, and right shift and
+right shift for non-guardbits and sign extension for guardbits. (d) 1-bit adder:
+it consists of a standard adder cell and peripheral logic gates. The adder                              addition/subtraction are performed, as dictated by bit values,
+supports Soft SIMD addition/subtraction by configuring guardbits as ‘0’/‘1’,                            until the multiplication result is computed. Due to CSD coding,
+respectively.                                                                                           multiplier bit patterns containing trailing zeros, such as “-0”
+around the standard adder cell are not in the carry chain, hence                                        and “100” in this example, can be processed in one cycle.
+do not affect the critical path much. Therefore, the required                                           Thus, the amount of cycles for this 8-bit multiplier example
+hardware consumption is less than in the case of Muxes-                                                 decreases from eight to three.
+based Soft SIMD, especially when timing path constraints                                                   It can be seen that the bitwidth of the multiplication results
+are stringent, such as for higher frequencies, larger-bitwidth                                          and those of the multiplicands are the same, Q1.6 values (with
+operands, or larger shifter numbers, as reported in Section V.                                          1 guardbit); hence, truncation errors occur. However, the errors
+   2) Shift-add-based Multiplication: Based on the shift and                                            are negligible even for very constrained bitwidths, for exam-
+addition circuits introduced above, the AU supports the fol-                                            ple, approximately 0.2% in the example in Figure 6. Wider
+lowing operations, where A and B are two input operands:                                                bitwidths would result in even lower truncation errors, while
+   (i) (A>>) +/− B → addition or subtraction between A                                                  narrower ones would increase parallelism and performance.
+(possibly right-shifted) and B.                                                                         We showcase in Section IV-A an accuracy-driven methodology
+   (ii) (-A>>) +/− B → addition or subtraction between -A                                               that navigates this trade-off.
+(possibly right-shifted) and B.                                                                            3) Overflow Management and Word Space Utilization:
+   B can be set to 0, resulting in:                                                                       For the shift, addition, and multiplication operations intro-
+   (iii) (A>>) +/− 0 and (iv) (-A>>) +/− 0.                                                               duced above, guardbits are used to (i) separate subwords, (ii)
+   Thus, the AU allows the execution of multiplications by                                                ensure correct shift operations in each subword, and (iii)
+decomposing them in iterative shifts-adds. In this work, fixed-                                           guarantee the correct carry generation and propagation in
+point Q1.X 2’s complement representation is selected as the                                               addition or subtraction operations between any two adjacent
+data format, i.e., with one leading bit for the integer parts                                             subwords and avoid possible overflows. It can be noted that
+and the rest devoted to the fractional part. The multiplier is                                            guardbits are only required when data traverses the first
+encoded to CSD notation to reduce the number of non-zero                                                  stage (AU) of this pipeline microarchitecture.
+bits and required iteration cycles. Several multiplicands with                                            If the first stage output needs to be reused as an input in
+the same multiplier are organized in subwords with Q1.X                                                   the next cycle through datapath loops, the most significant
+representation, separated by one guardbit, enabling data-level                                            bit (MSB) of each subword is used as a guardbit, which
+parallelism.                                                                                              does not encode numerical values, as shown in Figure 6.
+   The employed algorithm is shown in Figure 6, presenting                                                Conversely, if the first stage output is used as input for the
+an example of a Q1.7 multiplier and two 8-bit multiplicands                                               second stage or written back to memory, no guardbits are
+stored in subwords, themselves represented as Q1.6 values                                                 required, and the MSB encodes numerical values again.
+                                                                                                                                                                                                                     6
+
+
+             Input of                                                                       Output of                                     (a) Output Bitwidth  (b) Output Bitwidth  (c) Output Bitwidth
+                                                              Data Pack Unit
+        the second stage                                                                the second stage                                      3 4 6 8 12 16 24     3 4 6 8 12 16 24     3 4 6 8 12 16 24
+                                                                                                                                           3                    3                    3
+
+
+
+
+                                                                                                                         Input Bitwidth
+                                                                                        3*16-bit from R2                                   4                    4                    4
+                                                     0
+                                                                                                                                           6                    6                    6
+                                                                                           0       1        2
+                                                     1                                                                                     8                    8                    8
+       4*12-bit in R2                                                                                                                     12                   12                   12
+                                                     2                                  4*12-bit from R2
+                                                                                                                                          16                   16                   16
+                                                     3                                    0    1       2    3
+                                                                                                                                          24                   24                   24
+
+                                                     4
+                                                                                        6*8-bit from R2/R3                                (d) Output Bitwidth  (e) Output Bitwidth  (f) Output Bitwidth
+                                                                                          0 1 2 3 4 5                                         3 4 6 8 12 16 24     3 4 6 8 12 16 24     3 4 6 8 12 16 24
+                                                     5
+       4*12-bit in R3                                                                                                                      3                    3                    3
+
+
+
+
+                                                                                                                         Input Bitwidth
+                                                     6                                  8*6-bit from R2/R3                                 4                    4                    4
+                                                     7                                    01234567                                         6                    6                    6
+                                                                                                                                           8                    8                    8
+                                                                             (a)                                                          12                   12                   12
+                                                                                                                                          16                   16                   16
+                                       R2                              R3                                  Output                         24                   24                   24
+    Cycle 1
+                                                                                                                                                            Area cost verses different packing modes
+                                                                                                                                          8.00
+    Cycle 2               3        2        1        0                                                 2        1   0                                Synthesis
+                                                                                                                                                                                                          (f)
+                                                                                      D                                                              Model estimation
+
+
+
+
+                                                                                                                        Normalized area
+                                                                                                                                          6.00                                         (e)
+    Cycle 3               3        2        1        0        7    6    5    4        P                5        4   3
+                                                                                      U                                                   4.00                       (c)    (d)
+    Cycle 4             11 10               9        8        7    6    5    4                         8        7   6
+                                                                                                                                          2.00             (b)
+                                                                                                                                                     (a)
+    Cycle 5             11 10               9        8                                             11       10      9
+                                                                                                                                          0.00
+                                                                             (b)                                                                 0               5                10         15      20         25
+                                            Output Bitwidth                                                                                                                Number of packing modes
+
+                                       3        4        6    8    12 16 24                                             Fig. 8. Top: Different DPU configurations supporting (a) 2 SIMD modes, 4
+                                                                                                                        packing modes, (b) 3 SIMD modes, 7 packing modes, (c) 3 SIMD modes, 9
+                               3       2        8        4    16   8    32 16                                           packing modes, (d) 4 SIMD modes, 12 packing modes, (e) 7 SIMD modes, 19
+                                                                                      For each output bit,
+              Input Bitwidth
+
+
+
+
+                               4       6        2        6    4    6    8    12                                         packing modes, (f) 7 SIMD modes, 29 packing modes. Bottom: Normalized
+                               6       2        4        2    8    4    16   8        number of connections             area cost of (a) ∼ (f) under logic synthesis and lightweight model evaluation.
+                                                                                      with input bits
+                               8       --       2        6    2    6    4    6                                             Figure 7(a) shows an example of the repacking operation.
+                               12 --            --       2    4    2    8    4     -- Non-supported modes               In this example, we consider R2 and R3 as 48-bit words
+                               16 --            --       --   2    6    2    6                                          composed of four 12-bit subwords. Each subword can be
+                               24 --            --       --   --   2    4    2                                          resized to 6-, 8-, 12-, or 16-bit through the DPU, which
+                                                                             (c)                                        manages increase and decrease in subword size. If the subword
+Fig. 7. (a) Example of the data repacking with a 48-bit word size. The                                                  size increases, the sign bit of input subword data is extended,
+registers R2 and R3 have four 12-bit subwords (0/1/2/3 in R2, and 4/5/6/7 in                                            which provides a larger bitwidth to ensure that overflow does
+                                                                                                                                                                                      2
+R3). After repacking, the SIMD format can be converted to 16-bit with three                                             not occur in the following arithmetic operations in the first
+subwords, 8-bit with six subwords, 6-bit with eight subwords, or still 12-bit
+with four subwords. (b) For repacking from 12- to 16-bit, the output subwords                                           stage (AU). Conversely, if the subword size decreases, the
+can be fetched from different input positions. (c) Number of connections with                                           input subword data is truncated with the required MSBs. In
+input bits for each output bit. ‘–’ indicates non-supported packing modes.                                              addition, subword sizes can stay the same when traversing
+  Therefore, guardbits do not reduce word space uti-                                                                    the DPU, such as when R2 or/and R3 are used to store data
+  lization nor increase storage requirements. The only                                                                  temporarily for reducing read/write to memory.
+  requirement is the range of the input data for the first                                                                 Output subwords can be fetched from different input po-
+  stage. For example, for N-bit operands, the input can be                                                              sitions. For example, Figure 7(b) shows the possible four
+  represented at a maximum with (N-1)-bit, to avoid the                                                                 cases when repacking from 12- to 16-bit1 . From a hardware
+  possible overflow after addition, and the Nth bit (MSB) is                                                            perspective, the number of such cases reflects how many input
+  temporarily used as a guardbit.                                                                                       bits are connected to each output bit in DPU, hence the
+   Since each addition increases the bitwidth of the result by                                                          connectivity/complexity of the data packing mode, and it is
+1-bit, for multiple additions such as the multiply–accumulate                                                           positively correlated to hardware cost.
+(MAC) operations, the second stage (DPU) is used to repack                                                                 As an illustrative example, in Figure 7(c), we consider 48-bit
+the data to a larger bitwidth before arithmetic operations in                                                           registers with 3-, 4-, 6-, 8-, 12-, 16-, and 24-bit SIMD modes,
+the first stage. We detailed this procedure in Section III-C.                                                           and show their connectivity. Some data packing modes are not
+                                                                                                                        supported due to the presence of only two input registers (R2
+C. Data Pack Unit
+                                                                                                                        and R3). For example, converting from 12- to 3-bit would
+   The role of the second pipeline stage (DPU) is to bridge                                                             require four input registers and hence cannot be done in a
+across different SIMD formats. To this end, a crossbar-based                                                            single DPU traversal. The result also shows that the required
+DPU similar to [39] is employed to repack words from register                                                           connectivity for some data packing patterns is very large, such
+R2 or/and R3 into other supported bitwidths. The resulting                                                                1 For simplicity, only the cases when starting data packing operations from
+resized words are then written to register R4 as the input of                                                           R2 are presented here. The number of cases would double when symmetrical
+the first stage (AU) or back to memory.                                                                                 cases starting with R3 are considered.
+                                                                                                                                                                    7
+
+                                                                  TABLE II
+                                       A MAPPING EXAMPLE ON THE PROPOSED S OFT SIMD MICROARCHITECTURE
+              Cycle    Read        R1          R4                              Stage 1                       R2             R3           Stage 2        Write
+               1     B[11:0]                                       ResB [11 : 0] ← 0 ± B[11 : 0]
+               2                 B[11:0] ResB [11 : 0] ResB [11 : 0] ← ResB [11 : 0] >> ± B[11 : 0]
+               3                 B[11:0] ResB [11 : 0] ResB [11 : 0] ← ResB [11 : 0] >> ± B[11 : 0]
+               4     B[23:12]                                    ResB [23 : 12] ← 0 ± B[23 : 12]         ResB [11 : 0]
+               5                 B[23:12] ResB [23 : 12] ResB [23 : 12] ← ResB [23 : 12] >> ± B[23 : 12] ResB [11 : 0]
+               6                 B[23:12] ResB [23 : 12] ResB [23 : 12] ← ResB [23 : 12] >> ± B[23 : 12] ResB [11 : 0]                 ResB [7 : 0]
+               7    ResA [7 : 0]           ResB [7 : 0]      Sum[7 : 0] ← ResA [7 : 0] + ResB [7 : 0]    ResB ]11 : 0] ResB [23 : 12] ResB [15 : 8] Sum[7 : 0]
+               8 ResA [15 : 8]            ResB [15 : 8]     Sum[15 : 8] ← ResA [15 : 8] + ResB [15 : 8]                ResB [23 : 12] ResB [23 : 16] Sum[15 : 8]
+               9 ResA [23 : 16]           ResB [23 : 16] Sum[23 : 16] ← ResA [23 : 16] + ResB [23 : 16]                                              Sum[23 : 16]
+
+as from 3- to 8-bit or 16-bit, which means that such operations                          multiplication results (ResB [11:0] and ResB [23:12]) are then
+are very costly in hardware.                                                             temporarily stored in registers R2 and R3 for repacking to 6-bit
+   Hence, while the DPU could theoretically support con-                                 (ResB [7:0], ResB [15:8], and ResB [23:16]) to prevent possible
+version from/to any bitwidth, in practice, design complex-                               addition overflows. The same operations are performed to
+ity (hence area, energy, etc.) must be accounted for, which                              obtain ResA [23:0], and the repacked outputs (ResA [7:0],
+varies with the number and the selections of data packing                                ResA [15:8], and ResA [23:16]) are already stored in memory.
+modes [39] [40]. For instance, replacing a 3- to 16-bit repack                           Finally, Sum[7:0], Sum[15:8] and Sum[23:16] are obtained.
+with a 2-step 3- to 4-bit and 4- to 16-bit reduces design                                   Similar to this example, through careful mapping, our
+complexity. Also, since the DPU is mainly composed of mul-                               pipeline microarchitecture can ensure that the first stage (AU)
+tiplexers that can be reused by different data packing modes,                            is fully and seamlessly utilized to provide better perfor-
+choosing the modes with higher logic share is beneficial,                                mance/latency, while the second stage (DPU) is only activated
+such as more than 50% between 4- to 8-bit and 8- to 16-bit                               when repack operations are required to save energy cost.
+conversions.
+   To exemplify this, Figure 8(top: a∼f) describes six possible                                               IV. EXPERIMENTAL SETUP
+choices having different flexibility and hardware requirements,
+                                                                                            This section details the settings for our experiments. Sec-
+ranging from supporting 4, 7, 9, 12, 19, and 29 data packing
+                                                                                         tion IV-A first introduces the selected CNN benchmarks,
+modes. Since the DPU is combinational logic and not the
+                                                                                         their quantization schemes, and the mapping strategy onto
+timing bottleneck of the datapath, we focus on the area cost in
+                                                                                         the proposed Guardbit-based Soft SIMD microarchitecture.
+the following. Figure 8(bottom) presents the normalized area
+                                                                                         Then Section IV-B summarizes the assigned parameters for the
+cost of (a) ∼ (f) based on the two following approaches:
+                                                                                         proposed microarchitecture. Section IV-C lists the two base-
+   (i) Logic synthesis under TSMC 28nm technology.
+                                                                                         lines, and Section IV-D specifies the synthesis configuration
+   (ii) Calculate the number of required multiplexers based
+                                                                                         for Soft SIMD implementations. Finally, Section IV-E presents
+on the connectivity values in Figure 7(c), considering the
+                                                                                         the power consumption model for performance evaluation.
+multiplexers reuse among different data packing modes.
+   The result shows that supporting more SIMD and data pack-                             A. CNN Benchmarks Selection
+ing modes can incur high area penalties. Nonetheless, as the
+                                                                                            1) CNNs Quantization: To effectively leverage the comput-
+number of modes increases, the area growth rate falls because
+                                                                                         ing capabilities of the proposed microarchitecture illustrated
+of the multiplexers reuse among different modes. Also, the
+                                                                                         in Section III, we adopt a hardware-aware heterogeneous
+results obtained by logic synthesis and model estimation are
+                                                                                         method to optimize the CNN benchmarks based on per-
+very close, which indicates that we can use lightweight model
+                                                                                         layer quantization, similar to the methodology in [41]. This
+estimation to evaluate the hardware resource requirement of
+                                                                                         strategy aims to reduce the number of shift-add operations
+different packing choices. In the design investigated in Section
+                                                                                         as much as possible (hence the bitwidth of activations and
+IV-B, we select the choice in Figure 8(e) because it supports
+                                                                                         weights), resulting in speed-ups and energy cost reductions,
+all the required packing modes for MAC operations in CNNs
+                                                                                         while keeping accuracy drops below a user-defined constraint.
+while occupying 21.5% less area than the design in Figure 8(f).
+                                                                                            An overview of the adopted optimization approach is de-
+D. Mapping Example                                                                       picted in Figure 9. Its input is a trained CNN model uniformly
+   Table II shows a mapping example of performing multipli-                              quantized to 16bit activations and 8bit weights [9] [10] [15].
+cation, repack, and accumulation on our microarchitecture. We                            Then, the first step of the optimization loop measures the
+assume the register size is 48-bit, and the subword size can                             potential reduction of the shift-add operation numbers when
+be 4-, 6-bit, etc. Operands A and B are 4-bit multiplicands                              reducing the quantization level of either activations or weights
+with 24 subwords, while operands m1 and m2 are common                                    in each layer. Following a greedy approach, the optimization
+multipliers. The operation is : Sum <= A × m1 + B × m2. For                              action leading to the highest reduction is selected and applied
+simplicity, we only show the details of shift-add-based mul-                             to the model. After reducing the bitwidth of the target operands
+tiplication and repacking of ResB [23:0] <= B[23:0] × m2.                                (i.e., either activations or weights) in the target layer, 20 re-
+The multiplication input operands and result are both 4-bit,                             training epochs are run. Finally, the accuracy of the obtained
+so 12 subwords can be executed in parallel. The multiplicand                             model is measured. If it satisfies the user-defined accuracy
+(B[11:0] or B[23:12]) is fetched from memory in the start                                threshold, the optimization loop continues. Otherwise, the
+cycle of each multiplication, followed by shift-add iterations                           applied optimization is discarded and will not be considered in
+through registers R1 and R4 via the local datapath loop                                  future iterations. This process ends when no further optimiza-
+under control signals converted from the multiplier m2. The                              tion actions can be performed. Note that, while this process
+                                                                                                                                                                                                                       8
+
+
+                                                                                                                                                                           TABLE III
+                                                                         Input CNN                                                                  ACCURAY AND S HIFT- ADD - REDUCTION OF CNN B ENCHMARKS
+     Activations Weights                                                                                              Accuracy
+                                                                                                                                                                                                 HQ CNN Shift-add
+                                                                                                                                                              UQ CNN Accuracy HQ CNN Accuracy
+                                                 Optimization Loop                                                                                                                              Reduction Percentage
+                                        Quantize                                     Retrain           Check                                       LeNet5         74.35%           73.42%             70.40%
+                                                                                                                                                   AlexNet        50.69%           49.75%             45.25%
+                                                                                                                                                   VGG16          66.57%           66.63%             68.01%
+                                                                                                                                                  ResNet20        62.66%           61.88%             87.88%
+                                                                       Optimized CNN                                                              MobileNet       62.20%           61.30%             61.44%
+                                                                                                                                                   ResNext        69.31%           68.51%             66.12%
+Fig. 9. The method to quantize CNN models heterogeneously. The optimiza-
+tion loop adjusts the bitwidth of activations and weights to maximize shift-add
+                                                                                                                                                for 53 additions, 6 layers). The first layer of the binary tree
+cycle-reduction while abiding by bitwidth and accuracy constraints.                                                                             corresponds to the multiplication results of all the subwords
+                                                                                                                                                in the same column (e.g., 54 subwords in the first column in
+                                                                                                                   y000 y100 y200 y300
+                                                                                                                   y010 y110 y210 y310
+                                                                                                                                                Figure 10(b)), and the last layer is the convolution output (e.g.,
+     x000 x100 x200 x300 x400 x500                      w000 w100 w200                                                                          y000 in the first column in Figure 10(b)). Since each addition
+                                                                                                                   y020 y120 y220 y320
+     x010 x110 x210 x310 x410 x510
+     x020 x120 x220 x320 x420 x520          *           w010 w110 w210
+                                                         w020w120w220
+                                                                                                                   y030 y130 y230 y330          increases the subword size, the DPU stage is used to repack
+                                                                                                                                                the data to a larger bitwidth to avoid possible overflows.
+     x030 x130 x230 x330 x430 x530
+                                                             y000 = x000w000 + x100w100 + … + … + x225w225                                         Fully connected layers are mapped with the same strategy,
+     x040 x140 x240 x340 x440 x540                           …
+     x050 x150 x250 x350 x450 x550                           y330 = x333w000 + x430w100 + … + … + x555w225                                      as they can be executed via sequences of MAC operations [10].
+                                                                               (a)                                                                 It can also be noted that a smaller activation bitwidth
+     Multiple activations in parallel                                                          Convolution output                               means higher word-level parallelism, and a smaller weight
+                                                                                                              N + ceil(log2(filter size)) bit   bitwidth means fewer shift-add-based multiplication iteration
+                                                                                                      y000
+      x000 x100  ×w…      …     x330       000
+                                                                                                                                                cycles. The previous heterogeneous quantization methodology
+                                                   All weights in the filter
+
+
+
+
+ +
+
+ +
+      x  x
+       100 … … x
+             200 ×w              430       100                                                 …        +        …                              considers these two aspects comprehensively.
+       … … … … … × …                                                                                                                               3) Target Benchmarks: We consider six popular edge
+ +
+       … … … … … × …                                                                      …+…                    …+…                            CNN models with different complexity: LeNet5 [42],
+ +                                                                                                                                              AlexNet [43], VGG16 [44], ResNet20 [45], MobileNet [46],
+      x  x
+       225 … … x
+             325 ×w              555       225
+
+                                                                                           …+… …+… …+
+                                                                                                                                                and ResNext [47]. Accuracy is reported on the CIFAR-10
+                                                                                      +                                             N bit
+      y000 y100    …      …     y330                        x000w000 x100w100                                                x225w225           dataset [48] for LeNet5 and the CIFAR-100 dataset [48] for
+                    (b)                                                                                 (c)                                     the other CNN benchmarks.
+Fig. 10. (a) In the example, the input size is 6×6×6, the filter size is 3×3×6,                                                                    CNN benchmarks are first uniformly quantized with 16-
+and the output size is 4×4×1. (b) The word in each row contains multiple acti-                                                                  bit activations and 8-bit weights (named as UQ in the fol-
+vations (multiplicands) from different convolutions and shares the same weight
+(multiplier) from the filter. The multiplication results are then accumulated in
+                                                                                                                                                lowing), as done in [9] [10] [15]. They are then quantized
+the column to get the convolution results. The activation bitwidth determines                                                                   heterogeneously using the methodology presented in Figure 9
+the maximum degree of parallelism. (c) All the multiplication results from the                                                                  (named as HQ in the following). The maximum accuracy drop
+same column are accumulated with repacking to larger bitwidths constantly
+to avoid overflows. The number of repacking times is logarithmically related
+                                                                                                                                                threshold is set as 1.0%. Here, UQ is used as the baseline CNN
+to the filter size.                                                                                                                             implementations as well as a reference to contrast with HQ.
+induces a training time overhead, it only has to be performed                                                                                   Note that HQ can only be supported by an architecture that
+once (offline) for a given network, training set, and accuracy                                                                                  features flexible subword sizes, as is the case in Soft SIMD.
+threshold. Moreover, its complexity only scales linearly with                                                                                      Across experiments, multiplication operations need a max-
+the number of network layers, allowing it to converge in a                                                                                      imum bitwidth of 16 bits, while the accumulation outputs
+reasonable time even for models having tens of layers.                                                                                          require a maximum of 24 bits to ensure that overflow does not
+    2) CNNs Mapping: Figure 10 gives a mapping example of                                                                                       occur. Therefore, we consider the following subword bitwidth
+the basic convolution operation. As shown in Figure 10(a), the                                                                                  sets: 3, 4, 6, 8, 12, 16, and 24 bits. For weights, bitwidth varies
+filter size is 3×3×6, and the input and output sizes are 6×6×6                                                                                  from 1 to 16 bits. Both activations and weights are scaled to
+and 4×4×1, respectively. In this setting, each convolution                                                                                      (-1,1) and are represented in Q1.X notation.
+operation requires 54 multiplications and 53 additions. In                                                                                         Figure 11 presents the HQ bitwidths of activations and
+Figure 10(b), each row represents a word containing serval                                                                                      weights in each layer for all CNN benchmarks. Table III lists
+subwords (multiplicands) and the corresponding weight from                                                                                      the inference accuracy of UQ and HQ CNNs, as well as the
+the filter (multiplier), while each column describes the accu-                                                                                  shift-add reduction percentage, which is 66.52% on average
+mulation of multiplication results in each convolution. To per-                                                                                 and up to 87.88% for the ResNet20 case.
+form multiplications, multiple activations (up to the maximum                                                                                   B. Guardbits-based Soft SIMD Instantiation
+amount of possible subwords) in different convolutions are                                                                                        As a template instantiation for the proposed Guardbits-based
+mapped together on the same word and multiplied with the                                                                                        Soft SIMD pipeline microarchitecture described in Section III,
+shared weight. Thus, the final output also contains multiple                                                                                    we consider: (i) the support for heterogeneous subwords width
+convolution results in a word.                                                                                                                  of 3, 4, 6, 8, 12, 16, and 24 bits, which can fully exploit the
+    As for accumulation (detailed in Figure 10(c)), operations                                                                                  proposed microarchitecture, and (ii) a word size of 48 bits,
+are organized into a binary tree, in which the number of                                                                                        which is the least common multiple of all SIMD modes to
+layers is logarithmically related to the size of the filter (e.g.,                                                                              ensure full utilization of the word space.
+                                                                                                                                                             9
+
+
+                              Activation        Weight
+                     16
+                     14
+                     12
+    Bitwidth / bit
+
+
+
+                     10
+                      8
+                      6
+                      4
+                      2
+                      0
+                          LeNet5 AlexNet       VGG16                 ResNet20                  MobileNet                        ResNext
+Fig. 11. The activation (blue bar) and weight (orange bar) bitwidth of each layer in corresponding heterogeneously quantized CNN benchmarks.
+
+                          TABLE IV                                                             features as the proposed Guardbits-based Soft-SIMD microar-
+ C ONFIGURATIONS OF G UARDBITS - BASED S OFT SIMD I NSTANTIATION                               chitecture in Section III, but employs a different mecha-
+                                                        Configurations                         nism for implementing subword separation. The hardware
+   SIMD Modes                                    [3, 4, 6, 8, 12, 16, 24] bits                 implementation of Muxes-Based Soft SIMD baseline is sim-
+   Word bitwidth                                            48 bits
+                                                                                               ilar to [9] [10] [11] [12], which performs shift-add-based
+                                   3 to 4, 4 to 6, 6 to 8, 8 to 12, 12 to 16, 16 to 24 bits
+   Packing modes
+                                   4 to 3, 6 to 4, 8 to 6, 12 to 8, 16 to 12, 24 to 16 bits    arithmetic operations under 8- or 16-bit subword size for
+    Shifter range                                        0 ∼ 3, 0 ∼ 7                          quantized neural network acceleration. Such an approach is
+                                                                                               here extended to the SIMD modes in Table V for greater
+                                           TABLE V                                             flexibility, and CSD coding is adopted to speed multiplication.
+                            T HE PROPOSED METHOD AND TWO BASELINES
+                                                                                                  On the other hand, the Hard SIMD Multiplier-Adder base-
+                                   Guardbits-based         Muxes-based       Hard SIMD         line is a typical microarchitecture that can perform parallel
+                                Soft SIMD (Proposed)       Soft SIMD        Multiplier-Adder
+                                                                                               multiplication and addition in one cycle under limited SIMD
+   Word Bitwidth                           48                   48                 48
+   SIMD Modes                       3,4,6,8,12,16,24     3,4,6,8,12,16,24        8,16,24
+                                                                                               modes. Here, we select 8-, 16-, and 24-bit SIMD modes
+                                                                                               since more modes bring a large area and energy increase.
+   It should be noted that only the second stage (DPU) of                                      Indeed, even with this reduced set of supported bitwidths,
+the pipeline is impacted by the choice of supported subwords,                                  this implementation requires vastly more area and energy with
+while the first stage (AU) is only influenced by the word size.                                respect to Soft SIMD alternatives (see Section V).
+In this work, available data packing modes reflect the ones                                    D. Technology and Synthesis Configuration
+illustrated in Figure 8(e): 3- to 4-bit, 4- to 3-bit, 4- to 6-bit,
+                                                                                                  The hardware implementations of the proposed microar-
+6- to 4-bit, 6- to 8-bit, 8- to 6-bit, 8- to 12-bit, 12- to 8-bit,
+                                                                                               chitecture and two baselines use a 28nm technology node
+12- to 16-bit, 16- to 12-bit, 16- to 24-bit, 24- to 16-bit, and
+                                                                                               and regular voltage standard cell library from TSMC, with
+other seven modes that keep the original bitwidth.
+                                                                                               a maximum operating frequency of 1.0GHz.
+   Finally, we consider two implementations for the logarith-
+                                                                                                  One particularity for the Guardbits-based and Muxes-based
+mic shifter in the first pipeline stage (AU), having two or
+                                                                                               Soft SIMD microarchitecture synthesis is that, by default, the
+three layers. In the first case, up to 3-bit right-shifts can be
+                                                                                               worst critical path length is dictated by the adder in the AU,
+performed in a single operation, while up to 7-bit right-shifts
+                                                                                               which starts from bit 0 to bit 47 in this work. Nonetheless, no
+in the second. The two cases are named shift3 and shift7,
+                                                                                               Soft SIMD configuration can traverse all word bits in practice,
+respectively, in the following. As most operand bitwidths are
+                                                                                               as we constrain the maximum operand width to 24-bit in
+below 16-bit, shifting more than 7-bit is rarely required, so we
+                                                                                               this work. Such mismatch can cause an overly constrained
+do not explore even more complex shifters.
+                                                                                               optimization during synthesis, which impacts area and energy.
+   All design parameters are summarized in Table IV. Such
+                                                                                               To avoid it, we enforce specific timing constraints in the
+choices abide by the characteristics of the target scenarios
+                                                                                               synthesis tool, ensuring that the worst critical path length
+(CNN benchmarks), but are not an intrinsic limitation of
+                                                                                               of the adder corresponds to the supported SIMD modes (in
+our hardware/software methodology or microarchitectural tem-
+                                                                                               this work, 16- and 24-bit, as the corresponding subwords
+plate.
+                                                                                               delimitations are overlapping). Again, this does not restrict
+C. Baselines                                                                                   our methodology, as such an approach can be applied to any
+                                                                                               Soft SIMD microarchitecture synthesis.
+  In order to evaluate the performance of the proposed
+Guardbits-based Soft SIMD microarchitecture, we propose                                        E. Power Consumption Model
+two baselines in Table V : (i) Muxes-Based Soft SIMD mi-                                          To evaluate the energy performance of the three implemen-
+croarchitecture, to compare the performance of different Soft                                  tations in Section IV-C, we develop a power consumption
+SIMD implementation methods, (ii) Hard SIMD Multiplier-                                        model containing the energy consumed by basic operations.
+Adder, to compare the performance of the microarchitecture                                     For both Guardbits-based and Muxes-based Soft SIMD mi-
+based on Soft SIMD versus Hard SIMD.                                                           croarchitecture, we characterize the energy consumption of
+  The Muxes-Based Soft SIMD baseline uses multiplexers                                         shift-add operations under different bitwidths and that of data
+to separate subwords instead of guardbits. It has the same                                     packing operations. For the Hard SIMD Multiplier-Adder,
+                                                                                                                                                                                                                                 10
+
+
+                                                          (a) Basic shift-add operations                                                6000
+                                                                                                                                        6000
+Average energy of each subword / pJ   0.8
+                                                                                                                                                                                                                       5142
+                                      0.6                                                                                               5000
+                                                                                                                                        5000
+                                      0.4
+                                                                                                                                                                                                                4175
+                                      0.2                                                                                               4000
+                                                                                                                                        4000
+
+
+
+
+                                                                                                                           Area / μm2
+                                       0
+                                             A>>+B A>>-B -A>>+B -A>>-B A>>+0 -A>>+0
+                                                                                                                                        3000
+                                                                                                                                        3000
+                                               3-bit 4-bit 6-bit 8-bit 12-bit 16-bit 24-bit
+                                                          (b) Basic data packing operations                                                                            2060                              2095
+                                      0.4                                                                                               2000
+                                                                                                                                        2000           1901    1814                     1849     1797
+                                                                                                                                                1698                          1686
+                                      0.3                                                                                                              707
+                                                                                                                                                                       711                                718
+                                                                                                                                                               701                      709       700
+                                      0.2                                                                                                       698                           701
+                                                                                                                                                                       561                                561
+                                      0.1                                                                                               1000
+                                                                                                                                        1000           561     561                      562       561
+                                                                                                                                                561                           561
+                                      0.0
+                                            3-bit 4-bit 4-bit 6-bit 6-bit 8-bit 8-bit 12-bit 12-bit 16-bit 16-bit 24-bit                               633     552
+                                                                                                                                                                       788              579       536
+                                                                                                                                                                                                          816
+                                                                                                                                                439                           424
+                                             to    to     to    to to to to             to     to     to     to     to                    00
+                                            4-bit 3-bit 6-bit 4-bit 8-bit 6-bit 12-bit 8-bit 16-bit 12-bit 24-bit 16-bit                          Shift 3       Shift 7   Shift 3       Shift 7 Multiplier-Adder
+                                                                                                                                               Guardbits-based Soft SIMD Muxes-based Soft SIMD   Hard SIMD
+Fig. 12. The average energy cost of basic operations per subword at 1.0GHz                                                                       200MHz       1.0GHz     Stage 1 (AU)          Stage 2 (DPU)    Registers + CL
+for Guardbits-based Soft SIMD microarchitecture. (a) Shift-add operations,
+(b) Data packing operations.                                                                                               Fig. 13. When operating at 200MHz and 1.0GHz, synthesis area of
+                                                                                                                           (i) Guardbits-based Soft SIMD microarchitecture (’shift3’ and ’shift7’),
+similarly, we extract the energy cost of additions and multipli-                                                           (ii) Muxes-based Soft SIMD microarchitecture (’shift3’ and ’shift7’), and
+cations for each supported bitwidth. Such energy extraction is                                                             (iii) Hard SIMD Multiplier-Adder. The area is composed of three parts:
+                                                                                                                           Arithemetic Unit (the first stage, AU), the Data Pack Unit (the second stage,
+based on the post-synthesis simulation at the register transfer                                                            DPU), and the Registers and other Combinational Logic (R+CL).
+level (RTL).
+   Figure 12 shows the energy consumption of all basic oper-                                                               the added flexibility does induce speed-ups when performing
+ations for the proposed Guardbits-based Soft SIMD microar-                                                                 multiplications, as discussed in Section V-B). Besides, the area
+chitecture at 1.0GHz. The decrease in energy consumption per                                                               of the second stage (DPU) remains almost constant while that
+subword operation is significant when the operands have a                                                                  of the first stage (AU), which is the critical path, increases
+smaller bitwidth, such as 3-, 4-, 6-bit, since it results in higher                                                        significantly with tighter timing constraints. The area of the
+data-level parallelism. The energy cost of data packing oper-                                                              registers and other combinational logic (R+CL) also fluctuates
+ations, which exhibits the same trend as shift-add operations,                                                             slightly.
+is shown in Figure 12(b).                                                                                                     Then, as expected, since Guardbits-based and Muxes-based
+   We use this energy characterization to evaluate the energy                                                              Soft SIMD implementations do not require a complex combi-
+cost of executing quantized CNN benchmarks. To this end, in                                                                natorial multiplier, they take up considerably less area (for
+the case of Soft SIMD architectures (both Muxes-based and                                                                  ‘shift7’ at 1.0GHz, 59.9% and 59.3%, respectively) with
+Guardbits-based), we first map the CNN benchmarks to the                                                                   respect to the Hard SIMD Multiplier-Adder, even if the latter
+microarchitecture as a sequence of shift-add and data packing                                                              supports fewer SIMD modes (8-, 16-, and 24-bit).
+operations (as explained in Section IV-A). Then, we multiply                                                                  Finally, the Guardbits-based Soft SIMD microarchitecture
+the number of basic operations by the corresponding energy                                                                 scales better (i.e., has a smaller area increase) for tighter timing
+cost to determine the overall energy consumption. A similar                                                                constraints than the Muxes-based Soft SIMD alternative, as
+approach is followed for the Hard SIMD case, but considering                                                               it has a shorter critical path. For example, the area cost of
+multiplications and additions as basic operations.                                                                         Muxes-based Soft SIMD microarchitecture is always smaller
+                                                                                                                           than that of Guardbits-based Soft SIMD microarchitecture for
+                                                                                                                           ‘shift3’ configurations. However, its area cost becomes the
+                                                                  V. RESULTS
+                                                                                                                           larger one for ‘shift7’ cases at 1.0GHz. Also, for a constant
+   Section V-A first presents the area performance comparison.                                                             frequency constraint, when increasing the shift from 3 to 7, the
+Then, Section V-B contrast the multiplication speed and energy                                                             Guardbits-based Soft SIMD microarchitecture area grows by
+performance. Finally, Section V-C analyzes the performance of                                                              6.8% and 8.4% at 200MHz and 1.0GHz, respectively, while for
+running CNN benchmarks. In the following, we compare the                                                                   Muxes-based Soft SIMD microarchitecture 6.6% and 13.3%.
+performance of each 48-bit datapath for the three implemen-                                                                These again prove a better resilience to tighter timing con-
+tations in Table V. We consider the same operating conditions                                                              straints for the Guardbits-based Soft SIMD microarchitecture.
+(e.g., voltage, frequency) and workload (CNN benchmarks)
+                                                                                                                           B. Speed and Energy Evaluation of Iterative Multiplication
+for all of them and explore trade-offs between area, latency,
+and energy consumption.                                                                                                       1) Soft SIMD Multiplication Cycle Count: The shifter range
+                                                                                                                           (‘shift3’ or ‘shift7’) affects not only the area cost but also the
+A. Area Evaluation                                                                                                         iterative amount cycles to complete a shift-add-based multipli-
+  Figure 13 compares the area of the proposed Guardbits-                                                                   cation with CSD coding on both Guardbits-based and Muxes-
+based Soft SIMD microarchitecture and of two baselines when                                                                based Soft SIMD microarchitecture. The average cycles (for
+synthesized at 200MHz and 1.0GHz, respectively.                                                                            ‘shift3’, ‘shift7’, and a theoretical infinitely-wide shifter with
+  First, the comparison shows that the area increase brought                                                               CSD coding, and the work in [9]–[12] without CSD coding)
+by rising the maximum shift bits from 3 to 7 is marginal (while                                                            to finish a multiplication are presented in Figure 14.
+                                                                                                                                                                        11
+
+
+                                                                                            16
+   Thanks to the CSD coding, the trendline slope of our design                                     m is for slope
+                                                                                                       CSD Max shift 3, m=0.410
+drops by 18.0% (‘shift3’) and 35.4% (‘shift7’) with respect to                              14         CSD Max shift 7, m=0.323
+that of [9] [10], and by 59.0% (‘shift3’) and 67.7% (‘shift7’)                                         CSD Theoretical, m=0.322
+with respect to that of [11] [12]. For the ‘shift7’ case, its                               12                                                                  8.00
+                                                                                                       In paper [11][12], m=0.500
+trendline slope is almost the same as that of the infinitely-wide                                      In paper [9][10], m=1.000
+
+
+
+
+                                                                           Average cycles
+                                                                                            10
+shifter, and the average cycle count difference between the
+two is less than 0.30 cycles. In contrast, for the ‘shift3’ case,                            8
+                                                                                                                                                                1.51
+its trendline slope increases by 27.3% compared with that of
+                                                                                             6                                                                  1.09
+the theoretical scenario, resulting in less multiplication speed,
+                                                                                                                                                                0.29
+especially for the larger-bitwidth multiplier. For example, the
+                                                                                             4
+‘shift3’ case requires an average of 0.38 more cycle count for
+the 8-bit multiplier and 1.09 more for the 16-bit multiplier                                 2
+than the ‘shift7’ case.
+   2) Soft SIMD Multiplication Energy: The impact of the                                     0
+                                                                                                   3    4   5   6     7   8   9 10 11 12 13 14 15 16
+shifter range on multiplication energy consumption is further
+                                                                                                                    Multiplier bitwidth / bit
+contrasted on both Guardbits-based and Muxes-based Soft
+SIMD microarchitecture in Figure 15. Therein, we select 8-           Fig. 14. Under different shifter ranges, the average cycles to finish a shift-
+                                                                     add-based multiplication on the Guardbits-based or Muxes-based Soft SIMD
+bit multiplicand as an example, and describe the relationship        microarchitecture verses the multiplier bitwidth (in CSD coding). The lower
+between the average multiplication energy cost per subword           trendline slope means fewer cycles for multiplication.
+and the bitwidth of the multiplier for four Soft SIMD configu-                              1.40
+rations (Guardbits-based or Muxes-based, ‘shift3’ or ‘shift7’).                                         Guardbits-based Soft SIMD: shift3
+                                                                                                                                                           +3.6%
+The energy cost of the Hard SIMD Multiplier is omitted as                                               Guardbits-based Soft SIMD: shift7
+                                                                                            1.20                                                           +6.7%
+it is much larger (from 3-bit to 16-bit, ×4.8∼×2.0 times) than                                          Muxes-based Soft SIMD: shift3
+Soft SIMD alternatives.                                                                                 Muxes-based Soft SIMD: shift7
+                                                                                            1.00
+   First, the results indicate that Guardbits-based and Muxes-                                                                                          slope = 0.082
+                                                                           Energy / pJ
+
+
+based Soft SIMD microarchitectures adopting ‘shift7’ is al-
+ways better than those with ‘shift3’ when the multiplier                                    0.80
+                                                                                                                                               slope = 0.079
+bitwidth is larger than 6bit. For multipliers bitwidth lower than                                                                                                        y = 0.0820x + 0.1
+6bit, the four Soft SIMD configurations have a minimal dif-                                 0.60                                                                         y = 0.0785x + 0.1
+ference. Since Guardbits-based and Muxes-based Soft SIMD                                                                                slope = 0.073
+                                                                                                                                                                         y = 0.0730x + 0.2
+microarchitectures in ‘shift7’ configuration have advantages                                0.40                                                                         y = 0.0675x + 0.2
+on both speed and energy consumption with only a few                                                                           slope = 0.068
+area increases, they are chosen for further explorations in the                             0.20
+following.                                                                                             3 4 5 6 7 8 9 10 11 12 13 14 15 16
+   Moreover, Guardbits-based Soft SIMD microarchitecture                                                         Multiplier bitwidth / bit
+always consumes less energy than Muxes-based Soft SIMD               Fig. 15. Average multiplication energy cost per subword at 1.0GHz. The
+microarchitecture, and the energy advantage becomes more             multiplicand is 8-bit, and the multiplier varies from 3- to 16-bit. The energy
+                                                                     cost of the Hard SIMD Multiplier is not plotted as it is far greater than these.
+significant as the multiplier bitwidth increases. The reason is
+that the critical path growth of Guardbits-based Soft SIMD                               1.40
+                                                                                                                               slope
+microarchitecture is much lower than that of Muxes-based                                                                      = 0.086
+                                                                                         1.20
+Soft SIMD microarchitecture. Thus, it has more prominent
+advantages for larger bitwidths, tighter timing constraints, and                         1.00
+                                                                                                                 slope         slope
+higher operating frequencies.                                                            0.80
+                                                                                                                = 0.013       = 0.014
+                                                                         Energy / pJ
+
+
+
+
+   In addition, Guardbits-based Soft SIMD microarchitecture
+                                                                                         0.60
+with ‘shift7’ has the minimum energy consumption when the
+multiplier bitwidth is larger than 6bit. Also, it has the smallest                       0.40
+trendline slope, again proving its best energy efficiency.                               0.20
+   3) Soft and Hard SIMD Multiplication Energy Comparison:
+                                                                                         0.00
+In Figure 16, 8-bit multiplicand by 8-bit multiplier is selected                                        200M          400M        600M       800M              1.0G
+as the example, and the average energy consumption per                                                                        Frequency / Hz
+subword of Guardbits-based Soft SIMD microarchitecture,                        Guardbits-based Soft SIMD: shift7                    Muxes-based Soft SIMD: shift7
+Muxes-based Soft SIMD microarchitecture, and Hard SIMD                         Hard SIMD Multiplier
+Multiplier-Adder, are compared, considering target clock fre-        Fig. 16. 8bit * 8bit multiplication energy consumption per subword at dif-
+quencies from 200MHz to 1.0GHz.                                      ferent frequencies for proposed Guardbits-based Soft SIMD microarchitecture
+   As expected, Guardbits-based and Muxes-based Soft SIMD            and two baselines.
+implementations consume at least 41.0% and 37.5% less                SIMD Multiplier grows 6.6 and 6.1 times faster with frequency
+energy than Hard SIMD Multiplier using complex combi-                than that of Guardbits-based and Muxes-based Soft SIMD
+natorial logic. Moreover, the energy consumption of Hard             microarchitecture. Also, consistent with the previous analy-
+                                                                                                                                                 12
+
+
+                                                                                                 TABLE VI
+sis, the energy consumption of Guardbits-based Soft SIMD                  N ORMALIZED E NERGY C OST PER CNN I NFERENCE AT 1.0GH Z
+microarchitecture is always lower than that of Muxes-based                                  Guardbit-based      Muxes-based
+Soft SIMD microarchitecture for all frequencies.                                                                              Hard SIMD
+                                                                                               Soft SIMD         Soft SIMD
+                                                                                            UQ        HQ        UQ      HQ    UQ     HQ
+C. CNN Benchmarks Energy Cost Evaluation                                          LeNet5    1.38     1.00       1.52 1.10     2.24   1.70
+                                                                                  AlexNet   1.53     1.00       1.68 1.10     2.48   2.22
+   The energy consumption and execution time of the selected                      VGG16     2.14     1.00       2.35 1.09     3.48   1.84
+CNN benchmarks (LeNet5, AlexNet, VGG16, ResNet20, Mo-                             ResNet20 3.73      1.00       4.10 1.07     6.06   2.96
+bileNet, and ResNext) have been evaluated using the CNNs                          MobileNet 1.40     1.00       1.54 1.10     2.27   1.72
+mapping method detailed in Section IV-A and the power                             ResNext   2.18     1.00       2.39 1.09     3.53   2.04
+
+consumption model illustrated in Section IV-E. We consider                                       TABLE VII
+both uniformly quantized (UQ) and heterogeneously quantized             N ORMALIZED E XECUTION - TIME PER CNN I NFERENCE AT 1.0GH Z
+(HQ) CNN benchmarks.                                                                        Guardbit-based      Muxes-based
+                                                                                                                              Hard SIMD
+   Table VI and VII present the normalized energy consump-                                     Soft SIMD         Soft SIMD
+                                                                                            UQ        HQ        UQ      HQ    UQ     HQ
+tion and execution time to run per inference of different                         LeNet5    1.45     1.00       1.45 1.00     0.82   0.63
+CNN benchmarks on the proposed Guardbits-based Soft SIMD                          AlexNet   1.64     1.00       1.64 1.00     0.93   0.81
+microarchitecture and two baselines (Muxes-based Soft SIMD                        VGG16     2.45     1.00       2.45 1.00     1.39   0.73
+microarchitecture and Hard SIMD Multiplier-Adder) when                            ResNet20 4.28      1.00       4.28 1.00     2.44   1.17
+                                                                                  MobileNet 1.46     1.00       1.46 1.00     0.83   0.64
+operating at 1.0GHz.                                                              ResNext   2.37     1.00       2.37 1.00     1.35   0.78
+   Guardbits-based Soft SIMD microarchitecture consumes
+9.9% (UQ) / 9.2% (HQ) less energy than Muxes-based Soft                       80.0%
+
+SIMD microarchitecture on average, while having the same                      60.0%
+
+execution time. Therefore, we only compare the energy and               (a) 40.0%
+execution time performance of CNN benchmarks running on                       20.0%
+
+Guardbits-based Soft SIMD microarchitecture and Hard SIMD                      0.0%
+                                                                                       LeNet5 AlexNet VGG16 ResNet20 MobileNet ResNext Average
+Multiplier-Adder in the following.
+                                                                              20.0%
+   First, as Figure 17(a) presents, Guardbits-based Soft SIMD                   0.0%
+microarchitecture can significantly reduce energy consumption                 -20.0%
+                                                                        (b)
+compared to Hard SIMD Multiplier-Adder. Moreover, due                         -40.0%
+to using shift-add iterations to replace one-cycle multiplier,                -60.0%
+                                                                              -80.0%
+Guardbits-based Soft SIMD microarchitecture has an exe-                                LeNet5 AlexNet VGG16 ResNet20 MobileNet ResNext Average
+cution time increase for most CNN benchmarks, as shown                        80.0%
+in Figure 17(b). Specifically, for UQ CNN benchmarks, our                     60.0%
+proposed microarchitecture has an average energy reduction of           (c)
+                                                                              40.0%
+38.4% and execution time increase of 76.1% compared to Hard                   20.0%
+                                                                                0.0%
+SIMD Multiplier-Adder. Since all UQ CNN benchmarks have
+                                                                              -20.0%
+16-bit activations and 8-bit weights, their energy and execution                       LeNet5 AlexNet VGG16 ResNet20 MobileNet ResNext Average
+time reduction has a slight difference of less than 1.0%                    100.0%
+across benchmarks. Conversely, for HQ CNN benchmarks, our                    80.0%
+proposed microarchitecture has an average energy reduction                   60.0%
+                                                                        (d)
+                                                                             40.0%
+of 50.1% (ranging from 41.2% to 66.2%) and execution time                    20.0%
+increase of 31.5% (ranging from -14.5% to 58.7%). Their                       0.0%
+                                                                                       LeNet5 AlexNet VGG16 ResNet20 MobileNet ResNext Average
+performance difference is due to the different quantization
+                                                                                                           UQ       HQ
+schemes adopted in each CNN benchmark (hence different
+activation and weight bitwidths, see Figure 11). Besides,            Fig. 17. When running per inference of different CNN benchmarks at 1.0GHz,
+from the perspective of TOPS/W, Guardbits-based Soft SIMD            the normalized (a) energy consumption reduction, (b) execution time (delay)
+                                                                     reduction, (c) energy-delay product reduction, (d) area-energy-delay product
+microarchitecture has an average reduction of 63.2% (ranging         reduction, by Guardbits-based Soft SIMD microarchitecture relative to Hard
+from 60.0% to 68.8%) for UQ CNN benchmarks and 107.9%                SIMD Multiplier-Adder. The reduction is defined as (CostHard SIM D −
+for HQ CNN benchmarks (ranging from 69.5% to 194.1%)                 CostSof t SIM D )/CostHard SIM D .
+with respect to Hard SIMD Multiplier-Adder.                          and reduces 14.5% the execution time because its activations
+   Moreover, Guardbits-based Soft SIMD microarchitecture             and weights in many layers can be quantized to very small
+performs better with heterogeneously than uniformly quan-            bitwidths (see Figure 11).
+tized CNN benchmarks because they can fully use small                   In addition, Figure 17(c) presents the energy-delay (execu-
+bitwidth activations (i.e., higher data-level parallelism) and       tion time) product reduction. UQ CNN benchmarks exhibit
+weights (i.e., fewer iterative cycles for multiplication). For in-   an increase in this metric (ranging from 7.9% to 8.7%, and
+stance, the average execution time overhead drops from 76.1%         by 8.4% on average). However, by co-optimizing from the
+(UQ) to 31.5% (HQ), while the average energy reduction rises         hardware and software aspects, HQ alternatives can reduce the
+from 38.4% (UQ) to 50.1% (HQ). Especially for ResNet20               energy-delay product (ranging from 6.5% and up to 71.1% for
+(HQ), Guardbits-based Soft SIMD saves 66.2% energy cost              different quantization schemes, and by 32.3% on average).
+                                                                                                                                                             13
+
+
+
+   In summary, we compare all metrics employed (area, en-                        [11] P. Judd, J. Albericio, T. Hetherington, T. M. Aamodt, and A. Moshovos,
+ergy consumption, and execution time) by the energy-delay-                            “Stripes: Bit-serial deep neural network computing,” in 2016 49th
+                                                                                      Annual IEEE/ACM International Symposium on Microarchitecture (MI-
+area product in Figure 17(d). These results show that our                             CRO). IEEE, 2016, pp. 1–12.
+proposed Soft SIMD microarchitecture significantly improves                      [12] L.-C. Hsu, C.-T. Chiu, K.-T. Lin, H.-H. Chou, and Y.-Y. Pu, “Essa:
+concerning a Hard SIMD alternative for both UQ and HQ                                 An energy-aware bit-serial streaming deep convolutional neural network
+                                                                                      accelerator,” Journal of Systems Architecture, vol. 111, p. 101831, 2020.
+CNN benchmarks. Specifically, for UQ CNN benchmarks,                             [13] Y. Fu, E. Wu, A. Sirasao, S. Attia, K. Khan, and R. Wittig, “Deep
+the energy-delay-area product decreases 56.6% on average,                             learning with int8 optimization on xilinx devices,” White Paper, 2016.
+with less than 0.4% difference between benchmarks. For                           [14] F. Spagnolo, S. Perri, F. Frustaci, and P. Corsonello, “Designing fast
+                                                                                      convolutional engines for deep learning applications,” in 2018 25th IEEE
+HQ CNN benchmarks, the energy-delay-area product declines                             International Conference on Electronics, Circuits and Systems (ICECS).
+from 62.7% to 88.5%, with an average of 72.9%.                                        IEEE, 2018, pp. 753–756.
+                                                                                 [15] M. v. Baalen, A. Kuzmin, S. Nair, Y. Ren, E. Mahurin, C. Patel,
+                    VI. CONCLUSION                                                    S. Subramanian, S. Lee, M. Nagel, J. Soriaga et al., “Fp8 versus int8
+                                                                                      for efficient deep learning inference,” arXiv preprint arXiv:2303.17951,
+   Typical Hardware SIMD resources can only support a small                           2023.
+set of subword sizes, limiting their performance on fully                        [16] R. Goyal, J. Vanschoren, V. Van Acht, and S. Nijssen, “Fixed-point
+                                                                                      quantization of convolutional neural networks for quantized inference
+quantized and highly data-level parallel algorithms, especially                       on embedded platforms,” arXiv preprint arXiv:2102.02147, 2021.
+for small-bitwidth arithmetic operations. Filling this gap, our                  [17] S. Balakrishnan and S. K. Nandy, “Arbitrary precision arithmetic-
+work has introduced a novel pipeline microarchitecture for                            simd style,” in Proceedings Eleventh International Conference on VLSI
+                                                                                      Design. IEEE, 1998, pp. 128–132.
+arithmetic computing based on the Software-defined SIMD                          [18] S. Kraemer, R. Leupers, G. Ascheid, and H. Meyr, “Softsimd-exploiting
+paradigm, which can flexibly support arbitrary SIMD modes at                          subword parallelism using source code transformations,” in 2007 Design,
+run-time through control instructions. This microarchitecture                         Automation & Test in Europe Conference & Exhibition. IEEE, 2007,
+                                                                                      pp. 1–6.
+efficiently executes shift/add operations and shift-add-based                    [19] F. Catthoor, P. Raghavan, A. Lambrechts, M. Jayapala, A. Kritikakou,
+multiplication/accumulation operations in highly parallel using                       and J. Absar, Ultra-low energy domain-specific instruction-set proces-
+guardbits. CSD coding is used to feature the skipping of trail-                       sors. Springer Science & Business Media, 2010.
+                                                                                 [20] G. Psychou, R. Fasthuber, F. Catthoor, J. Hulzink, and J. Huisken, “Sub-
+ing ’0’ digits in multiplier operands, providing multiplication                       word handling in data-parallel mapping,” in ARCS 2012. IEEE, 2012,
+operations with further energy gains and savings in execution                         pp. 1–7.
+time. A Data Pack Unit is introduced to bridge across different                  [21] R. Fasthuber, F. Catthoor, P. Raghavan, and F. Naessens, “Energy-
+                                                                                      efficient communication processors,” Springer, New York, NY, vol. 10,
+SIMD formats and seamlessly support a wide range of quan-                             pp. 978–1, 2013.
+tization levels. We choose heterogeneously quantized CNNs                        [22] A. Avizienis, “Signed-digit numbe representations for fast parallel
+from the ML domain as the benchmark and map it onto this                              arithmetic,” IRE Transactions on electronic computers, no. 3, pp. 389–
+                                                                                      400, 1961.
+microarchitecture for performance evaluation. Experiments                        [23] A. K. Oudjida, “Binary arithmetic for finite-word-length linear con-
+showcase that our Soft SIMD microarchitecture significantly                           trollers: Mems applications,” Ph.D. dissertation, Besançon, 2014.
+outperforms Hard SIMD alternative when executing CNNs                            [24] A. Peled, “On the hardware implementation of digital signal processors,”
+                                                                                      IEEE Transactions on Acoustics, Speech, and Signal Processing, vol. 24,
+inferences, highlighting energy gains of 50.1% on average                             no. 1, pp. 76–86, 1976.
+while requiring 59.9% less area.                                                 [25] A. Herrfeld and S. Hentschke, “Look-ahead circuit for csd-code carry
+                                                                                      determination,” Electronics Letters, vol. 31, no. 6, pp. 434–435, 1995.
+                              R EFERENCES                                        [26] C. Koc, “Parallel canonical recoding,” Electronics Letters, vol. 32,
+                                                                                      no. 22, pp. 2063–2065, 1996.
+ [1] D. Kusswurm, “Advanced vector extensions (avx),” in Modern X86              [27] Y. Tanaka, “Efficient signed-digit-to-canonical-signed-digit recoding cir-
+     Assembly Language Programming. Springer, 2014, pp. 327–349.                      cuits,” Microelectronics Journal, vol. 57, pp. 21–25, 2016.
+ [2] C. J. Hughes, Single-instruction multiple-data execution.       Springer    [28] M. Faust, O. Gustafsson, and C.-H. Chang, “Fast and vlsi efficient
+     Nature, 2022.                                                                    binary-to-csd encoder using bypass signal,” Electronics letters, vol. 47,
+ [3] M. Hassaballah, S. Omran, and Y. B. Mahdy, “A review of simd                     no. 1, pp. 18–20, 2011.
+     multimedia extensions and their usage in scientific and engineering         [29] G. A. Ruiz and M. Granda, “Efficient canonic signed digit recoding,”
+     applications,” The Computer Journal, vol. 51, no. 6, pp. 630–649, 2008.          Microelectronics journal, vol. 42, no. 9, pp. 1090–1097, 2011.
+ [4] S.-J. Lee, S.-S. Park, and K.-S. Chung, “Efficient simd implementation      [30] Y. Guo, “A survey on methods and theories of quantized neural net-
+     for accelerating convolutional neural network,” in Proceedings of the            works,” arXiv preprint arXiv:1808.04752, 2018.
+     4th International Conference on Communication and Information Pro-          [31] A. Gholami, S. Kim, Z. Dong, Z. Yao, M. W. Mahoney, and K. Keutzer,
+     cessing, 2018, pp. 174–179.                                                      “A survey of quantization methods for efficient neural network infer-
+ [5] S. Basalama, A. Panahi, A.-T. Ishimwe, and D. Andrews, “Spar-2: A                ence,” arXiv preprint arXiv:2103.13630, 2021.
+     simd processor array for machine learning in iot devices,” in 2020 3rd      [32] A. Zhou, A. Yao, Y. Guo, L. Xu, and Y. Chen, “Incremental network
+     International Conference on Data Intelligence and Security (ICDIS).              quantization: Towards lossless cnns with low-precision weights,” arXiv
+     IEEE, 2020, pp. 141–147.                                                         preprint arXiv:1702.03044, 2017.
+ [6] Arm, “Neon™ version: 1.0 programmer’s guide,” 2013.                         [33] M. Nagel, M. Fournarakis, R. A. Amjad, Y. Bondarenko, M. Van Baalen,
+ [7] M. S. Murshed, C. Murphy, D. Hou, N. Khan, G. Ananthanarayanan,                  and T. Blankevoort, “A white paper on neural network quantization,”
+     and F. Hussain, “Machine learning at the network edge: A survey,” ACM            arXiv preprint arXiv:2106.08295, 2021.
+     Computing Surveys (CSUR), vol. 54, no. 8, pp. 1–37, 2021.                   [34] F. Ponzina, “Hardware-software co-design methodologies for edge ai
+ [8] W. Li, H. Hacid, E. Almazrouei, and M. Debbah, “A review and a                   optimization,” EPFL, Tech. Rep., 2023.
+     taxonomy of edge machine learning: Requirements, paradigms, and             [35] A. M. Abdelmoniem and M. Canini, “Towards mitigating device het-
+     techniques,” arXiv preprint arXiv:2302.08571, 2023.                              erogeneity in federated learning via adaptive model quantization,” in
+ [9] F. Ponzina, M. Rios, G. Ansaloni, A. Levisse, and D. Atienza, “A flexible        Proceedings of the 1st Workshop on Machine Learning and Systems,
+     in-memory computing architecture for heterogeneously quantized cnns,”            2021, pp. 96–103.
+     in 2021 IEEE Computer Society Annual Symposium on VLSI (ISVLSI).            [36] C. N. Coelho Jr, A. Kuusela, S. Li, H. Zhuang, J. Ngadiuba, T. K.
+     IEEE, 2021, pp. 164–169.                                                         Aarrestad, V. Loncar, M. Pierini, A. A. Pol, and S. Summers, “Automatic
+[10] M. Rios, F. Ponzina, A. Levisse, G. Ansaloni, and D. Atienza, “Bit-line          heterogeneous quantization of deep neural networks for low-latency in-
+     computing for cnn accelerators co-design in edge ai inference,” IEEE             ference on the edge for particle detectors,” Nature Machine Intelligence,
+     Transactions on Emerging Topics in Computing, 2023.                              vol. 3, no. 8, pp. 675–686, 2021.
+                                                                                                                                                           14
+
+
+
+[37] P. Raghavan, A. Lambrechts, M. Jayapala, F. Catthoor, D. Verkest,                                    Mohit Gupta received the M.Tech. degree in elec-
+     and H. Corporaal, “Very wide register: An asymmetric register file                                   tronics engineering from AMU, Aligarh, India,in
+     organization for low power embedded processors,” in 2007 Design,                                     2014, and the Ph.D. degree from the Katholieke Uni-
+     Automation & Test in Europe Conference & Exhibition. IEEE, 2007,                                     versiteit Leuven, Belgium, in 2022. Since 2020, he
+     pp. 1–6.                                                                                             has been an Research and Development Researcher
+[38] B. W. Denkinger, M. Peón-Quirós, M. Konijnenburg, D. Atienza, and                                  with IMEC, Leuven, and working on non-volatile
+     F. Catthoor, “Vwr2a: a very-wide-register reconfigurable-array archi-                                memory design and in/near memory computing with
+     tecture for low-power embedded devices,” in Proceedings of the 59th                                  SRAM and NVMs.
+     ACM/IEEE Design Automation Conference, 2022, pp. 895–900.
+[39] P. Raghavan, S. Munaga, E. R. Ramos, A. Lambrechts, M. Jayapala,
+     F. Catthoor, and D. Verkest, “A customized cross-bar for data-shuffling
+     in domain-specific simd processors,” in International Conference on                                   Dwaipayan Biswas received the M.Sc. degree in
+     Architecture of Computing Systems. Springer, 2007, pp. 57–68.                                         system on chip and the Ph.D. degree in electrical
+[40] F. Catthoor and D. Verkest, “Semi custom design: A case study on simd                                 engineering from University of Southampton (UoS),
+     shufflers,” in Integrated Circuit and System Design. Power and Timing                                 Southampton, U.K., in 2011 and 2015, respectively.
+     Modeling, Optimization and Simulation: 17th International Workshop,                                   From 2015 to 2016, he was a Postdoctoral Research
+     PATMOS 2007, Gothenburg, Sweden, September 3-5, 2007, Proceedings,                                    Fellow with UoS. In 2016, he joined IMEC, as
+     vol. 4644. Springer Science & Business Media, 2007, p. 433.                                           a researcher on digital IC design for biomedical
+[41] F. Ponzina, M. Rios, A. Levisse, G. Ansaloni, and D. Atienza,                                         applications. Currently, he is leading a team of 10
+     “Overflow-free compute memories for edge ai acceleration,” ACM                                        researchers working on the System Technology Co-
+     Transactions on Embedded Computing Systems, vol. 22, no. 5s, pp. 1–                                   optimization (STCO) program at IMEC, Leuven,
+     23, 2023.                                                                                             Belgium. His current research focuses on exploring
+[42] Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner, “Gradient-based learning    the interception of imec’s advanced semiconductor technology on future
+     applied to document recognition,” Proceedings of the IEEE, vol. 86,         compute system challenges. He has authored several peer-reviewed journals,
+     no. 11, pp. 2278–2324, 1998.                                                conferences, and edited a book. His research interests include low-power VLSI
+[43] A. Krizhevsky, I. Sutskever, and G. E. Hinton, “Imagenet classification     design, advanced technology for system optimization.
+     with deep convolutional neural networks,” Advances in neural informa-
+     tion processing systems, vol. 25, 2012.                                                              Giovanni Ansaloni is a senior researcher at the
+[44] K. Simonyan and A. Zisserman, “Very deep convolutional networks for                                  Embedded Systems Laboratory of EPFL. He pre-
+     large-scale image recognition,” arXiv preprint arXiv:1409.1556, 2014.                                viously worked as a Post-Doc at the University of
+[45] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image                               Lugano (USI, CH) between 2015 and 2020, and at
+     recognition,” in Proceedings of the IEEE conference on computer vision                               EPFL between 2011 and 2015. He received a Ph.D.
+     and pattern recognition, 2016, pp. 770–778.                                                          degree in Informatics from USI in 2011. His research
+[46] A. G. Howard, M. Zhu, B. Chen, D. Kalenichenko, W. Wang,                                             efforts focus on domain-specific and ultra-low-power
+     T. Weyand, M. Andreetto, and H. Adam, “Mobilenets: Efficient convo-                                  architectures and algorithms for edge computing sys-
+     lutional neural networks for mobile vision applications,” arXiv preprint                             tems, including hardware and software optimization
+     arXiv:1704.04861, 2017.                                                                              techniques.
+[47] S. Xie, R. Girshick, P. Dollár, Z. Tu, and K. He, “Aggregated residual
+     transformations for deep neural networks,” in Proceedings of the IEEE
+                                                                                                         David Atienza (Fellow, IEEE) received the Ph.D
+     conference on computer vision and pattern recognition, 2017, pp. 1492–
+                                                                                                         degree in computer science and engineering from
+     1500.
+                                                                                                         UCM, Spain, and IMEC, Belgium, in 2005. He is
+[48] A. Krizhevsky and G. Hinton, “Learning multiple layers of features from
+                                                                                                         a professor of electrical and computer engineering,
+     tiny images,” 2009.
+                                                                                                         heads the Embedded Systems Laboratory (ESL), and
+                                                                                                         is the scientific director of the EcoCloud Center
+                         Pengbo Yu received the M.Sc. degree in Integrated                               for Sustainable Computing at EPFL. His research
+                         Circuit Engineering from Tsinghua University, Bei-                              interests include system-level design methodologies
+                         jing, China, in 2020. He is currently a Ph.D. student                           for high-performance MPSoC and low-power edge
+                         at the Embedded Systems Laboratory of EPFL,                                     AI architectures. He is a co-author of more than 400
+                         Switzerland. His research interests include the de-                             papers in peer-reviewed international journals and
+                         sign of circuits and systems and energy-efficient       conferences, one book, and 14 patents in these fields. He is an ACM Fellow.
+                         computing.
+                                                                                                          Francky Catthoor (Fellow, IEEE) received the
+                                                                                                          Ph.D degree in EE from the Katholieke Univ. Leu-
+                                                                                                          ven, Belgium, in 1987. Between 1987 and 2000,
+                                                                                                          he has headed several research domains in the area
+                                                                                                          of synthesis techniques and architectural methodolo-
+                                                                                                          gies. Since 2000 he is strongly involved in other
+                         Flavio Ponzina received the M.Sc. degree in Com-
+                                                                                                          activities with IMEC including co-exploration of
+                         puter Engineering from Politecnico di Torino, Italy,
+                                                                                                          applications, computer architecture, deep submicron
+                         in 2018, and the Ph.D degree in Electronic En-
+                                                                                                          technology aspects, biomedical systems and IoT sen-
+                         gineering from EPFL, Switzerland, in 2023. He
+                                                                                                          sor nodes, and photo-voltaic modules combined with
+                         is currently a postdoctoral researcher at University
+                                                                                                          renewable energy systems, all with IMEC Leuven,
+                         of California, San Diego, United States. His main
+                                                                                 Belgium. Currently, he is an IMEC senior fellow. He is also a part-time full
+                         research interests include low power architectures
+                                                                                 professor with the EE department of the KU Leuven.
+                         and AI-based systems optimization.
+
+
+
+
+                         Alexandre Levisse received his Ph.D. degree in
+                         Electrical Engineering from CEA-LETI and Aix-
+                         Marseille University, France, in 2017. From 2018 to
+                         2021, he was a postdoctoral researcher at the Em-
+                         bedded Systems Laboratory of EPFL. From 2021,
+                         he works as a scientist in EPFL. His research inter-
+                         ests include circuits and architectures for emerging
+                         memory and transistor technologies as well as in-
+                         memory computing and accelerators.
+

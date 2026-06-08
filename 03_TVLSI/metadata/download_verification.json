@@ -1,0 +1,112 @@
+[
+  {
+    "paper_id": "paper_01",
+    "title": "ReLANCE: A Resource-Efficient Low-Latency Cortical Neural Acceleration Engine",
+    "bytes": 3280994,
+    "starts_with_pdf": true,
+    "head": "%PDF-",
+    "download_status": 200,
+    "content_type": "application/pdf",
+    "pdf_url": "https://arxiv.org/pdf/2510.17392",
+    "final_url": "https://arxiv.org/pdf/2510.17392"
+  },
+  {
+    "paper_id": "paper_02",
+    "title": "Unlimited Vector Processing for Wireless Baseband Based on RISC-V Extension",
+    "bytes": 889264,
+    "starts_with_pdf": true,
+    "head": "%PDF-",
+    "download_status": 200,
+    "content_type": "application/pdf",
+    "pdf_url": "https://arxiv.org/pdf/2504.10832",
+    "final_url": "https://arxiv.org/pdf/2504.10832"
+  },
+  {
+    "paper_id": "paper_03",
+    "title": "A 66-Gb/s/5.5-W RISC-V Many-Core Cluster for 5G+ Software-Defined Radio Uplinks",
+    "bytes": 6884372,
+    "starts_with_pdf": true,
+    "head": "%PDF-",
+    "download_status": 200,
+    "content_type": "application/pdf",
+    "pdf_url": "https://arxiv.org/pdf/2508.06176",
+    "final_url": "https://arxiv.org/pdf/2508.06176"
+  },
+  {
+    "paper_id": "paper_04",
+    "title": "A Scalable FPGA Architecture With Adaptive Memory Utilization for GEMM-Based Operations",
+    "bytes": 905492,
+    "starts_with_pdf": true,
+    "head": "%PDF-",
+    "download_status": 200,
+    "content_type": "application/pdf",
+    "pdf_url": "https://arxiv.org/pdf/2510.08137",
+    "final_url": "https://arxiv.org/pdf/2510.08137"
+  },
+  {
+    "paper_id": "paper_05",
+    "title": "Strassen Multisystolic Array Hardware Architectures",
+    "bytes": 1922234,
+    "starts_with_pdf": true,
+    "head": "%PDF-",
+    "download_status": 200,
+    "content_type": "application/pdf",
+    "pdf_url": "https://arxiv.org/pdf/2502.10063",
+    "final_url": "https://arxiv.org/pdf/2502.10063"
+  },
+  {
+    "paper_id": "paper_06",
+    "title": "CapsBeam: Accelerating Capsule Network-Based Beamformer for Ultrasound Nonsteered Plane-Wave Imaging on Field-Programmable Gate Array",
+    "bytes": 6320826,
+    "starts_with_pdf": true,
+    "head": "%PDF-",
+    "download_status": 200,
+    "content_type": "application/pdf",
+    "pdf_url": "https://arxiv.org/pdf/2509.03201",
+    "final_url": "https://arxiv.org/pdf/2509.03201"
+  },
+  {
+    "paper_id": "paper_07",
+    "title": "SPEED: A Scalable RISC-V Vector Processor Enabling Efficient Multiprecision DNN Inference",
+    "bytes": 1275835,
+    "starts_with_pdf": true,
+    "head": "%PDF-",
+    "download_status": 200,
+    "content_type": "application/pdf",
+    "pdf_url": "https://arxiv.org/pdf/2409.14017",
+    "final_url": "https://arxiv.org/pdf/2409.14017"
+  },
+  {
+    "paper_id": "paper_08",
+    "title": "Detect and Replace: Efficient Soft Error Protection of FPGA-Based CNN Accelerators",
+    "bytes": 563553,
+    "starts_with_pdf": true,
+    "head": "%PDF-",
+    "download_status": 200,
+    "content_type": "application/pdf",
+    "pdf_url": "https://oa.upm.es/83243/3/83243.pdf",
+    "final_url": "https://oa.upm.es/83243/3/83243.pdf"
+  },
+  {
+    "paper_id": "paper_09",
+    "title": "High-Throughput Bilinear Pairing Processor for Server-Side FPGA Applications",
+    "bytes": 2617774,
+    "starts_with_pdf": true,
+    "head": "%PDF-",
+    "download_status": 200,
+    "content_type": "application/pdf",
+    "pdf_url": "https://ieeexplore.ieee.org/ielx7/92/4359553/10539134.pdf",
+    "final_url": "https://ieeexplore.ieee.org/ielx7/92/4359553/10539134.pdf"
+  },
+  {
+    "paper_id": "paper_10",
+    "title": "An Energy Efficient Soft SIMD Microarchitecture and Its Application on Quantized CNNs",
+    "bytes": 1535128,
+    "starts_with_pdf": true,
+    "head": "%PDF-",
+    "download_status": 200,
+    "content_type": "application/pdf",
+    "pdf_url": "https://lirias.kuleuven.be/retrieve/457fd8c4-83d4-4b7a-9f05-d181ec08622e",
+    "final_url": "https://lirias.kuleuven.be/retrieve/457fd8c4-83d4-4b7a-9f05-d181ec08622e"
+  }
+]

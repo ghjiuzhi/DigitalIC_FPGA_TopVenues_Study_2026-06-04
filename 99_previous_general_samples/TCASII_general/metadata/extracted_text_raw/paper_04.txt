@@ -1,0 +1,584 @@
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. XX, NO. X, APRIL 2024 1
+Self-Adaptive Intermediate Resonator in a 3-coil
+Inductive Link for Power and Data Transmission
+Andrés Seré , Student Member, IEEE, Leonardo Steinfeld , Member, IEEE,
+Simon Hemour , Senior Member, IEEE, and Pablo Pérez-Nicoli , Senior Member, IEEE
+Abstract—This paper presents an innovative approach that
+dynamically adapts the intermediate resonator to enable efficient
+transmission of power and data over the same inductive link. The
+proposed intermediate resonator presents a tuned and high-Q
+response during power transmission, promoting high efficiency in
+the link. However, when the data transmission begins, it automat-
+ically adjusts its response to enable proper communication. Two
+different approaches for modifying the resonator response during
+data transmission are tested: 1) dynamically reducing the quality
+factor, and 2) dynamically detuning the resonator. The proposed
+resonator is designed, implemented, and applied to an actual
+commercial system to demonstrate its effectiveness. The selected
+proof-of-concept system is a low-frequency RFID link, widely
+used for cattle identification. Detuning the resonator, instead
+of reducing its quality factor, during data transmission was
+demonstrated to achieve greater reading distances. Measurements
+results show that the proposed resonator increases the RFID
+reading distance by up to ≈300 % (from 16 cm to 65 cm)
+compared to not using a resonator, and up to ≈50 % (from
+43 cm to 65 cm) compared to using a regular resonator without
+the proposed dynamic adaptation. Hence, this study validates
+the concept of employing batteryless self-adaptive resonators in
+inductive power links.
+Index Terms—wireless power transfer, 3-coil link, RFID, inter-
+symbol interference (ISI)
+I. INTRODUCTION
+INDUCTIVE coupling is the most commonly used method
+for wirelessly transferring energy over short distances. For
+instance, among its many applications, it is widely used for
+active implantable medical devices (AIMDs) [1]–[3] and for
+low and high-frequency radio frequency identification (RFID)
+[4]. The use of intermediate resonators (n-coil links) between
+the transmitter (Tx) and the receiver (Rx), has been extensively
+studied [5]–[7], demonstrating that it is an effective method
+Manuscript received December 11, 2023; revised Junary 31, 2024; accepted
+DD MM YY. Date of publication DD MM YY; date of current version DD
+MM YY. This work was supported in part by CAP and CSIC from Universidad
+de la República, Uruguay, and by the French National Research Agency ANR-
+21-CE19-0015-01.
+Andrés Seré and Leonardo Steinfeld are with the Instituto de Ingenierı́a
+Eléctrica, Facultad de Ingenierı́a, Universidad de la República. Montevideo,
+Uruguay (e-mail: asere@fing.edu.uy; leo@fing.edu.uy).
+Simon Hemour is with the IMS Laboratory, University of Bordeaux,
+Bordeaux, France (e-mail: simon.hemour@u-bordeaux.fr).
+Pablo Pérez-Nicoli is with the Instituto de Ingenierı́a Eléctrica, Facultad
+de Ingenierı́a, Universidad de la República. Montevideo, Uruguay, and also
+with the IMS Laboratory, University of Bordeaux, Bordeaux, France (e-mail:
+pablop@fing.edu.uy).
+Color versions of one or more of the figures in this paper are available
+online at http://ieeexplore.ieee.org.
+Digital Object Identifier DOI
+Fig. 1. Block diagram of the proposed slef-adaptive resonator.
+to improve link efficiency and transmission distance. From
+an intuitive perspective, we may consider the intermediate
+resonator to operate analogously to a repeater/relay. Due to
+its resonant nature, it is easily excited at the carrier frequency,
+and the resulting induced current also contributes to generating
+magnetic field. Furthermore, it has been demonstrated that
+these resonators are not only beneficial when positioned in
+intermediate locations; many studies incorporate resonators in
+the same plane as the Tx or Rx coil [1], [8], [9] to enhance
+various performance characteristics of the link.
+The larger the quality factor (Q) of the intermediate res-
+onator(s), the Tx, and Rx coils, the higher the efficiency that
+can be achieved by the link. On the other hand, a high-Q
+reduces the bandwidth of the link, affecting data transmission
+over it. The higher the Q of a resonator, the longer it takes
+for an oscillation to decay after the excitation source is turned
+off. This causes each bit transmitted in the link to take longer
+to decay and remain oscillating in high-Q resonators, thereby
+interfering with the next transmitted bit. This is an undesired
+phenomenon known as inter-symbol interference (ISI).
+One approach to mitigate ISI is to transmit suppression
+pulses after each bit, aiming to decrease the amplitude of
+the transmitted bit before sending the next one [10]–[12].
+This solution complicates the data transmitter implementation
+and requires the use of extra energy to actively dampen the
+sent pulses. This may not be viable in some applications,
+such as RFID, where the energy availability at the tag is
+low. Additionally, in many applications, there are already
+numerous tags in use, and replacing them may be impractical.
+Therefore, it is preferable to propose changes to the reader
+0000–0000/00$00.00 © 2021 IEEE
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. XX, NO. X, APRIL 2024 2
+or the intermediate resonator. A simpler solution, which is
+currently used in low-frequency RFID systems, is to limit the
+Q of the coils used to values that enable communication, albeit
+at the expense of reducing the power transfer efficiency [4].
+In this paper, we present a novel resonator that can maintain
+a tuned high-Q response while energy is being transferred and
+automatically attenuates its response when data transmission
+starts. The proposed resonator is utilized in a low-frequency
+RFID system that is widely employed for cattle identification,
+forming a 3-coil link. Fig. 1 depicts a diagram of the RFID
+system used. When an intermediate resonator is not used, the
+system, which is an actual commercial RFID low-frequency
+system, achieves a reading distance of 16 cm. In [4], a
+resonator with limited Q was designed to enhance efficiency
+without affecting data transmission, thereby increasing the
+reading distance to 43 cm. In this study, we employed the same
+reader, intermediate resonator, and tag used in [4]. However,
+rather than introducing a resistor that constantly decreases
+the Q of the intermediate resonator, we implemented the
+proposed self-adaptive circuit that only reduces Q (by adding a
+resistor) when necessary (during data transmission). Moreover,
+we also evaluate the performance of adding a capacitive ele-
+ment, instead of a resistor, thereby detuning the intermediate
+resonator instead of reducing its Q, which was proved to
+achieve a larger reading distance. The impact on the ISI of
+introducing a resistive or capacitive element into the resonator
+is further elucidated in Section III-C. Compared to using
+the regular limited Q intermediate resonator proposed in [4],
+the proposed self-adaptive resonator increases the maximum
+reading distance by ≈ 50 % (from 43 cm to 65 cm).
+The concept behind implementing this 3-coil cattle RFID
+system is to position the intermediate resonator at one or
+more locations along the cattle chute or cattle loading ramp.
+This simplifies or even enables the automation of the reading
+process using a handheld reader. It is worth emphasizing
+that while this article implements the self-adaptive resonator
+for a specific RFID link, the proposed concept of using
+intermediate resonators capable of dynamically adjusting their
+Q or resonance frequency can be applied to other systems.
+Dynamic Tx or Rx adjustments have been extensively
+employed for various purposes, including resonance tuning
+[13]–[15], output voltage regulation [16], and enhancing power
+or link efficiency [17], [18]. However, there are only a few
+instances in the literature where an intermediate resonator
+is dynamically adapted [8], [9]. Furthermore, these previous
+works involve a wired connection between Rx and the interme-
+diate coil, which is not the case in this study. Additionally, the
+modification of the intermediate resonator is carried out for a
+different purpose; [8] tries to deal with a varied distance range,
+alignment, and load impedance in real-time, while [9] aims to
+implement constant current and constant voltage sources for
+charging a battery.
+This paper is organized as follows. First, in Section II, the
+RFID system used as a proof-of-concept is presented. Next,
+in Section III, we delve into the design of the self-adaptive
+intermediate resonator. Measurements of the RFID system and
+the most critical signals involved are outlined in Section IV.
+Finally, Section V summarizes the main conclusions.
+Fig. 2. Graphic illustration of the operating principle of the half-duplex RFID
+system used in this work.
+II. LOW-FREQUENCY RFID LINK DESCRIPTION
+In these cattle RFID systems, the charging phase (energy
+transmission from the reader to the tag) and the reading
+phase (data transmission from the tag to the reader) are time-
+interleaved, which is known as half-duplex communication.
+Fig. 2 graphically illustrates the operation of the link, which
+is described below. The charging phase operates at a carrier
+frequency of 134.2 kHz and typically spans 50 ms. After
+this elapsed time, the reader halts coil excitation, swapping
+the voltage driver for a sensing circuit to detect the tag’s
+response. The tag rectifies the received signal during the
+charging phase, storing the energy in a capacitor. The tag
+identifies the end of the charging phase by detecting the
+absence of induced voltage in its antenna. Subsequently, the
+tag utilizes the stored energy in the capacitor to respond with
+its unique identification number (reading phase), employing
+FSK modulation (134.2 kHz and 123.2 kHz for the 0 and 1
+bits, respectively). During the reading phase, the tag transmits
+each bit for 16 cycles, and the transmission of the entire ID
+takes approximately 15 ms [4], [6].
+In these half-duplex communication systems, the reading
+process can fail due to two reasons: 1) the tag does not receive
+enough energy to transmit its complete ID, which will be
+referred to as “Charging limit”, or 2) the reader is unable to
+receive and decode the tag’s transmitted ID correctly, which
+will be referred to as “Reading/decoding limit”. In the 2-coil
+RFID link described here, the reading range is limited by
+the charging phase. Beyond approximately 16 cm, the energy
+received by the tag is insufficient, thus, the transmission of
+its ID is interrupted (due to the insufficient energy) before
+completion.
+This 2-coil RFID link system avoids ISI due to having the Q
+of the coils limited by design. However, when an intermediate
+resonator is included, there is a risk of introducing ISI if
+its Q value is not carefully controlled. In [4], a maximum
+reading distance of 43 cm was achieved by designing a Q-
+limited resonator. For distances larger than 43 cm, a higher Q
+is required to energize the tag, resulting in ISI that impedes
+the reader’s to decode the received signal. Lowering the Q to
+mitigate ISI prevents the tag from achieving full energization.
+This trade-off in Q, which results in the two different non-
+reading situations (“Reading/decoding” and “charging” limits),
+is visually depicted in Fig. 3.
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. XX, NO. X, APRIL 2024 3
+Fig. 3. Illustration of the trade-off in selecting the quality factor (Q) of the
+intermediate coil: a high-Q generates ISI, whereas a low-Q prevents the tag
+from fully charging.
+III. PROPOSED SELF-ADAPTIVE CIRCUIT
+A. Main idea
+This paper presents the design and implementation of a
+novel batteryless resonator capable of self-adjusting its re-
+sponse (either its Q or resonant frequency) to surpass the
+trade-off discussed in the preceding section and depicted in
+Fig. 3.
+The magnetic field produced by the reader during the charg-
+ing phase is significantly greater than that generated by the
+tag during the reading phase. Consequently, the intermediate
+resonator detects the end of the charging phase by recognizing
+the falling edge of the magnetic field envelope, as depicted in
+Fig. 4. At this point, and for a duration longer than the tag’s
+response time (15 ms), to prevent the occurrence of ISI, an
+impedance ZL is introduced in parallel to the intermediate
+coil, whether resistive or capacitive, as further discussed in
+Section III-C.
+B. Proposed circuit
+The system described in Fig. 4 is implemented by the circuit
+shown in Fig. 5, where LA and RA model the intermediate
+resonator coil with its equivalent series resistance, and CA
+is a capacitor adjusted to achieve resonance at the power
+carrier frequency (134.2 kHz). MOSFETs M1 and M2 work
+as switches; when they turned on, the impedance ZL is added
+in parallel with the LA-CA resonator. The diodes D1 to D4
+form a full-wave rectifier. Resistor R1 limits the energy taken
+from the inductive link, and, in conjunction with R2, C1 and
+the diodes, implements an envelope detector, VC1. Capacitor
+CS stores the peak of the envelope and, also, the necessary
+energy to power-on the transistors M1 and M2. When the
+envelope (VC1) falls, it turns on the thyristor implemented
+through Q1 and Q2, resulting in the activation of transistors
+M1 and M2. Resistors R3 and R4 are pull-downs and the zener
+diode DZ limits the voltage to avoid damaging the transistors.
+The full-wave rectifier ensures that the source of the MOSFET
+transistors (and hence its body) are at the minimum circuit
+potential (neglecting the diodes voltage dropout).
+Fig. 4. Graphical representation of the proposed self-adaptive resonator.
+LA
+RA
+CA
+M1 M2
+ZL
+D3
+D1 D2
+D4
+R1
+R2 C1
+VC1
+D5
+Q2
+Q1
+R4
+R3
+VG
+CS
+VCS
+DZ
+134.2 kHz
+resonator
+Envelope detector
+Falling edge detector
+Fig. 5. Schematic of the self-adaptive resonator circuit (operation is illustrated
+in Fig. 4). LA ≈ 648 µH, RA ≈ 13.3 Ω, CA ≈ 2.17 nF, M1 and M2 are
+ZVNL120A, D1..5 are 1N4148, R1 = 100 kΩ, R2..4 = 1 MΩ, C1 = 1 nF,
+Q1 is BC547, Q2 is BC557, CS = 100 nF and VZ = 16 V.
+C. Impedance ZL discussion
+In this section, it is discussed why detuning the intermediate
+resonator (capacitive ZL) also proves effective in addressing
+ISI, similar to reducing the quality factor (resistive ZL).
+To grasp this discussion, it is important to recall that during
+the reading phase, the bit 0 is encoded at the same frequency as
+the power carrier used during the charging phase (134.2 kHz),
+thus aligning with the resonant frequency of the intermediate
+coil. In contrast, bit 1 is encoded at a lower frequency
+(123.2 kHz). Therefore, if the intermediate resonator keeps
+the same resonant frequency (134.2 kHz) during charging
+and reading phase, the bit 0 (134.2 kHz) will pass through
+a high-Q resonator, reaching larger amplitudes than the bit 1
+(123.2 kHz), which will confront a non-resonant intermediate
+coil. This difference in amplitudes, combined with having a
+long decay time (due to a high Q), sets up a scenario favorable
+to ISI, as when a bit 1 is sent after a bit 0, the non-resonant
+1 will be overshadowed by the preceding resonant 0.
+If we use a resistive ZL, the Q of the resonator for both
+bits 0 and 1 will decrease. Therefore, while we will succeed
+in reducing the decay time and avoiding ISI, we will further
+impair the transmission conditions for bit 1. Consequently,
+the RMS voltage received from bit 1, VS in Fig. 2, will be
+very low, potentially preventing the reader from decoding the
+signal. A similar effect will occur if we add a capacitive ZL
+that significantly alters the resonator frequency, as it would
+yield a comparable effect to removing the resonator. However,
+if we use a capacitive ZL that shifts the resonator frequency
+to a value near the middle of the 0 and 1 bits, the amplitude
+imbalance between the bits is addressed, preventing one bit
+from overshadowing the other.
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. XX, NO. X, APRIL 2024 4
+0 10 20 30
+DIR-RX (cm)
+0
+20
+40
+60
+D
+TX-IR
+(cm)
+(a)
+0 10 20 30
+DIR-RX (cm)
+0
+20
+40
+60
+D
+TX-IR
+(cm)
+(b)
+reading/decoding limits:
+R = 200 Ω
+R = 2 kΩ
+R = 20 kΩ
+charging limits
+Fig. 6. Simulation results for the reading/decoding limits using different
+resistances as ZL (Fig. 5). The charging limit indicates not enough power
+received during the charging phase. (a) Reading/decoding limits due to ISI.
+(b) Reading/decoding limits due to a too low sensed voltage (VS in Fig. 2).
+0 10 20 30
+DIR-RX (cm)
+0
+20
+40
+60
+D
+TX-IR
+(cm)
+C = 250 pF
+C = 300 pF
+C = 350 pF
+(a)
+0 10 20 30
+DIR-RX (cm)
+0
+20
+40
+60
+D
+TX-IR
+(cm)
+C = 300 pF
+C = 500 pF
+C = 750 pF
+(b)
+charging limits
+Fig. 7. Simulation results for the reading/decoding limits using different
+capacitances as ZL (Fig. 5). The charging limit indicates not enough power
+received during the charging phase. (a) Reading/decoding limits due to ISI.
+(b) Reading/decoding limits due to a too low sensed voltage (VS in Fig. 2).
+Figs. 6 (resistive ZL) and 7 (capacitive ZL) substantiate the
+previous discussion through LTspice simulations, employing
+the models for Tx and Rx introduced in [4], along with the
+proposed resonator (Fig. 5). These plots depict the maximum
+distances DTX-IR (reader-to-intermediate resonator) and DIR-RX
+(intermediate resonator-to-tag) beyond which the tag cannot
+be read. Figs. 6a and 7a indicate the limit from which the bit
+error rate (BER) is not null due to the presence of ISI, while
+Figs. 6b and 7b indicate the limit due to a low received signal
+amplitude. As explained earlier, reading may also fail if the
+tag is not fully energized during the charging phase, thus, this
+charging limit was also superimposed in all the figures.
+To analyze the curves plotted in Figs. 6 and 7, it is important
+to note that the higher up to the right they are positioned, the
+greater the distances between the coils can be to read the
+tag. Conversely, the lower to the left they are, the shorter
+the achievable read distance. Firstly, it is noteworthy that
+merely reducing the bit decay time by introducing a resistive
+element (Fig. 6) still results in strong limitations on reading
+distances due to ISI (Fig. 6a). This is because the amplitude
+of the resonant bit (0) remains significantly higher than that
+of the non-resonant bit (1), overshadowing it. Moreover, as
+the decay time is decreased (lower R in parallel, thus lower
+Q), the reduction on the received bit amplitudes becomes more
+pronounced, which also restricts the reading distance (Fig. 6b).
+However, by modifying the resonance frequency, as illustrated
+in Fig. 7, curves positioned higher to the top right are achieved,
+corresponding to greater reading distances. As seen in Fig. 7,
+the optimal value for C is 300 pF, which corresponds to setting
+the intermediate coil resonance frequency near the middle of
+the 0 and 1 bits. Both higher and lower values of C result in
+more restrictive distance limits, as also shown in Fig. 7.
+Therefore, as a result of the analysis, a standard 330 pF
+capacitor was used as ZL, thus completing the design of the
+proposed circuit presented in Fig. 5.
+IV. MEASUREMENT RESULTS
+The self-adaptive resonator, addressed in the previous sec-
+tion (Fig. 5, with a capacitive ZL of 330 pF as designed), was
+used to increase the reading distance of the low frequency
+RFID link described in Section II. The measurement setup
+is shown in Fig. 8, corresponding to one of the various
+coil arrangements acquired. Fig. 9 plots the simulated limits
+introduced in the previous section (continuous line) over-
+lapped with the measurement results (solid dots), showing
+good agreement and validating the analysis. The cause of the
+reading failure (“Charging limit” or “reading/decoding” limit)
+discussed in Section II was determined through measurements,
+as represented by the colors indicated in the legend, which is
+also consistent with the simulations.
+To further validate the proposed circuit, it was measured
+during operation while also sensing the magnetic field by a
+sniffer antenna connected to an oscilloscope. These measure-
+ment results are presented in Figs. 10 and 11 and described in
+the remainder of this section. Fig. 10 shows the magnetic field,
+the voltage VCS (at CS terminals) and the MOSFETs gate
+voltage (VG). It shows the capacitor CL charging-up during
+the 50 ms of the charging phase and, at the end of this phase,
+when the envelope of the magnetic field has a falling edge, the
+thyristor formed by Q1 and Q2 turns on the MOSFETs M1 and
+M2 (gate voltage VG rises). The difference between VCS and
+VG during the reading phase corresponds to the thyristor (Q1
+& Q2) voltage drop. Fig. 11 compares the case in which the
+intermediate resonator is connected only to a capacitor forming
+a high-Q LC resonator at 134.2 kHz (light gray shadow); the
+case in which the intermediate resonator is connected not only
+Reader
+resonator
+⌀
+⌀=26cm
+=12cm
+D
+=20cm
+IR-RX
+(TX)
+(IR)
+Intermediate
+D
+=50cm
+IR-RX
+D =30cm
+TX-IR
+Tag
+=2.7cm
+⌀
+(RX)
+Fig. 8. Measurement setup. The maximum read distance corresponds to
+DTX-IR = 60 cm and DIR-RX = 5 cm.
+0 10 20 30 40
+DIR-RX (cm)
+0
+20
+40
+60
+D
+TX-IR
+(cm)
+Sim. Charg. limit
+Sim. reading/decoding limit
+Exp. Charg. limit
+Exp. reading/decoding limit
+Fig. 9. Measurement results.
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. XX, NO. X, APRIL 2024 5
+−40 −20 0 20
+time (ms)
+−2
+0
+2
+amplitude
+Mag. Field (rel. units)
+VG (V )
+VCS (V )
+Fig. 10. Circuit measurement using an auxiliary coil as magnetic field sniffer.
+Nodes VG and VCS are labeled in Fig. 5.
+0.0 2.5 5.0 7.5 10.0 12.5 15.0 17.5 20.0
+time (ms)
+relative
+magn.
+field
+amp.
+high-Q LC res.
+RLC resonator
+this work
+Fig. 11. Tag response for different intermediate coil: high-Q LC resonator,
+RLC limited-Q resonator [4], and the detuned resonator used in this work.
+to a capacitor to achieve resonance at 134.2 kHz, but also to a
+parallel resistance of 53 kΩ to reduce its Q, forming the RLC
+resonator proposed in [4] (strong gray shadow); and the case
+in which the proposed self-adaptive circuit is used (only the
+black envelope is shown for clarity purpose). With the first
+setup (high-Q LC resonator) the tag is correctly energized (its
+answer takes around 15 ms) but there is a strong ISI (not
+showed in the image but the reader don’t returns lectures).
+The second setup (RLC resonator) shows an answer which
+takes significantly less than 15 ms proving that the tag was
+not energized enough to complete its ID transmission. Finally,
+the proposed self-adaptive resonator, has a 15 ms answer time,
+without ISI (reader returns lectures), and also shows that the
+resonance frequency during the reading phase is more near
+the 123.2 kHz than the 134.2 kHz, contrary to the others two
+cases (the amplitude ratios are opposite). This is consistent
+with the aim of the proposed design that reduce the resonance
+frequency to avoid the ISI during the reading phase.
+V. CONCLUSION
+This work contributes by proposing a novel resonator that
+can dynamically adjust its response (either its Q or resonant
+frequency) to enhance both power and data transmission
+over the same inductive link. It is composed of a simple
+batteryless circuit that harnesses the power generated by the
+inductive link. This circuit can maintain a high-Q resonator for
+efficient power transmission and self-adapt to enable proper
+data transmission. Furthermore, we demonstrated that, due
+to the FSK modulation, adjusting the resonance frequency,
+rather than introducing dissipative elements like resistors to
+decrease the Q, is a more effective strategy. The validity of
+the proposed concept was confirmed through measurements
+conducted on an actual RFID system extensively employed
+for cattle identification, leading to a substantial improvement
+in the reading distance (50% greater reading range compared
+to using a classic fixed-Q intermediate resonator).
+REFERENCES
+[1] Q. Wang, W. Che, M. Mongiardo, and G. Monti, “Wireless power trans-
+fer system with high misalignment tolerance for bio-medical implants,”
+IEEE Transactions on Circuits and Systems II: Express Briefs, vol. 67,
+no. 12, pp. 3023–3027, 2020.
+[2] S. Pal and W.-H. Ki, “40.68 MHz digital on-off delay-compensated
+active rectifier for WPT of biomedical applications,” IEEE Transactions
+on Circuits and Systems II: Express Briefs, vol. 67, no. 12, pp. 3307–
+3311, 2020.
+[3] A. Celentano, C. Paolino, F. Pareschi, L. Callegaro, R. Rovatti, and
+G. Setti, “Mutual inductance measurement in wireless power transfer
+systems operating in the MHz range,” IEEE Transactions on Circuits
+and Systems II: Express Briefs, pp. 1–1, 2023.
+[4] P. Pérez-Nicoli, A. Rodriguez-Esteva, and F. Silveira, “Bidirectional
+analysis and design of RFID using an additional resonant coil to enhance
+read range,” IEEE Transactions on Microwave Theory and Techniques,
+vol. 64, no. 7, pp. 2357–2367, 2016.
+[5] M. Kiani and M. Ghovanloo, “The circuit theory behind coupled-
+mode magnetic resonance-based wireless power transmission,” IEEE
+Transactions on Circuits and Systems I: Regular Papers, vol. 59, no. 9,
+pp. 2065–2074, 2012.
+[6] P. Pérez-Nicoli, F. Silveira, and M. Ghovanloo, Inductive Links for
+Wireless Power Transfer: Fundamental Concepts for Designing High-
+efficiency Wireless Power Transfer Links. Cham: Springer International
+Publishing, 2021. [Online]. Available: https://link.springer.com/10.1007/
+978-3-030-65477-1
+[7] C.-J. Chen, T.-H. Chu, C.-L. Lin, and Z.-C. Jou, “A study of loosely
+coupled coils for wireless power transfer,” IEEE Transactions on Circuits
+and Systems II: Express Briefs, vol. 57, no. 7, pp. 536–540, 2010.
+[8] Y. Zhao, H. Li, S. Naderiparizi, A. Parks, and J. R. Smith, “Low-
+cost wireless power efficiency optimization of the NFC tag through
+switchable receiver antenna,” Wireless Power Transfer, vol. 5, no. 2,
+pp. 87–96, 2018.
+[9] Y. Li, J. Hu, M. Liu, Y. Chen, K. W. Chan, Z. He, and R. Mai, “Re-
+configurable intermediate resonant circuit based wpt system with load-
+independent constant output current and voltage for charging battery,”
+IEEE Transactions on Power Electronics, vol. 34, no. 3, pp. 1988–1992,
+2018.
+[10] M. Schormans, D. Jiang, V. Valente, and A. Demosthenous, “Short-range
+quality-factor modulation (squirm) for low power high speed inductive
+data transfer,” IEEE Transactions on Circuits and Systems I: Regular
+Papers, vol. 66, no. 9, pp. 3254–3265, 2019.
+[11] M. Kiani and M. Ghovanloo, “A 20-Mb/s pulse harmonic modulation
+transceiver for wideband near-field data transmission,” IEEE Transac-
+tions on Circuits and Systems II: Express Briefs, vol. 60, no. 7, pp.
+382–386, 2013.
+[12] F. Inanlou, M. Kiani, and M. Ghovanloo, “A 10.2 Mbps pulse harmonic
+modulation based transceiver for implantable medical devices,” IEEE
+journal of solid-state circuits, vol. 46, no. 6, pp. 1296–1306, 2011.
+[13] B. Lee, M. Kiani, and M. Ghovanloo, “A triple-loop inductive power
+transmission system for biomedical applications,” IEEE transactions on
+biomedical circuits and systems, vol. 10, no. 1, pp. 138–148, 2015.
+[14] W. Redman-White, H. Kennedy, R. Bodnar, and T. Lee, “Adaptive
+tuning of large-signal resonant circuits using phase-switched fractional
+capacitance,” IEEE Transactions on Circuits and Systems II: Express
+Briefs, vol. 64, no. 9, pp. 1072–1076, 2017.
+[15] F. Kong, M. Ghovanloo, and G. D. Durgin, “An adaptive impedance
+matching transmitter for a wireless intraoral tongue-controlled assistive
+technology,” IEEE Transactions on Circuits and Systems II: Express
+Briefs, vol. 67, no. 2, pp. 240–244, 2020.
+[16] J. Tian and A. Hu, “Stabilising the output voltage of wireless power
+pickup through parallel tuned dc-voltage controlled variable capacitor,”
+Electronics Letters, vol. 52, no. 9, pp. 758–759, 2016.
+[17] P. P. Mercier and A. P. Chandrakasan, “Rapid wireless capacitor charging
+using a multi-tapped inductively-coupled secondary coil,” IEEE Trans-
+actions on Circuits and Systems I: Regular Papers, vol. 60, no. 9, pp.
+2263–2272, 2013.
+[18] Z. Dang, Y. Cao, and J. A. A. Qahouq, “Reconfigurable magnetic
+resonance-coupled wireless power transfer system,” IEEE Transactions
+on Power Electronics, vol. 30, no. 11, pp. 6057–6069, 2015.
+

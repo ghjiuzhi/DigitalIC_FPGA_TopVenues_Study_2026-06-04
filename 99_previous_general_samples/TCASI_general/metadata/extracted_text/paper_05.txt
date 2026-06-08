@@ -1,0 +1,1328 @@
+                   Alma Mater Studiorum Università di Bologna
+                       Archivio istituzionale della ricerca
+
+
+
+A Heterogeneous RISC-V Based SoC for Secure Nano-UAV Navigation
+
+
+
+ This is the final peer-reviewed author’s accepted manuscript (postprint) of the following publication:
+
+ Published Version:
+ Valente, L., Nadalini, A., Veeran, A.H.C., Sinigaglia, M., Sá, B., Wistoff, N., et al. (2024). A Heterogeneous
+ RISC-V Based SoC for Secure Nano-UAV Navigation. IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS. I,
+ REGULAR PAPERS, 71(5), 1-14 [10.1109/tcsi.2024.3359044].
+
+
+ Availability:
+ This version is available at: https://hdl.handle.net/11585/959822 since: 2024-02-21
+ Published:
+ DOI: http://doi.org/10.1109/tcsi.2024.3359044
+
+
+ Terms of use:
+
+ Some rights reserved. The terms and conditions for the reuse of this version of the manuscript are
+ specified in the publishing policy. For all terms of use and more information see the publisher's website.
+
+
+
+
+                This item was downloaded from IRIS Università di Bologna (https://cris.unibo.it/).
+                              When citing, please refer to the published version.
+
+
+                                             (Article begins on next page)
+
+ 04 June 2026
+                                                                                                                                               1
+
+
+
+
+     A Heterogeneous RISC-V based SoC for Secure
+                Nano-UAV Navigation
+       Luca Valente, Alessandro Nadalini, Asif Veeran, Mattia Sinigaglia, Bruno Sá, Nils Wistoff, Student
+      Member, IEEE, Yvan Tortorella, Simone Benatti, Rafail Psiakis, Ari Kulmala, Baker Mohammad, Sr.
+    Member, IEEE, Sandro Pinto, Daniele Palossi, Luca Benini, Fellow, IEEE, Davide Rossi, Member, IEEE
+
+
+
+   Abstract—The rapid advancement of energy-efficient parallel                                        I. I NTRODUCTION
+ultra-low-power (ULP) µcontrollers units (MCUs) is enabling
+the development of autonomous nano-sized unmanned aerial
+vehicles (nano-UAVs). These sub-10cm drones represent the next
+generation of unobtrusive robotic helpers and ubiquitous smart
+                                                                                T     HE number of Internet-of-Things (IoT) devices and the
+                                                                                      spectrum of IoT applications are rapidly growing: from
+                                                                                home automation, robotics, industrial gateways, and building
+sensors. However, nano-UAVs face significant power and payload
+constraints while requiring advanced computing capabilities akin                automation to smart cities, digital signage, medical equipment,
+to standard drones, including real-time Machine Learning (ML)                   and more [1]. In this context, nano-sized unmanned aerial
+performance and the safe co-existence of general-purpose and                    vehicles (nano-UAVs) can be considered the “ultimate” IoT
+real-time OSs. Although some advanced parallel ULP MCUs                         node, thanks to their ability to navigate, sense, analyse, and
+offer the necessary ML computing capabilities within the pre-
+scribed power limits, they rely on small main memories (<1MB)                   understand the surrounding environment. Nano-UAVs have a
+and µcontroller-class CPUs with no virtualization or security                   form factor of a few centimeters in diameter, and a weight
+features, and hence only support simple bare-metal runtimes. In                 of only tens of grams, which allows them to safely operate
+this work, we present Shaheen, a 9mm2 200mW SoC implemented                     near humans and in narrow, cramped spaces [2], [3]. They
+in 22nm FDX technology. Differently from state-of-the-art MCUs,                 have a total power envelope of a few Watts, of which only
+Shaheen integrates a Linux-capable RV64 core, compliant with
+the v1.0 ratified Hypervisor extension and equipped with timing                 5-15% for computation [4], and their small physical footprint
+channel protection, along with a low-cost and low-power memory                  and limited payload restrain the maximum battery, the printed
+controller exposing up to 512MB of off-chip low-cost low-power                  circuit board size and exclude any form of active cooling.
+HyperRAM directly to the CPU. At the same time, it integrates a                 Nowadays, µcontroller units (MCUs) are the only computing
+fully programmable energy- and area-efficient multi-core cluster                platforms that meet the nano-UAV’s power and form-factor
+of RV32 cores optimized for general-purpose DSP as well as
+reduced- and mixed-precision ML. To the best of the authors’                    constraints.
+knowledge, it is the first silicon prototype of a ULP SoC coupling                 MCUs feature simple RISC host processors (e.g., ARM
+the RV64 and RV32 cores in a heterogeneous host+accelerator                     Cortex-M) with low computational capabilities and no virtu-
+architecture fully based on the RISC-V ISA. We demonstrate the                  alization support, to which they expose just a few hundred
+capabilities of the proposed SoC on a wide range of benchmarks
+                                                                                kBytes of on-chip SRAM scratchpad memory (SPM) [5]–
+relevant to nano-UAV applications including general-purpose
+DSP as well as inference and online learning of quantized DNNs.                 [11]. To deliver more advanced computational capabilities,
+The cluster can deliver up to 90GOp/s and up to 1.8TOp/s/W                      state-of-the-art (SoA) MCUs integrate accelerators with high
+on 2-bit integer kernels and up to 7.9GFLOp/s and up to                         data processing capabilities [5]–[11]. Usually, ultra-low-power
+150GFLOp/s/W on 16-bit FP kernels.                                              (ULP) devices’ accelerators are hardwired application-specific
+  Index Terms—Heterogeneous, Linux, Low-Power, Autonomous                       data-paths [9], [10] which achieve the best energy efficiency
+Nano-UAVs, RISC-V                                                               but are tailored to a single application domain, leading to poor
+                                                                                programmability and a high nonrecurring engineering cost [12]
+                                                                                while occupying a considerable part of the scarce area re-
+   Manuscript submitted July 30, 2023.
+                                                                                sources. To improve the overall versatility of the SoC, recent
+   Luca Valente, Mattia Sinigaglia, Alessandro Nadalini, Yvan Tortorella,       works replace ASIC accelerators with fully programmable
+Simone Benatti, Luca Benini, and Davide Rossi are with the Department           parallel accelerators [7], [8] that achieve competitive energy
+of Electrical, Electronic and Information Engineering, University of Bologna,
+40136 Bologna, Italy. Asif Veeran and Baker Mohammad are with the De-
+                                                                                efficiency while maintaining significant flexibility, and hence
+partment of Electrical Engineering and Computer Science, Khalifa University,    make the most out of the available power and area.
+Abu Dhabi, UAE. Bruno Sá and Sandro Pinto are with Centro ALGORITMI,              The increase in computing capabilities of SoA MCUs
+University of Minho, 4800-058 Guimarães, Portugal. Nils Wistoff, Daniele
+Palossi and Luca Benini are with the Integrated Systems Laboratory (IIS),       has enabled nano-UAVs to achieve autonomous flight while
+ETH Zürich, 8092 Zürich, Switzerland. Ari Kulmala and Rafail Psiakis are      executing intelligent auxiliary tasks. For example, Quantized
+with Technology Innovation Institute, Secure Systems Research Center, Abu       Neural Networks (QNNs) have been proposed to carry out
+Dhabi, UAE. Daniele Palossi is also with the Dalle Molle Institute for
+Artificial Intelligence (IDSIA), USI-SUPSI, 6900 Lugano, Switzerland.           obstacle avoidance [2] or human pose estimation and object
+   This work was supported by Technology Innovation Institute, Secure           detection [3]. At the same time, floating point (FP) digital-
+Systems Research Center, Abu Dhabi, UAE, PO Box: 9639, by the Spoke 1 on        signal-processing (DSP) computation has been proposed for
+Future HPC of the Italian Research Center on High-Performance Computing,
+Big Data and Quantum Computing (ICSC) funded by MUR Mission 4 - Next            path planning or structural build monitoring [13], [14]. Also, a
+Generation EU, and by KDT TRISTAN project (g.a. 101095947)                      recent trend for edge devices is online learning, which enables
+                                                                                                                                                    2
+
+
+
+a small portion of the Neural Networks (NN) training to                           TABLE I: UAVs taxonomy by vehicle class-size [2].
+happen on the edge, increasing the accuracy and reliability                                                        Power Budget
+                                                                               Vehicle         Diameter : Weight                     Onboard
+directly on the field [15], [16]. Nevertheless, even the most                  class size      [cm : kg]            Total[W]
+                                                                                                                                     computer
+                                                                                                                   Compute[W]
+advanced MCUs, supporting this new class of applications, lag                  standard [22]   ∼ 50 : ≥ 1          ≥ 100 / 5-15      Desktop/Emb.
+behind in terms of software support. Due to the small amount                   micro [17]      ∼ 25 : ∼ 0.5        ∼ 50 / 2.5-7.5    Embedded
+of available memory and the simplicity of their host CPU, SoA                  nano [2]        ∼ 10 : ∼ 0.01       ∼ 5 / 0.25-0.75   MCU
+                                                                               pico [4]        ∼ 2 : ≤ 0.001       ∼ 0.1 / 5-15E-3   ULP
+MCUs only provide close-to-metal software environments,
+based on minimal real-time operating systems (RTOS) or
+simple bare-metal runtimes. However, enabling the execution                      The cluster integrates the so-called Flex-V cores. The Flex-
+of full-fledged OSs (like Linux), securely along with the real-               V core extends the RISC-V ISA with custom instructions
+time control applications, would allow nano-UAVs to leverage                  for reduced-precision single instruction multiple data (SIMD)
+an existing, mature, and solid software stack and hence ease                  FP-based computation and byte and sub-byte mixed-precision
+the software development [17]. In this context, this work                     QNN inference, achieving State-of-the-Art (SoA) software
+presents a step forward in the current and future generation                  power and energy efficiency. Thanks to the aggressive op-
+of autonomous nano-UAVs. We present Shaheen, a 9mm2                           timizations, the cluster achieves up to 22.5 GigaOperations
+200mW heterogeneous System-on-Chip (SoC) implemented                          per second (GOp/s) and 90 GOp/s on 8-bit and 2-bit integer
+in 22 nm FDX technology that couples an application-class                     kernels, enabling low-latency mixed-precision QNN-based au-
+RV64 host processor with a low-power HyperRAM memory                          tonomous navigation [2], [3]. Furthermore, the cluster achieves
+controller and with a flexible cluster of eight RV32 cores,                   up to 4 GigaFloating-Point Operations per second (GFLOp/s)
+providing best-in-class energy efficiency and performance for                 and 7.9 GFLOp/s on FP32 and FP16 kernels enabling DSP
+IoT applications. The design is fine-tuned to accommodate the                 and online training of neural networks (NNs) [15], [16].
+requirements of emerging nano-UAV applications.                                  To sum up, compared to the State-of-the-Art MCUs for
+   The host includes hardware virtualization support [18]: to                 nano-UAVs, Shaheen is the first one coupling:
+the best of our knowledge, it is the first silicon implemen-
+                                                                                 • an RV64 host with Hypervisor support and security
+tation fully compliant with the ratified RISC-V Instruction
+                                                                                    features,
+Set Architecture (ISA) Hypervisor extension1 , enabling the
+                                                                                 • a low-power memory controller exposing hundreds of
+secure coexistence of an RTOS and a full-blown OS onto the
+                                                                                    MB at up to 1.6Gbps to the host core,
+same host core. In particular, the Hypervisor extension aims to
+                                                                                 • a fully-programmable parallel RV32 cluster providing
+provide confidentiality and integrity of virtual machines (VM)
+                                                                                    SoA software performance for IoT,
+by enforcing isolation (via two-stage virtual memory) between
+multiple consolidated guest OSes, i.e., General Purpose OS                    while keeping the overall power envelope within 200mW.
+(GPOS) and RTOS. To further isolate the execution of these                       The structure of this manuscript is as follows: in Section
+coexisting software stacks (trusted and untrusted), prevent                   II, we will present an overview of the State-of-the-Art SoC
+security threats, and ensure multi-domain operations, the host                for UAVs. Following this, Sections III and IV will delve
+core features Physical Memory Protection (PMP) [19] and ISA                   into an exhaustive discussion of Shaheen’s architecture, its
+and micro-architecture extensions for timing channel mitiga-                  implementation, and the measurements obtained from the
+tion [20]. Namely, the PMP aims to provide confidentiality                    silicon prototype. Moving forward, Sections V and VI will
+and integrity by limiting the physical addresses accessible                   address the software stack and provide a benchmark of the
+by software running on CVA6. PMP enforces the separation                      cluster’s performance and energy efficiency on a relevant set of
+between the bare-metal firmware (running in machine mode)                     applications for nano-UAVs. In Section VII, we will compare
+and everything else through a set of additional registers, which              Shaheen with similar silicon prototypes from both industry and
+specify the physical memory access privileges (read, write, ex-               academia. Finally, Section VIII will summarize our results and
+ecute) for each physical memory region. Lastly, timing channel                offer insights into potential future research directions.
+mitigation aims to provide confidentiality by eliminating side-
+channel attacks.                                                                                    II. R ELATED WORK
+   Apart from a 1MB on-chip SRAM SPM, Shaheen connects                           Table I shows the four categories of UAV systems according
+to up to 512MB of off-chip low-power HyperRAMs [21] di-                       to size, weight, power budget and onboard processing plat-
+rectly on the main interconnect, through a low-power, low-cost                form. The latter two characteristics are tightly coupled, as only
+0.27mm2 1.6 Gbps fully-digital memory controller. Relying                     around ∼ 5 − 15% of the power budget is allocated to com-
+on HyperRAMs instead of high-end LPDDR4/5 memories,                           putation [2]. Across all the categories of UAVs, autonomous
+typically integrated into embedded Linux-capable systems,                     navigation is achieved by the combination of two components:
+frees Shaheen from expensive and proprietary memory con-                      mission control and flight control. Mission control is the high-
+trollers with large mixed-signal PHYs, while still exposing                   level decisional part of the navigation algorithm, e.g., path
+hundreds of MB to the host processor and matching the tight                   planning [23], optimization-based control [24], etc. To carry
+power, form factor and cost requirements of nano-UAVs.                        out these types of tasks, SoA drones mostly rely on machine
+  1 SiFive, Ventana, and StarFive have announced RISC-V CPU designs with
+                                                                              learning (ML) algorithms [2], [17]. Flight control, on the
+Hypervisor extension support, but we are not aware of any silicon available   other hand, is the actuation of the output decisions of mission
+on the market yet.                                                            control: it collects data from the sensors to determine the
+                                                                                                                                      3
+
+
+
+                                            TABLE II: State-of-the-Art SoCs for UAVs.
+                                            CPU :                                                                Power
+      SoC          Target                                 Supported   HW Virt.       Parallel    Accelerator                  Main
+                                Task       Max freq                                                            envelope :
+  (Proxy price)   Platform                                   OS        support     accelerator    FLOp/s                     memory
+                                            [MHz]                                                              Technology
+ NVIDIA Jetson
+                  Standard/              4×Cortex-A57 :                            256x Pascal      1.33       7.5-15W :      8GB
+    TX2 [29]                   Mission                      Linux        ✓
+                  micro-size                2 GHz                                    CUDA         TFLOp/s        16nm       LPDDR4
+   (100-150$)
+   Intel Atom
+                                         4xIntel Atom :                          GPU Intel HD       230         ∼10W :        8GB
+ x7-E3950 [30]    Micro-size   Mission                      Linux         ✗
+                                             2GHz                                    505          GFLOp/s        14nm       LPDDR3
+      (50$)
+   Allwinnner
+                                         4xCortex-A7 :                           GPU Mali-400       10           >1W :       512MB
+    H3 [17]       Micro-size   Mission                      Linux        ✓
+                                            1.2GHz                                  MP2           GFLOp/s        40nm       LPDDR3
+     (<10$)
+                                          Cortex M7 +
+ STM32-H7 [5]     Standard/                                                                        <500        <200mW :      512kB
+                               Flight     Cortex M4 :       Linux         ✗             -
+    (15$)         micro-size                                                                      MFLOp/s        40nm        SRAM
+                                           480 - 240
+ STM32-F4 [6]                             Cortex M4 :                                                          <200mW :        1MB
+                  Nano-size     Both                        RTOS          ✗             -             -
+     (15$)                                    180                                                                90nm         SRAM
+   GAP8 [7]                                                                                                    <100mW :       1.5MB
+                  Nano-size     Both      Ri5cy : 250       RTOS          ✗         8xRi5cy           -
+     (40$)                                                                                                       55nm         SRAM
+   GAP9 [7]                                                                                      <3GFLOp/s     <50mW :        1.5MB
+                  Nano-size     Both      Ri5cy : 450       RTOS          ✗         9xRi5cy
+     (40$)                                                                                          (FP32)       22nm         SRAM
+  Kraken [8]                              Ri5cy-NN :                                             <3GFLOp/s     <300mW :        1MB
+                  Nano-size     Both                        RTOS          ✗       8xRi5cy-NN
+  (Prototype)                                350                                                    (FP32)       22nm         SRAM
+   This Work                                                Linux                                7.9GFLOp/s    <200mW :      8-512MB
+                  Nano-size     Both      RV-64 : 600                    ✓          8xFlex-V
+  (Prototype)                                              +RTOS                                    (FP16)       22nm       HyperRAM
+
+
+
+vehicle’s state and generates the control law, which manages          A57 running up to 2GHz and a Pascal CUDA GPU, which
+the actuators [25]. Flight control is often based on cascade PID      can deliver up to 1.33TFLOp/s resulting in an overall power
+control [26], especially in the case of nano-UAVs [27], [28],         consumption of more than 7.5 W. The Intel Atom x7 is the
+and it is not as computationally intensive as mission control,        heart of the Intel UpBoard platforms, as big as a credit card.
+but it requires low-latency guarantees. As a consequence, also        It features 4 Intel Atom processors running up to 2GHz and
+in the context of standard and micro-drones, flight control           an Intel HD 505 GPU delivering up to 230GFLOp/s and
+is usually carried out by simple MCUs with a predictable              roughly consuming 10W. Another compute hardware platform
+execution time like the STM32-H7 [5] integrated into the              commonly used on autonomous UAVs is the NanoPi Neo
+Pixhawk board [25]. Table II shows some mainstream SoCs               Air, which integrates an Allwinner H7 SoC with a quad-
+successfully deployed on drones of standard, micro, and nano          core CortexA7 and a Mali-400 MP2 GPU, delivering up to
+size. For each SoC, it highlights the different computational         10GFLOp/s. All these SoCs offer a mainstream Ubuntu-ready
+capabilities and power envelope, as well as the specific tasks        software stack and virtualization capabilities and can handle
+and UAV platforms they are suited for, detailed in the three          very sophisticated and complex applications. However, due to
+sections below. Sections II-A and II-B describe the state of          their power envelope, size, and the necessity for high-end off-
+the art of standards, micro, and nano UAVs SoCs.                      chip memories, these SoCs can only be integrated into standard
+                                                                      and micro-UAVs.
+A. SoCs for Standard and Micro-sized UAVs                                Naturally, Shaheen can not compete with these architectures
+   As table I shows, micro-size drones integrate embedded             in terms of performance, but our approach borrows the best
+computers, while standard-sized drones can even accommo-              of their characteristic while targeting a much smaller power
+date desktop processors. Nevertheless, embedded processors            envelope. Firstly, to mimic high-end SoCs with their heteroge-
+can nowadays deliver performance in the order of hundreds             neous GPU-based architecture, Shaheen integrates an RV32-
+of TOp/s and hundreds of GFLOp/s, which has proven to be              based parallel programmable cluster along with an RV64 CPU.
+sufficient to support the full flight stack for mission control,      Secondly, it exposes a significant amount of off-chip main
+both for micro [17] and standard-size UAVs [22].                      memory to the CPU. However, instead of high-performance
+   Embedded computers integrate high-end SoCs with                    DRAMs (LPDDR3/4/5) that are connected through large,
+application-class cores, supporting virtualization and various        proprietary and expensive mixed-signal PHYs with a high pin
+privilege levels (and hence full-fledged OSs), embedded GPUs,         count (>30), Shaheen leverages HyperRAMs, which are fully-
+and GBytes of high-performance off-chip LPDDR/DDR4/5                  digital low-power small-area DRAMs with less than 14 pins
+memories, connected through expensive, large and power-               and feasible to be deployed on nano-UAVs. A similar approach
+hungry mixed-signal DDR controllers, all within a power               is adopted in Cheshire [34], which is not optimized for nano-
+envelope of few watts [29], [31]–[33].                                UAV applications. Cheshire revolves around CVA6 as Shaheen
+   The NVIDIA Jetson TX2 is claimed to be ”the fastest, most          and exposes up to 1GB of Reduced Pin Count (RPC) DRAM
+power-efficient embedded artificial intelligence (AI) computing       memory, which uses a minimum number of signals to deliver
+device” by NVIDIA [29] and it is the board of choice for              DDR3-level in-system bandwidth at the cost of 22 switching
+the Agilicious drone [17]. It features a Quad-core Cortex             signals for a 16-bit wide data bus [34], [35]. While RPC and
+                                                                                                                                     4
+
+
+
+the related controller offer higher bandwidth than HyperBUS,         successfully proved to enable autonomous navigation [2],
+the RPC protocol is more convoluted, leading to higher design        [3]. Namely, GAP8, GAP9 [7] and Kraken [8] are MCUs
+complexity and a bigger area, mostly due to the four 8kB             with enhanced computational capabilities, based on parallel
+buffers [34]. More importantly, Cheshire’s CVA6 does not             programmable accelerators. GAP8 and GAP9 are commercial
+feature hardware virtualization support and micro-architectural      products by GreenWaves Technologies compliant with the so-
+extensions for timing channel mitigations. Lastly, while being       called Crazyflie-AIdeck [41] board, which is meant as a com-
+easily extensible through the AXI4 interface, Cheshire’s sili-       panion of the Crazyflie to offload the mission control tasks [2].
+con prototype does not integrate a parallel accelerator, heavily     GAP8 embeds the so-called Ri5cy [7] core as host CPU and
+limiting the offered performance. To sum up, Shaheen is the          1.5MB of on-chip SRAM memory, accompanied by a parallel
+first silicon implementation of a heterogeneous MCU coupling         programmable cluster of other eight Ri5cy cores delivering up
+an RV64 core with a cluster of eight RV32 cores and tens of          to 150 GOP/s on 8-bit data. Ri5cy is a 4 pipeline-stages core
+MB of main memory.                                                   compliant with the so-called XpulpV2 ISA, a custom RISC-V
+                                                                     ISA based on RV32 with extensions for DSP and ML applica-
+B. SoCs for Nano-UAVs                                                tions, with support for 16/8-bit SIMD operations and hardware
+   A state-of-the-art MCU for nano-UAVs platforms is the             loops. GAP9 is an improved version of the GAP8 processor.
+STM32-F4 [6]. The STM32-F4 is the computational unit of              It is fabricated in a more advanced node than GAP8, halving
+the Crazyflie [36] platform, integrating a Cortex-M4 core and        the power envelope and it features as well 2MB of non-
+192kB of on-chip SRAM with 180MHz of maximum operat-                 volatile SVM memory. Also, differently from GAP8, GAP9’s
+ing frequency. Its low performance and small memory capacity         cluster includes 4 FPUs with FP16/32 support. Lastly, Kraken
+limit the autonomous navigation capabilities of the nano-drone       [8] is a research prototype based on the same heterogeneous
+when compared to embedded computers. To this extent, two             architecture of GAP8 and GAP9, i.e., an RV32 CPU along
+kinds of approaches have been proposed: minimization of the          with an eight RV32 core cluster, which delivers up to 90 GOp/s
+workload [37] or offloading of the mission control computation       on 2-bit data. Kraken’s RV32 cores are a more advanced
+to an external base station [38], limiting the MCU to flight         version of Ri5cy, i.e., the Ri5cyNN cores [8] with support of
+control. The latter approach presents severe drawbacks, in the       sub-byte SIMD operations and fused Mac&Load instructions,
+first instance, it introduces network-dependent latency, limiting    which enable the concurrent execution of SIMD dot-product
+the maximum distance from the workstation to a few tens of           and memory accesses, increasing the computation efficiency
+meters. Also, the data transmitted are subject to noise on the       up to 94%. Kraken embeds 1.5MB of on-chip SRAM memory
+transmission channel, limiting reliability, and eavesdropping        and the CUTIE accelerator, able to achieve up to roughly 90k
+on confidential data [39].                                           Ternary-MACs per cycle. Furthermore, it provides an event-
+   To offer enhanced computational capabilities within a small       based camera, tightly coupled with a Spiking Neural Engine
+power budget, recent works also propose SoCs featuring               accelerator. When compared to traditional cameras, event-
+hardwired ASIC accelerators designed for specific UAV ap-            based cameras offer high temporal resolution (in the order of
+plications, like, for example, motion-control [9], visual-inertial   µs), very high dynamic range (140 dB vs. 60 dB), low power
+odometry (VIO) [10], simultaneous-localization-and-mapping           consumption, and high pixel bandwidth (on the order of kHz)
+(SLAM) [40], or QNN inference [7], [8]. These accelerators           resulting in reduced motion blur [42].
+achieve impressive energy efficiency, in the order of hundreds          Shaheen’s approach leverages the best from these advanced
+of TOp/s/W, by carefully mapping the target algorithm to the         AI IoT SoCs, integrating its own fully-programmable parallel
+hardware. For example, many accelerators exploit the inherent        8-core RV32 cluster accelerator. Shaheen’s RV32 cores stem
+parallelism of the target application, such as using a systolic      from the Ri5cyNN cores and are further enhanced with mixed-
+array for motion control [9]. Another common approach                precision support to eliminate the massive software overhead
+exploits reduced-precision arithmetic, as in SLAM [40] and           necessary for packing and unpacking data when executing
+VIO [10], to reduce the memory footprint and the datapath            mixed-precision sub-byte kernels, providing up to 8.5x speed-
+size. Exploiting both parallelism and reduced-precision com-         up over Kraken and less than 5.6% extra area resource over
+putation is also a well-established technique to accelerate QNN      the baseline core without extensions. In addition, Shaheen
+inference and training, due to the nature of such algorithm. For     addresses a major limitation of SoA MCUs: the software stack
+example, accelerators like the NE16 in GAP9 [7], the HWCE            based on lightweight RTOSs or simple bare-metal runtimes.
+in GAP8 [7], and the ternary weight neural-network (so-called        Programming applications on these stacks is hard, owing to
+CUTIE) accelerator in Kraken [8], able to reach peaks of 11.6        (i) the lack of virtualization capabilities of the host CPUs and
+TMAC/s, have been proposed to speed up QNN inference.                (ii) the small amount of memory directly accessible through
+However, due to poor flexibility and programmability, these          loads and stores, which limits the maximum software memory
+accelerators have to anyway rely on general-purpose CPUs             footprint. In the context of MCUs, memory resources coincide
+to achieve end-to-end flight. Furthermore, the high area cost        with on-chip SRAMs and off-chip DRAMs. The first ones
+per device makes them hard to adopt as they risk becoming            provide high bandwidth but are limited to a few hundred kB,
+obsolete due to the rapid evolution of the target nano-UAVs          due to the area and power constraints [21]. The latter ones offer
+applications.                                                        one order of magnitude more capacity but are much slower
+   To overcome these limitations, recent MCUs integrate par-         and are typically accessed only through explicit input-output
+allel fully-programmable and flexible accelerators, that have        copy functions. Thus, beyond SoA, to support a richer software
+                                                                                                                                                                                        5
+
+
+
+                                                                                                  Virtualization           Nominal                                          2-stage
+                                                                       Cluster Domain                                                               Name
+                       128 KB                                                                      Mode (V)                Privilege                                      translation
+        Bank #0                     Bank #15
+                       L1 SPM                                                                           0                      U                User (U) mode                 Off
+                                                                                    F
+                                                                         Flex-V
+                        ...                                                         P                   0                      S             Hypervisor-extended              Off
+                                                                         core #7
+               L1 TCDM Interconnect                                                 U     I                                                 Supervisor (HS) mode
+                                                                           ...            $                      0             M             Machine (M) mode                Off
+                                               Periph                               F                            1             U           Virtual User (VU) mode            On
+          DMA                                                            Flex-V
+                                                                                    P                            1             S        Virtual Supervisor (VS) mode         On
+                            Cluster EU          Xbar                     core #0
+                                                                                    U
+                                                                                              TABLE III: RISC-V ISA privilege modes with the Hypervisor
+                        Fully-Connected AXI-4 crossbar
+                                                                                              extension.
+                                         AXI CDC     AXI CDC
+    Bank #0
+               1MB                        IOTLB                           Host Domain
+              L2 SPM Bank #3                                                                                              Virtualised Environment   Non-virtualised Environment
+                 ...                                                    MAILBOX
+                                                                                                                     VU    Guest User Space            Host User Space             U
+
+
+
+
+                                                                                              privilege levels
+     L2 TCDM Interconnect
+
+
+
+
+                                                                                                Decreasing
+                                         Fully-Connected AXI-4 crossbar                                              VS         Guest OS
+       Host
+   Interconnect
+                                                                                                                     HS                       Hypervisor                           HS
+
+                                                                                                                                            Firmware (SBI)                         M
+                                                        CLINT & PLIC
+
+
+                                                                          AXI CDC                                    M
+                AXI 2 APB
+                                             AXI-4
+                                                                        L1I$       L1D$
+    μDMA (SPI, I2C, CAM, UART, ...)        HyperRAM                    CVA6 Host Core                                     Fig. 2: RISC-V privilege levels.
+                                           Controller                   FPU MMU
+         I/O Master interfaces
+  Peripheral Domain                                                    CVA6 Domain
+                                                                                                                 covert channels with a low increase in context switch
+                        Off-chip HyperRAMs (32-512MB)
+                                                                                                                 costs and negligible hardware overhead.
+
+          Fig. 1: Shaheen architecture block diagram.                                         Such new features are relevant to many UAV applications such
+                                                                                              as the co-existence of full-fledged and real-time OSes (both
+                                                                                              custom and legacy), as well as isolation for safety and security
+stack while offering the advanced computing performance                                       reasons.
+and energy efficiency of the RV32-based cluster, Shaheen                                         1) H extension: Tab. III shows the different privilege modes
+integrates an RV64 core with advanced virtualization and                                      when implementing the Hypervisor extension and Fig. 2 the
+security features, along with up to 512MB of main memory.                                     resulting software stack. The nominal privilege modes are
+This enables the secure coexistence of rich and mature general-                               machine (M), supervisor (S), and user (U). The Hypervisor
+purpose OS and bare-metal RTOS on the same platform and                                       extension adds the virtualization mode (V), indicating whether
+eases porting of feature-rich software stacks for robotics, such                              the hart is currently executing in a guest (V=1) or not (V=0).
+as ROS [43].                                                                                  When V=0, the S-mode is modified into the hypervisor-
+                                                                                              extended supervisor (HS) mode, well suited to host both type-
+                    III. S HAHEEN A RCHITECURE                                                1 and type-2 hypervisors. Other than in the HS-mode, when
+                                                                                              V=0, the hart can either be in M-mode or in U-mode atop
+   Shaheen consists of 4 clock domains, as illustrated in Fig.
+                                                                                              an OS running in HS-mode. When V=1, two new privilege
+1: (i) the CVA6 domain, where the host core is; (ii) the
+                                                                                              levels are added, namely the virtual supervisor (VS) mode and
+host domain, including the main interconnect and 4 256kB
+                                                                                              the virtual user (VU) mode. Also, the hypervisor extension
+interleaved SRAM banks; (iii) the cluster domain, served by
+                                                                                              defines a second stage of translation (the so-called ”G-stage”)
+16 16kB interleaved SRAM banks and 8 specialized RV32
+                                                                                              to virtualize the guest memory by translating guest-physical
+cores; and (iv) the peripheral domain.
+                                                                                              addresses (GPA) into host-physical addresses (HPA).
+                                                                                                 To enable these new execution modes, the Control Status
+A. CVA6 host core                                                                             Register (CSR) and Decode modules have been modified.
+   CVA6 [44] is the heart of Shaheen. It is an open-source                                    The CSR module was extended to implement the first three
+6-stages, single-issue, in-order, 64-bit Linux-capable RISC-                                  building blocks that comprise the hardware virtualization
+V core, supporting the RV64GC ISA variant, SV39 virtual                                       logic, specifically: (i) access logic and permission checks for
+memory with a dedicated Memory Management Unit (MMU),                                         VS-mode and HS-mode CSRs, (ii) delegation and triggering
+three levels of privilege (Machine, Supervisor, User), and PMP                                of exceptions and interrupts, and (iii) handling of trap entry
+[19]. In the context of this work, the baseline version of                                    and exit. The Decode module underwent changes to enable
+CVA6 has been enhanced with 2 extra features to provide                                       the decoding of hypervisor instructions (such as hypervisor
+high-assurance isolation between the different applications co-                               load/store instructions and memory-management fence in-
+existing on the core:                                                                         structions), as well as the execution of all VS-mode-related
+   1) hardware support for virtualization compliant with the                                  instructions and the triggering of access exceptions.
+       ratified 1.0 version of the RISC-V Hypervisor specifica-                                  The MMU’s page table walker (PTW) and translation
+       tion [18].                                                                             lookaside buffer (TLB) have been modified to support the
+   2) temporal fence instruction, namely fence.t [20], which                                  second stage of translation. The PTW features a new control
+       flushes µarchitectural state and enables the OS to close                               state to monitor the current stage of translation and facilitate
+                                                                                                                                                                                6
+
+
+
+                    92          Unmitigated                             92   With fence.t       1                 left it is shown the matrix when not using the fence.t: the
+                                                                                                                  correlation between the Trojan’s secret and the spy’s probe
+(measured by the spy)
+
+
+
+
+                                                    (measured by the spy)
+                    88                                                  88                      1E-1
+   Time [kcycles]
+
+
+
+
+                                                       Time [kcycles]
+                                                                                                                  time indicates a covert channel. On the right, when using the
+
+
+
+
+                                                                                                    Probability
+                    84                                                  84                      1E-2              fence.t, there is no correlation. With less than 320 additional
+                    80                                                  80                      1E-3              clock cycles to the context-switch latency (insignificant at
+                                                                                                                  typical switch rates of 1 kHz), the fence.t requires a low
+                    760      64      128      192     256 760    64      128      192     256   0                 implementation effort and negligible hardware costs.
+                                   Secret                              Secret
+                          (Number of data cache lines         (Number of data cache lines
+                              read by the Trojan)                 read by the Trojan)
+
+                Fig. 3: Channel matrices on the CHANNEL BENCH test.                                               B. Host & Peripheral Domain
+                                                                                                                     The host domain leverages the popular AXI4 protocol
+                                                                                                                  [48] for the main interconnect. Namely, it includes a 64-
+   the switching of contexts between VS-Stage and G-Stage                                                         bit AXI4 crossbar delivering up to 32Gbps on each AXI4
+   translations. Finally, the TLB entries have been extended to                                                   port, respectively on read and write channels. It also includes
+   store both VS-Stage and G-Stage Page Table Entries (PTEs),                                                     4 256kB SRAM banks, composing a 1MB L2 ScratchPad
+   as well as their corresponding permissions and virtual machine                                                 Memory (L2SPM) delivering up to 64Gbps, either for writing
+   identifiers. Overall, all these modifications account for less                                                 or reading. The L2SPM is meant to (i) store data to be
+   than 6% extra area and hardware while enabling the safe co-                                                    shared with off-chip peripherals, (ii) store the cluster code,
+   existence of a full-fledge guest-OS (executed in VS-mode)                                                      (iii) for fast communication between CVA6 and the cluster,
+   together with a bare-metal RTOS (executed in U-mode).                                                          and, more in general, (iv) for low-latency (<10 clock cycles)
+      2) fence.t: The CVA6 core also implements the fence.t                                                       and predictable accesses.
+   instruction [20]. This instruction is added to CVA6’s ISA                                                         To enable independent data transfer from peripherals to
+   to prevent timing channels: exploitable hardware resources                                                     the SoC, Shaheen includes in the peripheral domain the so-
+   holding state depending on the execution history (caches,                                                      called ”µDMA subsystem” which is a controller intended to
+   TLBs, branch predictors, and prefetchers) can leak information                                                 autonomously serve a set of I/O interfaces popular in critical
+   if not properly reset during a context switch. Timing channels                                                 applications. Such interfaces include for instance HyperBUS,
+   can be exposed by prime-and-probe attacks [20]. In these kinds                                                 I2C, (Q)SPI, CPI, SDIO, UART, CAN, PWM, and I2S. The
+   of attacks, the spy first brings the target hardware resource                                                  µDMA exports two ports, one for receiving and one for
+   into a known state (prime). In the following time slice, the OS                                                sending data, to read/write data from/to the L2SPM SRAM
+   switches to an application containing a Trojan, which accesses                                                 memory to/from the off-chip peripherals [7]. Shaheen also
+   a subset of the hardware resource to encode a secret. Finally,                                                 features an open-source Linux-compliant Ethernet IP, to be
+   when the execution switches back to the spy, it again probes                                                   fully compliant with the Pixhawk standard [25], popular
+   (probe) the whole buffer and observes an execution time t,                                                     open-source hardware specifications and guidelines for drone
+   correlated with the encoded secret. For data caches, the spy                                                   systems development.
+   traverses a large buffer of n lines so that the Trojan can then                                                   1) HyperRAM memory controller: Fig. 4 depicts Shaheen’s
+   transmit a secret s ≤ n by touching s lines: in the last time                                                  HyperRAM controller, which provides a configuration APB
+   slice, the spy decodes s from the measured execution time t.                                                   port and an AXI4 subordinate port. It connects the SoC with
+      In this context, the fence.t extends the control that the OS, or                                            off-chip HyperRAMs, compliant with the HyperBUS protocol,
+   the Hypervisor, has over the hardware. Namely, it provides the                                                 which is a fully digital protocol counting 11 + n pins: 3
+   capability of clearing vulnerable microarchitectural states to                                                 control pins, n Chip Select (CS), and 8 Double-Data-Rate
+   enable a history-independent context-switch latency by flush-                                                  pins used both for commands and data [21]. Depending on
+   ing the caches and the TLB and resetting the internal FSMs                                                     the off-chip memory models, the controller exposes between
+   of the core. The fence.t has been validated against prime-                                                     32MB and 512MB to the interconnect, and it provides up
+   and-probe attacks from the MASTIK toolkit [20], [45]. These                                                    to 1.6 Gbps. HyperRAMs are the main memory of choice
+   attacks are implemented within Ge’s CHANNEL BENCH [46],                                                        for Shaheen because, differently from high-end DDR DRAM
+   [47] suite, which provides a minimal OS and data collection                                                    memories, they target a much lower power consumption and
+   infrastructure, running on an experimental version of seL4 sup-                                                silicon footprint while guaranteeing enough bandwidth for
+   porting timing protection. To visualize the correlation between                                                advanced AI IoT applications and capacity to boot embedded
+   s and t, we use channel matrices. A channel matrix represents                                                  SPM Linux [21].
+   the conditional probability of getting an execution time t,                                                       There are two distinct modules within the HyperRAM
+   having an input secret s. In Fig. 3, we represent the channel                                                  controller, i.e., the PHY controller (back-end) and the front-
+   matrix as heatmaps: s (the secret encoded by the Trojan by                                                     end, operating in different frequency domains. The front-
+   touching s ≤ n data cache lines) varies horizontally, and t (the                                               end module consists of an AXI4-to-PHY converter and a
+   execution time measured by the spy) varies vertically, bright                                                  specialized µDMA engine channel accessible through APB
+   colours indicate a high probability and dark colours indicate                                                  to execute software-programmed DMA transfers. The AXI4
+   a low probability of measuring such t, given a certain s.                                                      and µDMA transactions are multiplexed towards the PHY,
+      Fig. 3 shows the channel matrices on the CHANNEL                                                            which translates the incoming data packets into HyperRAM
+   BENCH test for CVA6’s write-through L1 data cache. On the                                                      transactions and vice versa. The AXI4 front-end enqueues
+                                                                                                                                                                                                        7
+
+
+
+                                                                                                                                              VIRTUAL SIMD INSTRUCTION
+                 AW QUEUE        FRONT-END      FSM          BACK-END                                    DECODER                                                             CSRs
+
+
+
+
+                                                                        CTRL
+                                                                                                                SCALAR                                                    SIMD
+
+
+
+
+                               ARB
+
+
+
+
+                                     PHY
+                                      TO
+                                      AX
+
+
+
+
+                                                mux
+                 AR QUEUE                                                                                       INSTRUCTION                                              FORMAT
+           AXI
+
+
+
+
+                                                            ARB
+
+
+
+                                                                   TX
+
+
+
+
+                                                                               HYPERBUS
+                                                                                                        MULT/ALU SCALAR                                       MULT/ALU SIMD
+
+
+
+
+                                       R PHY
+                                      TO TO
+
+
+
+
+                                                                                          MEM
+                                     PHY W
+
+
+
+
+                                                      mux
+
+
+
+
+                                                                                  TRX
+                                                                   RX
+                                                                                                Fig. 5: Instruction decoding during the status-based execution.
+
+
+
+
+                                                      mux
+           APB
+
+
+
+
+                      engine
+                      uDMA
+
+
+ TX/RX to/from uDMA                                                                                SIMD_FMT; MPC_CNT
+                                               CDC
+                                                                                                                                                              DOTP-2b
+
+
+
+
+                                                                                                                          SLICER AND ROUTER
+     Fig. 4: HyperRAM memory controller architecture.
+
+
+
+
+                                                                                                                                                                                  OUTPUT MUX
+                                                                                                                                                              DOTP-4b
+
+
+
+
+                                                                                                                                                                                               Result
+                                                                                                                                                              DOTP-8b
+
+the AXI4 transactions individually and lets through only one
+                                                                                                    B                                                         DOTP-16b
+read or one write at a time and converts it into a request for
+the PHY. At this point, the back-end translates the request                                         A
+
+                                                                                                    C
+into a command for the HyperRAMs and issues it over the
+HyperBUS. Following, in the case of a write, the W channel                                                             Fig. 6: Dotp unit Datapath.
+transactions get converted into multiple PHY data packets. For
+reads, the PHY back-end sends data packets to a converter
+that then populates the R channel. The µDMA engine directly                                     and custom ISA extensions, the cluster avoids the hardware
+connects the L2SPM and the back-end and can generate                                            overhead of expensive data caches while maximizing the
+both 1D and 2D burst transactions. These features are highly                                    utilization of memory and computing resources [49].
+valuable for the efficient execution of ML algorithms on the                                       1) Flex-V cores: The 8 RV32 cores are the so-called Flex-
+cluster, as it is achieved through explicit orchestration of the                                V cores [50]. Each core has a dedicated FPU unit supporting
+data movement between the off-chip memory, the L2SPM and                                        FP32, FP16 and bfloat16 types, supporting SIMD instruc-
+the L1SPM [49].                                                                                 tions on lower precision data. Also, all the cores share a
+   To double the bandwidth and the capacity, Shaheen’s back-                                    single Floating Point division and square root operations unit
+end module controls 2 HyperBUS interfaces in parallel, and it                                   (DIV/SQRT). The Flex-V core is an aggressively optimized
+controls 2 memories on each HyperBUS, with 2 dedicated CS.                                      version of the Ri5cy core [51], which support the XPulpV2
+Each memory is seen as a memory block of 16 bits width and                                      ISA extension, considered as the baseline. The Ri5cy core al-
+N rows, programmable at runtime according to the onboard                                        ready provides custom instructions to accelerate the execution
+memories available. The pair of memories on the same CS                                         of ML and DSP workloads, namely, it supports post-increment
+of the two different buses are mapped as interleaved, hence                                     LD/ST, hardware loops, and SIMD instructions down to 8-bit
+occupying the first 2 · 2 · N Bytes. The other pair of memory                                   precision.
+is placed contiguously on top.                                                                     To enhance the performance of sub-byte uniform linear
+                                                                                                kernels, the XpulpNN ISA has been proposed [8], which
+                                                                                                extends XpulpV2 ISA with 4- and 2-bit SIMD operations.
+C. Parallel Programmable Cluster                                                                Additionally, it introduces fused Mac&Load instructions en-
+   While the host core supports advanced virtualization, se-                                    abling simultaneous execution of SIMD dot-product operations
+curity and isolation features, it is not optimized for num-                                     alongside memory accesses, almost doubling the computation
+ber crunching: when running computation-intensive kernels                                       efficiency. More precisely, the fused Mac&Load (mlsdotp)
+is needed, it invokes the cluster. The cluster domain is a                                      instruction combines a SIMD dot-product-like operation with
+programmable parallel accelerator connected to the main host                                    a load operation performed during the writeback stage. Doing
+interconnect through a controller and a subordinate AXI4                                        so enables replacing the non-stationary data in a register to
+port. The cluster is composed of 8 70kGE 4-pipeline stages                                      directly feed the next Mac&Load instruction with it. To decou-
+RV32 cores, optimized for general-purpose DSP and ML                                            ple and simplify the Mac&Load execution, the XPulpNN core
+applications, described below. The cores share 16 16kB inter-                                   integrates six additional 32-bit registers, forming the so-called
+leaved SRAM banks, composing a 256kB L1 SPM, accessible                                         Neural Network Register File (NN-RF), enabling the Load
+through a single clock cycle latency logarithmic intercon-                                      operations (of weights and activations) during the Mac&Load
+nect, providing up to 256 Gbps at 500MHz. A hierarchical                                        write-back stage, which could not be performed otherwise on
+instruction cache, composed of 8 512 Bytes private caches                                       the general purpose register file (GP-RF). However, when deal-
+and a 4kB of 2-cycle latency shared cache, assists the cores.                                   ing with mixed-precision inputs, the performance of XpulpNN
+It is implemented with latch-based SCM to improve energy                                        degrades significantly because of the substantial software
+efficiency over energy-expensive SRAM cuts. The cluster also                                    overhead required for packing and unpacking data.
+includes a DMA with one 64-bit AXI4 port and 4 32-bit                                              To overcome this limitation and maximize the computa-
+ports towards the L1SPM for high-bandwidth, low-latency                                         tional unit utilization, Flex-V further extends XPulpNN with
+transactions to/from the L1 SPM. Leveraging explicit memory                                     mixed-precision operation support. To efficiently enable arbi-
+DMA transfers and scratchpad memories, double-buffering                                         trary mixed-precision operations while avoiding the prolifer-
+                                                                                                                                      8
+
+
+
+                      4 8-bit operands          8 4-bit operands    TABLE IV: Flex-V’s performance [MAC/cycle] on MatMul
+  1                                                         B0
+                                                 B1                 kernels, against XPulpNN and XPulpV2 [50].
+  sumdotp<A0,B0>                          A1
+                                         A0                               Input        XpulpV2   XpulpNN      Flex-V       Flex-V
+                                                                          widths         [8]        [7]                 Speedup vs.
+                         <.,.>
+                                                                                                             h      i
+                                                                                                               M AC
+                                                                           [bits]                                       XPulpV2 /
+                                                                                       h     i   h      i
+  2                                                                                     M AC       M AC        cycle
+                           +
+  sumdotp<A1,B1>
+                                                                     Act.     Weight    cycle      cycle                 XPulpNN
+                      Accumulator                                     2           2       -         90.8       91.5       -/≤ 1%
+                                                                      4           2       -         7.62       51.9        -/6.8x
+Fig. 7: Execution flow of a mixed-precision sumdotp instruc-          4           4       -         49.5       50.6       -/≤ 1%
+                                                                      8           2     4.91        6.07       27.8      5.6x/4.5x
+tion between 8-bit operand A and 4-bit operand B.                     8           4     6.38        7.63       27.6      4.3x/3.6x
+                                                                      8           8     16.59       26.1       26.9       1.6x/3%
+
+ation of extra instructions, Flex-V exploits the dynamic bit-
+scalable execution mode: the ISA instruction only encodes           (i.e., get unauthorised access to sensitive data).
+the type of the operation, while the format is specified by            The IOTLB provides 32 entries. For each entry, CVA6 has to
+a CSR in the core. Figure 5 illustrates the relative decoding       specify the starting and ending virtual addresses, the physical
+process: the decoder retrieves all the necessary information        base address and the characteristics of the region: if the
+from the instruction and transmits it to the EX stage. If the       cluster can access it, and if it is readable or writeable. Before
+received op-code corresponds to a Virtual SIMD instruction,         offloading a task to the cluster, the host statically reserves the
+such as a (ml)sdotp, the decoder activates the SIMD func-           portions of the main memory to be shared with the cluster and
+tional unit which will execute the instruction according to         then it programs the entries. Then, once a transaction from the
+CSRs values and to signals from the dedicated MAC&Load              cluster arrives, its address is compared against the 32 virtual
+and Mixed-precision controllers (MCD). Figure 6 shows the           address ranges. If it is within one of the available ranges and
+mixed-precision Dot Product (Dotp) unit. This unit integrates       the cluster has the right permissions, the address is translated
+a Slicer&Router, responsible for the extraction of the 4- and       through simple subtraction of the virtual base address and the
+2-bit operands from a 32-bit input word, along with the two         addition of the physical base address. Otherwise, the IOTLB
+dedicated units for the sub-byte operations. For example, as        sends an interrupt to CVA6 to notify the cluster’s attempt
+shown in Fig. 7, the slicer is needed in the case of a sum-of-      at accessing memory outside the expected regions. Then, the
+dot-product (sdotp) operation between an 8-bit operand A and        IOTLB behaves as a simple AXI4 subordinate to not break the
+a 4-bit operand B. Since the single instruction can consume         AXI4 protocol: for write transactions, it accepts the incoming
+just four elements of the eight 4-bit words inside the register,    data on the write channel, without propagating them, while
+it selects either the 16 MSBs or the 16 LSBs, according to the      for read transactions, it serves as many read beats as needed,
+value of the MPC CNT signal from the MCD. Subsequently,             providing an arbitrary value set at design time. At this point,
+the Router directs the desired elements to the Dotp units           the cluster is not aware that the transaction was not allowed
+following the SIMD FMT signal coming from the CSR, i.e.             and continues the execution until it receives an interrupt from
+the DOTP-8b (operating on 8b inputs) for this example.              CVA6. If, in this scenario, the cluster’s runtime has not been
+   In the case of mixed-precision kernels, by re-arranging          compromised by the malicious/buggy application, the cluster
+the data natively in hardware, Flex-V alleviates the sub-           will gracefully interrupt its execution and resume from a
+stantial software overhead needed for pointer management            known state. If this is not the case and it is not possible to
+and explicit data unpacking that would be needed otherwise.         shut down the cluster, the IOTLB will anyway prevent denial-
+Table IV shows Flex-V’s performance gain over XPulpV2 and           of-service attacks and prevent unauthorised access to sensitive
+XPulpNN on dense matrix multiplication kernels with weights         data.
+and activations (operands A and B in Figure 7, respectively)
+of different bit widths. It expresses performance in terms                  IV. I MPLEMENTATION AND MEASUREMENTS
+of MAC/cycle, isolating the inner kernel and excluding the             Fig. 8 shows the microphotograph of the Shaheen SoC,
+non-idealities that arise when running complex real-world           highlighting the main building blocks described in Section III.
+applications. While on uniform kernels, Flex-V and XPulpNN          The SoC is implemented in Global Foundries 22nm CMOS
+achieve the same performance, on mixed-precision kernels,           FD-SOI technology. It was synthesized with Synopsys Design
+Flex-V outperforms XPulpNN by up to 6.8× and for only               Compiler 2019.12, while Place & Route was performed with
+5.6% extra area resources.                                          Cadence Innovus 19.10. Shaheen’s 4 different clocks are gen-
+   2) IOTLB: The cluster accesses towards the host intercon-        erated by 4 Frequency Locked Loops (FLLs), taking a 32KHz
+nect are mediated by an IO TLB (IOTLB) unit [52]. Since             clock in input from an off-chip ring oscillator. The FLLs’
+the Flex-V cores cannot perform virtual-to-physical address         maximum achievable output frequency at 0.8V is 600MHz.
+translation, the IOTLB unit is meant to ease pointer sharing        The different peripheral PHYs (I2C, SPI, HyperBUS, ...)
+with CVA6 and further prevent cluster unauthorized accesses         internally feature clock division to further scale down the input
+towards the shared memory. The latter is a fundamental feature      clock when needed.
+for critical applications: without any control, malicious or           Figure 9 shows the test board developed for the bring-up
+buggy applications running on the cluster could potentially         and measurements. It provides four 8MB HyperRAM chips
+cause denial-of-service to the host core or break confidentiality   and a socket to test different chips easily. It also exposes the
+                                                                                                                                                 9
+
+
+
+                                                                                         600
+                                                                                                    CVA6
+
+
+
+
+                                                                    Maximum freq.
+                                                                                                    Host domain & Cluster
+                                                                                         500
+
+
+
+
+                                                                        [MHz]
+
+
+
+
+                                                                                                                                             (a)
+                                                                                         400
+
+                                                                                         300
+
+                                                                                         200
+                                                                                                    Total
+
+
+
+
+                                                                    Power @ max.
+                                                                      freq. [mW]
+                                                                                                    CVA6+Host domain
+                                                                                         150
+                                                                                                    Cluster
+
+
+
+
+                                                                                                                                             (b)
+                                                                                         100
+
+                                                                                          50
+
+Fig. 8: Die micrograph (3mm x 3mm) and area breakout.                                          0.625 0.650 0.675 0.700 0.725 0.750 0.775 0.800
+                                                                                                                     VDD
+           Technology             CMOS22nm FD-SOI (SLVt, LVt)       Fig. 10: Maximum frequency and power envelope varying
+            Chip Area                       9mm2
+         SRAM Memory                       1280KB                   VDD.
+           VDD Range                      0.625-0.8V
+     CVA6/Cluster Max Freq.              600/500MHz
+           Idle Power                9-19mW (0.625-0.8V)                                           fmax_int2
+    Avg. Power (CVA6 Active)        45-130mW (0.625-0.8V)                                          fmax_int4
+                                                                                         103
+                                                                     Energy Efficiency
+    Max. Power (Cluster Active)     75-200mW (0.625-0.8V)                                          fmax_int8
+                                                                                                   fmax_int16
+
+                                                                        [GOp/s/W]
+                                                                                                   fmax_int32
+               TABLE V: Shaheen SoC features.                                                      fmax_fp16
+                                                                                                   fmax_fp32
+
+
+
+
+                                                                                         102
+
+
+                                                                                                                   101                      102
+                                                                                                                Performance [GOp/s]
+
+                                                                    Fig. 11: Pulp cluster energy efficiency on dense matrix multi-
+                                                                    plication. 1 MAC = 2 Op.
+
+
+         Fig. 9: Shaheen test-board, top and bottom.                highest achievable frequency for the voltage supply. For these
+                                                                    tests, CVA6 runs a dense FP64 matrix multiplication, and the
+                                                                    cluster runs a dense INT32 matrix multiplication, both within
+interfaces required to debug the chip, such as JTAG and UART,       an infinite loop. Then, we measure and sum the average cur-
+as well as pin headers connected to all the other interfaces for    rents consumed by the two power domains. To get the average
+testing purposes. Finally, it exposes the pin headers to regulate   power consumption, we measure the power consumption of
+the voltage supply of the two power domains: (i) one for the        Shaheen when the cluster is clock-gated, which matches with
+core logic and the SRAM macros, which we vary between               the power consumption of CVA6, the peripheral, and the host
+0.625V and 0.8V, and (ii) one for the IOs, fixed at 1.8V. While     domain together. Then, we also enable the cluster and measure
+the SoC fits all the requirements for Nano-UAV navigation, the      the resulting total power, which coincides with the maximum
+board described above has not been designed for flying, but         power consumed by Shaheen. Varying VDD and frequency, the
+specifically for the testing and characterization of Shaheen.       power consumption of CVA6 and the host domain varies from
+   First, we measure the idle power. To do so, we reduce the        45mW to 130mW. On the other hand, the cluster consumes
+frequency of the SoC to 32kHz and clock gate the cluster while      from 30mW to 70mW.
+CVA6 is in a wait-for-interrupt state, i.e., a for loop of nop         Fig. 11 shows the cluster domain energy efficiency varying
+operations. As reported in Table V, idle power consumption is       frequency, VDD and data width. On 2-bit data, the cluster
+between 9mW and 19mW, depending on the supply voltage.              can achieve up to 90GOp/s and up to 1.8TOp/s/W. On 8-
+Fig. 10 (a) shows the measured maximum frequency varying            bit data, the cluster can achieve up to 26.9GOp/s and up
+the voltage supply of the host domain, the cluster domain,          to 540GOp/s/W. All the experiments were performed run-
+and CVA6. The cluster and the host domain can run at up to          ning on Shaheen the various n-bit matrix-multiplication ker-
+280MHz at 0.625V and up to 500MHz at 0.8V. Thanks to the            nels extracted from the PULPNN library on the software-
+more aggressive pipelining, the CVA6 core can reach up to           programmable cores and extracting the MAC/cycle of the inner
+310MHz at 0.625V and up to 600MHz at 0.8V. Fig. 10 (b)              loops, excluding the initial data arrangement overhead [50].
+also shows the measured maximum power consumption at the               Lastly, we performed post-layout, parasitic annotated sim-
+                                                                                                                                                                                    10
+
+
+
+ulations of the HyperRAM memory controller’s netlist to                                            Host + CVA6                                      Cluster [fp16]
+characterize its power consumption. At 0.8V and a speed                                            Cluster [fp32]                                   Cluster 1000 iter [fp16]
+                                                                                                   Cluster 1000 iter [fp32]
+of 1.6Gbps, it consumes 1.25mW, 70% of which is con-
+                                                                                      8
+
+
+
+
+                                                                                                                          @FMAX [GFLOP/s/W]
+sumed by the IOs. At 0.625V, delivering 1.1Gbps, the power                                         1.82x                                      150              1.82x
+
+
+
+
+                                                                  Performance @0.8V
+                                                                   @FMAX [GFLOp/s]
+                                                                                      7
+
+
+
+
+                                                                                                                           En. eff. @0.625V
+consumption is 0.8mW, with 75% of the IOs. More details                               6
+about the HyperRAM controller’s performance and power                                 5                                                       100
+                                                                                      4   27.53x                                                      43.15x
+characterization, as well as comparisons with traditional DDR
+                                                                                      3
+controllers, can be found in [53].                                                                                                             50
+                                                                                      2
+                                                                                      1
+          V. H ETEROGENEOUS S OFTWARE S TACK                                          0                                                         0
+                                                                                                       MM                                                          MM
+A. Software stack and programming model
+                                                                                Fig. 12: Offload performance breakout on an FP MM.
+    Shaheen comes with a mature software stack for hetero-
+geneous programming. On the cluster side, we provide a
+                                                                         Host                                                                                               Cluster
+lightweight bare-metal runtime that allows low programming                                 Linux RTOS                          Data filtering
+overhead, and fast hardware functionality validation and per-                 User App                                                                                   State
+formance profiling. On the host side, CVA6 can either run full-                                            RT Control
+                                                                        (e.g., legacy SW stack)                                                                        estimation
+ledged Buildroot-based Linux distribution (v5.16.9) on top of                                                                                 Intelligence
+                                                                                                                              (avoidance, planning, object
+the Bao Hypervisor [18] or a bare-metal runtime, and both are                                                                       recognition, ...)      multi-tasking
+equipped with a dedicated driver for the cluster management.
+The APIs provided by the cluster runtime and the CVA6’s                                                                 Cloud
+driver are already sufficient to run heterogeneous code on
+                                                                  Fig. 13: Shaheen’s autonomous mission & flight functional
+the platform. However, one must write two different codes
+                                                                  blocks.
+for the host and cluster. To avoid this, Shaheen adapts the
+OpenMP 5 framework from HERO [52], allowing users to use
+a high-level, directive-based, intuitive programming interface    CVA6, 500MHz for the cluster), and it also highlights the
+to efficiently offload the computationally intensive part of a    speed up. The figure shows the acceleration when executing
+program to the cluster within one single heterogeneous source     the accelerated kernel once or 1000 times on the cluster; the
+code. Also, to map the execution of QNNs on the cluster,          first case represents low code utilization, while the second
+we adopt the data and execution flow presented in Dory [49].      represents high code utilization. In each execution, the cluster
+Dory is a tool that given the description of a QNN in input       performs the computation on a different couple of input
+generates the corresponding C code to be executed on parallel     matrices. At the same time, it fetches the input matrices
+programmable clusters. Dory calculates data tiling solutions      for the next execution and writes back the result of the
+fitting the available L1SPM (where it puts the data to be         previous computation. Data movement is performed through
+processed by the cluster) and it schedules the DMA data           the DMA and overlaps computation. On a simple FP32 matrix
+transfers from the main memory to the L1SPM and vice-versa.       multiplication, the cluster can deliver up to 4.3 GFLOp/s,
+Thanks to the efficiency of tiling and double-buffering, when     which is roughly 27 times more than CVA6. Furthermore, the
+the execution is not memory bound, data movements overlap         plot shows once again the benefit of scaling down the number
+with computation for more than 95% of the execution time          precision, which is not a possibility on CVA6.
+[49].                                                                The plot on the right in Figure 12 compares the energy
+                                                                  efficiency achieved by CVA6 and the host domain against
+B. Offload mechanism & Performance                                the cluster on the same benchmark, with the IPs working at
+   To perform the offload, CVA6 lazily (at first occurrence)      the maximum frequency at 0.65V (280MHz for the cluster
+loads the cluster code into the L2SPM to then communicate         and 310MHz for CVA6). On the reduced-precision matrix
+to the cluster where is the code to execute. Such a mechanism     multiplication, the cluster can reach up to 157 GOp/s/W, while
+requires a few thousand clock cycles, depending on the length     CVA6 can only provide 2 GOp/s/W, ≈ 80× less.
+of the code. Hence, when the cluster execution time is very
+short (<100k cycles), the cluster’s offload overhead (i.e.,                                                   VI. B ENCHMARKING
+loading the code) dominates the total execution time and             Figure 13 presents the loop that Shaheen executes to achieve
+reduces the speedup. Based on our (empirical) experience, this    autonomous flight while executing other auxiliary tasks, and
+is a very uncommon case.                                          how it maps on Shaheen’s hardware. In the first instance, it col-
+   Figure 12 shows the offload speedup and overhead over          lects and filters the sensors’ input data, which are subsequently
+an FP matrix multiplication. It is important to notice how        used to estimate the current state. Then, in the “intelligence”
+the cluster can run such a benchmark with reduced precision       block it has to independently determine the next state (i.e.,
+(down to FP16), exploiting the SIMD extensions otherwise          what to do next) and carry out the target auxiliary tasks such as
+unavailable on the CVA6 core.                                     object detection, recognition or monitoring [3], [14]. Once the
+   The plot on the left in Fig. 12 shows CVA6 and cluster         next state is determined, the control part actuates the change.
+performance at the maximum frequency at 0.8V (600MHz for          In Shaheen, the first three phases (filtering, state estimation,
+                                                                                                                                                                                                            11
+
+
+
+
+                                                                      En. eff. @0.625V Performance @0.8V
+and intelligence) are mapped on the cluster hardware, while                                                 8
+
+
+
+
+                                                                     @FMAX [GFLOp/s/W] @FMAX [GFLOp/s]
+                                                                                                                  1.9x                   CVA6 fp32 (MM)                    8-core fp32
+the real-time control is left to the host core, also executing                                              6                            1-core fp32                       8-core fp16
+
+the general-purpose OS, to leverage its legacy software stack                                                   7.9x                                                                                 1.8x
+                                                                                                            4                                  1.5x
+                                                                                                                                                             1.4x
+for non-real-time tasks (e.g. transmitting the classification of a                                          2               7.9x
+                                                                                                                                    1.5x7.9x          5.9x                               1.7x7.9x
+                                                                                                                                                                    5.8x   1.2x5.9x
+detected object to the cloud through the legacy network stack).
+                                                                                                            0
+In this section, we focus on benchmarking the cluster on its                                          150         1.9x
+target tasks as they are the most computing-intensive phases
+and potential bottlenecks of the autonomous flight and mission                                        100
+                                                                                                                7.9x                                                                                 1.8x
+                                                                                                                                               1.5x
+loop.                                                                                                                               1.5x7.9x                 1.4x
+                                                                                                           50
+                                                                                                                            7.9x                      5.9x                               1.7x7.9x
+                                                                                                                                                                           1.2x5.9x
+   Filtering of the input data and state estimation as well                                                                                                         5.8x
+                                                                                                            0
+as intelligence tasks like path planning or structural health                                                          MM          FFT   CONV-1D KMEAN                 DWT            IIR           FIR
+monitoring usually rely on general-purpose DSP primitives
+                                                                     Fig. 14: Performance and en. eff. delivered by the cluster on
+[13], [14]. At the same time, QNN inference is widely
+                                                                     general-purpose DSP benchmarks.
+adopted for tasks like classification or recognition for obstacle
+avoidance or object recognition and localization [2], [3], [17],     TABLE VI: Accuracy, memory footprint, perf. & en. of end-
+[54], [55]. However, one limitation of the QNN inference at          to-end networks.
+the edge is the mainstream adoption of the train-once-deploy-
+everywhere approach, which trains the networks offline and                                                                                 MobileNetV1
+                                                                                                                                         MobilNetV1       ResNet20
+                                                                                                                 Network
+                                                                                                                                              (8b4b)
+                                                                                                                                            (8b)           (4b2b)
+then deploys them later on the embedded devices, where no                                                 Top-1 Acc.                           66.0%
+                                                                                                                                           69.3%            90.2%
+further modifications to the weights happen. This approach                                               Deg. w.r.t. 8b                       -3.3%         0.15%
+prevents the models to adapt in the deployment environment                                                Model size                          997 kB
+                                                                                                                                          1.9 MB           142 kB
+                                                                                                            MACs                           325M328M          10M
+and possibly leads to accuracy degradation and unreliability                                             Mem. saved                             47%          63%
+[15]. On-device learning potentially overcomes this limitation                                             Avg. Perf. : Latency : Energy [MAC/cycle : ms : mJ]
+by enabling small portions of the training to happen on the                                                                 @0.8V -run to sleep-
+field, directly on the MCU [16]. Thus, we benchmark the                                                    XpulpV2              5.6 :           3.2 :        4.8 :
+                                                                                                        GAP9, 450MHz         126 : 5.87     227 : 10.23   4.9 : 0.22
+proposed SoC on three sets of kernels representative of the                                                XpulpNN              6.0 :           2.7 :        4.4 :
+different tasks described above, i.e., (i) general-purpose DSP,                                        Kraken, 380MHz        141 : 12.7     319 : 28.76   6.4 : 0.58
+(ii) DNN, and (iii) online learning benchmarks.                                                             Flex-V              6.0 :           5.8 :       11.2 :
+                                                                                                       Shaheen, 500MHz       108 : 8.55      119 : 8.83   1.9 : 0.15
+
+
+A. General Purpose DSP
+                                                                     of the benchmarks on 8 Flex-V cores can give an additional
+   Figure 14 shows the cluster performance and energy ef-
+                                                                     speed-up between 5.9 and 7.9 times when compared to single-
+ficiency over seven open-source FP benchmarks [56] repre-
+                                                                     core execution. Leveraging the reduced precision arithmetic
+sentative of DSP applications for filtering, feature extraction
+                                                                     can further provide almost a 2x speed-up, allowing the core
+classification, and basic linear algebra functions, relevant both
+                                                                     to reach up to 7.9GFLOp/s and up to 157 GFLOp/s/W.
+for input data filtering, state estimation but also intelligence
+tasks such as path planning or structural health monitoring
+[13], [14]. To show the advantage given by parallelism and           B. QNN inference
+reduced-precision computation, such benchmarks are executed             In this subsection, we focus on two real-world 8-bit QNNs
+both at full precision (FP32) on a single Flex-V core, and then      fine-tuned for Nano-UAVs application scenarios, namely Tiny-
+on 8 cores at full and lower precision (FP16 & bfloat16) to          PULP-Dronet [2] and FrontNet [3], as well as two aggressively
+exploit the available packed-SIMD support.                           quantized mixed-precision QNNs for object detection and clas-
+   Some of the benchmark kernels are representative of digital       sification. The Tiny-PULP-Dronet is a lightweigth QNN based
+data acquisition and analysis, such as the Finite Impulse            on the ResNet architecture [55] and it enables autonomous
+Response (FIR) and Infinite Impulse Response (IIR) filters.          navigation within tight spaces avoiding obstacle collision.
+To characterize the cluster on frequency-domain applications,        FrontNet on the other hand is based on the MobileNet [54]
+we run a decimation-in-frequency radix-2 variant of the Fast         architecture and it is used for Human-Robot Interaction (HRI):
+Fourier Transform (FFT) and a Discrete Wavelet Transform             it allows the nano-drone to recognize a face and follow it. The
+(DWT), a standard kernel used for feature extraction. As for         cluster is able to achieve 320FPS on a Tiny-PULP-Dronet and
+more state-estimation-oriented kernels, we provide the perfor-       260FPS on an optimized 6.7MMAC FrontNet, which is well
+mance results when executing a K-Means classifier kernel.            above the 20FPS needed to achieve autonomous flight [2], [3].
+Lastly, we also benchmark two classical basic linear algebra         This means that more than 90% of the cluster’s computational
+kernels such as a Matrix Multiplication and a 1D Convolution.        capabilities are actually available to carry out other activities.
+   As the plots in Fig. 14 show, on all these benchmarks,               Stemming the analysis from the QNNs mentioned below, we
+thanks to the ISA extension not available on the host core, a        first benchmark the cluster on a relatively big (325MMAC)
+single Flex-V running at 500MHz provides from 1× to 3× the           8-bit MobileNetV1 [54] for object classification. Then, we
+performance delivered by CVA6 on a dense and regular matrix          extend the analysis to a mixed-precision MobileNetV1 with
+multiplication at 600MHz. Furthermore, the parallel execution        8-bit activations and 4-bit (8b4b) weights and an aggressively
+                                                                                                                                                                                                               12
+
+
+
+@FMAX [GFLOP/s/W] Performance @0.8V
+                                  @FMAX [GFLOp/s]
+                                                    6          1.7x
+                                                                        1.8x
+                                                                                          1.6x 1.6x
+                                                                                                             1.5x             CVA6 fp32 (MM)    computation of the gradients with respect to the activations,
+                                                                                                                              1-core fp32       and (iii) the backward computation of the gradients with
+                                                    4 7.4x                         7.3x     7.5x
+                                                                                                      7.2x                    8-core fp32
+                                                                 6.3x                                                         8-core bfloat16   respect to the weights. The kernels we leverage map each of
+                                                    2                            1.4x                          6.9x 1.0x    1.7x                these computation phases directly to one matrix multiplication
+                                                                          4.7x                                         6.7x    6.1x 1.1x
+                                                    0
+                                                                                                                                                containing all the matrix multiplications needed to obtain the
+                                                               1.7x                       1.6x 1.6x                                             output [16]. Depending on the matrices’ shapes, the amount of
+                                                                        1.8x                                 1.5x
+ En. eff. @0.625V
+
+
+
+
+                                      100
+                                                                                            7.5x
+                                                                                                                                                parallelizable work changes, and hence the performance [58].
+                                                        7.4x                       7.3x               7.2x
+                                                                 6.3x                                                                           Figure 15 shows performance and energy efficiency over such
+                                           50
+                                                                          4.7x
+                                                                                 1.4x                          6.9x 1.0x    1.7x                benchmarks. As for the DSP benchmarks, the parallelization
+                                                                                                                       6.7x    6.1x 1.1x
+                                                                                                                                                provides a significant speed-up for most of them. Except for
+                                                    0
+                                                         CONV-2D CONV-2D CONV-2D PTWISE        PTWISE   PTWISE      LINEAR   LINEAR   LINEAR
+                                                           FWD    INPUT WEIGHT    FWD           INPUT   WEIGHT       FWD      INPUT   WEIGHT    the weight gradient computation on the convolution kernel,
+                                                                  GRAD    GRAD                  GRAD     GRAD                 GRAD     GRAD
+                                                                                                                                                which achieves a 4.7× speedup, the parallelization provides
+Fig. 15: Performance and En. Eff. delivered by the cluster on                                                                                   between 6.1x and 7.5x faster execution. At the same time,
+FP training benchmarks.                                                                                                                         leveraging the bfloat16 format (providing a wide dynamic
+                                                                                                                                                range explicitly thought for ML training) and the dedicated
+                                                                                                                                                SIMD extensions provides up to 1.8x more performance.
+quantized 4b2b ResNet-20 [57] for object detection. The two                                                                                     Overall, the cluster is able to achieve up 6.2 GFLOp/s and
+MobileNetV1 networks have been trained on ImageNet while                                                                                        120 GFLOp/s/W on this class of benchmarks.
+the 4b2b ResNet-20 targets CIFAR10. As table VI shows,
+reducing the operands’ precision does not automatically jeop-                                                                                          VII. C OMPARISON WITH S TATE - OF - THE -A RT
+ardize the accuracy: in the case of the MobileNetV1, there
+                                                                                                                                                   Table VII shows Shaheen against 6 SoCs for UAVs, both
+is a 47% memory footprint reduction for a negligible 3%
+                                                                                                                                                from industry and academia. To have a thorough comparison,
+accuracy loss, from 69% to 66% [50], while the ResNet-
+                                                                                                                                                we extend it also with SoC not explicitly optimized for UAVs
+20 achieves 90.2% accuracy [55]. As shown in table VI,
+                                                                                                                                                but with similar general-purpose software performance and
+Flex-V is the only version of Ri5cy able to efficiently deal
+                                                                                                                                                functionalities that could fit the purpose, namely Cheshire
+with mixed precision networks: in terms of MAC/cycles, on
+                                                                                                                                                [34], the work from Jia et.al. [31], the STM32-H7 [5] and
+the 4b-2b mixed-precision ResNet-20, it achieves 2.3× and
+                                                                                                                                                the work by Ju et.al. [11]. From an architectural viewpoint, Ju
+2.5× of speedup with respect to XPulpNN and XPulpV2.
+                                                                                                                                                et. al. [11] consists of a homogeneous systolic array of RV32
+Table VI also compares the latency and energy consumed
+                                                                                                                                                cores, while Jia et al. [31] instantiates a cluster of four RV64
+by Shaheen over the three networks when running at the
+                                                                                                                                                cores along with a set of hardwired ASIC accelerators. More
+maximum frequency at 0.8V, compared to two other 8-core
+                                                                                                                                                advanced nano-UAV SoCs, such as GAP9 [7] and Kraken [8],
+clusters respectively implementing the baseline XPulpV2 in-
+                                                                                                                                                incorporate an RV32 CPU that can offload compute-intensive
+structions or the XPulpNN, namely GAP9 [7] and Kraken [8].
+                                                                                                                                                tasks to a parallel cluster of cores with the same ISA.
+On the uniform-precision MobileNetV1, thanks to the higher
+                                                                                                                                                   In this context, Shaheen is the first silicon demonstrator
+frequency and optimized ISA, Shaheen’s cluster provides the
+                                                                                                                                                of a heterogeneous RV64/RV32 architecture. When offloading
+smallest latency, but not the lowest energy, due to higher power
+                                                                                                                                                compute-intensive tasks to the fully-programmable parallel
+consumption (70mW) when compared to GAP9 (50mW),
+                                                                                                                                                cluster of Flex-V cores, performance can be improved by up to
+being the latter tuned for energy-efficient operation. As soon
+                                                                                                                                                2 orders of magnitude achieving state-of-the-art performance
+as the mixed-precision extensions can be exploited, Shaheen’s
+                                                                                                                                                with up to 90 GOp/s on heavily quantized integer tasks and
+cluster emerges both as the fastest and most energy-efficient
+                                                                                                                                                up to 7.9 GFLOp/s/W on 16-bit floating point tasks. Shaheen
+one.
+                                                                                                                                                stands out as the only nano-UAV SoC that provides Linux,
+                                                                                                                                                hypervisor, and security capabilities to the host enabling
+C. Online training                                                                                                                              the secure co-existence of user applications running on full-
+                                                                                                                                                fledged OSes and control tasks running on real-time OSes
+   In this subsection, we benchmark the cluster against a set of
+                                                                                                                                                while providing up to 512MB of low-cost and low-power off-
+open-source kernels to enable online learning on MCU con-
+                                                                                                                                                chip memory within the power envelope of 200 mW.
+trollers [16]. In particular, we benchmark three very popular
+layers such as 2D Convolution, Pointwise and Fully-Connected
+which are the three building blocks of Convolutional NNs                                                                                                             VIII. C ONCLUSION
+(CNNs), used to find patterns in images. Convolutional and                                                                                         We presented Shaheen: a heterogeneous and flexible SoC
+pointwise layers are the core building blocks of CNN, where                                                                                     implemented in 22 nm FDX technology. Shaheen features a
+most of the computation happens, and are used to perform                                                                                        Linux-capable RV64 core, compliant with the v1.0 ratified Hy-
+feature extraction. The Fully connected layer connects the in-                                                                                  pervisor extension. To the best of our knowledge, it is the first
+formation extracted from the previous steps (i.e., Convolution                                                                                  silicon implementation fully compliant with the ratified RISC-
+layer and Pooling layers) to the output layer and eventually                                                                                    V ISA Hypervisor extension. It features support for timing
+classifies the input into the desired label. For each layer, we                                                                                 channel protection to isolate concurrent execution of multiple
+consider the three phases of training: (i) the forward pass, to                                                                                 software stacks (trusted and untrusted), preventing security
+compute the output result and hence the loss, (ii) the backward                                                                                 threats and ensuring multi-domain operations. It provides up to
+                                                                                                                                                             13
+
+
+
+                                                     TABLE VII: Comparison with SoA SoCs.
+                   Neo - Cheshire       Jia et al.      STM32-H7            Ju et al.               GAP9                 Kraken
+                                                                                                                                            Shaheen (ours)
+                        [34]               [31]             [5]                [11]                  [7]                   [8]
+    Target           Prototype          Prototype        Product            Prototype              Product              Prototype               Prototype
+  Technology           65nm               12nm            40nm                65nm                  22nm              22nm FDSOI              22nm FDSOI
+   Die Size          6, 4mm2           21, 6mm2              -             4, 47mm2                12mm2                 9mm2                    9mm2
+                                                       Cortex-M7 +                                                                               CVA6 +
+     CPU /             CVA6/            4xCVA6 /                          10xRISC-V /           10x RI5CY /         9x RI5CY-XNN /
+                                                        CortexM4 /                                                                            8x FLEX-V /
+      ISA             RV64GC            RV64GC                               RV32                  RV32                  RV32
+                                                         ARM32                                                                             RV64GC + RV32
+  Power Env.          300mW             1.83W                -          116mW-589mW               50mW                  300mW                    195mW
+  Max. Freq.          300MHz            1,5GHz         480-240MHz          400MHz                450MHz               330-390MHz              500-600MHz
+                                                                                              1.5MB On-chip                                  1MB On-chip
+    Memory
+                                                      512kB On-chip      150kB On-chip           SRAM +              1.5MB On-chip              SRAM +
+   exposed to        1GB RPC           2GB SerDes
+                                                         SRAM               SRAM                 8-64MB                  SRAM                  32-512MB
+    the CPU
+                                                                                              HyperBUS (XIP)                                   HyperBUS
+   Supported           Linux /           Linux /                                                                                                 Linux +
+                                                          RTOS                  RTOS                RTOS                  RTOS
+       OS              RTOS              RTOS                                                                                                     RTOS
+    Security                                           Crypto/hash                            AES128/256 acc.,                              fence.t, IOTLB,
+                          -                 -                                     -                                          -
+    Features                                            processor                                  PUF                                     PMP, Hypervisor
+  SW INT/FP                                                                                                                                bfloat16, fp16/32,
+                                                                                              bfloat16, fp16/32,    bfloat16, fp16/32,
+   arithmetic        SP/DP-FP          SP/DP-FP           SP-FP                   -                                                             int32/16,
+                                                                                                  int32/16/8          int32/16/8/4/2
+    support                                                                                                                                  int-mixed8/4/2
+                                                                                                                     22GOp/s(8b-8b)       26GOp/s(8b-8/4/2b)
+ Peak SW INT         0.5GOp/s           1.5GOp/s        390MOp/s               16GOp/s            15.6GOp/s
+                                                                                                                     45GOp/s(4b-4b)        50GOp/s(4b-4/2b)
+ Performance           (32b)              (32b)            (8b)                  (8b)                (8b)
+                                                                                                                     85GOp/s(2b-2b)        90 GOp/s(2b-2b)
+  Peak SW FP        0.5GFLOp/s         1.5GFLOp/s      240MFLOp/s                                3.3GFLOp/s           3.12GFLOp/s          4.0GFLOp/s(32b)
+                                                                                  -
+  Performance          (32b)              (32b)           (32b)                                     (32b)                 (32b)            7.9GFLOp/s(16b)
+
+
+
+512MB of main off-chip HyperRAM memory, large enough to                           [5] STMicroeletronics,        “STM32H7,”         2020,       Accessed      30
+host general-purpose OSs as well as RTOSs. Also, it is the first                      July      2023.      [Online].      Available:     https://www.st.com/en/
+                                                                                      microcontrollers-microprocessors/stm32h7-series.html
+silicon implementation of a heterogeneous MCU coupling an                         [6] STMicroeletronics, “STM32F4,” 2020, Accessed 30 July 2023. [Online].
+RV64 host together with a multi-core RV32 cluster, achieving                          Available:      https://www.st.com/en/microcontrollers-microprocessors/
+up to 90GOp/s and up to 1.8TOp/s/W on 2-bit integer kernel                            stm32f4-series.html
+                                                                                  [7] GreenWavesTechnology, “GAP8/9,” 2023, Accessed 30 July
+and up to 26.9GOp/s and up to 540GOp/s/W on 8-bit integer                             2023. [Online]. Available: https://greenwaves-technologies.com/
+kernels.                                                                              low-power-processor/
+   After this thorough evaluation, we envision the miniaturiza-                   [8] A. Di Mauro, M. Scherer, D. Rossi, and L. Benini, “Kraken: A Direct
+tion of the testing PCB (see Fig. 9) and development of ad-hoc                        Event/Frame-Based Multi-sensor Fusion SoC for Ultra-Efficient Visual
+                                                                                      Processing in Nano-UAVs,” in 2022 IEEE Hot Chips 34 Symposium
+control software, tightly coupled with the physical character-                        (HCS), 2022, pp. 1–19.
+istics of the board, to achieve real-world nano-UAV flight,                       [9] I.-T. Lin et al., “2.5 A 28nm 142mW Motion-Control SoC for Au-
+exploiting Shaheen’s secure and scalable architecture with                            tonomous Mobile Robots,” in 2023 IEEE International Solid- State
+                                                                                      Circuits Conference (ISSCC), 2023, pp. 1–3.
+host/cluster decoupling and advanced virtualization. Overall,                    [10] A. Suleiman, Z. Zhang, L. Carlone, S. Karaman, and V. Sze, “Navion: A
+Shaheen is the first prototype SoC providing support for                              2-mW Fully Integrated Real-Time Visual-Inertial Odometry Accelerator
+general-purpose OSs within a 200mW power envelope while                               for Autonomous Navigation of Nano Drones,” IEEE Journal of Solid-
+                                                                                      State Circuits, vol. 54, no. 4, pp. 1106–1119, 2019.
+offering state-of-the-art performance over a wide spectrum of
+                                                                                 [11] Y. Ju and J. Gu, “A Systolic Neural CPU Processor Combining Deep
+applications, thanks to the programmable multi-core cluster.                          Learning and General-Purpose Computing With Enhanced Data Locality
+All the IPs integrated within Shaheen are released as open                            and End-to-End Performance,” IEEE Journal of Solid-State Circuits,
+source2 under a liberal license to foster future research in the                      vol. 58, no. 1, pp. 216–226, 2023.
+                                                                                 [12] W. J. Dally, Y. Turakhia, and S. Han, “Domain-Specific Hardware
+area of AI-IoT computing devices.                                                     Accelerators,” Commun. ACM, vol. 63, no. 7, p. 48–57, jun 2020.
+                                                                                      [Online]. Available: https://doi.org/10.1145/3361682
+                              R EFERENCES                                        [13] P. Tsiotras, D. Jung, and E. Bakolas, “Multiresolution hierarchical path-
+                                                                                      planning for small UAVs using wavelet decompositions,” Journal of
+ [1] M. O. Ojo, S. Giordano, G. Procissi, and I. N. Seitanidis, “A Review of          Intelligent & Robotic Systems, vol. 66, pp. 505–522, 2012.
+     Low-End, Middle-End, and High-End Iot Devices,” IEEE Access, vol. 6,        [14] A. Khadka, B. Fick, A. Afshar, M. Tavakoli, and J. Baqersad, “Non-
+     pp. 70 528–70 554, 2018.                                                         contact vibration monitoring of rotating wind turbines using a semi-
+ [2] L. Lamberti et al., “Tiny-PULP-Dronets: Squeezing Neural Networks                autonomous UAV,” Mechanical Systems and Signal Processing, vol. 138,
+     for Faster and Lighter Inference on Multi-Tasking Autonomous Nano-               p. 106446, 2020.
+     Drones,” in 2022 IEEE 4th International Conference on Artificial            [15] D. Amodei, C. Olah, J. Steinhardt, P. Christiano, J. Schulman,
+     Intelligence Circuits and Systems (AICAS), 2022, pp. 287–290.                    and D. Mané, “Concrete Problems in AI Safety,” arXiv preprint
+ [3] E. Cereda et al., “Deep Neural Network Architecture Search for                   arXiv:1606.06565, 2016.
+     Accurate Visual Pose Estimation aboard Nano-UAVs,” in 2023 IEEE             [16] D. Nadalini, M. Rusci, G. Tagliavini, L. Ravaglia, L. Benini, and
+     International Conference on Robotics and Automation (ICRA), 2023,                F. Conti, “PULP-TrainLib: Enabling On-Device Training for RISC-V
+     pp. 6065–6071.                                                                   Multi-core MCUs Through Performance-Driven Autotuning,” in Em-
+ [4] R. J. Wood et al., Progress on “Pico” Air Vehicles. Cham:                        bedded Computer Systems: Architectures, Modeling, and Simulation.
+     Springer International Publishing, 2017, pp. 3–19. [Online]. Available:          Cham: Springer International Publishin, 2022, pp. 200–216.
+     https://doi.org/10.1007/978-3-319-29363-9 1                                 [17] P. Foehn et al., “Agilicious: Open-source and open-hardware agile
+                                                                                      quadrotor for vision-based flight,” Science Robotics, vol. 7, no. 67, p.
+  2 https://github.com/pulp-platform                                                  eabl6259, 2022.
+                                                                                                                                                           14
+
+
+
+[18] B. Sá, L. Valente, J. Martins, D. Rossi, L. Benini, and S. Pinto, “CVA6     [39] B. Nassi, R. Bitton, R. Masuoka, A. Shabtai, and Y. Elovici, “SoK:
+     RISC-V Virtualization: Architecture, Microarchitecture, and Design                Security and Privacy in the Age of Commercial Drones,” in 2021 IEEE
+     Space Exploration,” IEEE Transactions on Very Large Scale Integration             Symposium on Security and Privacy (SP), 2021, pp. 1434–1451.
+     (VLSI) Systems, vol. 31, no. 11, pp. 1713–1726, 2023.                        [40] J.-H. Yoon and A. Raychowdhury, “31.1 A 65nm 8.79TOPS/W
+[19] M. Schneider, A. Dhar, I. Puddu, K. Kostiainen, and S. Čapkun,                   23.82mW Mixed-Signal Oscillator-Based NeuroSLAM Accelerator for
+     “Composite Enclaves: Towards Disaggregated Trusted Execution,” IACR               Applications in Edge Robotics,” in 2020 IEEE International Solid- State
+     Transactions on Cryptographic Hardware and Embedded Systems, vol.                 Circuits Conference - (ISSCC), 2020, pp. 478–480.
+     2022, no. 1, p. 630–656, Nov. 2021.                                          [41] Bitcraze, “AI-Deck,” 2023, Accessed 30 July 2023. [Online]. Available:
+[20] N. Wistoff, M. Schneider, F. K. Gürkaynak, G. Heiser, and L. Benini,             https://www.bitcraze.io/products/ai-deck/
+     “Systematic Prevention of On-Core Timing Channels by Full Temporal           [42] G. Gallego et al., “Event-Based Vision: A Survey,” IEEE Transactions
+     Partitioning,” IEEE Transactions on Computers, 2022.                              on Pattern Analysis and Machine Intelligence, vol. 44, no. 01, pp. 154–
+[21] B. John, “HyperRAM as a low pin-count expansion memory for                        180, jan 2022.
+     embedded systems,” 2020, Accessed 30 July 2023. [Online]. Available:         [43] ROS, “Robot Operating System,” 2022, Accessed 30 July 2023.
+     https://www.infineon.com/                                                         [Online]. Available: https://www.ros.org/
+[22] A. Das, P. Kol, C. Lundberg, K. Doelling, H. E. Sevil, and F. Lewis,         [44] OpenHW, “CVA6,” Github repository, 2023. [Online]. Available:
+     “A Rapid Situational Awareness Development Framework for Heteroge-                https://github.com/openhwgroup/cva6
+     neous Manned-Unmanned Teams,” in NAECON 2018 - IEEE National                 [45] Y. Yarom, “Mastik: A micro-architectural side-channel toolkit,” 2016,
+     Aerospace and Electronics Conference, 2018, pp. 417–424.                          Accessed 30 July 2023. [Online]. Available: https://cs.adelaide.edu.au/
+                                                                                       ∼yval/Mastik/Mastik.pdf
+[23] B. Forsberg, D. Palossi, A. Marongiu, and L. Benini, “GPU-
+     Accelerated Real-Time Path Planning and the Predictable Execution            [46] Q. Ge, “Principled elimination of microarchitectural timing channels
+     Model,” Procedia Computer Science, vol. 108, pp. 2428–2432,                       through operating-system enforced time protection,” Ph.D. dissertation,
+     2017, international Conference on Computational Science, ICCS                     UNSW Sydney, 2019.
+     2017, 12-14 June 2017, Zurich, Switzerland. [Online]. Available:             [47] Sel4, “Timing channel benchmarking tool,” Github repository, 2023.
+     https://www.sciencedirect.com/science/article/pii/S1877050917308256               [Online]. Available: https://github.com/SEL4PROJ/channel-bench
+[24] S. A. Quintero and J. P. Hespanha, “Vision-based target tracking             [48] ARM, “AMBA AXI Protocol Specification,” https://developer.arm.com/
+     with a small UAV: Optimization-based control strategies,” Control                 documentation/ihi0022/j/?lang=en, 2022.
+     Engineering Practice, vol. 32, pp. 28–42, 2014. [Online]. Available:         [49] A. Burrello, A. Garofalo, N. Bruschi, G. Tagliavini, D. Rossi, and
+     https://www.sciencedirect.com/science/article/pii/S0967066114001774               F. Conti, “DORY: Automatic End-to-End Deployment of Real-World
+[25] Pixhawk, “PX4,” 2023, Accessed 30 July 2023. [Online]. Available:                 DNNs on Low-Cost IoT MCUs,” IEEE Transactions on Computers,
+     https://pixhawk.org/standards/                                                    vol. 70, no. 8, pp. 1253–1268, 2021.
+[26] M. Idrissi, M. Salami, and F. Annaz, “A Review of Quadrotor                  [50] A. Nadalini et al., “A 3 TOPS/W RISC-V Parallel Cluster for Inference
+     Unmanned Aerial Vehicles: Applications, Architectural Design and                  of Fine-Grain Mixed-Precision Quantized Neural Networks,” in 2023
+     Control Algorithms,” Journal of Intelligent & Robotic Systems,                    IEEE Computer Society Annual Symposium on VLSI (ISVLSI), 2023.
+     vol. 104, no. 2, p. 22, Jan 2022. [Online]. Available: https:                [51] OpenHW, “CV32E40P,” 2023, Accessed 30 July 2023. [Online].
+     //doi.org/10.1007/s10846-021-01527-7                                              Available: https://github.com/openhwgroup/cv32e40p
+                                                                                  [52] A. Kurth, B. Forsberg, and L. Benini, “HEROv2: Full-Stack Open-
+[27] C. Budaciu, N. Botezatu, M. Kloetzer, and A. Burlacu, “On the
+                                                                                       Source Research Platform for Heterogeneous Computing,” IEEE Trans.
+     Evaluation of the Crazyflie Modular Quadcopter System,” in 2019 24th
+                                                                                       Parallel Distrib. Syst., vol. 33, no. 12, p. 4368–4382, dec 2022.
+     IEEE International Conference on Emerging Technologies and Factory
+                                                                                       [Online]. Available: https://doi.org/10.1109/TPDS.2022.3189390
+     Automation (ETFA), 2019, pp. 1189–1195.
+                                                                                  [53] L. Valente et al., “HULK-V: a Heterogeneous Ultra-low-power Linux
+[28] O. H. Zekry, T. Attia, A. T. Hafez, and M. M. Ashry, “PID Trajec-
+                                                                                       capable RISC-V SoC,” in 2023 Design, Automation & Test in Europe
+     tory Tracking Control of Crazyflie Nanoquadcopter Based on Genetic
+                                                                                       Conference & Exhibition (DATE), 2023, pp. 1–6.
+     Algorithm,” in 2023 IEEE Aerospace Conference, 2023, pp. 1–8.
+                                                                                  [54] A. G. Howard et al., “MobileNets: Efficient Convolutional Neural
+[29] NVIDIA, “NVIDIA Jetson TX2,” 2023, Accessed 30 July 2023.
+                                                                                       Networks for Mobile Vision Applications,” 2017.
+     [Online]. Available: https://developer.nvidia.com/embedded/jetson-tx2
+                                                                                  [55] Z. Dong et al., “HAWQ: Hessian AWare Quantization of Neural
+[30] Intel, “Intel Atom x7-E3950,” 2020, Accessed 30 July 2023. [Online].              Networks With Mixed-Precision,” in Proceedings of the IEEE/CVF
+     Available:        https://www.intel.com/content/www/us/en/products/sku/           International Conference on Computer Vision, 2019, pp. 293–302.
+     96488/intel-atom-x7e3950-processor-2m-cache-up-to-2-00-ghz/                  [56] P. Platform, “TransLib,” 2023, Accessed 30 July 2023. [Online].
+     specifications.html                                                               Available: https://github.com/ahmad-mirsalari/TransLib
+[31] T. Jia et al., “A 12nm Agile-Designed SoC for Swarm-Based Perception         [57] K. He, X. Zhang, S. Ren, and J. Sun, “Deep Residual Learning for
+     with Heterogeneous IP Blocks, a Reconfigurable Memory Hierarchy, and              Image Recognition,” 2015.
+     an 800MHz Multi-Plane NoC,” in ESSCIRC 2022- IEEE 48th European              [58] G. M. Amdahl, “Validity of the Single Processor Approach to Achieving
+     Solid State Circuits Conference (ESSCIRC), 2022, pp. 269–272.                     Large Scale Computing Capabilities,” in Proceedings of the April 18-20,
+[32] C.-H. Lin et al., “7.1 A 3.4-to-13.3TOPS/W 3.6TOPS Dual-Core Deep-                1967, Spring Joint Computer Conference, ser. AFIPS ’67 (Spring).
+     Learning Accelerator for Versatile AI Applications in 7nm 5G Smart-               New York, NY, USA: Association for Computing Machinery, 1967, p.
+     phone SoC,” in 2020 IEEE International Solid-State Circuits Conference            483–485. [Online]. Available: https://doi.org/10.1145/1465482.1465560
+     - (ISSCC), 2020, pp. 134–136.
+[33] C. Schmidt et al., “An Eight-Core 1.44-GHz RISC-V Vector Processor
+     in 16-nm FinFET,” IEEE Journal of Solid-State Circuits, vol. 57, no. 1,
+     pp. 140–152, 2022.
+[34] A. Ottaviano, T. Benz, P. Scheffler, and L. Benini, “Cheshire: A
+     lightweight, linux-capable risc-v host platform for domain-specific accel-
+     erator plug-in,” IEEE Transactions on Circuits and Systems II: Express
+     Briefs, vol. 70, no. 10, pp. 3777–3781, 2023.
+[35] Etron,        “256Mb       High       Bandwidth       RPC        DRAM,”
+     https://etronamerica.com/wp-content/uploads/2019/05/
+     EM6GA16LGDABMACAEA-RPC-DRAM Rev.-1.0.pdf, 2022.
+[36] Bitcraze, “Crazyflie,” 2023, Accessed 30 July 2023. [Online]. Available:
+     https://www.bitcraze.io/products/crazyflie-2-1/
+[37] G. Shi, W. Hönig, Y. Yue, and S.-J. Chung, “Neural-Swarm: Decentral-
+     ized Close-Proximity Multirotor Control Using Learned Interactions,”
+     in 2020 IEEE International Conference on Robotics and Automation
+     (ICRA), 2020, pp. 3241–3247.
+[38] F. Candan, A. Beke, and T. Kumbasar, “Design and Deployment of
+     Fuzzy PID Controllers to the nano quadcopter Crazyflie 2.0,” in 2018
+     Innovations in Intelligent Systems and Applications (INISTA), 2018, pp.
+     1–6.
+

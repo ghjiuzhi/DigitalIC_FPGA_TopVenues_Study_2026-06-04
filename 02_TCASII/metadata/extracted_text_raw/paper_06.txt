@@ -1,0 +1,1459 @@
+A lightweight and hardware-efficient NTT FPGA accelerator for FHE
+applications
+Zaman, M. A., Khan, M. B., Ahmad, W., Khalid, A., & O'Neill, M. (2025). A lightweight and hardware-efficient
+NTT FPGA accelerator for FHE applications. IEEE Transactions on Circuits and Systems II: Express Briefs.
+Advance online publication. https://doi.org/10.1109/TCSII.2025.3633181
+Published in:
+IEEE Transactions on Circuits and Systems II: Express Briefs
+
+Document Version:
+Peer reviewed version
+
+Queen's University Belfast - Research Portal:
+Link to publication record in Queen's University Belfast Research Portal
+
+Publisher rights
+Copyright 2025 the authors.
+This is an accepted manuscript distributed under a Creative Commons Attribution License (https://creativecommons.org/licenses/by/4.0/),
+which permits unrestricted use, distribution and reproduction in any medium, provided the author and source are cited.
+General rights
+Copyright for the publications made accessible via the Queen's University Belfast Research Portal is retained by the author(s) and / or other
+copyright owners and it is a condition of accessing these publications that users recognise and abide by the legal requirements associated
+with these rights.
+Take down policy
+The Research Portal is Queen's institutional repository that provides access to Queen's research output. Every effort has been made to
+ensure that content in the Research Portal does not infringe any person's rights, or applicable UK laws. If you discover content in the
+Research Portal that you believe breaches copyright or violates any law, please contact openaccess@qub.ac.uk.
+Open Access
+This research has been made openly available by Queen's academics and its Open Research team. We would love to hear how access to
+this research benefits you. – Share your feedback with us: http://go.qub.ac.uk/oa-feedback
+
+Download date:04. Jun. 2026
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS
+
+1
+
+A Lightweight and Hardware-Efficient NTT FPGA
+Accelerator for FHE Applications
+Moonis Amir Zaman, Muhammad Bilal Khan, Waqar Ahmad, Ayesha Khalid, Máire O’Neill
+
+Abstract—The Number Theoretic Transform (NTT) and its
+inverse (INTT) are pivotal operations in Fully Homomorphic
+Encryption (FHE) schemes to facilitate efficient polynomial
+multiplication over modular rings. We propose a compact and
+hardware-efficient NTT/INTT architecture for FHE systems with
+a novel twiddle factor generator (TFG) for Radix-2 multi-path
+delay commutator (MDC) designs, saving up to 97.2% of onchip memory by storing the twiddle factors (TF) for the initial 11
+stages (for log2 (N ) = 15 to 17) and only the TF bases for on-thefly generation in the remaining stages. DSP-efficient multipliers
+via non-standard tiling are designed to reduce DSP utilization
+as compared to standard tiling, without sacrificing performance.
+Benchmarking on comparable Xilinx FPGAs reveals that our
+design is the most compact, along with a significant efficiency advantage with up to 2.72× reduction in average area-time product
+(ATP) and up to 2.57× increase in throughput-per-equivalentLUT (TPE) compared to state-of-the-art NTT designs. In various
+configurations, the architecture maintains lower BRAM and DSP
+utilization, and better overall efficiency, making it a scalable and
+efficient solution for real-world FHE deployments.
+Index Terms—Fully Homomorphic Encryption (FHE), Number
+Theoretic Transform (NTT), Twiddle Factor Generation
+
+I. I NTRODUCTION
+Polynomial arithmetic, in particular polynomial multiplication, is crucial to modern cryptographic schemes such as
+Fully Homomorphic Encryption (FHE) and Post-Quantum
+Cryptography (PQC) [1]. Polynomial multiplication tends to
+be a bottleneck operation in these schemes. The Number
+Theoretic Transform (NTT) comes into play here, reducing
+the complexity from O(n2 ) to O(n log2 n), making it a musthave component of FHE hardware designs.
+There are two commonly used pipelined architectures for
+NTT, namely the single-path delay feedback (SDF) and multipath delay commutator (MDC) architectures, with their respective performance-resource trade-offs. Different cryptographic
+schemes use a range of polynomial degrees (N ) and modulus
+lengths, e.g., FHE generally uses N values from 215 to 217
+with bit widths (log2 (q)) of 50 to 64 bits. The reported work
+either optimizes NTT for specific parameter sets [N ,log2 (q)],
+limiting its usability, or are run-time configurable for different
+parameters [2], resulting in large resource overhead. In contrast, compile-time configurable designs (parameters provided
+This work is funded by the EPSRC-UK grant IQN (Integrated Quantum
+Networks) hub (EP/Z533208/1).
+Moonis Amir Zaman and Muhammad Bilal Khan are with the National University of Sciences & Technology, Pakistan. E-mail: mzaman.bee21seecs@seecs.edu.pk, mkhan.bee21seecs@seecs.edu.pk.
+Waqar Ahmad is with the Ghulam Ishaq Khan Institute of Engineering
+Sciences and Technology, Topi, Pakistan. E-mail: waqar.ahmad@giki.edu.pk.
+Ayesha Khalid, and Máire O’Neill are with the Queen’s University Belfast,
+UK. E-mail: a.khalid@qub.ac.uk, m.oneill@ecit.qub.ac.uk
+
+before synthesis) such as [3], result in the most efficient
+architectures. While there is limited work in the literature
+for architectures supporting high-degree polynomial parameters, essential for next-generation cryptographic primitives
+like FHE, most of the reported work has large hardware
+overheads and high usage of memory due to twiddle factors
+and DSPs used in the standard integer multipliers implemented
+on FPGAs. Most of these reported designs precalculate and
+store the twiddle factors (TF) in memory [3]–[5] and majority
+do not support high-degree polynomials. For higher-order
+polynomials, this precalculation can contribute to a significant
+memory overhead.
+In this paper, we present a compact and hardware-efficient
+NTT hardware architecture that can accommodate high-order
+polynomials from 215 to 217 . Our design can be configured at
+compile-time for different parameter sets. Our contributions
+are two-fold: First, to alleviate the high BRAM usage associated with storing precomputed twiddle factors (TF), we
+employ a hybrid approach of using some precomputed TF
+bases in memory and computing others on the fly. To reach
+an optimal split in this context, we carry out an exhaustive
+design space exploration to reach the optimal number of
+precomputed / on-the-fly stages to reach the most area-time
+product (ATP) efficient split, which we believe to be the
+first reported optimal twiddle factor generator (TFG) design
+for Radix-2 MDC architectures since most of the reported
+TFG designs for NTT are iterative architectures [2], [6], [7].
+Second, since the generation of TFs requires additional multipliers, we also propose non-standard DSP tiling multiplier
+designs for various bit widths, that help reduce DSP usage
+compared to standard tiling based DSP multiplier designs used
+commonly in the literature. To our knowledge, we are the
+first to implement these DSP based optimizations on NTT
+architectures. Our experimental results show that we achieve
+91.7% ∼ 97.2% reduction in on-chip memory for TFs, 1.15×
+∼ 2.72× reduction in average area-time product (ATP) and
+1.25× ∼ 2.57× increase in throughput-per-equivalent-LUT
+(TPE) compared to the state-of-the-art NTT designs.
+II. BACKGROUND
+Number Theoretic Transform (NTT): The NTT is a
+fundamental operation in FHE schemes used to speed up
+polynomial multiplication. It is similar to the Fast Fourier
+Transform (FFT) except that it works over Zq instead of
+Rq , where q ≡ 1 (mod N ). An N -pt NTT takes a degreeN polynomial a ∈ Rq and outputs an N degree evaluation
+polynomial â ∈ Rq . In the NTT domain, polynomial multiplication is performed as point-wise multiplication, which is
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS
+
+FIFO
+
+SW
+
+BU0
+
+In
+
+𝒅𝒅𝒅𝒅𝒅𝒅𝒅𝒅𝒅𝒅 = 𝑵𝑵⁄𝟒𝟒
+
+FIFO
+
+2
+
+BU2
+
+BU1
+
+𝒅𝒅𝒅𝒅𝒅𝒅𝒅𝒅𝒅𝒅 = 𝑵𝑵⁄𝟒𝟒
+
+BU
+(N‒1)
+
+BU3
+
+Out
+
+sel
+
+addr
+ROM
+NTT TF
+
+ROM
+
+ROM
+
+In
+
+ROM𝜓𝜓1𝑏𝑏𝑏𝑏
+
+ROM
+
+ROM
+
+ROM
+
+7𝑏𝑏𝑏𝑏
+ROM
+𝜓𝜓 4𝑏𝑏𝑏𝑏 − 𝜓𝜓
+
+𝜓𝜓 2𝑏𝑏𝑏𝑏 , 𝜓𝜓 3𝑏𝑏𝑏𝑏
+ROM
+
+ROM
+
+ROM
+
+BU0
+
+ROM
+
+ROM
+
+ROM
+
+ROM
+
+ROM
+
+BU1
+
+ROM
+
+ROM
+
+𝑏𝑏𝑏𝑏 − 𝜓𝜓15𝑏𝑏𝑏𝑏
+𝜓𝜓 8ROM
+
+ROM
+𝑁𝑁
+
+ROM
+𝑁𝑁+1 −1)
+𝑏𝑏𝑏𝑏
+
+𝜓𝜓 (2 )𝑏𝑏𝑏𝑏 − 𝜓𝜓 (2
+−(2𝑁𝑁 )𝑏𝑏𝑏𝑏
+
+𝑁𝑁+1
+
+ROM
+
+ROM
+
+IR1
+
+IR2
+
+IR1
+
+IR2
+
+IR1
+
+IR2
+
+IR1
+
+IR2
+
+IR1
+
+IR2
+
+IR1
+
+IR2
+
+ROM
+
+BU2
+
+addr
+
+INTT TF
+
+ROM
+
+ROM
+𝜓𝜓1𝑏𝑏𝑏𝑏
+
+𝜓𝜓
+
+−1𝑏𝑏𝑏𝑏
+
+ROM
+
+ROM
+
+ROM
+
+BU3
+
+BU
+(N‒1)
+
+BU4
+
+Out
+
+𝜓𝜓
+
+−2𝑏𝑏𝑏𝑏
+
+, 𝜓𝜓
+
+ROM
+
+𝜓𝜓 4𝑏𝑏𝑏𝑏 − 𝜓𝜓 7𝑏𝑏𝑏𝑏
+
+𝜓𝜓 2𝑏𝑏𝑏𝑏 , 𝜓𝜓 3𝑏𝑏𝑏𝑏
+
+−3𝑏𝑏𝑏𝑏
+
+IR1: Input Rom 1
+
+𝜓𝜓
+
+−4𝑏𝑏𝑏𝑏
+
+IR2: Input Rom 2
+
+ROM
+
+ROM
+
+ROM
+
+sel
+
+NTT TF
+
+ROM
+
+ROM
+
+ROM
+
+𝜓𝜓
+− 𝜓𝜓 −(2 −1)𝑏𝑏𝑏𝑏
+𝜓𝜓 −4𝑏𝑏𝑏𝑏 − 𝜓𝜓 −7𝑏𝑏𝑏𝑏
+𝜓𝜓 −1𝑏𝑏𝑏𝑏
+𝜓𝜓 −2𝑏𝑏𝑏𝑏 , 𝜓𝜓 −3𝑏𝑏𝑏𝑏
+𝜓𝜓 −8𝑏𝑏𝑏𝑏 − 𝜓𝜓 −15𝑏𝑏𝑏𝑏
+INTT TF
+Fig. 1. Simplified multi-path delay commutator (MDC) architecture with precomputed twiddle factor ROMs (green/red for NTT/INTT). The commuter switch
+(SW) and FIFOs are shown for the first stage only. sel switches between NTT/INTT TFs, addr is the address from control logic, br is bit reversed index.
+
+ROM
+
+ROM
+
+ROM
+
+− 𝜓𝜓
+
+−7𝑏𝑏𝑏𝑏
+
+NTT TF bases
+INTT TF bases
+
+𝜓𝜓1 [0,1] 𝜓𝜓2 8,10,12,14
+
+𝜓𝜓1 [0,1,2,3] 𝜓𝜓2 [16,20,24,28]
+
+𝜓𝜓1 [0, −1] 𝜓𝜓2 [−(8,10,12,14)] 𝜓𝜓1 [−(0,1,2,3)] 𝜓𝜓2 [−(16,20,24,28)]
+
+𝜓𝜓1 [0,1, … ] 𝜓𝜓2 …
+
+𝜓𝜓1 [0, −1, … ] 𝜓𝜓2 [… ]
+
+Fig. 2. Modified MDC architecture with twiddle factor generator for unified NTT. The commuter switch and FIFOs have been omitted for clarity. The TFs for
+the first 3 stages (BU0 to BU2) are stored completely in memory, while subsequent stages store few TF bases as inputs to their respective modular multipliers.
+IR1
+much faster than
+the schoolbook polynomial multiplication.
+IR2
+Most cryptographic
+applications
+workROM
+over the cyclotomic
+ROM
+ROM
+ROM
+ROM
+ROM
+polynomial ring Rq = Zq [x]/(xN + 1), which is called
+IR1
+IR1
+negative-wrapped convolution
+(NWC). In NWC, the twiddle
+factors are primitive 2N -th roots of unity, ψ. The NTT and
+INTT are expressed as [8]:
+
+NTTψ (a) = âj =
+INTTψ
+
+−1
+
+(â) = ai = N
+
+N
+−1
+X
+
+ψ 2ij+i ai
+
+i=0
+N
+−1
+X
+−1
+−(2ij+j)
+
+ψ
+
+âj
+
+mod q
+
+(1)
+
+mod q
+
+(2)
+
+j=0
+
+Two well-known approaches, Cooley-Tukey (CT) and
+Gentleman-Sande (GS), are typically used to implement these
+equations [8]. Both algorithms have the trade-off of bit reversed outputs, which require costly bit reversal operations to
+correct the data ordering, however by using CT for NTT and
+GS for INTT, we can avoid the need for reordering.
+Twiddle Factor Generation: Twiddle factors (TF) are constants (ψ) used in the calculation of NTT/INTT. The higher the
+order of N , larger the number of TFs needed, e.g., for a unified
+NTT design with N = 217 with log2 (q) = 64 bits, 262144 TFs
+are needed since (218 × 64)/8 = (262144 × 64)/8 ≈ 2.10 MB
+of data. To reduce on-chip memory, these TFs can be generated
+on-the-fly by executing the following recursive equation with
+a known initial value of ψ, [9]:
+ψ i = ψ i−1 × ψ
+
+mod q.
+
+(3)
+
+Since most NTT butterfly dataflows require TFs in bitreversed order, additional TF bases need to be stored as well,
+
+complicating the
+design. Additionally, the generation
+IR2
+IR1 hardware
+IR1
+
+of the next TF requires feedback from the previous output of
+the modular multiplier, which can result in additional latency
+for pipelined architectures, as modular multipliers typically
+take more than one cycle to execute. Reported work, including
+[3], [5], use precomputed TFs in memory, resulting in high
+memory overhead for large N . Other reported work, including
+[2], [6], [7], implement TFG modules but are limited to
+iterative NTT architectures. To the best of our knowledge, this
+work is the first reported optimal TFG for MDC architectures.
+MDC architectures: Also called pipelined architectures,
+use only one butterfly unit (BU) for each stage of NTT/INTT,
+while iterative designs can have multiple BUs in parallel per
+stage, as shown in Fig. 1. These architectures take two input
+polynomial coefficients and generate two coefficients every
+cycle once their pipeline is full. Two FIFO (memory) units and
+a commutator switch (SW) are used at each stage to reorder
+the intermediate coefficients according to the required offset
+pattern for the next stage. The depth of the FIFO units depends
+N
+on the formula [3]: d = 2s+2
+, where s = 0, 1, . . . , log2 (N )−1.
+III. P ROPOSED O PTIMIZATIONS FOR NTT/INTT
+A. Twiddle Factor Generator (TFG)
+The first stage (BU0) requires only two TFs, one each for
+NTT and INTT, while for subsequent stages the required TFs
+increase in powers of two. To reduce the on-chip memory for
+storing these TFs, we can generate most of them on-the-fly
+by storing a few TF bases and employing modular multipliers
+(MM). We aim to design a generator that does not require
+any feedback from the MM output to generate the next TF;
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS
+
+3
+
+e.g., 256 × 256 = 65536, hence, to generate 65536 values we
+only require 512 unique factors. To determine the minimum
+number of TF bases for each stage, we wrote a Python script
+(Algorithm 1) to generate the Verilog for the TF base ROMs
+for each on-the-fly generated stage.
+The algorithm takes as input the number of initial stages to
+be stored in memory, STORED, and the total number of stages,
+LOGN. It also takes a precomputed table of N twiddle factors,
+ψtable , in which each TF is multiplied by the Montgomery
+factor, Rw , so that no correction operation is required later
+in the hardware. The output consists of two ROM arrays,
+ROM_G1 and ROM_G2, which store the bases for the two
+inputs to the modular multipliers for each stage from STORED
+to LOGN − 1. The algorithm iterates over each stage, factors
+2s into two components f1 and f2 to minimize their sum
+(MFS), and calculates the required address bits for each ROM.
+It then populates the ROMs with the appropriate TFs in bitreversed index order (BitRev), ensuring that the generated TFs
+are correctly aligned for use in the NTT/INTT computations.
+Now, the challenge is how to efficiently deploy the generator
+for MDC architectures. Firstly, it is obvious that placing a
+MM at each stage is impractical, as some of the initial stages
+require only a few distinct TFs. For log2 (q) = 64, each MM
+uses 19 DSPs (with our multiplier designs) and around 1000
+LUTs, which may increase the design area if implemented at
+every stage. Fig. 2 shows the MDC architecture with the TFG,
+where the first three stages store all TFs in ROM.
+To determine the optimal split of stages with precomputed
+TFs and on-the-fly TFG, we carried out a design space
+exploration. We computed ATP for different extents of TFG
+for N = 215 and N = 216 , with log2 (q) = 64 in each case.
+We did not include results for the first three stages, as they
+are trivial and do not require a TFG. For the later stages, we
+
+log₂(N) = 16
+
+10000
+
+Lowest
+ATP
+
+9500
+
+33000
+
+1100
+
+31000
+
+1050
+
+29000
+27000
+
+9000
+
+25000
+
+8500
+
+23000
+
+8000
+
+No 4
+TFG
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10 11 12 13 14 15
+
+1000
+
+950
+
+900
+
+850
+
+21000
+
+800
+
+Number of Initial TF Stages Stored in Memory
+
+Fig. 3. ATP of the architecture for log2 (N ) = 15/16, for different TF stages,
+log2 (q) = 64 bits. ’No TFG’ refers to [3] with all TFs precomputed.
+
+calculated the hardware efficiency as the area-time product
+(ATP) for each configuration, using the formula in [6], [10]:
+ATP = (LUT + 100 · DSP + 300 · BRAM) · Lat.
+
+ATP for log(N) = 15
+
+10500
+
+ATP
+
+Require: LOGN: log2 of transform size N , STORED: Initial stages
+stored, ψtable : Table of N twiddle factors (ψ i · Rw (mod q)),
+Rw : Montgomery factor
+Ensure: ROM_G1[0..L − S − 1][·], ROM_G2[0..L − S − 1][·] {S =
+STORED, L = LOGN}
+1: for s = STORED to LOGN − 1 do
+2:
+(f1 , f2 ) ← MFS(2s ) {Factor 2s to minimize f1 + f2 }
+3:
+addr_bits1 ← ⌈log2 (f1 )⌉
+4:
+addr_bits2 ← ⌈log2 (f2 )⌉
+5:
+rom_idx ← s − STORED
+{Generate Input 1 bases (ROM_G1)}
+6:
+for i = 0 to f1 − 1 do
+7:
+addr1 ← BitRev(i, addr_bits1)
+8:
+idx ← BitRev(i, LOGN)
+9:
+ROM_G1[rom_idx][addr1] ← ψtable [idx]
+10:
+end for
+{Generate Input 2 bases (ROM_G2)}
+11:
+bits_inp2 ← log2 (BitRev(i + 1, LOGN)) + 1
+12:
+for j = 0 to f2 − 1 do
+13:
+addr2 ← BitRev(j, addr_bits2)
+14:
+rev_j ← BitRev(j, bits_inp2)
+15:
+offset ← 2LOGN−1−s
+16:
+idx ← rev_j + offset
+17:
+ROM_G2[rom_idx][addr2] ← ψtable [idx]
+18:
+end for
+19: end for
+
+log₂(N) = 15
+
+ATP
+
+11000
+
+Algorithm 1 NTT Twiddle Factor Bases Precomputation for
+On-the-Fly Stages
+
+(4)
+
+Where, Lat. or latency (execution time) in milliseconds is:
+Latency (ms) = (Execution CCs × 10−3 )/Frequency (MHz)
+Fig. 3 shows the results for N = 215 and N = 216 , with
+operating frequencies 196MHz and 186MHz, respectively. The
+optimal configuration for the TFG is observed when the lowest
+ATP is achieved, i.e., first 11 stages have all TFs stored in
+memory, while only a few TF bases are stored for the remaining stages for on-the-fly generation. We achieve a reduction of
+19% and 42% in ATP, for N = 215 and N = 216 , respectively.
+Note that our TFG provides much greater improvements for
+N = 216 , as the reduction in BRAMs is more significant than
+in N = 215 . The ATP formula we used weights BRAMs more
+heavily than LUTs and DSPs, hence the greater improvement.
+A unified NTT/INTT stores 2N − 2 TFs if all are precomputed, i.e., 65534 TFs for N = 215 . In contrast, storing the
+first 11 TF stages requires only 5438 TFs for N = 215 , with
+4094 TFs for the first 11 stages (2×211 −2) and 1344 TF bases
+for the later stages. The latter are calculated as: 211 = 32×64,
+212 = 64 × 64, 213 = 128 × 64, 214 = 128 × 128, yielding
+2 × (32 + 64 + 64 + 64 + 128 + 64 + 128 + 128) = 1344.
+This is a 91.7% reduction in on-chip memory as compared to
+traditional ROM-based storage. For N = 216 , 6206 TFs are
+stored instead of 131070, with 4094 for the first 11 stages and
+2112 TF bases, which is a 95.2% reduction in on-chip memory.
+This reduction increases to 97.2% for N = 217 . The proposed
+TFG works in parallel to BUs and thus avoids contributing
+to the MDC architecture’s latency. It ensures that the required
+TFs are available when needed by the BUs, thus introducing
+no stall cycles and maintaining a fully occupied pipeline.
+B. DSP-Efficient Multipliers
+The integer multiplier is a crucial component of NTT/INTT.
+Furthermore, the on-the-fly generation of TFs necessitates
+additional multipliers, leading to increased DSP utilization. A
+common technique for integer multiplication is the standard
+tiling (ST) approach [11], employed also by [3], that partitions the input operands into smaller chunks. The DSP48E1
+multiplier in 7-series FPGAs is a 25×18 bits signed multiplier.
+To emulate unsigned multiplication, the MSB of each operand
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS
+
+4
+
+is set to 0, effectively performing 24×17 unsigned multiplication. Similarly, the DSP48E2 in Ultrascale+ FPGAs supports
+27 × 18 signed and 26 × 17 unsigned multiplication. This
+approach of using unsigned numbers avoids any logic required
+for signed to unsigned number conversions, that can potentially
+reduce the maximum frequency of the overall design.
+Fig. 4(a) and (e) show the standard tiling configurations for
+DSP48E1 and DSP48E2, respectively. In Fig. 4(a), for a 52 ×
+52 bit multiplication, the first three DSPs of the last column
+perform 4 × 17 bit multiplications each and the final DSP
+performs a 4 × 1 bit multiplication, which is not an efficient
+use of those DSPs. Similar issues can be observed for other bit
+sizes such as 36, 54, and 64 (mainstream bit widths of FHE
+accelerators), as well as in Fig. 4(e). Hence, we propose more
+efficient DSP-mapping techniques for various bit ranges.
+Our mapping algorithm dynamically partitions input
+operands (a × b) based on the bit width of the modulus
+(log2 (q)) and the DSP dimensions available in the target FPGA
+(24 × 17 or 26 × 17). It determines the optimal DSP count
+by analyzing operand coverage in both width and height,
+ensuring full multiplication representation without redundancy.
+Operands are segmented into DSP-aligned chunks, and partial
+products from each chunk pair are aligned via left shifts and
+accumulated by a carry-save adder (CSA) tree to reduce carry
+propagation delay. A final two-operand addition produces the
+product. This structured approach minimizes DSP usage while
+preserving full precision and high operating frequency across
+varying operand sizes.
+24
+
+48
+
+72
+
+24
+
+65
+
+48
+
+24
+
+41
+
+58
+
+17
+24
+
+34
+
+34
+48
+
+51
+
+51
+54×54
+68
+
+64×64
+
+68
+
+(a) Standard Tiling
+26
+
+72
+
+(b) For 59 to 65 bits
+26
+
+78
+
+52
+
+52
+
+24
+
+52×52
+
+34
+
+17
+
+64×64
+
+36×36
+
+52×52
+
+24
+17
+
+68
+
+17
+34
+
+48
+
+51
+54×54
+
+51
+72
+
+(c) For 52 to 58 bits
+
+69
+
+26
+
+43
+
+41
+
+24
+36×36
+
+48
+
+(d) For 35 to
+41 bits
+
+60
+
+34
+
+17
+
+64×64
+
+36×36
+
+52×52
+
+26
+17
+
+43
+
+17
+26
+
+34
+
+17
+
+26
+34
+
+26
+34
+
+51
+
+51
+
+52
+
+54×54
+
+51
+
+64×64
+
+36×36
+
+52
+
+51
+
+54×54
+
+68
+
+68
+
+68
+
+(e) Standard Tiling
+
+78
+
+(f) For 61 to 69 bits
+
+(g) For 53 to 60 bits
+
+(h) For 35 to
+43 bits
+
+78
+
+52
+
+Fig. 4. Standard vs Non-standard tiling for different bit widths. (a) to (d) use
+DSP48E1, while (e) to (h) use DSP48E2.
+Results for DSP48E1 (Freq. = 250MHz)
+
+Equivalent LUT (EqL)
+
+1800
+
+12
+
+12
+
+1600
+
+10
+
+11
+10
+
+1400
+1200
+1000
+800
+
+6
+5
+
+600
+400
+Standard
+Our Method
+
+36
+
+2000
+
+12
+
+52
+
+54
+
+64
+
+12
+
+12
+
+1600
+
+11
+10
+
+1400
+1200
+1000
+800
+600
+
+Bit size [log₂(q)]
+
+Results for DSP48E2 (Freq. = 400MHz)
+
+1800
+
+Equivalent LUT (EqL)
+
+2000
+
+400
+
+6
+
+5
+
+36
+
+54
+
+64
+
+Bit size [log₂(q)]
+
+Fig. 5. Comparison of Equivalent LUT (EqL [6], [10]) used in standard tiling
+vs. our DSP mapping for DSP48E1 (left) and DSP48E2 (right). The numbers
+above each bar show the number of DSPs used. EqL = LUT + 100×DSP +
+300×BRAM (BRAM usage is 0 in all cases).
+
+For DSP48E1, Fig. 4(b) and Fig. 4(d) present our proposed
+design for input bit-widths of 59 to 65 bits and 35 to 41
+bits, respectively. In both configurations, the last DSP in each
+
+row is vertically aligned, with the remaining bits of input
+a mapped to the shorter side and multiplied by up to 24
+bits of input b mapped to the longer side of the DSP. This
+results in a reduction of one DSP unit compared to standard
+tiling. A similar arrangement for DSP48E2 in Fig. 4(f) and
+Fig. 4(h) targets bit-widths of 61 to 69 bits and 35 to 43 bits,
+respectively, with b divided into 26-bit chunks.
+For 52 to 58 bit inputs in DSP48E1, Fig. 4(c) divides input
+a into one 24-bit and two 17-bit chunks, and input b into 17bit and 24-bit chunks. The 24-bit chunk of a multiplies with
+the 17-bit chunk of b, and the 17-bit chunk of a multiplies
+with the 24-bit chunk of b, reducing two DSPs compared to
+standard tiling. A similar design for DSP48E2 in Fig. 4(g)
+reduces two DSPs for bit-widths of 53 to 60 bits.
+Fig. 5 presents a comparative analysis between standard
+tiling and our proposed methods, for different bit sizes, on
+both DSP48E1 and DSP48E2 architectures. We used a Virtex7 FPGA for DSP48E1 and ZCU102 (Ultrascale+) to implement DSP48E2 designs. The results show up to 16.8% area
+reduction (EqL) due to more efficient DSP utilization in the
+proposed designs compared to standard methods.
+IV. H ARDWARE I MPLEMENTATION R ESULTS
+We implemented our proposed designs on various Xilinx
+FPGAs using Xilinx Vivado 2019.1. We configured our TFG to
+precomputed 11 stages, as discussed in Section III-A, and used
+a unified-NWC architecture. Table I shows the Post-Place-andRoute (Post-PAR) results comparison between different NTT
+designs in the literature for large polynomial degree sizes. We
+calculated the throughput (TP) as done in [2]. We calculated
+the throughput-per-equivalent-LUT (TPE), where the equivalent LUT (EqL) for area utilization is calculated as done in [6].
+The area-time product (ATP, ref. Section III-A) to determine
+hardware efficiency is also computed. Note that we used the
+average of the performance metrics for comparison, as the
+NTT/INTT operations are used for many inputs consecutively,
+in real world FHE deployments.
+For N = 215 , log2 (q) = 64, we compared our design to
+[3], which is a state-of-the-art pipelined NTT architecture,
+which can be configured as SDF or MDC. We compared our
+work to a unified MDC configuration of this work. Our design
+achieves 1.33× better average ATP and 1.35× equivalent LUT,
+along with 1.35× better average TPE. Moreover, we use 3.03×
+fewer BRAMs due to our TFG, at the expense of 1.20× more
+DSPs, whereas [3] stores all its TFs in memory and therefore
+requires fewer multipliers overall than our work.
+For N = 216 , log2 (q) = 52, we compared our work to [3]
+and two iterative NTT architectures [6], [7]. Compared to [3],
+our work uses 1.18× more DSPs due to on-the-fly computation
+of TFs, however it uses 3.16× fewer BRAMs. Both [6], [7]
+generate TFs on the fly, however, our work utilizes the lowest
+number of DSPs and BRAMs. Since iterative architectures
+can be parallelized, they are faster as compared to pipelined
+architectures. While [6] and [7] take nearly 2× fewer average
+clock cycles, and 1.69× and 1.58× lower average latency,
+respectively, our design outperforms them in average ATP and
+TPE. Specifically, it achieves 1.56× and 1.49× better ATP, and
+1.60× and 1.50× better TPE, respectively.
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS
+
+5
+
+TABLE I
+P OST-PAR IMPLEMENTATION RESULTS OF OUR WORK VS . S TATE - OF - THE -A RT NTT/INTT DESIGNS FOR VARIOUS FHE PARAMETERS
+
+215
+
+log2 (q)
+(bits)
+64
+64
+
+Freq.
+(MHz)
+212
+196
+
+Our work
+[3] / 2024 †
+[6] / 2024
+[7] / 2022
+
+216
+216
+216
+216
+
+52
+52
+52
+52
+
+Our work
+[3] / 2024 †
+[2] / 2024 ‡
+[12] / 2023
+[5] / 2023
+
+216
+216
+216
+216
+216
+
+Our work
+[2] / 2024 ‡
+[13] / 2024
+[14] / 2025
+
+217
+217
+217
+217
+
+[Ref.] / Year
+
+N
+
+Our work
+[3] / 2024 †
+
+215
+
+98.6
+121.7
+
+Avg.
+ATP
+7,701
+10,272
+
+ATP
+impro.
+ref
+1.33×↑
+
+Avg. TP
+(Mbps)β
+26,852
+24,847
+
+Avg.
+TPEγ
+0.27
+0.20
+
+TPE
+impro.
+ref
+1.35×↑
+
+Virtex-7
+Virtex-7
+
+132.4
+136.1
+78.4
+83.9
+
+104.6
+153.7
+276
+246.5
+
+13,860
+20,918
+21,653
+20,681
+
+ref
+1.51×↑
+1.56×↑
+1.49×↑
+
+25,739
+25,039
+43,467
+40,618
+
+0.24
+0.16
+0.15
+0.16
+
+ref
+1.50×↑
+1.60×↑
+1.50×↑
+
+ZCU102
+ZCU102
+ZCU102
+ZCU102
+
+33,096
+33,096
+16,552
+54,000
+16,628
+
+168.8
+176
+66.2
+207
+66.5
+
+125.3
+184.6
+409.7
+154
+368.2
+
+21,159
+32,498
+27,122
+31,878
+24,485
+
+ref
+1.53×↑
+1.28×↑
+1.50×↑
+1.15×↑
+
+24,847
+23,831
+59,398
+20,262
+59,130
+
+0.20
+0.13
+0.14
+0.13
+0.16
+
+ref
+1.53×↑
+1.42×↑
+1.53×↑
+1.25×↑
+
+Virtex-7
+Virtex-7
+U250
+Virtex-7
+VU37P
+
+66,192
+32,997
+41,207
+72,167
+
+264.7
+131.9
+164.8
+257.7
+
+160.6
+409.7
+235.6
+448.9
+
+42,510
+54,039
+38,827
+115,688
+
+ref
+1.27×↑
+1.09×↓
+2.72×↑
+
+29,710
+59,623
+47,720
+31,534
+
+0.18
+0.14
+0.20
+0.07
+
+ref
+1.28×↑
+1.11×↓
+2.57×↑
+
+U250
+U250
+U250
+VU13P
+
+Avg.
+Lat. (µs)
+78.1
+84.4
+
+kEqLα
+
+63
+191
+
+Avg.
+Lat. (cc)*
+16,547
+16,547
+
+378
+320
+896
+564
+
+96
+304
+98
+137
+
+33,096
+33,096
+16,445
+16,776
+
+36.3
+29.7
+83.1
+93
+61.4
+
+399
+320
+630
+132
+288
+
+127
+383
+241
+236
+883
+
+36.7
+83.1
+67.6
+119.2
+
+437
+630
+470
+840
+
+218
+241
+229
+822
+
+kLUT
+
+kFF
+
+DSP
+
+BRAM
+
+43.6
+34.4
+
+33.2
+27.8
+
+361
+300
+
+250
+243
+210
+200
+
+38.0
+30.5
+157
+149
+
+26.7
+22.3
+117
+91
+
+64
+64
+60
+64
+60
+
+196
+186
+250
+260
+250
+
+47.3
+37.7
+274.4
+70
+74.5
+
+60
+60
+60
+62
+
+250
+250
+250
+280
+
+51.1
+274.4
+119.9
+118.3
+
+Device
+
+NOTE: The ↑ and ↓ indicate superior or inferior metrics compared to others. *: Avg. latency for 100 operations. †: Configured for MDC-Unified-NWC and Montgomery reduction.
+‡: Run-time configurable for N = 216 /217 . α: EqL = LUT + 100×DSP + 300×BRAM [6] β: Avg. TP = Total number of bits / Avg. Latency (µs) [2] γ: Avg. TPE = Avg. TP / EqL
+
+For N = 216 , log2 (q) = 60 − 64, we compared our
+design to [2], [3], [5], [12]. Our architecture achieves the
+best average ATP from 1.15× to 1.53× better than the other
+designs, while also achieving 1.25× to 1.53× better average
+TPE. Furthermore, our design has the lowest BRAM usage.
+[2] uses Radix-24 BUs which processes more coefficients in
+parallel as compared to our Radix-2 BUs, hence they have high
+throughput however, our TPE is still higher. [12] utilities the
+fewest number of DSPs, however, it has the highest number
+of average clock cycles resulting in the longest latency. [5]
+achieves very low latency despite comparatively lower number
+of DSPs, however, it uses the highest number of BRAMs
+resulting in 1.15× and 1.25× worse average ATP and TPE,
+respectively, than our design.
+Finally, for N = 217 and log2 (q) = 60 − 62, we compared
+our work to [2], [13], [14]. [2] can be configured for N = 216
+or N = 217 at run time; hence, their resource usage is identical
+for each parameter. Our work achieves a 1.27× higher average
+ATP and 1.28× higher average TPE. Additionally, our design
+is more compact as it uses 2.55× fewer equivalent LUTs and
+1.44× fewer DSPs. [13] achieves better average ATP and TPE
+than our work, however, it uses 1.46× more equivalent LUTs
+and 1.07× more DSPs than our design. Compared to [14],
+we achieve significant improvements of 2.72× and 2.57×
+in average ATP and TPE, respectively, however, their work
+supports the Residue Number System based FHE schemes
+without need for reconfiguration when switching modulus.
+V. C ONCLUSION
+This paper proposes novel optimization techniques for MDC
+NTT/INTT architectures for FHE applications. We achieve a
+reduction of up to 97.2% in memory utilization by employing a
+novel TFG. Combined with DSP-efficient multiplier designs,
+these optimizations deliver significantly better average ATP
+and TPE, as compared to most reported literature. Future
+work includes extending the TFG to support different radix
+configurations of pipelined architectures, such as Radix-4, and
+developing a generator for single-path delay feedback (SDF)
+NTT architectures.
+
+R EFERENCES
+[1] J. Xie, W. Zhao, H. Lee, D. B. Roy, and X. Zhang, “Hardware Circuits and Systems Design for Post-Quantum Cryptography—A Tutorial
+Brief,” IEEE Transactions on Circuits and Systems II: Express Briefs,
+vol. 71, no. 3, pp. 1670–1676, 2024.
+[2] R. Mareta, A. Satriawan, P. N. Duong, and H. Lee, “A BootstrappingCapable Configurable NTT Architecture for Fully Homomorphic Encryption,” IEEE Access, vol. 12, pp. 52911–52921, 01 2024.
+[3] F. Hirner, A. C. Mert, and S. S. Roy, “Proteus: A Pipelined NTT Architecture Generator,” IEEE Transactions on Very Large Scale Integration
+(VLSI) Systems, vol. 32, no. 7, pp. 1228–1238, 2024.
+[4] Y. Geng, X. Hu, and Z. Wang, “GS-MDC: High-Speed and AreaEfficient Number Theoretic Transform Design,” IEEE Transactions on
+Circuits and Systems II: Express Briefs, vol. 71, no. 12, pp. 4974–4978,
+2024.
+[5] S. Kurniawan, P. Duong-Ngoc, and H. Lee, “Configurable MemoryBased NTT Architecture for Homomorphic Encryption,” IEEE Transactions on Circuits and Systems II: Express Briefs, vol. 70, pp. 3942–3946,
+06 2023.
+[6] F. Krieger, F. Hirner, A. C. Mert, and S. S. Roy, “OpenNTT:
+An Automated Toolchain for Compiling High-Performance NTT
+Accelerators in FHE,” Cryptology ePrint Archive, Paper 2024/1740,
+2024. [Online]. Available: https://eprint.iacr.org/2024/1740
+[7] P. Duong-Ngoc, S. Kwon, D. Yoo, and H. Lee, “Area-Efficient Number
+Theoretic Transform Architecture for Homomorphic Encryption,” IEEE
+Transactions on Circuits and Systems I: Regular Papers, vol. 70, no. 3,
+pp. 1270–1283, 2023.
+[8] A. Satriawan, I. Syafalni, R. Mareta, I. Anshori, W. Shalannanda, and
+A. Barra, “Conceptual Review on Number Theoretic Transform and
+Comprehensive Review on Its Implementations,” IEEE Access, vol. 11,
+pp. 70288–70316, 2023.
+[9] N. Im, H. Yang, Y. Eom, S.-C. Park, and H. Yoo, “Efficient Twiddle
+Factor Generators for NTT,” Electronics, vol. 13, no. 16, 2024.
+[10] Z. Ye, R. C. C. Cheung, and K. Huang, “PipeNTT: A Pipelined Number
+Theoretic Transform Architecture,” IEEE Transactions on Circuits and
+Systems II: Express Briefs, vol. 69, no. 10, pp. 4068–4072, 2022.
+[11] D. B. Roy, D. Mukhopadhyay, M. Izumi, and J. Takahashi, “Tile
+Before Multiplication: An Efficient Strategy to Optimize DSP Multiplier
+for Accelerating Prime Field ECC for NIST Curves,” in 2014 51st
+ACM/EDAC/IEEE Design Automation Conference (DAC), 2014, pp. 1–6.
+[12] Z. Li, J. Ren, G. Du, Z. Tu, X. Wang, Y. Yin, and Y. Ouyang, “An AreaEfficient Large Integer NTT-Multiplier Using Discrete Twiddle Factor
+Approach,” IEEE Transactions on Circuits and Systems II: Express
+Briefs, vol. 70, no. 2, pp. 751–755, 2023.
+[13] R. Mareta and H. Lee, “Compact 217 NTT Architecture for Fully
+Homomorphic Encryption,” in 2024 IEEE International Symposium on
+Circuits and Systems (ISCAS), 2024, pp. 1–5.
+[14] Q. Dang Truong, P. Duong-Ngoc, and H. Lee, “Hybrid Number Theoretic Transform Architecture for Homomorphic Encryption,” IEEE
+Transactions on Very Large Scale Integration (VLSI) Systems, vol. 33,
+no. 7, pp. 2039–2043, 2025.
+
+

@@ -1,0 +1,1135 @@
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems--II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2023.3286257
+
+1
+
+A Low-Complexity Sensing Scheme for
+Approximate Matching Content-Addressable
+Memory
+Esteban Garzón , Member, IEEE, Roman Golman , Marco Lanuzza , Senior Member, IEEE, Adam
+Teman , Member, IEEE, Leonid Yavits , Member, IEEE
+
+Abstract—The need for approximate rather than exact search
+arises in numerous compare-intensive applications, from networking to computational genomics. This brief presents a novel
+sensing approach for approximate matching content-addressable
+memory (CAM) designed to handle large Hamming distances
+(HDs) between the query pattern and stored data. The proposed
+matchline sensing scheme (MLSS) employs a replica mechanism
+and a 12-transistor positive feedback sense amplifier to effectively resolve the approximate match operation. The MLSS was
+integrated into a 4 kB approximate CAM array and fabricated
+in a 65 nm CMOS technology. With an overall area footprint
+of 0.0048 mm2 , which includes 512 sense amplifiers and the
+replica mechanism, the MLSS allows a flexible and dynamic
+adjustment of the HD tolerance threshold via several design
+variables. Experimental measurements demonstrate the efficiency
+of our sensing scheme in tolerating very large HDs with the
+highest sensitivity.
+Index Terms—HD-CAM, Hamming Distance, ContentAddressable Memory, approximate CAM, approximate match,
+matchline sense amplifier.
+
+I. I NTRODUCTION
+ONTENT-ADDRESSABLE memories (CAMs) are
+widely used in many applications requiring high-speed
+parallel search operations between an input query pattern and
+the complete dataset stored within the memory [1], [2]. Due to
+the wide demand for similarity search in numerous emerging
+applications such as compare-intensive big data workloads,
+machine learning, and pattern recognition in various domains,
+including images, DNA sequencing, and biomedical data,
+there is a growing need for CAMs that can perform
+approximate search operations [3]–[6]. Conventional CMOSbased or emerging resistive memory-based CAMs typically
+support only exact search operations [7], [8]. Other memory
+sensing schemes have been proposed [1], [2], [9], [10].
+
+C
+
+This work was supported in part by European Union’s Horizon Europe programme for research and innovation under grant agreement No.
+101047160, in part by the Israeli Ministry of Science and Technology
+under Lise Meitner grant for Israeli-Swedish research collaboration, and in
+part by the Italian Ministry of University and Research (MUR) under the
+project PRIN 2020LWPKH7. The work of Esteban Garzón was supported
+by the Italian MUR under the call “Horizon Europe 2021-2027 programme –
+H25F21001420001”. Esteban Garzón and Marco Lanuzza are with the Department of Computer Engineering, Modeling, Electronics and Systems (DIMES),
+University of Calabria, 87036 Rende, Italy (e-mail: esteban.garzon@unical.it;
+m.lanuzza@dimes.unical.it). Roman Golman, Adam Teman, and Leonid
+Yavits are with the EnICS Labs, Faculty of Engineering, Bar-Ilan University, Ramat-Gan 5290002, Israel (e-mail: roman.golman@live.biu.ac.il;
+adam.teman@biu.ac.il; leonid.yavits@biu.ac.il).
+Manuscript received XXX, XXX; revised XXX, XXX.
+
+Several techniques have been proposed in literature to
+enable approximate matching in CAMs by leveraging customized sensing schemes and other solutions (i.e., involving redundancy). For instance, error-correction codes have
+been suggested for Ternary CAMs (TCAMs) and NAND-type
+CAMs, which employ parity bits and a dedicated matchline
+scheme [11], [12]. However, these methods can only handle
+a small Hamming distance (HD) of 1 to 4 bits between the
+input query pattern and stored data, and their implementations
+require large area overhead and increased design complexity. Tunable sampling time techniques have also been explored [13]; however, their implementation is challenging due
+to the strong dependency on precise device and circuit sizing,
+susceptibility to jitter, and higher probability of generating
+false results (matches instead of mismatches and vice versa). A
+recent solution, proposed in [14], presents a large HD-tolerant
+approximate CAM (HD-CAM) based on matchline charge
+redistribution. Unfortunately, the sensing scheme presented in
+this work also suffers from a high degree of design complexity
+and large area overhead.
+This brief proposes a low-complexity, scalable, and areaefficient sensing scheme for approximate CAMs with a tunable
+matchline discharge rate [14], [15]. Our sensing scheme consists of a 12-transistor positive feedback sense amplifier along
+with a replica mechanism that provides control of the sampling
+time during approximate match operations. Specifically, the
+replica line enables the sensing of the sense amplifier that further resolves the compare result. Additional design variables
+allow adjusting the HD tolerance threshold and the sensitivity
+of the proposed sensing scheme. A 4 kB HD-CAM design [14]
+integrating the proposed matchline sensing scheme, was fabricated in a commercial 65 nm CMOS technology. The sensing
+scheme of the HD-CAM design has a silicon footprint of
+0.0048 mm2 . The effectiveness of the suggested approximate
+match sensing scheme (i.e., its sensitivity as a function of
+HD and its susceptibility to variations) is evaluated through
+experimental measurements.
+This brief provides the following main contributions:
+• To our knowledge, this is the first sensing scheme for
+approximate search CAM, enabling highly sensitive approximate match sensing capabilities, that has been
+fabricated and evaluated in silicon.
+• Our sensing scheme supports a very wide range of HD
+tolerance through user-configurable design variables.
+• The proposed sensing scheme presents low susceptibility
+to sampling time, temperature, and process variations.
+
+This work is licensed under a Creative Commons Attribution 4.0 License. For more information, see https://creativecommons.org/licenses/by/4.0/
+
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems--II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2023.3286257
+
+2
+
+SLn-1 SLn-1
+
+SLn-2 SLn-2
+
+SL0
+
+WL0
+HDCAM
+cell
+
+Veval
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+WL1
+HDCAM
+cell
+
+Veval
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+VDD
+
+n-bit HD-CAM word
+
+SL0
+
+ML0
+
+MLSA
+
+SLn-1
+
+HDCAM
+cell
+Veval
+
+Vref
+ML1
+
+SLn-1 SLn-2
+
+ML
+
+MLSA
+sense
+
+SL0
+
+SLn-2
+
+HDCAM
+cell
+Veval
+
+SL0 MPC
+
+HDCAM
+cell
+Veval
+
+n-bits
+
+MLSA
+
+Vref
+
+(b)
+Vref
+
+m×n
+
+SL
+
+HD-CAM cell
+SL
+
+WL
+
+WLm-1
+
+Veval
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+PC
+
+MLi
+
+MLm-1
+
+SL
+
+SL
+
+storage
+
+MLSA
+
+ML
+
+D
+
+D
+
+HDCAM
+cell
+
+Vref
+comparison
+
+Search data registers/drivers (SDRs)
+HD-CAM array
+
+Veval
+
+Approximate
+match
+evaluation
+
+ML
+V
+
+eval
+(a)
+(c)
+Fig. 1. Overview of the Hamming Distance (HD) tolerant CAM (HD-CAM) based on tunnable matchline discharge rate. (a) HD-CAM array. (b) n-bit
+HD-CAM word. (c) HD-CAM cell highlighting the storage, comparison and approximate match evaluation blocks. For the sake of simplicity, wordline (WL)
+is not shown in the HD-CAM cell block of (b) and (c).
+
+•
+
+Unlike state-of-the-art matchline sensing schemes, the
+proposed design utilizes the charge redistribution of a
+replica line to control the sense amplifier sampling time.
+
+SLn-1
+
+SLn-1 SLn-2
+
+HDCAM
+cell
+Veval
+
+SL0
+
+SLn-2
+
+HDCAM
+cell
+Veval
+
+SL0
+HDCAM
+cell
+Veval
+
+MPC
+
+PC
+
+ML
+
+SA MLSo
+Vref
+
+MN2 PC
+
+Sen
+
+II. BACKGROUND : H AMMING D ISTANCE T OLERANT CAM
+The HD tolerant CAM (HD-CAM), proposed in [14], is
+capable of both exact and approximate matching; the latter
+tolerating HDs of up to 60% of the length of the query
+pattern. HD-CAM design is based on the observation that
+the matchline voltage drop is proportional to the HD between the query pattern and a data word. To evaluate the
+efficiency of HD-CAM approximate matching, it was tested
+as a real-time DNA classifier programmed to detect Severe
+Acute Respiratory Syndrome Coronavirus-2 (SARS-CoV-2)
+DNA in a metagenomic sample (i.e., containing the DNA
+of multiple organisms). Noteworthy attributes of HD-CAM
+include its ability to tolerate large HDs with high sensitivity
+and precision, its resilience to DNA sequencing errors and
+sampling time variation, and its reduced area overhead and
+design complexity.
+Fig. 1(a) shows the top-level schematic view of an m × n
+HD-CAM [14]. Each row in the CAM has its own matchline
+(ML), which is connected to a ML sense amplifier (MLSA).
+A pair of searchlines (SLs) are connected to all the bitcells in
+a column, thereby forming an n-bit HD-CAM word, as shown
+in Fig. 1(b). The precharge (PC) transistor (MPC) is used to
+precharge the ML. The MLSA senses the state of the matchline
+against a reference voltage (Vref ). Fig. 1(c) shows the NORtype HD-CAM bitcell, which is built upon the conventional
+NOR-type CAM bitcell [1]. Similar to a standard six-transistor
+static random access memory (6T-SRAM) cell, it is based
+on a pair of cross-coupled inverters for storing data and
+accessed for write and read by enabling row access through
+the word line (WL) and driving SL and SL to opposite logic
+values for write or pre-charging them for read. The associative
+search operation involves two steps: precharge and evaluation.
+During the precharge step, the ML is precharged to VDD by
+enabling the MPC transistor (PC = ‘0’). This is followed by the
+evaluation step, where the MPC transistor is cut off (PC = ‘1’),
+
+VDD
+
+n-bit HD-CAM word
+
+n-bit replica cells
+
+VDD
+
+VDD
+
+Vrep
+MN1
+
+Mn-1
+
+Mn-2
+
+VDD
+M0
+
+VDD
+PC
+
+MP
+I1
+
+Optional
+
+ML replica line (MLRL)
+(a)
+VDD
+Vref
+
+MEN1
+
+Sen
+
+ML
+
+VDD
+
+VDD
+
+Sen
+
+Sen
+MLSo
+
+Positive Feedback
+Sense Amplifier
+
+MLSo
+
+MEN2
+
+Sen
+
+(b)
+
+Fig. 2. Proposed matchline sensing scheme (MLSS) for HD tolerant CAM
+based on tunable matchline discharge rate. (a) Schematic of the MLSS. (b)
+schematic of the positive feedback sense amplifier.
+
+and the query data is loaded onto the SLs. The comparison
+between the query pattern and the data word is performed
+by the M1-M3 transistors. An evaluation transistor (M4) is
+integrated into the HD-CAM cell to regulate the discharge rate
+of the ML according to the evaluation voltage level (Veval ). By
+controlling the voltage level on M4, HD-CAM can perform
+approximate matching when Veval < VDD , while a conventional
+exact match CAM operation is executed when M4 is driven
+by a full voltage level, Veval = VDD .
+III. P ROPOSED M ATCHLINE S ENSING S CHEME (MLSS)
+A. Design and Operating Principle
+The proposed matchline sensing scheme (MLSS) is based
+on a positive feedback sense amplifier (SA) that is controlled
+
+This work is licensed under a Creative Commons Attribution 4.0 License. For more information, see https://creativecommons.org/licenses/by/4.0/
+
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems--II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2023.3286257
+
+3
+
+Matchline Voltage (V)
+
+Precharge (PC=0)
+
+Evaluation (PC=1)
+approximate match
+
+Vref
+
+ML > Vref
+(approximate
+match)
+
+ML < Vref
+(mismatch)
+
+mismatch
+
+t1 (Vrep ≈ VDD)
+sampling at t1
+
+t2 (Vrep < VDD/2)
+sampling at t2
+
+Time
+
+Fig. 3. Matchline sensing scheme (MLSS) behavior during search operation.
+
+by a replica line, as illustrated in Fig. 2 (a). The ML replica
+line (MLRL) is composed of n replica transistors (Mn−1 to
+M0 ) that are connected in parallel. The gate terminals of these
+devices are grounded, their drain terminals are connected to
+VDD , and their source terminals are connected to the MLRL.
+The MLSS includes three additional transistors (MN1, MN2,
+and MP), along with an inverter (I1). MN2 and MP are
+controlled by the PC signal. The gate of MN1 is connected
+to the replica voltage (Vrep ), which in the final design is the
+same as Veval (or VDD ), i.e., does not require a separate voltage
+source (or MN1). However, for the sake of evaluating the
+MLSS susceptibility to sampling time variations, we enable
+the Vrep to be biased separately to adjust the MLRL discharge,
+as presented hereafter.
+The MLRL emulates the capacitance of a ML. Its output is
+the Sen signal that timely enables the sensing of the positive
+feedback SA. Fig. 2(b) details the schematic of the positive
+feedback SA. It comprises a pair of cross-coupled inverters
+with four enable transistors (MEN1 -MEN4 ), whose gates are
+driven by Sen. MEN1 (MEN2 ) acts as header (footer) to
+connect the latch to (down to) VDD (ground). The last two
+enable transistors, MEN3 and MEN4 , are connected to the
+output terminals of the cross-coupled inverters. The sources of
+the MEN3 and MEN4 devices are connected to Vref and ML,
+respectively, while the drains are connected to the inverters
+that output MLSo and MLSo respectively.
+Overall, the MLSS operation is controlled by the PC signal.
+When PC = ‘0’, MLRL is charged to VDD , avoiding any
+
+sensing activity by the SA. The comparison starts when PC
+= ‘1’, enabling the MLRL to discharge through transistors
+MN1 and MN2. Once the MLRL voltage level drops below
+the threshold of the I1 inverter, the Sen triggers the start of the
+SA sampling. The MEN3 and MEN4 transistors will transfer
+the Vref and ML signals to the terminals of the cross-coupled
+inverters. The highest voltage level will raise a terminal to
+VDD , while the other terminal will drop down to ground. The
+role of the positive feedback SA is to compare the ML and
+Vref signals. When the ML voltage level is above Vref , the SA
+signals a match (exact or approximate). On the other hand, if
+the ML voltage falls below Vref , the SA signals a mismatch,
+as illustrated in Fig. 3. This figure also shows two particular
+cases: when Vrep is close to VDD and when Vrep is less than
+half VDD . These two examples are labeled as sampling time at
+t1 and t2 , and correspond to approximate match and mismatch
+responses, respectively. Note that lowering Vrep slows down
+the MLRL discharge, which in turn delays the Sen signal
+assertion. Therefore, the design variable (Vrep ) may provide
+an additional level of flexibility, enabling the fine-tuning of
+the sensitivity response of the approximate match.
+B. MLSS in Approximate CAM Memory Array
+The top-level architecture of the HD-CAM memory array,
+including the MLSS and peripherals, is illustrated in Fig. 4(a).
+A 32- kbit HD-CAM array, organized as 512 64-bit words,
+comprises two 256×64 memory blocks. Two replica circuits
+are built in the HD-CAM array: the replica row and the
+replica column. The replica row has 64 transistors connected in
+parallel. Note that to balance the IR drop between the MLRL
+and the 512 SAs, the MLRL is placed at the middle of the
+memory array. The replica row generates the self-timed Sen
+signal to control the positive feedback SAs. Every evaluation
+of the SA is preceded by a precharge of the MLRL to initialize
+the sensing of the 512 HD-CAM words. This ensures that the
+evaluation phase will start only after the precharge to achieve
+a correct search operation across Process-Voltage-Temperature
+(PVT) variations. The replica column serves to synchronize
+
+Vref
+
+Replica
+column
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+HDCAM
+cell
+
+HDHDCAM
+CAM cell
+cell
+
+HDCAM
+Bitcell
+
+D
+
+SA
+Delay
+cell
+
+Sen1
+
+ML1
+
+D
+
+ML3
+
+Delay
+cell
+
+clk
+
+Delay
+cell
+
+clk
+
+SA
+Sen3
+SA
+
+512×64 HD-CAM array
+
+Q
+
+Out0
+
+clk
+
+SA
+Sen2
+
+ML2
+
+Output
+circuitry
+
+Delay
+cell
+
+Sen0
+ML0
+
+Q
+
+D
+
+Q
+
+D
+
+Q
+
+Out1
+
+Out2
+
+Out3
+
+clk
+
+Replica Row
+
+Sense Amplifiers
+
+Write drivers and
+precharge circuitry
+
+HDCAM
+cell
+
+SL drivers and input circuitry
+
+Row-1
+Row-2
+Row-3
+
+SA row-1 SA row-2
+
+SA row-3
+
+Sense Amplifiers
+Replica column
+
+2.61 μm
+
+HDCAM
+cell
+
+Output
+circuitry
+
+Row Decoder
+
+Write drivers and precharge circuitry
+
+SL drivers and circuitry
+
+Delay cell
+
+PC
+
+Vrep
+MN1
+
+MN2
+
+Optional
+
+VDD VDD
+
+64-cells
+
+VDD
+PC
+
+VDD
+
+VDD
+Sen
+
+MP
+
+5.14 μm
+accounts for <1% of area
+Replica row MLRL:
+occupation of the memory array
+
+I1
+
+ML replica line (MLRL)
+
+(a)
+(b) Memory array continues...
+Fig. 4. (a) Top-level architecture of the HD-CAM memory array along with the matchline sensing scheme and peripherals. (b) Layout of the HD-CAM array
+highlighting the replica row and sense amplifiers. In the inset: the positive feedback sense amplifier layout.
+
+This work is licensed under a Creative Commons Attribution 4.0 License. For more information, see https://creativecommons.org/licenses/by/4.0/
+
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems--II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2023.3286257
+
+4
+
+the delays of the Sen signal and the SL/SL lines. This replica
+column is connected to the Sen line, and comprises 512 delay
+cells connected in parallel, as shown in Fig. 4. The delay cells
+represent the capacitance of the SL/SL lines that are connected
+along the column of the memory cell.
+The layout of the HD-CAM memory array is shown in
+Fig. 4(b). The height of three rows matches the height of the
+SA. Therefore, three SAs are placed next to each other in
+a single row, as shown in the sub block view at the top of
+the memory array. The inset shows the layout of the positive
+feedback SA, exhibiting an area footprint of 13.4 µm2 . The
+total area of the MLSS including all 512 SAs, as well as the
+replica row and column, is 0.0048 mm2 .
+
+LEO-II Board
+
+Approximate CAM
+Macro with proposed
+sensing scheme
+
+LEO-II SoC
+
+(a)
+Experimental Setup
+
+IV. E XPERIMENTAL R ESULTS
+A. Test Chip and Measurement Setup
+Fig. 5(a) shows the test board with the fabricated test chip,
+nicknamed “LEO-II”. The layout of the fabricated chip is provided on the right side of Fig. 5(a) with the approximate search
+CAM arrays highlighted among the various SoC components
+and other research projects integrated within the chip. Fig. 5(b)
+provides the main features of the 4 mm2 chip, fabricated in
+65 nm CMOS technology. The SoC features the operating
+frequency of 300 MHz at a supply voltage of 1.2 V. Fig. 5(c)
+shows our experimental setup, with an Intel Cyclone-V FPGA
+used for control and testing support during measurements.
+B. Methodology and Measurement Results
+Offline setup: First, we create a random dataset and store it
+in the HD-CAM array. Second, we build a query data set,
+which is the same dataset as the one stored in HD-CAM,
+but overlaid with random errors at a certain predefined rate
+(i.e., a certain number of bit errors in random positions per
+memory row). The error rate defines the Hamming distance
+(HD) between queries and the data stored in HD-CAM. Third,
+the MLSS is configured by setting its HD tolerance threshold
+using the design variables Veval and Vref .
+Online test: The query datawords are searched one by one in
+the HD-CAM, and the number of matches is recorded. Since
+the MLSS HD threshold is configured to tolerate said HD,
+we expect each query to match in HD-CAM. Therefore, all
+matches are true positive (T P ) results, while all mismatches
+are false negative (F N ) ones. Using these results, we can
+calculate the sensitivity of the MLSS as T P/(T P + F N ).
+Silicon measurement results of the MLSS sensitivity, for
+different Vref , Veval , and Vrep , temperature, and different silicon
+
+Control and testing
+support with Intel
+Cyclone-V FPGA
+
+(b)
+
+(c)
+
+Fig. 5. (a) LEO-II SoC board along with a top-level view of the SoC
+layout highlighting HD-CAM, the approximate search CAM equipped with
+the proposed sensing scheme. (b) Main features of the test chip. (c) Photo
+of the experimental setup. For the purposes of testing and control, an Intel
+Cyclone-V FPGA is connected to the prototyping board.
+
+samples are provided in Fig. 6. Sensitivity as a function of
+Vref is shown in Fig. 6(a) for a HD of 4 (i.e., 4 bit errors in
+random positions in each HD-CAM row). Vrep = Veval , and
+Veval is varied between 0.6 V and 1.0 V. For lower values
+of Vref , the MLSS sensitivity is 100%, meaning that MLSS
+tolerates the HD of 4 and correctly resolves the compare
+results. With increasing Vref , the MLSS sensitivity diminishes,
+meaning some matches are falsely registered as mismatches.
+The threshold Vref (i.e., the highest Vref at which the MLSS
+sensitivity is still 100%) depends on Veval . The lower the Veval ,
+the higher the threshold Vref .
+Fig. 6(b) shows the MLSS sensitivity as a function of HD
+for Vref = 0.8 V and Veval = 0.6. The highest HD for which
+the MLSS sensitivity is still 100% (refer to the highlighted
+region), marks the HD tolerance threshold of the MLSS. The
+higher (lower) the Veval or Vref , the lower (higher) the HD
+tolerance threshold.
+We also analyze the MLSS susceptibility to sampling time
+variation, to model which we vary the Vrep . Fig. 6(c) shows
+the MLSS sensitivity as function of Vref for VDD of 1.2 V
+and different Vrep values. Two sets of measurement results
+are shown: for Veval of 1 V and 0.6 V. For Veval of 1 V, the
+sample timing variation shows a very little effect on the MLSS
+
+TABLE I
+C OMPARISON BETWEEN THE PROPOSED DESIGN AND OTHER POSSIBLE SENSING SCHEMES COMPATIBLE WITH H AMMING D ISTANCE CAM
+Design
+[13]
+[12]
+[11]
+[14]
+This work
+Fabricated
+No
+No
+No
+No
+Yes (65 nm)
+HD Tolerated
+Low
+Low
+Low
+High
+High
+Counters +
+NAND match-line
+StrongARM
+Replica circuitry +
+Sensing Scheme
+Comparator
+comparators
+organization
+comparator
+positive feedback SA
+High
+High
+Medium–High
+High
+Low
+Design Complexity (Precise device and circuit (Encoder, dedicated ML (Error-correcting code (Sizing, control circuitry, (Replica circuitry
+sizing, and sampling time) scheme and comparator)
+scheme)
+and precise sampling
+controlling a SA)
+Area overhead
+Large
+Large
+Large
+Large
+Small
+PVT Stability
+Low
+Medium–High
+–†
+High*
+High*
+† Not enough circuit information was reported.
+∗ Flexibility to adjust the HD tolerance threshold.
+
+This work is licensed under a Creative Commons Attribution 4.0 License. For more information, see https://creativecommons.org/licenses/by/4.0/
+
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems--II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2023.3286257
+
+5
+
+Vref = 0.8
+
+Sensitivity (%)
+
+Vrep= Veval
+VDD = 1.2 V
+HD = 4
+
+40
+
+Veval= 0.6 V
+Veval= 0.8 V
+
+20
+
+(a)
+
+0
+
+Veval= 1.0 V
++Veval
+
+0.6
+
+0.8
+
+1.0
+
+Sampling time sensitivity
+
+Sensitivity (%)
+
+80
+
+Veval =
+Veval = 1.0 V
+
+0.6 V
+VDD =
+
+60 VDD = 1.2 V
+
+1.2 V
+Vrep = 0.6 V
+Vrep = 0.8 V
+Vrep = 1.0 V
+Vrep = 1.2 V
+
+0
+
+(c)
+
+0.6
+
+0.8
+
+40
+
+̶ Vref | eval
+
+20 +V
+
+V. C ONCLUSION
+
+This brief introduced a low-complexity, scalable, and areaefficient matchline sensing scheme for approximate search
+CAM based on tunable matchline discharge. Our circuit was
+1.2
+0 4 8 12 16 20
+fabricated as part of a 65 nm test chip and evaluated through
+HD
+post-silicon testing and measurements. The proposed sensing
+Veval = 0.6 V
+100
+scheme exhibits high sensitivity over a wide range of HDs
+Vdd = 1.2 V
+Temperature
+98
+between the queries and stored data. Testing results show that
+variations @ HD = 2
+96
+the proposed design can flexibly adjust the tolerance threshold,
+94
+while exhibiting very limited susceptibility to sampling time,
+92
+temperature, and process variations. The proposed design
+(d)
+90
+offers an efficient, low-complexity and robust alternative to
+Temperature
+state-of-the-art approximate search CAM sensing approaches.
+100.2
+
+100
+
+20
+
+Vref= 0.8 V
+100%
+sensitivity
+region
+ref | eval
+
+0 (b)
+
+Vref (V)
+
+40
+
+Vrep= Veval= 0.6 V
+
+60
+
+1.0
+
+Vref (V)
+
+1.2
+
+10
+0
+10
+0
+10
+0
+10
+0
+10
+0
+99
+.6
+99
+.6
+99
+.6
+
+60
+
+80
+
+range of HDs [14]. To our knowledge, none of these stateof-the-art designs have been silicon-proven. In contrast, the
+proposed MLSS has been demonstrated, by means of silicon
+prototyping and measurements, to provide an efficient lowcomplexity and low-cost solution for the tunable matchline
+discharge rate-based approximate search CAM.
+
+14 °C
+27 °C
+50 °C
+75 °C
+90 °C
+92 °C
+103 °C
+110 °C
+
+80
+
+̶ Vref | eval
+100
+MLSS
++V
+ref
+|
+eval
+Silicon measurements
+
+Sensitivity (%) Sensitivity
+(%)
+Sensitivity(%)
+
+Sensitivity (%)
+
+100
+
+Die-to-die variability
+
+100.0
+
+Max
+
+99.8
+
+mean
+
+HD = 4
+99.6 @ T = 25 °C
+
+99.4
+99.2
+
+# Chips = 5
+
+VDD = 1.2V
+Vref = 0.8V
+Min
+
+(e)
+
+Vrep = Veval= 0.6V
+
+Fig. 6. Measurement results of the MLSS sensitivity for different voltages
+and temperature variations. Sensitivity as a function of: (a) Vref and Veval , (b)
+HD for Veval = 0.6 V and Vref = 0.8 V, (c) Vref for different evaluation Vrep ,
+(d) temperature. (e) Die-to-die variability box plot of sensitivity.
+
+sensitivity. For Veval of 0.6 V, this variation is higher mainly at
+Vrep of 0.6 V. Overall, the susceptibility to the sampling time
+variation is limited over a wide range of Veval and Vref .
+Finally, we also analyze the MLSS temperature and process
+variability (shown in Fig. 6(d, e)), where about 100% sensitivity is maintained for a wide range of temperatures, and across
+5 different chips, respectively. Note that dynamic adjustment
+of the MLSS design variables effectively resolves the issue
+when significant PVT variations adversely affect the target HD
+tolerance.
+C. Related Work and Comparison with State-Of-The-Art
+Table I qualitatively compares the proposed matchline sensing scheme with other sensing approaches compatible with approximate search CAMs. These approximate matching MLSSs
+have a large area footprint, can only tolerate a limited HD, and
+present a high degree of design complexity. Garzón et al. [14]
+require a complex sizing process and extra peripherals. Krishnan et al. [11] use an analog comparator and additional
+circuitry. Efthymiou [12] requires an encoder for parity bits,
+a dedicated ML scheme, and an embedded comparator in each
+cell. Imani et al. [13] use delay lines at the clock inputs of
+four SAs per match line, as well as precise device and circuit
+sizing. The StrongARM comparator, used in [14], as well as
+the proposed MLSS, assure better PVT stability, mainly due
+to the flexibility to adjust the tolerance threshold to a wide
+
+R EFERENCES
+[1] K. Pagiamtzis and A. Sheikholeslami, “Content-addressable memory
+(CAM) circuits and architectures: a tutorial and survey,” IEEE Journal
+of Solid-State Circuits, vol. 41, no. 3, pp. 712–727, 2006.
+[2] K. Pagiamtzis et al., “A Soft-Error Tolerant Content-Addressable Memory (CAM) Using An Error-Correcting-Match Scheme,” in IEEE Custom
+Integrated Circuits Conference 2006, 2006, pp. 301–304.
+[3] M. Imani et al., “ACAM: Approximate Computing Based on Adaptive
+Associative Memory with Online Learning,” in Proc. of the 2016 Int.
+Symp. on Low Power Electronics and Design, 2016, p. 162–167.
+[4] M. Ali et al., “RAMANN: In-SRAM Differentiable Memory Computations for Memory-Augmented Neural Networks,” in Proc. of the
+ACM/IEEE Int. Symp. on Low Power Electr. and Design, 2020, p. 61–66.
+[5] M. M. Taha and C. Teuscher, “Approximate memristive in-memory
+Hamming distance circuit,” ACM Journal on Emerging Technologies
+in Computing Systems (JETC), vol. 16, no. 2, pp. 1–14, 2020.
+[6] R. Kaplan et al., “BioSEAL: In-Memory Biological Sequence Alignment
+Accelerator for Large-Scale Genomic Data,” in Proceedings of the 13th
+ACM International Systems and Storage Conference, 2020, pp. 36–48.
+[7] B. Song et al., “A 10T-4MTJ nonvolatile ternary CAM cell for reliable
+search operation and a compact area,” IEEE Transactions on Circuits
+and Systems II: Express Briefs, vol. 64, no. 6, pp. 700–704, 2016.
+[8] E.
+Garzón
+et
+al.,
+“AM4 :
+MRAM
+crossbar
+based
+CAM/TCAM/ACAM/AP for in-memory computing,” IEEE J. Emerg.
+Sel. Top. Circuits Syst., vol. 13, no. 1, pp. 408–421, 2023.
+[9] Z. Yang et al., “A Novel Computing-in-Memory Platform Based on
+Hybrid Spintronic/CMOS Memory,” IEEE Transactions on Electron
+Devices, vol. 69, no. 4, pp. 1698–1705, 2022.
+[10] N. Mohan et al., “A low-power ternary CAM with positive-feedback
+match-line sense amplifiers,” IEEE Trans. Circuits Syst. I, vol. 56, no. 3,
+pp. 566–573, 2008.
+[11] S. C. Krishnan et al., “Error-Correcting Codes for Ternary Content
+Addressable Memories,” IEEE Transactions on Computers, vol. 58,
+no. 2, pp. 275–279, 2009.
+[12] A. Efthymiou, “An error tolerant CAM with nand match-line organization,” in Proceedings of the 23rd ACM international conference on
+Great lakes symposium on VLSI, 2013, pp. 257–262.
+[13] M. Imani et al., “Exploring hyperdimensional associative memory,” in
+2017 IEEE International Symposium on High Performance Computer
+Architecture (HPCA). IEEE, 2017, pp. 445–456.
+[14] E. Garzón et al., “Hamming Distance Tolerant Content-Addressable
+Memory (HD-CAM) for DNA Classification,” IEEE Access, vol. 10,
+pp. 28 080–28 093, 2022.
+[15] R. Hanhan et al., “EDAM: edit distance tolerant approximate matching
+content addressable memory,” in Proceedings of the 49th Annual International Symposium on Computer Architecture, 2022, pp. 495–507.
+
+This work is licensed under a Creative Commons Attribution 4.0 License. For more information, see https://creativecommons.org/licenses/by/4.0/
+
+

@@ -1,0 +1,512 @@
+                                                                                                                                                1
+
+
+
+
+Watermarking-based Defense Mechanism in LFC of
+ Electricity Grids Compromised by Covert Attacks
+ Soroush Oshnoei, Mohammad Reza Aghamohammadi, Jalal Heidari, and Mohammad Hassan Khooban, Senior
+                                        Member, IEEE
+
+
+
+   Abstract—This paper focuses on improving the load frequency                  effective versus stealth cyberattacks. Thus, more research is
+control (LFC) performance of a multi-area power system com-                     needed on stealthy attacks in LFC systems. The covert attack is
+promised by covert attacks. In this regard, a novel detection tech-             a stealth attack strategy that can severely compromise the sys-
+nique based on the multiplicative watermarking and Luenberger
+observer is developed to identify covert attacks applied to the                 tem’s performance without detection. Accordingly, this paper
+system. In the presented detection strategy, a special watermark                studies the LFC performance of power systems compromised
+generator filter produces a dummy signal on the original signal                 by covert threats and proposes a defense mechanism against
+transmitted through the insecure communication channels. In                     these attacks.
+addition, there is a watermark equalization filter at the end of                   Despite the presence of detection logic in the energy man-
+the communication channel, which cancels out the impact of
+the watermark signal, resulting in the recovery of the original                 agement systems of the LFC application, various stealthy
+signal. A PI controller tuned by the deep reinforcement learning                attacks with comprehensive plant dynamics knowledge have
+algorithm and dependent on the Luenberger observer is utilized                  remained undetected [9]. The covert attack is regarded as
+as the secondary frequency control strategy to mitigate the                     one of those stealthy attacks capable of disruption and dis-
+impacts of the convert attacks. The OPAL-RT real-time emulator-                 closure with a high level of model knowledge. When an
+based results show the proposed defense strategy successfully
+detects and mitigates the covert attacks imposed on the system.                 attacker generates control actions in the covert attack setup,
+                                                                                the controller does not detect abnormalities because the covert
+   Index Terms—Load frequency control, covert attacks, multi-                   agent removes the plant actuation effect by subtracting output
+plicative watermarking, deep reinforcement learning, Luenberger
+observer, multi-area power system.                                              measurements from output responses. Moreover, the adversary
+                                                                                utilizes retained thresholds to reduce the number of false
+                                                                                alarms caused by disturbances and model uncertainties [10].
+                          I. I NTRODUCTION                                      As a result, despite the discrepancies between the attacker’s
+       Variety of closed-loop control systems, such as load                     plant model and the real system, the covert adversary remains a
+A      frequency control (LFC) with geographically distributed
+sensing and actuation components, is employed to operate
+                                                                                hidden cybernetic ally. A better description of the attack would
+                                                                                be that attackers first try to interfere with the network channel
+power systems [1]. Wide-area monitoring system-based ap-                        between the controller and actuator to disrupt the power sys-
+plications are used to obtain the system’s real-time data under                 tem’s performance. After that, some carefully planned signals
+different conditions [2], [3]. Automatic generation control                     are applied to the sensor or controller channel to eliminate
+(AGC) service, as the most important section of the LFC                         input attack effects [11]. In this way, even though the power
+application, controls the frequency and tie-line power of elec-                 system may have been compromised, the measurement signals
+tricity grids using remote data transmitted by communication                    remain the same, enabling these covert attacks undetected by
+networks. Due to the presence of the AGC service in LFC                         the normal detection techniques described above.
+schemes, power systems are more susceptible to cyberattacks,                       To date, only a few techniques have been developed to iden-
+compromising the system’s stability [4], [5].                                   tify covert attacks. In [12], the authors proposed a detection
+   In recent years, cyber-security has become an increasingly                   scheme consisting of model-based distributed estimators to
+important topic for LFC systems, and a number of literature                     identify local covert attacks in linear interconnected systems.
+have been accomplished to study the implications and design                     A two-module distributed monitoring architecture comprising
+countermeasures regarding different cyberattacks, including                     a set of unknown input observers was proposed in [13] to
+denial-of-service [5], and false data injection [6], [7] attacks. In            detect covert attacks applied to a DC microgrid considering
+[8], a survey on learning-based methods has been presented to                   the ideality of the communication channel. An unsupervised
+detect cyberattacks in communication network-based systems.                     machine learning-based strategy named i-Forest was presented
+The defense mechanisms presented in the literature are not                      in [14] to identify covert attacks imposed on communication
+                                                                                networks of power systems. The authors in [15] mentioned that
+   Soroush Oshnoei and Mohammad Reza Aghamohammadi are with the                 data-driven-based techniques are not useful when the bogus
+Faculty of Electrical Engineering, Shahid Beheshti University, Tehran, Iran.
+   Jalal Heidari is with the Department of Electromechanical, Systems & Metal   measurement data vary slightly from learned standard use
+Engineering, Ghent University, 9052 Ghent, Belgium.                             patterns. The authors in [16] proposed an intrusion detection
+   Mohammad-Hassan Khooban is with the Department of Electrical and             scheme based on the GPS data and offline maps for intelligent
+Computer Engineering, Aarhus University, Aarhus, Denmark.
+   emails:s oshnoei@sbu.ac.ir;                  m aghamohammadi@sbu.ac.ir;      transportation systems compromised by covert attacks. In [11],
+jalal.heidari@ugent.be; khooban@ece.au.dk                                       a recursive watermarking-based scheme was proposed to iden-
+                                                                                                                                                                                                                                                           2
+
+
+
+tify covert attacks in an industrial cyber-physical system. The            respectively. The mathematical equations related to the ith
+available identification strategies exhibit drawbacks, including           control area state variables are written as follows:
+performance failure and identification delay.                                 
+                                                                                   .              PG
+                                                                                ∆P tiei = 2π             Tij (∆fi − ∆fj )
+                                                                              
+   Regarding the inability of available methods to encounter
+                                                                              
+                                                                              
+                                                                              
+                                                                                               j=1,i̸≡j
+stealth cyberattacks and the importance of preserving the grid’s               .
+                                                                              
+frequency in a permissible range under these attacks, this paper                ∆f i = M1i (∆Pt,i − ∆PL,i − ∆Ptie,i − Di ∆fi )     (2)
+                                                                                   .
+                                                                                            1                     1
+                                                                                ∆ P      =      (u  −  ∆P      −    ∆f  )
+                                                                              
+investigates the LFC performance of an interconnected power
+                                                                              
+                                                                              
+                                                                                    g,i   Tg,i   i        g,i   Ri   i
+                                                                              ∆P. = 1 ∆P − 1 ∆P
+                                                                              
+grid under stealth covert attacks. In this regard, covert attacks
+                                                                              
+                                                                                         t,i                      Tt,i                          g,i            Tt,i                   t,i
+are designed on a two-area LFC system. Moreover, a defense
+mechanism based on dynamic multiplicative watermarking                     In these differential equations, Tt,i , the turbine time constant,
+technique is proposed to encounter covert attacks. In the                  Tg,i , the governor time constant, Ri , governor speed coeffi-
+proposed defense mechanism, the multiplicative watermarking                cient, Di , load damping coefficient, Mi , the generator inertia
+technique, a Luenberger observer, and a detector are employed              constant of the ith area, and Tij synchronizing coefficient are.
+to identify covert attacks. The multiplicative watermarking                ∆Ptie,i and ∆fi are changes of tie-line power and frequency
+superimposes a watermark signal on an original signal before               of the ith area, respectively. ∆Pg,i , ∆Pt,i , and ∆PL,i show the
+transmitting it over an insecure network. A reverse watermark              ith area output power variations associated with the governor,
+is also used after the watermark signal transits via an inse-              turbine, and load, respectively.
+cure network, which mitigates the watermark’s effect under                                                                                                                         Thermal Power Plant
+                                                                                                                                                               1
+any conditions. The motivation for containing the proposed                                                                                                     Ri
+                                                                                                                                                                                    PL ,i           Rotor inertia
+                                                                                                                                                              Droop
+                                                                                                                                                                                                      and load
+watermarking technique is to make covert attacks identifi-                                                                      ui               1      Pg ,i 1 P
+                                                                                                                                                                         t ,i                             1
+                                                                                                                                                                                                                                          Area G
+
+                                                                                                                                                                                                                              Ptie ,iG (i  j)
+                                                                                                                Actuator
+                                                                                                                                             1  sTg ,i       1  sTt ,i                             M i s  Di
+
+
+
+
+                                                                                                                                                                                                                                                     ...
+able by having them cause a defective reconstruction of the                                                                                     Governor         Turbine
+
+                                                                                                                                                                                     Ptie ,i                   f i                          Area j
+plant’s signals. Unlike all watermarking-based methods, the                                                                                                Area i Plant
+                                                                                                                                                                                                                                  ...    Ptie ,ij
+multiplicative watermarking-based methods generally have a                                                      Watermark
+                                                                                                                Remover 2                          Attacker
+                                                                                                                                                                                                                  Watermark
+                                                                                                                                                                                                                  Generator 1
+                                                                                                                                                                                                                                Watermark
+                                                                                                                                                                                                                                Generator 1
+                                                                                                                                                                                                                                   ...
+higher capacity for embedding information than other meth-                                                                                                                                                                                     Attacker
+                                                                                                                                                   Communication Channels
+ods. Moreover, adversaries in this method cannot identify or
+                                                                                                                                                      Attacker                 Area i Control Center                             ...
+copy the watermark parameters for estimating or removing the                        (st , at , rt , st 1 )     Watermark
+                                                                                                                Generator 2
+                                                                                                                                                                           ACEi                 Bi
+                                                                                                                                                                                                                  Watermark
+                                                                                                                                                                                                                  Remover 1
+                                                                                                                                                                                                                                Watermark
+                                                                                                                                                                                                                                Remover 1
+                                                                                     Critic Network       Actor Network
+
+watermark signal and compromising the signal integrity. A Lu-
+                                                           DRL Algorithm               Current Net            Current Net                 PI Controller
+
+
+
+
+                                                                                                                                                                                                          ...
+                                                                                                                                           at                       yri [k ]  
+                                                                                                                                                            ˆ
+                                                                                                                                                           ACE                       Ptie ,i
+enberger observer is also designed in the proposed mechanism                                Soft update           Soft update
+                                                                                                                                               Luenberger
+                                                                                                                                                          i
+                                                                                                                                                             yri [k ]  
+
+                                                                                                                                            Observer&Detector
+to provide the system’s state estimation and residual signal.                                                                        Ne
+                                                                                                                                                                      Attack Detection
+
+                                                                                        Target Net             Target Net                 DDPG Algorithm
+A deep reinforcement learning (DRL)-based PI controller                                                       Replay buffer
+
+
+
+is also used in the AGC loop for frequency regulation of
+the system compromised by covert attacks. The proposed                     Fig. 1. Block diagram of the ith control area for a G-area LFC system
+defense mechanism has the capability of coping with other
+stealth cyberattacks and can be applied to different real-world             III. D ESIGN OF C OVERT ATTACKS ON THE LFC S YSTEM
+applications.                                                                 Fig. 2 depicts the description of the covert attack on the
+                                                                           cyber-physical system. According to this figure, the attack
+             II. S TUDIED LFC S YSTEM M ODEL                               signal ua (t) is injected into the watermarked control signal to
+   Fig. 1 depicts the block diagram of the ith control area,               disrupt the operation of the system, whereas the attack signal
+comprised of the thermal generation unit for a G-area LFC                  ya (t) is injected into the watermarked output signals to remove
+system. Studies accomplished on the LFC issues have widely                 the impact of ua (t) on the measurement signal. The modeling
+used linearized models to analyze power system frequency                   of covert attacks can be represented by:
+                                                                                                (
+behavior. The linearized LFC system model consists of a                                            ũ(t) = u(t) + ua (t)
+steam turbine, governor, rotating mass, and an AGC loop, as                                                                              (3)
+                                                                                                   ỹ(t) = y(t) − ya (t)
+illustrated in Fig. 1. The mathematical model of the ith control
+area can be expressed by the following:                                    where ũ(t) and ỹ(t) are the control signal submitted to
+                 (.                                                        the physical system and measurement output signal obtained
+                    xi (t) = Ai xi (t) + Bi ui (t)                         by the control center, respectively. The main hardship in
+                                                             (1)
+                    yi (t) = Ci xi (t)                                     identifying such attacks is that the attacker can design ua (t)
+                                                                           and ya (t) to make the attack impact covert and not different
+In this model, Ai , Bi , and Ci are the ith control area state-            from the expected behavior. The attacker aims to configure
+                                                          T
+space matrices. xi (t) = [∆Ptie,i ∆fi ∆Pg,i ∆Pt,i ] is the                 the disruption ua (t) such that the plant brings to some states
+                                         th
+vector of the state variables in the i control area. yi (t) =              determined by the attacker. Simultaneously, the effect of the
+              T
+[∆Ptie,i ∆fi ] shows the vector of the ith control area output             attack ua (t) on the watermarked output signals yg is canceled
+variables, and ui (t) is the vector of the ith area control signal.        by ya (t). To this end, the attacker uses the dynamic system
+The process and measurement noises are also considered in                  given by (4):
+modeling the power system dynamic as distributed Gaussian                                  (.
+random variables with zero mean and covariance matrices                                      x̃i (t) = Ai x̃i (t) + Bi ua (t)
+                                                                                                                                       (4)
+Cov(wi ) = diag[1.5e−5 0 0 0] and Cov(vi ) = [6e−6 I2 ],                                     ya (t) = Ci x̃i (t)
+                                                                                                                                                                               3
+
+
+
+where x̃i (t) shows the state vector of the dynamic system                               P , and V filters, respectively. The watermarking filters and
+used by the attacker (Attacker model of the plant in Fig. 2).                            their equalizing are described as discrete-time linear systems
+Since the disruption ua (t) applied by the attacker is arbitrary,                        with series interconnection as follows:
+its features are generally unclear to defenders. Accordingly,                                         (
+                                                                                                        xϕ [k + 1] = Aϕ xϕ [k] + Bϕ ηϕ [k]
+model (4) is satisfactory for defining a covert attacker. The                                                                                        (6)
+state-space equations of the system (1) under covert attacks                                            λϕ [k] = Cϕ xϕ [k] + Dϕ ηϕ [k]
+can be represented as follows:
+          (.                                                                             where ϕ ∈ {g, w, p, v} indicates whether the state, input,
+            x̆i (t) = Ai x̆i (t) + Bi (ui (t) + ua,i (t))                                or output vectors are related to G, W , P , and V filters.
+                                                              (5)                        xϕ , ηϕ , and λϕ show the vectors of the state, input, and
+            ỹi (t) = Ci x̆i (t) − ya,i (t)
+                                                                                         output relevant to the watermark filters, respectively. Aϕ , Bϕ ,
+In this model, x̆(t) and ỹi (t) show the vector of the state                            Cϕ , Dϕ are the parameters of the watermark generator and
+and output variables related to system (1) under covert attack.                          remover filters. These parameters must provide stability and
+ya,i (t) is generated by (4) to cancel the impact of the input                           invertibility between G and W , and P and V . The systems
+attack ua,i (t) against measurement signal.                                              are stable and square:
+   Supposing that the adversary has a thorough knowledge                                           (          Communication   .
+about the system (matrices Ai , Bi , Ci ) and the attack begins
+                                                                                                             ⊤ network
+                                                                                                     [ηg⊤ , ηw                    ⊤
+                                                                                                               , ηp⊤ , ηv⊤ ]⊤ = [ym , ȳg⊤ , u⊤     ⊤ ⊤
+                                                                                                                                              c , ūp ]
+                                                                                                                               .                        (7)
+at time tc ≥ 0, the following conditions will illustrate the                                         [λ⊤     ⊤     ⊤      ⊤ ⊤     ⊤ ⊤         ⊤
+                                                                                                        g , λw , λp , λv ] = [yg , yw , up , uv ]
+                                                                                                                                                    ⊤ ⊤
+                                                                                                                                                                          B1
+covert attack’s stealthiness [12]. 1) If matrix A is Hurwitz,                                                                                  Measurement
+                                                                                         Moreover, all matrices have appropriate dimensions. The de-
+the attacker can suitably design the ya (t) to produce the covert
+                                                                                         sign of the G and P filters is such that they are stable inverses
+attack as t → 0. 2) If the attacker determines x̃i (tc ) = 0 then                                                                            .
+                                                                                         of W and V filters, respectively; hence W = G−1 and
+the attack is covert for all instants and A.                                                .   −1                                                    Rotor inertia and load
+                                                                                         V =P       [17]. As a result, when there is no attack, we have:
+                                 Plant
+   IV. D ESIGN OF THE P ROPOSED D EFENSE M ECHANISM                                                            W G = I →1 ym [k] = yw [k]
+                                                                                                                                 R
+   Fig. 2 demonstrates the proposed defense strategy structure
+                                                                                                                           i
+                                                                                                               V P = I →Droopuc [k] = uvP[k]
+                                                                                                                                           L ,i                           (8)
+                                                   Controller                                                               Pg ,i                                                       Area G
+in a cyber-physical system compromised by covert attacks. Ac-                                                     1                1 Pt ,i
+                                                                                         If an attack     ui
+                                                                                                Actuator happens   in the system,           the Eq. (8) 1is violated.Ptie,iG
+cording to this figure, the proposed defense mechanism com-                                                   1  sTg ,i       1  sT                            Di f i the
+                                                                                                                                                          M i spresents       (i  j)
+
+
+
+
+                                                                                                                                                                                             ...
+                                                                                         In the proposed strategy,
+                                                                                                               Governor
+                                                                                                                         the Luenberger
+                                                                                                                               Turbine
+                                                                                                                                      t , i    observer
+prises the dynamic multiplicative watermarking-based filters,                                                        Thermal Power Plant
+                                                                                         expected    behavior of the plant by estimating      Ptie ,i the system’s state     Area i
+a Luenberger observer, a detector Di , and a controller. The                                   Secondary
+                                                                                         variables.    Hence, excessive
+                                                                                               Controller
+                                                                                                                          Area   i Plant of the system output
+                                                                                                                              deviation
+                                                                                         responses from the expected values indicates the happening Ptie,ij                       ...
+                  Actuator             Plant                  Sensor                     of an attack on the system. To this end, the design of the
+                         uv                                       ym                     Luenberger observer is       accomplishedChannels
+                                                                                                                  Communication             as follows:
+                  Watermark                              Watermark
+                  Remover V         Communication        Generator G                            
+                    up                Channels
+                                                                 yg                             x̂i [k + 1] = Adi x̂i [k] + Bdi ui [k] + Li yri [k]
+                                                                                                
+                                   Attacker Model        ya                                        ŷmi [k] = Cdi x̂i [k] ACEi                                      Bi    (9)
+                                     of the Plant                                                                                                          Ptie ,i
+                          ua
+                                                                                                
+
+
+
+
+                                                                                                                                                                          ...
+                                                                                                   yri [k] = |ywi [k] − ŷmi [k]|
+                                                                                                
+                                                    Covert
+                                    Attack Signal
+                                                    Attack       yg
+                    up                                                                                                                                Area i Control        Center
+                                uc Controller       yw                                In this formulation, x̂i [k] and ŷmi [k] are the estimations                     xi [k]
+                  Watermark                               Watermark
+                  Generator P                             Remover W                   and ymi [k] presented by the Luenberger observer at time step
+                                   Luenberger
+                                                                                      k, respectively. The yri [k] and Li indicate the residual signal
+                                    Observer      Attack Detection                    and the observer’s gain, respectively. It is assumed that the
+                                   &Detector
+                                                                                      x̂[0] = 0. Also, the (A, C) pair should be a detectable pair.
+Fig. 2. Description of the covert attack on the cyber-physical system equipped        Considering the state estimation error e[k] = x[k] − x̂[k], the
+with multiplicative watermarking technique                                            error derivative is calculated using e[k + 1] = (A − LC)e[k].
+                                                                                                                                                         
+                                                                                      The Luenberger          gain must be specified so that 2all
+                                                                                                     Communication
+                                                                                                        network                                          s
+                                                                                                                                                               theT eigen-
+                                                                                                                                                                    12
+
+proposed multiplicative watermarking algorithm consisting of values of the matrix (A − LC) are negative real values.
+a watermark generator (filter before transmitting the original According to Eq. (9), the Luenberger observer computes the
+signal during the communication network) and a watermark             ACE     2
+                                                                           Proposed residual signal
+                                                                                                    u2
+                                                                                                           using the 1     Pg 2
+                                                                                                                           W                Pt 2 The residual
+                                                                                                                               filter1 output.                   1 signal
+                                                                         control scheme
+                                                                                           Actuator
+                                                                                                                 1  sT          1  sT                                         f 2
+remover (filter after transmitting the original signal during becomes a significant value                                                                  M  2  on
+                                                                                                                                                                s    D2 the
+                                                                                                                        g2
+                                                                                                                                if an attack is imposed
+                                                                                                                                        t 2
+                                                                                                                Governor          Turbine               Rotor inertia and load
+the communication network) is considered for measurement signals transmitted during the                                     Droopbecause the watermark remover
+                                                                                                                                                  PL 2
+and control signals. Therefore, a watermark generator              B2 G along filter W cannot reconstruct the                 1     original signal. Therefore, an
+with a watermark remover W and a watermark generator P imperfect signal is sent to the detector. After that, the detector    R   2
+                                                                                                         Communication
+                                                                                                                                                                        Measurement
+along with a watermark remover V are placed in the path of Di compares thenetwork                             residual signal yri [k] with a preset threshold
+transmitting the measurement and control signals, respectively. value α to complete the attack detection process using the
+It should be noted that the watermark generator and remover following equation:
+filters are the same for measurement signals. yg , yw , up , and                                 (
+uv disclose the outputs related to the G, W , P , and V filters,                                    yri [k] ≥ α , Occurrence of an attack
+                                                                                          Di :                                                                           (10)
+respectively. ym , ȳg , uc , and ūp show the inputs of the G, W ,                                 yri [k] < α , N o attack
+                                                                                                                                              4
+
+
+
+α is chosen as the maximum residual signal value plus a              This paper neglects time delays as an assumption to provide
+security margin.                                                     a precise analysis of the proposed defense mechanism’s effec-
+   After the attack detection (yri [k] ≥ α), the proposed detec-     tiveness under covert attacks. The LFC system equipped with
+tion strategy submits the estimated area control error (ACE)         the developed control structure is implemented on the OPAL-
+signal to the secondary controller instead of the measured           RT device to prove the practicability of the presented scheme
+ACE signal, as illustrated in Fig. 1. This paper employs a           in real-time.
+                                                                             q      Moreover, the root-mean-square error (RMSE)
+DRL-based PI controller as the secondary controller, ensuring                         PNs             2
+                                                                     index ( N1s × k=1        ||h(k)|| , where h(k) and Ns show the
+frequency deviations are decreased under covert attacks. DRL         frequency changes and the number of the simulation’s samples,
+algorithm employs a trained agent to train a machine to learn a      respectively,) and
+specific task in an unknown dynamic environment. Based on a                           R t the index of the integral of time absolute
+                                                                     error (ITAE) ( 0 |ACEi |dt) are computed to numerically
+state-action mapping policy st , agents select the most efficient    assess the performance of the considered defense methods.
+action (at ) within the action space (A) for the current state of    The threshold value α is equal to 0.004. The parameters
+the environment (π(at |st )). The agent is given a reward rt         of the studied LFC system are as: Tg1 = Tg2 = 0.08s,
+after every action, after which the environment is changed to        Tt1 = Tt2 = 0.3s, T12 = 0.545p.u., M1 = M2 = 0.167s,
+a new state st+1 after every action. For all states, this process    D1 = D2 = 0.0083p.u./Hz, R1 = R2 = 2.4Hz/p.u.
+                             P∞ agents’ expectations regarding
+is conducted again to maximize                                       To implement the covert attack on the system, the attacker
+discount rewards Rt = k=0 γ k rt+k , where γ is a discount           injects the disruption ua into the communication channels as
+factor between 0 and 1 [5]. This study employs a deep deter-         pulse signals with the amplitudes of 0.1, 0.15, 0.18, and 0.2 at
+ministic policy gradient (DDPG) algorithm, which is an off-          15 < k ≤ 25, 35 < k ≤ 45, 55 < k ≤ 65, and 70 < k ≤ 80,
+policy alternative among DRL algorithms. Searching for the           respectively. Moreover, the load power changes in the range
+optimal policy using DDPG strives to increase the anticipated        of [0, 0.06] p.u.MW are randomly considered for each area.
+cumulative long-term reward. DDPG uses two critic-actor deep         The attack signal ya is produced using Eq. (4).
+neural networks with continuous state and action spaces for
+stable and robust learning. A replay buffer is also used to
+reduce the correlations of the input backgrounds. By mapping
+an environment state to a specific action, the actor-network of
+weight θµ sets the current policy µ(st |θµ ). The critic network
+is Q(st , at |θµ ), with a weight θQ . Stochastic gradient descent
+is used to update the critic network to minimize the loss
+function:
+          (
+            L(θQ ) = E(s,a) [(yt − Q(st , at |θµ ))2 ]               Fig. 3. Performance of the considered methods to detect covert attacks
+                                                              (11)
+            yt = rt (st , at ) + γQ(st+1 , µ(st |θµ )|θQ )
+In addition, the actor-network parameters are adjusted accord-          Fig. 3 demonstrates the performance of the watermarking-
+ing to the following equation:                                       based methods to detect covert attacks on the LFC system.
+         µ
+                                                                     As shown, the additive watermarking-based method cannot
+ ∇θµ J θ ≈ Est ∼ρβ [∇a Q(s, a|θQ )|a=µθ (s) ∇θµ µ(s|θµ )] (12)       successfully detect the designed attacks. For example, the
+                                                                     detector output (blue curve) at 15 < k ≤ 25 is below the
+where β indicates a specific policy to the current policy π,
+                                                                     threshold value (red line). Therefore, the attack is not detected
+while ρ represents the state distribution discount. The target
+                                                                     during this time range. In contrast, the detector output of the
+actor network and target critic network follow the trained
+                                                                     proposed method has surpassed the threshold value’s red line,
+networks utilizing Eq. (13):
+                                                                     revealing the attacks happening in the system. Accordingly, the
+    ′                       ′   ′                      ′
+ θQ ← νθQ + (1 − ν)θQ , θµ ← νθµ + (1 − ν)θµ , ν ≪ 1                 proposed method successfully detects the designed attacks. In
+                                                  (13)               the additive watermarking-based methods, there is a possibility
+                                                                     that the noise related to the Gaussian variable exceeds the
+An exploration noise Ne is added to actor actions to ease the
+                                                                     threshold value, and the detector mistakenly identifies the
+training performance through the suboptimal path neighbor-
+                                                                     noise as an attack. In addition, the additive watermarking-
+hood space. A reward as r = −[|Bi ∆fi |+|∆Ptie,i |] is defined
+                                                                     based approaches apply a more considerable computational
+to ensure the DDPG algorithm has optimal performance.
+                                                                     burden to the system. Fig. 4 shows the output responses related
+                                                                     to the watermark generator P and watermark remover V for
+                  V. S IMULATION R ESULTS                            control signals in the proposed method under covert attacks.
+   The proposed scheme performance is compared with a                According to these figures, the output of the watermark
+conventional PI controller and an additive watermarking-based        generator filter before and after the communication channel
+defense method, including the additive watermarking tech-            (P and ∼ P ) is different during attacks imposed on the
+nique, a Luenberger observer, and a detector. The watermark          communication channels. Accordingly, the multiplication of
+signal considered in this paper is a Gaussian white noise with       the watermarking filter and its equalizing filter (P V ) is not 1
+zero-mean and standard deviation σ = 25 × 10−4 . More detail         in the periods of the occurrence of the attacks. The dynamic
+about this type of watermarking method is available in [18].         responses obtained by the considered defense methods are
+                                                                                                                                                      5
+
+
+
+depicted in Figs. 5 (a)-(c). As shown, the proposed method                                              R EFERENCES
+presents much more suitable responses than the other strategies            [1] S. Oshnoei, M. R. Aghamohammadi, S. Oshnoei, S. Sahoo, A. Fathol-
+from viewpoints, decreasing the settling time and oscillations’                lahi, and M. H. Khooban, “A novel virtual inertia control strategy for
+amplitude under covert attacks. Also, the RMSE values of                       frequency regulation of islanded microgrid using two-layer multiple
+                                                                               model predictive control,” Applied Energy, vol. 343, p. 121233, 2023.
+the frequency changes and the area’s ITAE values for the                   [2] H. M. Khalid, M. M. Qasaymeh, S. M. Muyeen, M. S. E. Moursi,
+considered methods are indicated in Table I. Based on this                     A. M. Foley, T. O. Sweidan, and P. Sanjeevikumar, “Wams operations in
+table, the proposed scheme presents much smaller RMSE and                      power grids: A track fusion-based mixture density estimation-driven grid
+                                                                               resilient approach toward cyberattacks,” IEEE Systems Journal, vol. 17,
+ITAE values than the other defense methods. Therefore, the                     no. 3, pp. 3950–3961, 2023.
+proposed defense strategy has the capability of detecting and              [3] H. M. Khalid, F. Flitti, M. S. Mahmoud, M. M. Hamdan, S. Muyeen, and
+mitigating covert attacks.                                                     Z. Y. Dong, “Wide area monitoring system operations in modern power
+                                                                               grids: A median regression function-based state estimation approach
+                                                                               towards cyber attacks,” Sustainable Energy, Grids and Networks, vol. 34,
+     (a)                                          (b)
+                                                                               p. 101009, 2023.
+                                                                           [4] H. Shen, D. Wang, Z. Wang, J. H. Park, and K. Shi, “H load frequency
+                                                                               control for power systems under communication delays: An event-
+                                                                               triggered dynamic output feedback scheme,” IEEE Transactions on
+                                                                               Circuits and Systems II: Express Briefs, vol. 69, no. 8, pp. 3495–3499,
+                                                                               2022.
+                                (c)
+                                                                           [5] J. Heidary, S. Oshnoei, M. Gheisarnejad, M. R. Khalghani, and M. H.
+                                                                               Khooban, “Shipboard microgrid frequency control based on machine
+                                                                               learning under hybrid cyberattacks,” IEEE Transactions on Industrial
+                                                                               Electronics, pp. 1–11, 2023.
+                                                                           [6] S. Weng, P. Weng, B. Chen, S. Liu, and L. Yu, “Distributed secure
+                                                                               estimation against unknown fdi attacks and load deviation in multi-area
+                                                                               power systems,” IEEE Transactions on Circuits and Systems II: Express
+                                                                               Briefs, vol. 69, no. 6, pp. 3007–3011, 2022.
+Fig. 4. Response of the watermark generator and remover filters P and V
+                                                                           [7] S. Oshnoei, M. R. Aghamohammadi, and M.-H. Khooban, “Model-free
+                                                                               predictive frequency control under sensor and actuator fdi attacks,” IEEE
+                                                                               Transactions on Circuits and Systems II: Express Briefs, pp. 1–1, 2023.
+                                                                           [8] U. Inayat, M. F. Zia, S. Mahmood, H. M. Khalid, and M. Benbouzid,
+    (a)
+                                            (b)                                “Learning-based methods for cyber attacks detection in iot systems: A
+                                                                               survey on methods, analysis, and future prospects,” Electronics, vol. 11,
+                                                                               no. 9, p. 1502, 2022.
+                                                                           [9] A. Amulya, K. S. Swarup, and R. Ramanathan, “Multivariate spec-
+                                                                               tral analysis and hypothesis testing-based robust attack detection for
+                          (c)
+                                                                               multiarea frequency control,” IEEE Transactions on Systems, Man, and
+                                                                               Cybernetics: Systems, vol. 53, no. 8, pp. 4636–4648, 2023.
+                                                                          [10] J. He and X. Gong, “Resilient path planning of unmanned aerial vehicles
+                                                                               against covert attacks on ultra-wideband sensors,” IEEE Transactions on
+                                                                               Industrial Informatics, vol. 19, no. 11, pp. 10 892–10 900, 2023.
+                                                                          [11] L. Ma, Z. Chu, C. Yang, G. Wang, and W. Dai, “Recursive
+                                                                               watermarking-based transient covert attack detection for the industrial
+Fig. 5. Dynamic responses obtained by the considered defense methods           cps,” IEEE Transactions on Information Forensics and Security, vol. 18,
+                                                                               pp. 1709–1719, 2023.
+                                                                          [12] A. Barboni, H. Rezaee, F. Boem, and T. Parisini, “Detection of covert
+                                                                               cyber-attacks in interconnected systems: A distributed model-based
+                                 TABLE I                                       approach,” IEEE Transactions on Automatic Control, vol. 65, no. 9,
+          N UMERICAL A NALYSIS OF C ONSIDERED D EFENSE M ETHODS                pp. 3728–3741, 2020.
+                                                                          [13] A. J. Gallo, M. S. Turan, F. Boem, T. Parisini, and G. Ferrari-Trecate,
+                                          RM SE             IT AE              “A distributed cyber-attack detection scheme with application to dc
+            Method                     ∆f1     ∆f2      Area1 Area2            microgrids,” IEEE Transactions on Automatic Control, vol. 65, no. 9,
+  Only Secondary Controller           0.0473  0.0468    0.362    0.331         pp. 3800–3815, 2020.
+ Additive watermarking Method         0.0356  0.0364    0.257    0.223    [14] S. Ahmed, Y. Lee, S.-H. Hyun, and I. Koo, “Unsupervised machine
+        Proposed Method               0.0239  0.0207    0.118    0.073         learning-based detection of covert data integrity assault in smart grid
+                                                                               networks utilizing isolation forest,” IEEE Transactions on Information
+                                                                               Forensics and Security, vol. 14, no. 10, pp. 2765–2777, 2019.
+                      VI. C ONCLUSION                                     [15] L. Cui, L. Guo, L. Gao, B. Cai, Y. Qu, Y. Zhou, and S. Yu, “A covert
+   This research investigated the LFC performance of a two-                    electricity-theft cyberattack against machine learning-based detection
+                                                                               models,” IEEE Transactions on Industrial Informatics, vol. 18, no. 11,
+area power network against covert attacks. Accordingly, the                    pp. 7824–7833, 2021.
+combination of the Luenberger observer and multiplicative                 [16] F. Farivar, M. S. Haghighi, A. Jolfaei, and S. Wen, “Covert attacks
+watermarking-based technique was proposed to detect covert                     through adversarial learning: Study of lane keeping attacks on the safety
+                                                                               of autonomous vehicles,” IEEE/ASME Transactions on Mechatronics,
+attacks. A DDPG-based PI controller was also employed as                       vol. 26, no. 3, pp. 1350–1357, 2021.
+the secondary controller to regulate the system’s frequency.              [17] R. M. Ferrari and A. M. Teixeira, “A switching multiplicative water-
+The real-time simulation results illustrated that the proposed                 marking scheme for detection of stealthy cyber-attacks,” IEEE Transac-
+                                                                               tions on Automatic Control, vol. 66, no. 6, pp. 2558–2573, 2020.
+strategy successfully copes with covert attacks imposed on the            [18] T. Huang, B. Satchidanandan, P. Kumar, and L. Xie, “An online detection
+system and improves by the RMSE and ITAE indices at least                      framework for cyber attacks on automatic generation control,” IEEE
+35% to other methods.                                                          Transactions on Power Systems, vol. 33, no. 6, pp. 6816–6827, 2018.
+   In future work, the proposed defense mechanism will be
+presented to cope with time delays, replay, and denial-of-
+service attacks.
+

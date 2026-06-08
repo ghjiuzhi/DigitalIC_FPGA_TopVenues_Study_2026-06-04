@@ -1,0 +1,496 @@
+Resilient Consensus Through Dynamic Event-Triggered
+Mechanism
+Citation for published version (APA):
+Liao, Z., Shi, J., Wang, S., Zhang, Y., & Sun, Z. (2024). Resilient Consensus Through Dynamic Event-Triggered
+Mechanism. IEEE Transactions on Circuits and Systems II: Express Briefs, 71(7), 3463-3467. Article 10430433.
+https://doi.org/10.1109/TCSII.2024.3364524
+
+
+
+
+Document license:
+TAVERNE
+
+
+DOI:
+10.1109/TCSII.2024.3364524
+
+
+Document status and date:
+Published: 01/07/2024
+
+
+Document Version:
+Publisher’s PDF, also known as Version of Record (includes final page, issue and volume numbers)
+
+
+Please check the document version of this publication:
+• A submitted manuscript is the version of the article upon submission and before peer-review. There can be
+important differences between the submitted version and the official published version of record. People
+interested in the research are advised to contact the author for the final version of the publication, or visit the
+DOI to the publisher's website.
+• The final author version and the galley proof are versions of the publication after peer review.
+• The final published version features the final layout of the paper including the volume, issue and page
+numbers.
+Link to publication
+
+
+
+
+General rights
+Copyright and moral rights for the publications made accessible in the public portal are retained by the authors and/or other copyright owners
+and it is a condition of accessing publications that users recognise and abide by the legal requirements associated with these rights.
+
+       • Users may download and print one copy of any publication from the public portal for the purpose of private study or research.
+       • You may not further distribute the material or use it for any profit-making activity or commercial gain
+       • You may freely distribute the URL identifying the publication in the public portal.
+
+If the publication is distributed under the terms of Article 25fa of the Dutch Copyright Act, indicated by the “Taverne” license above, please
+follow below link for the End User Agreement:
+www.tue.nl/taverne
+
+Take down policy
+If you believe that this document breaches copyright please contact us at:
+openaccess@tue.nl
+providing details and we will investigate your claim.
+
+
+
+
+Download date: 04. Jun. 2026
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. 71, NO. 7, JULY 2024                                                                   3463
+
+
+
+
+                    Resilient Consensus Through Dynamic
+                          Event-Triggered Mechanism
+                         Zirui Liao , Graduate Student Member, IEEE, Jian Shi , Shaoping Wang ,
+                                    Yuwei Zhang , and Zhiyong Sun , Member, IEEE
+
+
+
+   Abstract—In this brief, the resilient consensus problem for                  interactive rules and may lead to the overall system crash [5],
+multi-agent systems (MASs) is addressed based on the dynamic                    [6], [7], [8].
+event-triggered (DE) mechanism, when the network is subject to                     Specific to resilient consensus problems, cooperative
+malicious attacks. A dynamic variable is introduced in the DE
+                                                                                agents usually seek for agreement through local interaction.
+mechanism to adjust the threshold dynamically. Via the proposed
+dynamic event-triggered mean-subsequence-reduced (DE-MSR)                       The impact of attacks can be mitigated through various
+algorithm, all cooperative agents are guaranteed to reach an                    techniques. Among them, a family of algorithms called
+agreement on the same consensus value, so that the MAS achieves                 Mean-Subsequence-Reduced (MSR) has attracted tremendous
+resilient consensus despite the influence of some noncooperative                attention due to its fault-tolerant and light-weight prop-
+agents in the network. Compared to existing event-based resilient               erties. In [9], a weighted MSR (W-MSR) algorithm was
+algorithms, the proposed DE-MSR algorithm is superior in                        adopted to achieve resilient consensus against malicious
+reducing communication overheads while maintaining a resilient
+consensus. Finally, a comparative case study is conducted to                    attacks, with each cooperative agent filtering the suspi-
+validate the theoretical findings.                                              cious values received from its in-neighbors. Variants of
+                                                                                this algorithm include the double-integrator position-based
+  Index Terms—Multi-agent system, resilient consensus, dynamic
+variable, event-triggered mechanism, malicious attack.
+                                                                                MSR (DP-MSR) [10], sliding-window MSR (SW-MSR) [11],
+                                                                                and quantized-weighted MSR (QW-MSR) [12] algorithms.
+                                                                                Furthermore, the MSR-type algorithms have been widely
+                      I. I NTRODUCTION                                          applied in hybrid MASs [13], continuous-time MASs [14], and
+                                                                                impulsive control [15].
+     HE INCREASING concern for cyber security in
+T    recent years has been accompanied by the attention
+paid to the multi-agent consensus problem against mali-
+                                                                                   In addition to malicious attacks, another concern for resilient
+                                                                                consensus is the heavy communication burden. Specifically,
+                                                                                most existing MSR-type algorithms require each agent to
+cious attacks [1], [2], [3]. Open communications via shared
+                                                                                interact with its in-neighbors at each time step to obtain their
+networks are vulnerable to potential attacks, which may cause
+                                                                                state values for update. To reduce communication overheads,
+irreparable losses. Thus, an essential problem in multi-agent
+                                                                                an event-based MSR (E-MSR) algorithm was proposed in [16],
+systems (MASs) is resilient consensus [4], which involves
+                                                                                which involves an event-triggered mechanism to restrict
+cooperative agents aiming to reach an agreement on their
+                                                                                the interaction between agents. Subsequently, this brief was
+states, while some noncooperative agents attempt to destroy
+                                                                                extended to a multi-dimensional space [17], and combined
+this goal. These adversaries are outside the scope of preset
+                                                                                with self-triggered [18] and quantized [19] mechanisms.
+   Manuscript received 10 November 2023; revised 24 January 2024; accepted
+                                                                                Nevertheless, all these promising results merely seek for
+7 February 2024. Date of publication 9 February 2024; date of current version   approximate resilient consensus, which guarantees that the
+1 July 2024. This work was supported in part by the National Natural            MAS converges to a given error range instead of an exact
+Science Foundation of China under Grant U2233212 and Grant 62303030;            consensus value. Additionally, agents may be constrained by
+in part by the Beijing Municipal Natural Science Foundation under Grant
+L221008; in part by the China Postdoctoral Science Foundation under Grant       predefined event conditions, which are often fixed and cannot
+2022M710305; in part by the China Scholarship Council (CSC) under Grant         adapt to changing environmental conditions or agent behaviors.
+202206020114, and in part by the Outstanding Research Project of Shen Yuan         Motivated by the above observations, this brief aims to
+Honors College under Grant 230122204. This brief was recommended by
+Associate Editor M. Chen. (Corresponding author: Shaoping Wang.)
+                                                                                design a dynamic event-triggered (DE) controller for the MAS
+   Zirui Liao is with the School of Automation Science and Electrical           to achieve resilient consensus, such that all cooperative agents
+Engineering and the Shenyuan Honors College, Beihang University, Beijing        converge to the same consensus value. The proposed resilient
+100191, China.                                                                  scheme is able to adjust the triggering condition dynamically,
+   Jian Shi and Yuwei Zhang are with the School of Automation Science and
+Electrical Engineering, Beihang University, Beijing 100191, China.              which shares high adaptability and flexibility. The innovations
+   Shaoping Wang is with the School of Automation Science and Electrical        of this brief are highlighted as follows:
+Engineering, Beihang University, Beijing 100191, China, also with Tianmu           1) In contrast to DE studies [20], [21], [22] in attack-free
+Mountain Laboratory, Hangzhou 310023, China, and also with the Beihang-
+Ningbo Innovation Research Institute, Beihang University, Ningbo 315800,
+                                                                                       scenarios, this brief incorporates the DE mechanism
+China (e-mail: shaopingwang@buaa.edu.cn).                                              to solve the resilient consensus problem of MASs
+   Zhiyong Sun is with the Department of Electrical Engineering, Eindhoven             over directed graphs, when the network is subject to
+University of Technology, 5600 MB Eindhoven, The Netherlands.                          malicious attacks.
+   Color versions of one or more figures in this article are available at
+https://doi.org/10.1109/TCSII.2024.3364524.                                        2) The frequent communication between neighbors, as
+   Digital Object Identifier 10.1109/TCSII.2024.3364524                                required in [9], [10], [11], is relaxed via a novel
+                      1549-7747 
+                                c 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.
+                                    See https://www.ieee.org/publications/rights/index.html for more information.
+  Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on March 12,2025 at 06:48:17 UTC from IEEE Xplore. Restrictions apply.
+3464                                                    IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. 71, NO. 7, JULY 2024
+
+
+
+       dynamic event-triggered MSR (DE-MSR) algorithm,                          C. Problem Formulation
+       which saves system resources and reduces communica-                         This brief aims to tackle the following problem, despite the
+       tion overheads.                                                          influence of noncooperative agents.
+   3) Compared to existing event-based resilient algo-                             Problem 1: Consider a MAS described by digraph G =
+       rithms [16], [17], [18], [19], the proposed DE-MSR                       (V, E). Suppose that at most f noncooperative agents exist
+       algorithm guarantees that all cooperative agents con-                    in the in-neighbor set of each agent in the network. For any
+       verge to the same consensus value rather than an                         initial states of agents, determine graph conditions and design
+       error range, so that the MAS achieves exact resilient                    controllers such that the conditions below are satisfied:
+       consensus.                                                                  • Resilience condition: For each cooperative agent i ∈ C,
+   The rest of this brief is organized as follows. Section II                         it holds xi [t] ∈ S, ∀t ∈ Z≥0 , where S =
+introduces some preliminaries, together with formulating the                          [ mini∈C xi [0], maxi∈C xi [0]].
+resilient consensus problem. Section III presents the main                         • Consensus condition: For each pair of cooperative agents
+results for achieving resilient consensus with the DE mecha-                          i, j ∈ C, it holds limt→∞ |xi [t] − xj [t]| = 0.
+nism. We validate the main results through a comparative case                      Remark 1: The aforementioned two conditions can be inter-
+study in Section IV. Finally, Section V concludes this brief.                   preted as: (1) the state values of cooperative agents should
+                                                                                always remain in a safety interval S despite the influence of
+      II. P RELIMINARIES AND P ROBLEM F ORMULATION                              noncooperative agents, and (2) the ultimate states of any two
+A. Graph Theory                                                                 cooperative agents should be totally identical.
+   Consider a digraph G = (V, E). The set of nodes is given
+by V. The set of edges is denoted by E ⊆ V × V. The edge                        D. Dynamic Event-Triggered Protocol
+(j, i) ∈ E indicates that node i can receive information from                      Compared to existing event-based resilient algorithms [16],
+node j. Since G is a digraph, we define the sets of in-neighbors                [17], [18], [19], the dynamic triggering pattern is superior
+and out-neighbors as Viin = {j ∈ V|(j, i) ∈ E} and Viout = {j ∈                 in reducing communication overheads. In this subsection, we
+V|(i, j) ∈ E}, respectively.                                                    develop a DE consensus scheme. To start with, we introduce
+   Some essential notions with respect to (w.r.t.) sets and                     the event-triggered protocol [16] as below:
+graphs are presented to characterize the resilience for the                                                                       
+MAS.                                                                                          ui [t] = −    aij [t] xi [t] − x̂j [t] ,     (2)
+   Definition 1 [9]: Consider a digraph G = (V, E). A                                                         j∈Viin
+nonempty subset S ⊆ V is r-reachable if there exists an agent
+                                                                                where x̂j [t] ∈ R denotes the last broadcast state value of
+i ∈ S such that |Viin \S |≥ r, where r ∈ Z>0 .                                                                               j         j    j
+   Definition 2 [9]: Consider a digraph G = (V, E). G is                        agent j, which is defined as x̂j [t] = xj [tm ], t ∈ [tm , tm+1 ), with
+                                                                                  j j
+r-robust if for each pair of nonempty and disjoint subsets                      {t0 , t1 , . . . , ∈ Z>0 } being the sequence of triggering times.
+S1 , S2 ⊆ V, at least one of them is r-reachable, where r ∈                     Following the works [16], [17], [18], a static event-triggered
+Z>0 .                                                                           function (SETF) is designed as
+                                                                                                                                       
+                                                                                             tm+1 = min t > tmj : ej [t] > 0 + 1 e−αt ,
+                                                                                               j
+                                                                                                                                                    (3)
+B. System Model
+   Consider a single-integrator MAS described by a digraph                      where ej [t] = xj [t + 1] − x̂j [t] is the relative error between the
+G = (V, E). We denote xi [t] ∈ R as the state for agent i at time               updated state xj [t + 1] and the auxiliary variable x̂j [t], and 0 ,
+step t ∈ Z≥0 . The state update for each agent i ∈ V is based                   1 , and α are positive scalars.
+on a prescribed rule, which is mathematically expressed as                          For the dynamic triggering case, a dynamic variable ξi [t] ∈
+                                                                                R is introduced and its state update adheres to
+                      xi [t + 1] = xi [t] + ui [t],                      (1)
+                                                                                          ξi [t + 1] = (1 − ψi )ξi [t] + φi (ϑ[t] − |ei [t]|),            (4)
+where ui [t] represents the control input.
+   In this brief, we consider the situation that there exist some               where ψi and φi are parameters to be designed, ϑ[t] is a
+noncooperative agents in the network. They will disseminate                     positive threshold which converges exponentially to zero. With
+                                                                                ξi [t], agent i determines its triggering times {tm  i }∞
+malicious information to all of their out-neighbors. Such                                                                                m=1 by the
+misbehaviors may destroy the operation of other cooperative                     following dynamic event-triggered function (DETF):
+agents, and disrupt system security. The definitions of coop-                                                                             
+                                                                                          i
+                                                                                         tm+1 = min t > tmi
+                                                                                                            : ζi (|ei [t]| − ϑ[t]) > ξi [t] ,   (5)
+erative and noncooperative agents are presented as follows.
+   Definition 3 [9]: An agent is said to be cooperative if it                   where ζi is also a parameter to be designed.
+utilizes the prescribed rule to update its state. Let the set of                   Assumption 1: For any i ∈ V, the parameters ψi , φi , and ζi
+cooperative agents be C ⊆ V. An agent is noncooperative if                      satisfy the following conditions:
+it does not adhere to the prescribed update rule, but utilizes
+                                                                                                 1 − φi
+some other protocols for state update at some time steps. Let                          1) ζi >          ;     2) φi + ψi < 1;        3) φi < ζi ψi .      (6)
+the set of noncooperative agents be A := V\C.                                                      ψi
+   The attack model is further defined below to quantify the                      These conditions play a crucial role in the proof of
+distribution of malicious attacks.                                              Lemma 2. Based on the designed DETF, we further develop
+   Definition 4 [9]: For f ∈ Z≥0 , the noncooperative set A is                  a Dynamic Event-triggered Mean-Subsequence-Reduced (DE-
+said to be an f -local model if |Viin ∩ A| ≤ f , ∀i ∈ V\A.                      MSR) algorithm. Taking the state update of cooperative agent
+
+  Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on March 12,2025 at 06:48:17 UTC from IEEE Xplore. Restrictions apply.
+LIAO et al.: RESILIENT CONSENSUS THROUGH DE MECHANISM                                                                                                          3465
+
+
+Algorithm 1 DE-MSR Algorithm                                                      Synthesizing (9) with (4), we obtain
+Require: Parameter f ∈ Z≥0
+ 1: Initialize xi [0], x̂i [0], ξi [0] > 0, ψi , ζi , and φi ;                                                                        φi
+                                                                                                  ξi [t + 1] ≥ 1 − ψi −                  ξi [t].              (10)
+ 2: for t = 0, 1, . . ., the cooperative agent i ∈ C do                                                                               ζi
+ 3:    Receive the initial or updated x̂j [t] from j ∈ Viin [t], and sort
+       them in ascending order;                                                   By recursion, it is derived that the dynamic variable ξi [t] is
+ 4:    if less than f of the values in the sorted list are strictly larger        always strictly greater than zero:
+       [resp. smaller] than xi [t] then                                                                                           t
+           Eliminate all these values that are strictly larger [resp.                                                      φi
+ 5:                                                                                               ξi [t] ≥ 1 − ψi −                   ξi [0] > 0,             (11)
+           smaller] than xi [t];                                                                                           ζi
+ 6:    else
+ 7:        Eliminate the f largest [resp. smallest] values;                       where the last inequality holds due to (6).
+ 8:    end if                                                                       For the second statement, we first rewrite (9) as
+ 9:    Denote Rin   i [t] as the set of retained in-neighbors;                                                        ξi [t]
+10:    Update the state according to                                                                     |ei [t]| ≤          + ϑ[t].                          (12)
+                                                                                                                    ζi
+                xi [t + 1] = xi [t] −            aij [t] xi [t] − x̂j [t] ; (7)
+                                                                                  Combining the results of (4), (11), and (12), we obtain
+                                      j∈Rin
+                                         i [t]
+                                                                                                                           φi
+11:   if DETF (5) triggers then                                                              ξi [t + 1] ≤ 1 − ψi +            ξi [t] + 2ϑ[t].                 (13)
+12:      Update x̂i [t + 1] as x̂i [t + 1] = xi [t + 1];                                                                   ζi
+13:      Send x̂i [t + 1] to the agents in Viout [t];                             By recursion, we further derive
+14:   else
+15:      Set x̂i [t + 1] as x̂i [t + 1] = x̂i [t].                                                                    φi   n
+16:   end if                                                                            ξi [t + n] ≤ 1 − ψi +                  ξi [t]
+17: end for
+                                                                                                                      ζi
+                                                                                                              
+                                                                                                              n−1
+                                                                                                                                        φi   n−1−l
+                                                                                                         +2           1 − ψi +                       ϑ[t + l]. (14)
+                                                                                                                                        ζi
+i ∈ C as an example, the main steps of the DE-MSR                                                             l=0
+algorithm are shown in Algorithm 1. Different from the update                     In view of the third condition in (6) and Lemma 1, we have
+scheme (2), the cooperative agents will only utilize the state                    limt→∞ ξi [t] = 0, which completes the proof.
+values of in-neighbors retained after Algorithm 1 for update,                        To proceed, denote M[t] = maxi∈C xi [t] and m[t] =
+as expressed in (7).                                                              mini∈C xi [t] as the maximum and minimum state for coop-
+   Assumption 2: The weight aij [t] in (7) satisfies the follow-                  erative agents at time step t. Let L[t] = M[t] − m[t] > 0
+ing conditions:
+      n                                                                          be the difference between these two quantities. In order to
+   1)     j=1 aij [t] = 1, ∀t ∈ Z≥0 ;                                             establish the consensus condition, we need to prove that L[t]
+   2) aij [t] = 0 whenever j ∈  / Viin [t], t ∈ Z≥0 ;                             asymptotically converges to zero.
+   3) there exists a positive scalar w > 0 such that aij [t] ≥ w,                    In order to find a unified form to express the auxiliary
+      ∀j ∈ Viin [t], t ∈ Z≥0 .                                                    variable x̂j [t], we define σj [t] = x̂j [t] − xj [t]. By invoking the
+                                                                                  DE-MSR algorithm, we further obtain
+                      III. M AIN R ESULTS
+                                                                                                  0,                        if DETF (5) triggers,
+   In this section, we investigate the efficiency of the DE-MSR                        σj [t] =                                                               (15)
+                                                                                                  x̂j [t] − xj [t + 1],     otherwise.
+algorithm and the consensus of the system (1) equipped with
+DETF (5), when the noncooperative set is subject to the f -local                  By invoking (9), we know
+model.                                                                                                    
+   Lemma 1 [23]: Let γ ∈ (0, 1) and let {ϕk } be a sequence                                         σj [t] ≤ ξj [t] + ϑ[t].                                 (16)
+                                                                                                                ζj
+consisting of positive scalar values. Suppose that limk→∞
+ϕk = 0. Then                                                                         Lemma 3: Suppose that each normal agent follows
+                                                                                  DE-MSR algorithm. For any t ∈ Z≥0 and for any i ∈ C, the
+                                
+                                k
+                          lim         γ k−l ϕl = 0.                        (8)    following relations hold:
+                         k→∞
+                                l=0                                                                                  ξi [t]
+                                                                                                   M[t + 1] ≤ M[t] +        + ϑ[t],
+   The following lemma provides essential properties for the                                                           ζi
+dynamic variable ξi [t].                                                                                             ξi [t]
+   Lemma 2: Let Assumption 1 holds. Suppose that the coop-                                         m[t + 1] ≥ m[t] −        − ϑ[t].                           (17)
+                                                                                                                      ζi
+erative agents adopt the DE-MSR algorithm for update. For
+any i ∈ C, the dynamic variable ξi [t] satisfies the following                       Based on the results provided by Lemmas 1, 2, and 3, we
+statements for all t ∈ Z≥0 :                                                      are now ready to state the main result for the DETF case.
+                                                                                     Theorem 1: Consider an MAS consisting of n agents and
+              1) ξi [t] > 0;           2)   lim ξi [t] = 0.                       described by a digraph G = (V, E). Let Assumptions 1 and 2
+                                            t→∞
+                                                                                  hold. Suppose that G is (2f +1)-robust and the noncooperative
+ Proof: We start the proof with the first statement. Since
+                                                                                  set A satisfies the f -local model. Then, exact resilient
+DETF (5) is adopted, we have
+                                                                                  consensus is achieved if the cooperative agents adopt the
+                       ζi (|ei [t]| − ϑ[t]) ≤ ξi [t].                      (9)    proposed DE-MSR algorithm for state update.
+
+  Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on March 12,2025 at 06:48:17 UTC from IEEE Xplore. Restrictions apply.
+3466                                                    IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. 71, NO. 7, JULY 2024
+
+
+
+   Proof: For any ε ∈ R and 0 ≤ t ≤ t , define two node sets
+as PM (t, t , ε) = {j ∈ V : xj [t ] > M[t] − ε} and Pm (t, t , ε) =
+{j ∈ V : xj [t ] < m[t] + ε}. Furthermore, denote QM (t, t , ε) =
+PM (t, t , ε) ∩ C and Qm (t, t , ε) = Pm (t, t , ε) ∩ C as two node
+sets that contain the cooperative agents in PM (t, t , ε) and
+Pm (t, t , ε), respectively.
+   As mentioned above, we need to prove that L[t] asymptoti-
+cally converges to zero. By contradiction, we assume L[t] > 0
+at some time step t. Let ε0 = L[t]/2 and establish two                          Fig. 1.    A 3-robust digraph with seven agents.
+nonempty and disjoint node sets QM (t, t, ε0 ) and Qm (t, t, ε0 ).
+The reasons for nonempty and disjoint properties are that there                 eventually due to |QM (t, t, ε0 )| + |Qm (t, t, ε0 )| ≤ n. Thus, at
+exist some cooperative agents with state values being M[t] or                   least one of QM (t, t + n, εn ) and Qm (t, t + n, εn ) is empty.
+m[t] in both sets, and M[t] − ε0 > m[t] + ε0 .                                  Without loss of generality, we assume QM (t, t + n, εn ) = ∅.
+   Since G is (2f + 1)-robust and the noncooperative set A                      Then, we have M[t + n] ≤ M[t] −       εn . In view of Lemma 3, we
+                                                                                                                   ξi [t+λ]
+satisfies the f -local model, either QM (t, t, ε0 ) or Qm (t, t, ε0 )           obtain m[t + n] ≥ m[t] − n−1λ=0  (     ζi    + ϑ[t + λ]). Combining
+contains a cooperative agent i that has at least 2f + 1                         these two results yields
+in-neighbors outside of its respective set. Without loss of                                                      
+                                                                                                                 n−1
+                                                                                                                     ξi [t + λ]
+generality, we assume i ∈ QM (t, t, ε0 ). Through the DE-MSR                      L[t + n] ≤ L[t] − εn +                        + ϑ[t + λ]
+algorithm, at least one of these 2f + 1 in-neighbors will be                                                              ζi
+                                                                                                                 λ=0
+retained for the state update of agent i. Thus, the upper bound                                                            
+                                                                                                                           n−1
+                                                                                                           wn                  ξi [t + λ]
+of xi [t + 1] satisfies                                                                         = 1−            L[t] + 2                  + ϑ[t + λ] .
+                                                                                                           2                        ζi
+                                            ξi [t]                                                                         λ=0
+            xi [t + 1] ≤ (1 − w) M[t] +            + ϑ[t]                                                                                                   (20)
+                                              ζi
+                                             ξi [t]                             For any σ ∈ N, we have
+                         +w M[t] − ε0 +             + ϑ[t]
+                                                ζi                                                     wn σ
+                                        ξi [t]                                   L[t + σ n] ≤ 1 −             L[t]
+                       = M[t] − wε0 +           + ϑ[t].          (18)                                   2
+                                         ζi                                                                −1
+                                                                                                      n−1 σ
+                                                                                                                  wn            σ −1−l
+                                                                                                                                          ξi [t + λ + ln]
+It should be noted that the inequality (18) also holds for the                                     +2          1−
+cooperative agents in V\PM (t, t, ε0 ). If i ∈ Qm (t, t, ε0 ), we                                                  2                             ζi
+                                                                                                        λ=0 l=0
+have xi [t +1] ≥ m[t]+wε0 −(ξi [t]/ζi +ϑ[t]), which also holds                                               −1
+                                                                                                        n−1 σ
+                                                                                                                       wn       σ −1−l
+for the cooperative agents in V\Pm (t, t, ε0 ).                                                    +2              1−                     ϑ[t + λ + ln]. (21)
+   Define ε1 = wε0 −(ξi [t]/ζi +ϑ[t]). Based on (18), we know                                           λ=0 l=0
+                                                                                                                        2
+that at least one cooperative node exists in QM (t, t, ε0 ) with
+its state value less than or equal to M[t] − ε1 at time step                    According to Lemmas 1 and 2, we know
+t + 1, or at least one cooperative node exists in Qm (t, t, ε0 )                                      −1
+                                                                                                 n−1 σ
+                                                                                                                      σ −1−l
+                                                                                                                  wn
+with its state value greater than or equal to m[t] + ε1 at time                           lim               1−                   ϑ[t + λ + ln] = 0,         (22)
+                                                                                          σ →∞                    2
+step t + 1. Thus, at least one of QM (t, t + 1, ε1 )  QM (t, t, ε0 )                            λ=0 l=0
+and Qm (t, t + 1, ε1 )  Qm (t, t, ε0 ) holds.
+                                                                                and
+   Notice that QM (t, t + 1, ε1 ) and Qm (t, t + 1, ε1 ) are disjoint
+due to ε1 < ε0 . If they are nonempty, we can conduct a similar                                       −1
+                                                                                                 n−1 σ
+                                                                                                                      σ −1−l
+                                                                                                                  wn             ξi [t + λ + ln]
+analysis as above and conclude that either QM (t, t + 1, ε1 ) or                          lim               1−                                   = 0.       (23)
+                                                                                          σ →∞                    2                     ζi
+Qm (t, t + 1, ε1 ) contains a cooperative agent j, whose state                                   λ=0 l=0
+value is upper bounded by                                                       Thus, we eventually obtain limt→∞ L[t] = 0, which means
+                                   ξi [t + 1]                                   that exact resilient consensus is guaranteed for the MAS.
+xj [t + 2] ≤ (1 − w) M[t + 1] +               + ϑ[t + 1]
+                                        ζi
+                              ξi [t + 1]                                                                  IV. C ASE S TUDY
+             +w M[t] − ε1 +                + ϑ[t + 1]                              In this section, a comparative case study is provided to
+                                   ζi
+                                                                                validate the theoretical results.
+                            
+                            1
+                                  ξi [t + λ]
+           ≤ M[t] − w2 ε0 +                   + ϑ[t + λ] , (19)                    Consider the network of an MAS consisting of seven agents
+                                       ζi                                       illustrated in Fig. 1. Notice that the network is a 3-robust
+                                 λ=0
+                                                                                digraph. According to Theorem 1, it can tolerate at most
+if j ∈ QM (t, t + 1, ε1 ). Likewise, we have xj [t + 2] ≥ m[t] +
+                                                                               one noncooperative agent in the in-neighbors of each agent.
+w2 ε0 − 1λ=0 ( ξi [t+λ] + ϑ[t + λ]) if j ∈ Qm (t, t + 1, ε1 ). Define
+              1 ζi ξi [t+λ]                                                    Thus, we postulate that the network satisfies the 1-local
+ε2 = w ε0 − λ=0 ( ζi + ϑ[t + λ]). Therefore, at least one
+        2
+                                                                                model and let Agent 1 be noncooperative, whose motion is
+of QM (t, t + 2, ε2 )  QM (t, t + 1, ε1 ) and Qm (t, t + 2, ε2 )              described by x1 [t] = 5× sin(t/5) + 7. The initial state values
+Qm (t, t + 1, ε1 ) holds.                                                      of seven agents are denoted as x[0] = [x1 [0], . . . , x7 [0]]T =
+                                                            ξi [t+λ]
+   By recursion, we can define εk = wk ε0 − k−1       λ=0 ( ζi       +          [7, 7, 6, 8, −5, 8, 6]T . For the SETF case, the related param-
+ϑ[t + λ]), ∀k ∈ Z>0 and conclude that all cooperative                           eters are chosen as 0 = 5×10−4 , 1 = 0.01, α = 0.01. For
+agents will move out from QM (t, t + n, εn ) or Qm (t, t + n, εn )              the DETF case, we let ϑ[t] = e−βt with β = 0.01, and set
+  Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on March 12,2025 at 06:48:17 UTC from IEEE Xplore. Restrictions apply.
+LIAO et al.: RESILIENT CONSENSUS THROUGH DE MECHANISM                                                                                                      3467
+
+
+
+                                                                                                               R EFERENCES
+                                                                                  [1] Z. Ahmed, N. Ali, and W. Zhang, “H2 resilient consensus control of
+                                                                                      multiagent systems under deception attack,” IEEE Trans. Circuits Syst.
+                                                                                      II, Exp. Briefs, vol. 70, no. 7, pp. 2530–2534, Jul. 2023.
+                                                                                  [2] Y. Zhang et al., “Self-reconfigurable hierarchical frameworks for
+                                                                                      formation control of robot swarms,” IEEE Trans. Cybern., vol. 54, no. 1,
+                                                                                      pp. 87–100, Jan. 2024.
+                                                                                  [3] J. Zhang and H. Zhang, “Adaptive event-triggered consensus of linear
+                                                                                      multiagent systems with resilience to communication link faults for
+Fig. 2.   Trajectories and triggering behaviors of agents using SETF (3).             digraphs,” IEEE Trans. Circuits Syst. II, Exp. Briefs, vol. 69, no. 7,
+                                                                                      pp. 3249–3253, Jul. 2022.
+                                                                                  [4] Y. Shang, “Median-based resilient consensus over time-varying random
+                                                                                      networks,” IEEE Trans. Circuits Syst. II, Exp. Briefs, vol. 69, no. 3,
+                                                                                      pp. 1203–1207, Mar. 2022.
+                                                                                  [5] Y. Zhai, Z.-W. Liu, Z.-H. Guan, and G. Wen, “Resilient consensus of
+                                                                                      multi-agent systems with switching topologies: A trusted-region-based
+                                                                                      sliding-window weighted approach,” IEEE Trans. Circuits Syst. II, Exp.
+                                                                                      Briefs, vol. 68, no. 7, pp. 2448–2452, Jul. 2021.
+                                                                                  [6] D. M. Senejohnny, S. Sundaram, C. De Persis, and P. Tesi, “Resilience
+                                                                                      against misbehaving nodes in asynchronous networks,” Automatica,
+                                                                                      vol. 104, pp. 26–33, Jun. 2019.
+Fig. 3.   Trajectories and triggering behaviors of agents using DETF (5).         [7] S. Li, Y. Zhang, X. Wang, S. Wang, and H. Duan, “Prescribed-time
+                                                                                      bearing-based formation control of underactuated ASVs under external
+                            TABLE I                                                   disturbance,” IEEE Trans. Circuits Syst. II, Exp. Briefs, early access,
+C OMPARISON OF T RIGGERING T IMES B ETWEEN SETF (3) AND DETF (5)                      Oct. 23, 2023, doi: 10.1109/TCSII.2023.3325435.
+                                                                                  [8] Y. Zhang, S. Li, S. Wang, X. Wang, and H. Duan, “Distributed bearing-
+                                                                                      based formation maneuver control of fixed-wing UAVs by finite-time
+                                                                                      orientation estimation,” Aerosp. Sci. Technol., vol. 136, May 2023,
+                                                                                      Art. no. 108241.
+                                                                                  [9] H. J. LeBlanc, H. Zhang, X. Koutsoukos, and S. Sundaram, “Resilient
+                                                                                      asymptotic consensus in robust networks,” IEEE J. Sel. Areas Commun.,
+                                                                                      vol. 31, no. 4, pp. 766–781, Apr. 2013.
+                                                                                 [10] S. M. Dibaji and H. Ishii, “Resilient consensus of second-order agent
+                                                                                      networks: Asynchronous update rules with delays,” Automatica, vol. 81,
+                                                                                      pp. 123–132, Jul. 2017.
+                                                                                 [11] D. Saldana, A. Prorok, S. Sundaram, M. F. M. Campos, and V. Kumar,
+ξi [0] = 20. To satisfy Assumption 1, the parameters ψi , φi ,                        “Resilient consensus for time-varying networks of dynamic agents,” in
+and ζi are chosen as ψi = 0.35, φi = 0.6, ζi = 10. Note that                          Proc. Am. Control Conf. (ACC), 2017, pp. 252–258.
+                                                                                 [12] S. M. Dibaji, H. Ishii, and R. Tempo, “Resilient randomized quantized
+the selection of the above parameters holds for all i ∈ V.                            consensus,” IEEE Trans. Autom. Control, vol. 63, no. 8, pp. 2508–2522,
+    Firstly, Figs. 2(a) and 2(b) show the performance of the                          Aug. 2018.
+MAS using SETF (3). We observe that approximate resilient                        [13] Y. Shang, “Consensus of hybrid multi-agent systems with malicious
+                                                                                      nodes,” IEEE Trans. Circuits Syst. II, Exp. Briefs, vol. 67, no. 4,
+consensus is guaranteed in this case, but triggering functions                        pp. 685–689, Apr. 2020.
+are frequently activated in the first few time steps. As a                       [14] Y. Bai and J. Wang, “Resilient consensus of continuous-time linear
+comparison, we next exhibit the performance of the DETF (5)                           networked systems,” IEEE Trans. Circuits Syst. II, Exp. Briefs, vol. 69,
+in Figs. 3(a) and (b). Fig. 3(a) shows that the convergence                           no. 8, pp. 3500–3504, Aug. 2022.
+                                                                                 [15] J. Yan, C. Wen, X.-K. Liu, and L. Xing, “Resilient impulsive control for
+rate of the DETF (5) is approximately equal to Fig. 2(a).                             second-order consensus under malicious nodes,” IEEE Trans. Circuits
+From Fig. 3(b), it is observed that the communication times                           Syst. II, Exp. Briefs, vol. 68, no. 6, pp. 1962–1966, Jun. 2021.
+between agents are reduced in the first fifteen time steps.                      [16] Y. Wang and H. Ishii, “Resilient consensus through event-based commu-
+                                                                                      nication,” IEEE Trans. Control Netw. Syst., vol. 7, no. 1, pp. 471–482,
+The detailed event counts are listed in TABLE I, from which                           Mar. 2020.
+we observe that with DETF (5), the number of triggered                           [17] J. Yan, Y. Mo, X. Li, L. Xing, and C. Wen, “Resilient vector consensus:
+events for most cooperative agents has significantly decreased.                       An event-based approach,” in Proc. IEEE 16th Int. Conf. Control Autom.
+These results mean that the proposed DE-MSR algorithm is                              (ICCA), 2020, pp. 889–894.
+                                                                                 [18] H. Matsume, Y. Wang, and H. Ishii, “Resilient self/event-triggered
+superior in reducing communication overheads while main-                              consensus based on ternary control,” Nonlin. Anal. Hybrid Syst., vol. 42,
+taining a similar convergence to existing static event-triggered                      Nov. 2021, Art. no. 101091.
+mechanisms.                                                                      [19] Y. Wang and H. Ishii, “An event-triggered approach to quantized
+                                                                                      resilient consensus,” Int. J. Robust Nonlin. Control, vol. 30, no. 11,
+                                                                                      pp. 4188–4204, 2020.
+                      V. C ONCLUSION                                             [20] A. Girard, “Dynamic triggering mechanisms for event-triggered con-
+                                                                                      trol,” IEEE Trans. Autom. Control, vol. 60, no. 7, pp. 1992–1997,
+   In this brief, we address the resilient consensus problem                          Jul. 2015.
+for MASs in presence of malicious attacks by proposing                           [21] X. Yi, K. Liu, D. V. Dimarogonas, and K. H. Johansson, “Dynamic
+                                                                                      event-triggered and self-triggered control for multi-agent systems,” IEEE
+a novel DE-MSR algorithm. Considering the existence of                                Trans. Autom. Control, vol. 64, no. 8, pp. 3300–3307, Aug. 2019.
+noncooperative agents in the network, the DE-MSR algorithm                       [22] R. K. Mishra and H. Ishii, “Event-triggered control for discrete-time
+is executed to achieve resilient consensus with reduced com-                          multi-agent average consensus,” Int. J. Robust Nonlin. Control, vol. 33,
+                                                                                      no. 1, pp. 159–176, 2023.
+munication overheads. A comparative case study is presented                      [23] A. Nedic, A. Ozdaglar, and P. A. Parrilo, “Constrained consensus and
+to exhibit the validity and superiority of the DE-MSR                                 optimization in multi-agent networks,” IEEE Trans. Autom. Control,
+algorithm.                                                                            vol. 55, no. 4, pp. 922–938, Apr. 2010.
+
+
+
+
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on March 12,2025 at 06:48:17 UTC from IEEE Xplore. Restrictions apply.
+

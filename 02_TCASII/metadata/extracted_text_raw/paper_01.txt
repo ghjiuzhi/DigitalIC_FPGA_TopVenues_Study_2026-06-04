@@ -1,0 +1,780 @@
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems--II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2023.3262353
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS
+
+1
+
+CORDIC-Based Computation of Arcsine and
+Arccosine Functions on FPGA
+Pedro Paz, and Mario Garrido, Senior Member, IEEE
+
+Abstract—This paper presents a novel CORDIC-based approach for computing arcsine and arccosine functions. Previous
+approaches based on CORDIC either calculate double iterations,
+which increases the complexity of stages, or have a high approximation error. By contrast, the proposed approach presents a
+novel compensation of the gain in the rotations that allows for
+an accurate computation of the arcsine and arccosine that does
+not increase the complexity of the stages. The proposed approach
+has been implemented on an FPGA to demonstrate its benefits.
+Index Terms—CORDIC, arcsine, arccosine, sine, cosine, FPGA,
+trigonometric
+
+I. I NTRODUCTION
+The CORDIC algorithm [1]–[4] is based on the computation
+of a rotation as a series of microrotations by specific angles.
+These angles have the advantage that they allow to compute
+the microrotations by only using additions and bit-wise shifts.
+This is very convenient for implementations in digital systems
+requiring low area.
+The extended version of the CORDIC algorithm [5]–[8]
+can be used to compute trigonometric functions, hyperbolic
+functions, multiplications, divisions, logarithms, and exponentials, among others. This work focuses on the CORDIC-based
+algorithms for computing inverse trigonometric functions.
+Specifically, it considers arcsine and arccosine [9]–[13].
+The direct approach for arcsine and arccosine computation [6] presents large approximation errors at several points
+of the domain of the functions. This occurs because the gain
+of the microrotations needs to be compensated at each stage
+over the reference used to determine the direction of the microrotations. This compensation requires a real multiplication,
+which largely increases the resources needed to implement
+the algorithm. Alternatively, the double iteration CORDIC
+algorithm [9]–[11], [14], [15] is based on computing two
+microrotations by each CORDIC angle in the same direction.
+This allows to compensate the gain of the microrotations
+using bit-wise shifts and additions. This leads to computing
+the arcsine and arccosine functions without accuracy issues
+and without additional multiplications. However, this approach
+increases the complexity of the microrotations at each stage.
+P. Paz and M. Garrido are with the Department of Electronic Engineering, ETSI de Telecomunicación, Universidad Politécnica de Madrid, 28040
+Madrid, Spain, e-mails: p.pazm@alumnos.upm.es, mario.garrido@upm.es
+This work was supported by the Project PID2021-126991NA-I00
+funded by MCIN/AEI/10.13039/501100011033 and by ”ERDF A way
+of making Europe”, and by the Grant RYC2018-025384-I funded by
+MCIN/AEI/10.13039/501100011033 and by ”ESF Investing in your future”.
+Copyright (c) 2022 IEEE. Personal use of this material is permitted.
+However, permission to use this material for any other purposes must be
+obtained from the IEEE by sending an email to pubs-permissions@ieee.org
+
+(𝑋𝑀 , 𝑌𝑀 )
+𝑣𝑀
+
+𝜃
+
+𝑣0
+
+(𝑋0 , 𝑌0 )
+Fig. 1. Rotation of the vector v by the angle θ carried out in the CORDIC
+algorithm.
+
+This brief presents a novel CORDIC-based approach for
+arcsine and arcosine computation that solves the issues with
+the direct CORDIC-based approach without increasing the
+complexity of the stages. The proposed approach is based
+on the approximation of the gain of the microrotations by
+an expression that can be computed only with bit-wise shifts
+and additions. This approach leads to accurate computations of
+the arcsine and arccosine functions using fewer resources than
+previous approaches. Additionally, an FPGA implementation
+is provided and compared to state-of-the-art CORDIC-based
+implementation for arcsine and arcosine computations.
+The brief is organized as follows. In Section II, we review
+the CORDIC-based algorithms for computing the sine and
+cosine trigonometric functions and their extension to arcsine
+and arccosine. In Section III, the proposed algorithm is described in detail. In Section IV, implementation consideration
+and comparison to state-of-the-art results are provided. In
+Section V, the error analysis of the proposed approach is
+presented. Finally, the main conclusions of this work are
+summarized in Section VI.
+II. BACKGROUND
+A. Sine and cosine computation using CORDIC
+Fig. 1 shows the calculation of the sine and cosine of an
+angle θ using the CORDIC algorithm [16], [17]. The calculation is based on rotating a vector v by an angle θ. The initial
+value of the vector is v0 = (X0 , Y0 ) with Y0 = 0 and zero
+phase. The final value is vM = (XM , YM ). Once the rotation
+has been carried out, the sine and the cosine of the angle
+are obtained as sin(θ) = YM /|vM | and cos(θ) = XM /|vM |.
+When the magnitude of vM is one, the sine and the cosine are
+directly YM and XM , respectively.
+The CORDIC algorithm for computing sine and cosine uses
+the variables Xi , Yi and Zi , which represent the real and
+imaginary components of the vector and its phase at stage i,
+
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems--II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2023.3262353
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS
+
+2
+
+respectively. The algorithm calculates the rotation by a series
+of M microrotatons by the set of angles
+αi = tan−1 2−i ,
+
+1.5
+
+for i = 0, . . . , M − 1. Each microrotation brings the angle
+Zi closer to θ. Thus, when Zi is greater than θ, the rotation
+is computed in clockwise direction. Otherwise, the rotation is
+computed in counterclockwise direction. In the algorithm, the
+direction of the rotation at stage i is denoted by δi where
+(
+1
+if Zi < θ,
+(2)
+δi =
+−1 otherwise,
+
+1
+
+θ≈
+
+M
+−1
+X
+
+Angle
+
+(rad)
+
+(1)
+
+so that
+
+(3)
+
+Arcsine function
+Direct arcsine using CORDIC (9)
+
+0.5
+0
+-0.5
+-1
+-1.5
+-2
+-1
+
+δi · αi .
+
+Arcsine domain sweep compairison
+
+2
+
+-0.8
+
+-0.6
+
+-0.4
+
+-0.2
+
+0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+1
+
+sin( )
+
+i=0
+
+The microrotations are computed as
+Xi+1 = Xi − δi Yi 2−i ,
+Yi+1 = Yi + δi Xi 2−i ,
+
+Fig. 2. Comparison between the built-in arcsine function and the direct
+CORDIC approximation.
+
+(4)
+
+which only requires bit-wise shifts and additions.
+The phase Zi also needs to be updated at each stage by
+either adding or subtracting the angle αi , i.e.,
+Zi+1 = Zi + δi αi .
+
+(5)
+
+The angles αi are usually precomputed and stored in memory.
+Each microrotation increases the magnitude of the vector
+by a factor
+q
+2
+2
+Xi+1
++ Yi+1
+p
+(6)
+1 + 2−2i .
+=
+A(i+1),i = p 2
+Xi + Yi2
+As a result, the gain for the whole algorithm is computed as
+AM =
+
+M
+−1 p
+Y
+
+1 + 2−2i .
+
+(7)
+
+i=0
+
+In order to compute correctly the sine and cosine, and avoid
+additional multiplications or divisions, the component X is
+initialized to 1/AM . Thus, the variables X, Y and Z are
+initialized as
+X0 = 1/AM ,
+Y0 = 0,
+
+(8)
+
+Z0 = 0.
+Consequently, after M iterations, the magnitude of the
+vector v will be one, its phase will be approximately θ,
+and its components XM and YM will be cos(θ) and sin(θ),
+respectively.
+B. Direct arcsine and arccosine computation using CORDIC
+The calculation of the arcsine and arccosine functions
+using CORDIC [6] follows the same principles explained in
+Section II-A. In this case, either sin(θ) or cos(θ) is known,
+and the angle θ is sought. In this algorithm, the direction of
+the rotations is calculated by comparing Xi with cos(θ) in
+case of the arccosine computation, or Yi with sin(θ) in case
+
+of the arcsine computation. Thus, the phase ZM of the vector
+obtained after computing the algorithm will be the angle θ that
+is sought. The equations for computing the arcsine are
+(
+1
+if Yi < T0 ,
+δi =
+−1 otherwise,
+Xi+1 = Xi − δi Yi 2−i ,
+
+(9)
+
+−i
+
+Yi+1 = Yi + δi Xi 2 ,
+Zi+1 = Zi + δi tan−1 (2−i ),
+where T0 = sin(θ), X0 = 1, Y0 = 0 and Z0 = 0. Likewise,
+the equations for computing the arccosine are
+(
+1
+if Xi < T0 ,
+δi =
+−1 otherwise,
+Xi+1 = Xi − δi Yi 2−i ,
+
+(10)
+
+−i
+
+Yi+1 = Yi + δi Xi 2 ,
+Zi+1 = Zi + δi tan−1 (2−i ),
+where T0 = cos(θ), X0 = 1, Y0 = 0 and Z0 = 0.
+Fig. 2 compares the direct arcsine computation using
+CORDIC in (9) with the exact arcsine function over the
+whole domain of the function. It can be observed that, at
+several points along the domain of the function, the CORDIC
+algorithm fails to obtain a good approximation. This is due
+to the fact that the gain of the rotations over vector v is not
+taken into account. At each stage, the magnitude of this vector
+is slightly different. However, the direction of the rotations is
+determined by comparing either Xi or Yi with the value T0 ,
+which corresponds to a vector with magnitude one. This leads
+to selecting the wrong direction for the rotations in some of the
+iterations and, thus, results in large errors in the approximation.
+A way to compensate the gain of the rotations over T0 is
+to compute
+p
+(11)
+Ti+1 = Ti · 1 + 2−2i .
+However, this requires a real multiplication at each iteration.
+
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems--II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2023.3262353
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS
+
+TABLE I
+C OMPARISON OF THE R ESOURCES R EQUIRED TO I MPLEMENT A S TAGE
+FOR AN A RCSINE C OMPUTER BASED ON CORDIC.
+
+Direct CORDIC
+Double Iteration
+Proposed
+
+Adders/
+subtracters
+3
+6
+4
+
+Registers
+
+Error
+
+3
+4
+4
+
+High
+Low
+Low
+
+C. Double iteration CORDIC
+The main solution in the literature for solving the approximation error is to apply the double iteration CORDIC
+algorithm [9], [10]. This algorithm calculates two rotations by
+each angle αi . The equations of the algorithm for the arcsine
+calculation are
+(
+1
+if Yi < Ti ,
+δi =
+−1 otherwise,
+Xi+1 = xi (1 + δi 2−2i ) − yi δi 2−i+1 ,
+Yi+1 = yi (1 + δi 2−2i ) + xi δi 2−i+1 ,
+
+(12)
+
+Zi+1 = Zi + 2 · δi · tan−1 (2−i ),
+Ti+1 = Ti + Ti · 2−2i ,
+where , X0 = 1, Y0 = 0, Z0 = 0 and T0 = sin(θ). Likewise,
+the arccosine equations are
+(
+1
+if Xi < Ti ,
+δi =
+−1 otherwise,
+−2i
+
+Xi+1 = xi (1 + δi 2
+
+−i+1
+
+) − yi δi 2
+
+,
+
+Yi+1 = yi (1 + δi 2−2i ) + xi δi 2−i+1 ,
+
+(13)
+
+Zi+1 = Zi + 2 · δi · tan−1 (2−i ),
+Ti+1 = Ti + Ti · 2−2i ,
+where , X0 = 1, Y0 = 0, Z0 = 0 and T0 = cos(θ).
+Note that each iteration of this algorithm can also be
+implemented by computing two iterations of a direct CORDIC
+implementation for arcsine and arcosine, including the gain
+compensation over Ti . This is why it is called double iteration
+CORDIC. This algorithm does not lead to significant errors in
+the approximation and it can be computed without requiring
+real multiplications, since the gain over Ti is computed by a
+bit-wise shift and an addition. This solves the issues with the
+direct CORDIC algorithm. However, the calculation of two
+microrotations per angle increases the hardware complexity.
+III. P ROPOSED APPROACH
+A. Proposed algorithm
+The main issue with the CORDIC-based arcsine and arccosine algorithms is the compensation of the gain over Ti
+at each iteration. Avoiding this computation leads to large
+approximation errors at several points across the domain of the
+functions, as reviewed in Section II-B. Using a real multiplier
+to compensate this gain is often too expensive in terms of area
+for hardware implementations. The double iteration CORDIC,
+reviewed in Section II-C solves this issue without requiring
+real multipliers. However, the complexity of the stages is
+
+3
+
+increased. This leads to hardware implementations that require
+more resources.
+In this work, we propose a method to compute Ti using only
+additions and bit-wise shifts. This approach does not require
+to modify the X, Y and Z paths of the original CORDIC.
+This leads to a simple, low-area circuit capable of computing
+accurately the arcsine and arcosine functions.
+The proposed approach considers the following approximation:
+p
+1 + 2−2i ≈ 1 + 2−2i−1 .
+(14)
+By squaring both terms,
+1 + 2−2i ≈ 1 + 2−2i + 2−4i−2 ,
+
+(15)
+−4i−2
+
+it can be observed that for i ≥ 0 the term 2
+is
+considerably smaller than the other two terms. Thus, it can
+be neglected without leading to large errors in the CORDIC
+computation. By applying this idea, the value of T in the
+proposed approach is calculated as Ti+1 = Ti + Ti · 2−2i−1 .
+As a result, the equations of the algorithm for the arcsine
+calculation are
+(
+1
+if Yi < Ti ,
+δi =
+−1 otherwise.
+Xi+1 = Xi − δi · Yi · 2−i ,
+Yi+1 = Yi + δi · Xi · 2−i ,
+
+(16)
+
+Zi+1 = Zi + δi · tan−1 (2−i ),
+Ti+1 = Ti + Ti · 2−2i−1 ,
+The equations for the arccosine calculation are
+(
+1
+if Xi < Ti ,
+δi =
+−1 otherwise.
+Xi+1 = Xi − δi · Yi · 2−i ,
+Yi+1 = Yi + δi · Xi · 2−i ,
+
+(17)
+
+Zi+1 = Zi + δi · tan−1 (2−i ),
+Ti+1 = Ti + Ti · 2−2i−1 .
+By following the ideas in [10], the proposed algorithm can
+be further optimized by avoiding the first iteration. This is due
+to the fact that the arcsine and arccosine functions are odd
+and only have outputs in the range [−π/2, π/2] and [0, π],
+respectively. For both of them, the input is in [−1, 1], but we
+can only consider the absolute value of the input. This will
+provide a solution in [0, π/2]. Then, if the input was in the
+range [0, 1], the result is correct, whereas if the input was
+in [−1, 0), the output is moved to the fourth quadrant for
+arcsine by negating the output, and to the second quadrant
+for arccosine by subtracting the result from π.
+The initialization of the algorithm needs to take into account
+two factors. First, the difference between the real gain of the
+microrotations and the proposed approximation is compensated as
+M
+−1
+Y
+1 + 2−2i−1
+′
+√
+.
+(18)
+AM =
+1 + 2−2i
+i=0
+Second, after the first iteration, the phase of v will be
+tan−1 (1). Thus, the components are initialized as
+
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems--II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2023.3262353
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS
+
+4
+
+TABLE II
+C OMPARISON OF P IPELINED A RCHITECTURE FOR A RCSINE C OMPUTATION BASED ON CORDIC.
+Algorithm
+Word length
+Iterations
+FPGA
+Look-up tables (LUTs)
+Flip-flops (FFs)
+Clock frequency (MHz)
+Throughput (MS/s)
+Latency (clock cyles)
+Latency (ns)
+Power (mW)
+Error (rad)
+NP: Not provided.
+
+[11]
+Double iteration
+25
+12
+Cyclone E
+3200
+3200
+152
+152
+12
+78.9
+NP
+4.88 · 10−4
+
+[10]
+Double iteration
+20
+12
+Virtex 6
+1265
+747
+220
+220
+10
+45.5
+NP
+2.33 · 10−5
+
+Proposed B
+Proposed
+20
+12
+Virtex 6
+1012
+753
+266
+266
+11
+41.3
+91
+2.51 · 10−5
+
+Proposed C
+Proposed
+20
+12
+Virtex US+
+998
+753
+595
+595
+11
+18.5
+131
+2.51 · 10−5
+
+Zᵢ
+
+X1 = A′M · cos(tan−1 (1)),
+Y1 = A′M · sin(tan−1 (1)),
+
+Proposed A
+Proposed
+25
+12
+Cyclone E
+1553
+791
+155
+155
+11
+70.9
+216
+4.90 · 10−4
+
+Zᵢ₊₁
+αᵢ
+
+(19)
+
+Z1 = tan−1 (1),
+Note that since the first iteration is not computed, then,
+in (16) and (17), i = 1, ...M − 1.
+As a result, the proposed algorithm requires only bit-wise
+shifts, additions and subtractions to be computed and obtains
+an accurate approximation of the arcsine and arccosine for the
+whole domain of the functions. Therefore, it solves the issues
+in previous approaches.
+
+𝛿𝑖
+
+Xᵢ
+
+Xᵢ₊₁
+>> i
+𝛿𝑖
+
+>> i
+
+Yᵢ₊₁
+
+Yᵢ
+𝛿𝑖
+
+Yᵢ < Tᵢ
+
+Tᵢ
+
+>> 2i-1
+
+𝛿𝑖
+
+Tᵢ₊₁
+
+B. Proposed architecture
+Fig. 3 represents the architecture for a single stage of
+the proposed algorithm for arcsine computations. A pipelined
+implementation requires a stage for each microrotation in the
+algorithm minus the first one. The throughput of the proposed
+architecture is one sample per clock cycle, and its latency is
+M −1 cycles. In this figure, Zi contains the phase information
+of the vector v. The angle αi is stored in a memory and
+it is either added or subtracted to Zi . The obtained result
+is registered. The Xi and Yi components are right-shifted i
+bits. The shifted Xi signal is either added or subtracted to
+the original Yi signal, and the shifted Yi signal is added or
+subtracted to the original Xi signal. Finally, both results are
+registered. The Ti signal contains the information of the sine
+whose arcsine is sought, scaled to match with the magnitude
+of the v vector at each stage. This signal is right-shifted
+(2i − 1) bits and added to the original Ti signal in order to
+compensate the gain of the microrotation computed over the
+vector v. Afterwards, this result is registered. The direction of
+the rotations is calculated by comparing Yi and Ti , as detailed
+in eq. (16).
+IV. C OMPARISON AND EXPERIMENTAL RESULTS
+Table I compares the number of adders, subtracters and registers required to implement a stage for the different CORDICbased arcsine approaches. The direct CORDIC approach requires the smallest area with 3 adders and 3 subtractors, but
+it has high approximation error. Conversely, both the double
+iteration CORDIC and the proposed approach obtain accurate
+results for the whole domain of the arcsine and arccosine
+
+Fig. 3. Architecture for an iteration of the proposed CORDIC-based algorithm
+for arcsine and arccosine computations.
+
+functions. Among them, the proposed approach saves 33% of
+the adders/subtracters, as it only requires 4 of them, whereas
+the double iteration CORDIC requires 6 of them.
+The proposed architecture has been described in VHDL. Table II shows experimental results of the proposed approach and
+previous CORDIC-based pipelined arcsine implementations.
+The proposed implementations A and B have been provided
+with the only purpose of comparing to previous works in a fair
+way, whereas implementation C provides results for a state-ofthe-art FPGA. In all the proposed implementations, the error
+has been calculated as the maximum angular error among 106
+uniformly distributed inputs in the range [−1, 1].
+Implementation A and [11] use the same setup with
+25-bit word length, 12 iterations and an Altera Cyclone
+EP4CE115F29C7 FPGA. It can be observed that both obtain similar throughput and error. However, the proposed
+implementation A reduces the latency by 10% and requires
+significantly less area, with savings of 60% in terms of LUTs
+and reduction of the number of FFs by a factor 4.
+Implementation B and [10] have 20-bit word length, 12
+iterations, and use a Xilinx Virtex-6 XC6VLX240T FPGA.
+Compared to [10], the proposed approach B reduces the number of LUTs by 20% and has a similar number of FFs. This
+agrees with the information provided in Table I. Furthermore,
+the proposed approach B achieves 20% higher throughput,
+which results in lower latency in nanoseconds, even when the
+
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems--II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2023.3262353
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS
+
+implementation in [10] takes one less clock cycle to process
+the inputs. Finally, the error of the proposed approach is 7%
+higher than that in [10], but it could be reduced by increasing
+the number of iterations by one at the cost of a slight increase
+in area.
+Finally, the proposed implementation C considers the same
+design as B, implemented on a Xilinx Virtex Ultrascale+
+XCVU37P FPGA. On this FPGA, the design reaches a
+throughput of 595 MS/s with slightly less LUTs, same number
+of FFs and much better ratio between throughput and power
+consumption than implementation B on a Virtex-6.
+V. E RROR ANALYSIS
+The maximum error for the proposed approach has three
+sources: The word length used in the implementation (εW L ),
+the number of iterations that are computed (εM ), and the
+approximation error of the gain compensation over Ti , (εT ).
+Thus, the maximum error can be expressed as
+εmax ≤ εW L + εM + εT .
+
+(20)
+
+The error εW L is related to the word length as εW L = 2−W L ,
+where W L is the number of bits used to represent the data
+in the implementation. The error εM represents the relation
+between the number of iterations computed in CORDIC-based
+algorithms and the maximum error of the approximation. It is
+calculated as εM ≤ tan−1 (2−M ), where M is the number of
+iterations computed in the implementation. The error εT is the
+error outcome of the approximation of the gain compensation
+over Ti . This error is constant. We have measured this error to
+be εT ≈ 4.3382 · 10−10 rad. This leads to the theoretical limit
+of the proposed algorithm, being εT the maximum resolution
+that can be obtained by applying this algorithm.
+We can state that, since tan(x) ≈ x for small values of x,
+then, εW L ≈ εM when W L = M . Therefore, the limit of the
+algorithm is reached when εT is larger than both εW L and
+εM . Each, εW L and εM , are equal to εT for a word length
+of 32 bits and 32 iterations. Note that a precision of εT is
+enough for most applications.
+
+5
+
+[3] L. Vachhani, K. Sridharan, and P. K. Meher, “Efficient CORDIC
+algorithms and architectures for low area and high throughput implementation,” IEEE Trans. Circuits Syst. II, vol. 56, no. 1, pp. 61–65, Jan.
+2009.
+[4] C.-S. Wu, A.-Y. Wu, and C.-H. Lin, “A high-performance/low-latency
+vector rotational CORDIC architecture based on extended elementary
+angle set and trellis-based searching schemes,” IEEE Trans. Circuits
+Syst. II, vol. 50, no. 9, pp. 589–601, Sep. 2003.
+[5] J. S. Walther, “A unified algorithm for elementary functions,” in AFIPS
+Joint Comp. Conf., May 1971, pp. 379–385.
+[6] R. Andraka, “A survey of CORDIC algorithms for FPGA based computers,” in Proc. ACM/SIGDA Int. Symp. FPGAs, Feb. 1998, pp. 191–200.
+[7] E. Manor, A. Ben-David, and S. Greenberg, “CORDIC hardware acceleration using DMA-based ISA extension,” J. Low Power Electron. App.,
+vol. 12, no. 1, pp. 1–12, Jan. 2022.
+[8] A. Sergiyenko, L. Moroz, L. Mychuda, and V. Samotyj, “FPGA implementation of CORDIC algorithms for sine and cosine floating-point
+calculations,” in IEEE Int. Conf. Intell. Data Acq. Adv. Comput. Syst.:
+Tech. App., vol. 1, Sep. 2021, pp. 383–386.
+[9] C. Mazenc, X. Merrheim, and J.-M. Muller, “Computing functions
+cos/sup -1/ and sin/sup -1/ using CORDIC,” IEEE Trans. Comput.,
+vol. 42, no. 1, pp. 118–122, Jan. 1993.
+[10] X. Liu, Y. Xie, H. Chen, and B. Li, “Implementation on FPGA for
+CORDIC-based computation of arcsine and arccosine,” in IET Int. Radar
+Conf., Oct. 2015, pp. 1–4.
+[11] W. Zhu, S. Ye, Y. Huang, and Z. Xue, “Design of a precise subdivision
+system for gratings using a modified CORDIC algorithm,” IET Circuits,
+Devices and Syst., vol. 13, no. 8, pp. 1284–1291, Nov. 2019.
+[12] A. Saha, A. Ghosh, and K. Kumar, “FPGA implementation of arcsine
+function using CORDIC algorithm,” Adv. Model. Anal., vol. 54, no. 2,
+pp. 196–201, Sep. 2017.
+[13] T. Lang and E. Antelo, “CORDIC-based computation of arccos and
+arcsin,” in Proc. IEEE Int. Conf. App.-Specific Syst., Jul. 1997, pp. 132–
+143.
+[14] M. Zechmeister, “Solving Kepler’s equation with CORDIC double
+iterations,” Mon. Not. R. Astron. Soc., vol. 500, no. 1, pp. 109–117,
+Nov. 2020.
+[15] W. Zhu, S. Ye, Y. Huang, and Z. Xue, “An improved CORDIC for
+digital subdivision of Moiré signal,” Metrol. Meas. Syst., vol. 27, no. 1,
+pp. 51–64, 2020.
+[16] F. Salehi, E. Farshidi, and H. Kaabi, “Novel design for a low-latency
+CORDIC algorithm for sine-cosine computation and its implementation
+on FPGA,” Microprocess. Microsyst., vol. 77, pp. 1–7, Sep. 2020.
+[17] J. P. Lim, M. Shachnai, and S. Nagarakatte, “Approximating trigonometric functions for posits using the CORDIC method,” in Proc. Int.
+Conf. Comp. Frontiers, May 2020, p. 19–28.
+
+VI. C ONCLUSION
+In this paper, a novel algorithm based on CORDIC for
+the computation of arcsine and arccosine functions has been
+presented. Contrary to previous CORDIC-based approaches,
+the proposed algorithm does not require neither to increase
+the complexity of the iterations nor to compute real multiplications in order to compute the functions accurately. The
+hardware implementation of the proposed algorithm has been
+provided, proving that a better trade-off between area and
+error is obtained when compared to other CORDIC-based
+implementations.
+R EFERENCES
+[1] J. E. Volder, “The CORDIC trigonometric computing technique,” IRE
+Trans. Electronic Computing, vol. EC-8, pp. 330–334, Sep. 1959.
+[2] M. Garrido, P. Källström, M. Kumm, and O. Gustafsson, “CORDIC II:
+A new improved CORDIC algorithm,” IEEE Trans. Circuits Syst. II,
+vol. 63, no. 2, pp. 186–190, Feb. 2016.
+
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License. For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+
+

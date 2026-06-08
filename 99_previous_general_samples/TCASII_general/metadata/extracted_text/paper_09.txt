@@ -1,0 +1,306 @@
+                                           TNNGen: Automated Design of Neuromorphic
+                                         Sensory Processing Units for Time-Series Clustering
+                                                  Prabhu Vellaisamy∗ , Harideep Nair∗ , Vamsikrishna Ratnakaram, Dhruv Gupta, and John Paul Shen
+                                                                      Electrical and Computer Engineering Department, Carnegie Mellon University
+                                                                             {pvellais, hpnair, vratnaka, dhruvgup, jpshen}@andrew.cmu.edu
+
+
+
+                                            Abstract—Temporal Neural Networks (TNNs), a special class of          This work serves as the first attempt at realizing such a
+                                         spiking neural networks, draw inspiration from the neocortex in       framework for the automated design of application-specific
+arXiv:2412.17977v1 [cs.AR] 23 Dec 2024
+
+
+
+
+                                         utilizing spike-timings for information processing. Recent works      TNNs, or Neuromorphic Sensory Processing Units (NSPU),
+                                         proposed a microarchitecture framework and custom macro suite
+                                         for designing highly energy-efficient application-specific TNNs.      for online clustering of time-series sensory signals. As il-
+                                         These recent works rely on manual hardware design, a labor-           lustrated in Fig. 1, the framework leverages PyTorch [12],
+                                         intensive and time-consuming process. Further, there is no open-      PyVerilog [17], Python, Cadence toolchain, and open-source
+                                         source functional simulation framework for TNNs. This paper           FreePDK45 [10], ASAP7, and TNN7 libraries [8]. Starting
+                                         introduces TNNGen, a pioneering effort towards the automated          from high-level modeling of TNNs in PyTorch, this framework
+                                         design of TNNs from PyTorch software models to post-layout
+                                         netlists. TNNGen comprises a novel PyTorch functional simulator       enables the generation of post-layout netlists of the models
+                                         (for TNN modeling and application exploration) coupled with           along with resulting hardware metrics in a single automated
+                                         a Python-based hardware generator (for PyTorch-to-RTL and             flow. It facilitates the development of optimized energy-
+                                         RTL-to-Layout conversions). Seven representative TNN designs          efficient TNN designs without expert involvement, integrating
+                                         for time-series signal clustering across diverse sensory modalities   previously segregated software-only and hardware-only TNN
+                                         are simulated and their post-layout hardware complexity and
+                                         design runtimes are assessed to demonstrate the effectiveness         developments. Further, we enable users without EDA access to
+                                         of TNNGen. We also highlight TNNGen’s ability to accurately           obtain key hardware results without running the actual process
+                                         forecast silicon metrics without running hardware process flow.       flow, via forecasting. Key contributions of this work are:
+                                            Index Terms—Temporal neural networks, Neuromorphic sen-               • TNNGen - a pioneering attempt at a design framework
+                                         sory processing units, Time-series clustering, Design automation
+                                                                                                                     for automated design of custom TNN-based NSPUs.
+                                                                                                                  • A novel TNNGen functional simulator based on PyTorch
+                                                                                                                     for robust modeling and rapid application exploration.
+                                                      I. I NTRODUCTION AND BACKGROUND
+                                                                                                                  • A novel TNNGen hardware generator based on PyVerilog
+                                            Deep neural networks (DNNs) [5] have emerged as the de                   that translates TNN PyTorch models to layout in con-
+                                         facto technology for artificial intelligence (AI), even surpass-            junction with Cadence EDA tools and a library of finely-
+                                         ing human-like sensory processing capabilities. However, this               tailored TCL scripts for optimizing the TNN designs.
+                                         impressive progress comes with an exponential surge in com-              • Time-series clustering performance and post-layout hard-
+                                         pute demands and energy consumption, raising concerns about                 ware metrics for seven representative TNN designs gen-
+                                         long term sustainability of this trend [9], [11], [18]. Temporal            erated using TNNGen across different technology nodes,
+                                         Neural Networks (TNNs), a special class of spiking neural                   extending beyond previous post-synthesis studies.
+                                         networks (SNNs) employing spike time-based processing with               • Accurate forecasting of post-layout die area and leakage
+                                         close adherence to biological plausibility [14]–[16], offer a               power for a quick evaluation of hardware complexity in
+                                         promising alternative path for AI compute, with potential for               lieu of the time-consuming hardware process flow.
+                                         orders of magnitude improvements on energy efficiency.                   The next section details the TNNGen framework and its
+                                            Recent research [2] demonstrates that single-layered TNNs          key components. Section III describes our experimental setup
+                                         excel in unsupervised time-series clustering [1], [6], [20] and       and evaluation results, highlighting the optimized TNN designs
+                                         are amenable for resource-constrained edge devices. Further           generated and design flow runtimes, along with forecasting.
+                                         works in advancing TNN research include a microarchitecture           Finally, Section IV summarizes key findings and future work.
+                                         framework for TNN implementation in 45nm CMOS [7], and
+                                                                                                                           II. TNNG EN D ESIGN F RAMEWORK
+                                         augmenting the ASAP7 process design kit (PDK) [3] with
+                                         TNN-tailored custom macros for improved energy-efficiency                The proposed TNNGen framework orchestrates the entire
+                                         [8]. Recently, the idea of creating an end-to-end framework           TNN design flow by providing user-tunable parameters. It fa-
+                                         that can automate the design of specialized TNN chiplets for          cilitates rapid TNN model development and application perfor-
+                                         online sensory processing applications was suggested in [19].         mance evaluation using a PyTorch-based simulator, which then
+                                                                                                               provides the model specifications to an automated hardware
+                                           ∗ Both authors contributed equally to this work.                    flow that delivers highly optimized physical design netlists.
+                                                                   (STDP) learning in both supervised and unsupervised modes.
+                                                                   Pytorch’s tensor operations are utilized to implement all the
+                                                                   TNN functionalities for high simulation speed. Further, it also
+                                                                   supports GPU acceleration through PyTorch’s CUDA API.
+                                                                      TNNGen simulator models the time dimension precisely,
+                                                                   aligning with the direct implementation methodology in [7]
+                                                                   wherein spike times are dictated by precise hardware clock
+                                                                   cycles. The simulator performs cycle-accurate temporal mod-
+                                                                   eling for time windows around onset of spikes, and dynam-
+                                                                   ically switches to an event-driven approach in time windows
+                                                                   where spikes are absent to speed up the simulation. TNNGen
+                                                                   employs a modular and parameterized approach, leveraging
+                                                                   key functional blocks of TNNs.
+
+                                                                   B. Hardware Generator
+                                                                      TNNGen automates the hardware design process flow by
+                                                                   facilitating automated RTL generation, RTL simulation, logic
+                                                                   synthesis, and place-and-route while ensuring a smooth design
+                                                                   flow. It leverages Veriloggen package built on top of PyVerilog
+                                                                   [17] to provide a Python interface to the user for converting
+                                                                   PyTorch model specifications to Verilog RTL codes.
+                                                                      Table I specifies the process flows within TNNGen, the
+                                                                   Cadence tools utilized during each flow, and the various
+                                                                   libraries currently supported by the framework. Cadence EDA
+                                                                   tools are specifically chosen as the ASAP7 and TNN7 libraries
+                                                                   are primarily supported in the Cadence toolchain. However,
+                                                                   TNNGen is built with huge focus on flexibility and modularity
+                                                                   to enable easy integration of other toolchains and libraries. We
+                                                                   plan to open-source TNNGen for the research community to
+                                                                   not only leverage it for their custom TNN design flow but also
+                                                                   enhance it with additional capabilities.
+                                                                      In the TNNGen backend, to enable PyTorch-to-RTL conver-
+                                                                   sion, we implemented all the TNN functionalities in PyVerilog,
+                                                                   ensuring the generated RTL is highly optimized and aligns
+Fig. 1: The TNNGen framework for designing TNN-based               with the microarchitecture in [7]. TNN7 custom macros are
+neuromorphic sensory processing units. It comprises a Py-          incorporated to help accelerate runtime. [8] reports a 3x
+Torch functional simulator and a hardware generator, and           speedup for logic synthesis; we go a step further and report
+automates the entire design flow from PyTorch to chip layout.      the place-and-route speedup in Section III. Further, TNNGen
+                                                                   contains a library of specifically tailored TCL scripts and
+                                                                   templates for automating the various design flows and PDKs,
+A. Functional Simulator
+                                                                   while providing end-user with complete freedom to configure
+   A novel PyTorch-based functional simulator is developed as      the flow as needed. Note that TNNGen does not cover DRC
+part of TNNGen for swift design space exploration and precise      & LVS checks for signoff as it requires expert intervention.
+evaluation of application-specific metrics (e.g., classification
+accuracy, clustering rand index, F1 score, etc.). The simulator       TABLE I: Industry EDA tools supported by TNNGen.
+is flexible, offering users the ability to quickly explore a                 Design Flow Stage         Cadence Tool
+vast design space and use the resulting insights to develop                   RTL simulation             Xcelium
+optimized TNN models. Some key design space configurations                    Logic synthesis             Genus
+include: (i) single-column TNNs with an arbitrary number                      Place-and-route            Innovus
+                                                                              Library support    FreePDK45, ASAP7, TNN7
+of neurons (q) and synapses per neuron (p), and (ii) large
+multi-layer TNNs with an arbitrary number of layers and
+columns per layer with configurable inter-layer connectivity.                    III. R ESULTS AND E VALUATION
+It supports various neuron response function models (in-
+cluding step-no-leak, ramp-no-leak, leaky-integrate-and-fire),     A. Experimental Setup
+winner-take-all inhibition (with customizable winner count and        We adopt the same seven single-column designs in [13],
+tie-breaking options), and spike timing dependent plasticity       targeting different sensory modalities within the UCR archive
+TABLE II: Seven different TNN configurations for various                    TABLE IV: Post-place-and-route die area results for the seven
+sensory modality applications used for the experimental setup.              representative UCR column designs.
+Clustering performance (rand index) for TNNs vs state-of-the-                          UCR            Synapse    FreePDK45     ASAP7       TNN7
+art DTCR, normalized to k-means is also provided.                                   Benchmark          Count         Area       Area        Area
+                                                                                      Name                          (µm2 )     (µm2 )      (µm2 )
+  UCR         UCR Benchmark              Sensory          DTCR      TNN
+                                                                              SonyAIBORobotSurface2      130     14284.466    1028.67     692.06
+ Column           Name                   Modality          Rand     Rand
+  (pxq)                                                   Index    Index             ECG200              192      21036.08    1513.05     1015.8
+                                                                                      Wafer              304      33868.98    2394.01     1608.52
+   65x2   SonyAIBORobotSurface2        Accelerometer      0.8354   0.6066
+                                                                                 ToeSegmentation2        686      75654.82    5388.72     3682.63
+   96x2          ECG200                     ECG           0.6648   0.6648
+                                                                                    Lightning2          1274     140,502.84   10184.45    6860.68
+  152x2           Wafer             Fabrication process   0.7338   0.555
+                                                                                       Beef             2350      259,167.4   18298.1    12634.83
+  343x2      ToeSegmentation2          Motion sensor      0.8286   0.6683
+                                                                                  WordSynonyms          6750      744,422.4   51158.20   35303.88
+  637x2         Lightning2          Optical + RF sensor   0.5913   0.577
+  470x5            Beef              Food spectrograph    0.8046   0.731
+ 270x25       WordSynonyms           1D word outlines     0.8984   0.8473
+
+TABLE III: Post-place-and-route leakage power results for the
+seven representative UCR column designs.
+           UCR            Synapse     FreePDK45      ASAP7      TNN7
+        Benchmark          Count       Leakage       Leakage   Leakage
+          Name                           (mW)         (µW)      (µW)
+  SonyAIBORobotSurface2    130           0.299        0.961      0.57
+         ECG200            192           0.442         1.41      0.84
+          Wafer            304           0.717         2.26      1.34         (a) 65x2 (79.2 ns)      (b) 96x2 (93.36 ns)     (c) 152x2 (98.4 ns)
+     ToeSegmentation2      686            1.59         5.09      3.14
+        Lightning2         1274           2.95         9.81      5.84
+                                                                            Fig. 2: Layouts of three generated column configurations fitted
+           Beef            2350          5.452         17.4     11.06       onto the same floorplan size. p × q column configurations are
+      WordSynonyms         6750          15.66        46.69     31.13       provided with computation latencies inside parentheses.
+
+
+[4], as representative benchmarks to showcase TNN designs                      TNNGen hardware generator translates the above software
+(Table II). The designs are evaluated using three approaches:               models to layouts. We employ various open cell libraries,
+   • Develop PyTorch TNN models as per p, q parameters in                   with resulting hardware metrics reported in Tables III and IV.
+     Table II and report corresponding clustering performance.              With TNN7, there is a 32.1% and 38.6% decrease in area
+   • Use TNNGen to generate post-layout hardware metrics                    and leakage power compared to ASAP7, respectively, aligning
+     across multiple cell libraries and technology nodes.                   with the findings in [8]. We report only leakage power here
+   • Predict the hardware metrics without actually running any              as total power requires fine-tuned physical rules specific to
+     of the process flows, using TNNGen’s forecasting feature.              each design, including clock tree synthesis. Nevertheless, we
+   This research extends beyond previous post-synthesis stud-               do report the total power specifically for the largest column
+ies on TNN implementations by presenting post-layout re-                    (6750 synapses) with TNN7 library for evaluation purposes.
+sults using multiple cell libraries. Further, we provide layout                Using the TNN7 macros, the largest column results in
+runtime comparisons and assess the forecasting feature of                   just 0.035 mm2 area and consumes only 0.067 mW total
+TNNGen that can predict post-layout hardware metrics with-                  (leakage + dynamic) power after layout, going beyond the
+out EDA runs. Our runtime simulations are run on a server                   post-synthesis area and total power reported in [8]. The
+with 8 Intel Xeon(R) E5-2680 CPU cores.                                     corresponding FreePDK45 and ASAP7 area/leakage values are
+                                                                            0.744 mm2 /15.66 mW and 0.051 mm2 /0.047 mW respectively.
+B. TNNGen Design Performance and Hardware Complexity
+                                                                            The advantage of 7nm designs vs. 45nm is clear. We also see
+   TNNGen simulator is used for modeling and rapidly simu-                  from Tables III and IV that TNN7 (with custom macro cells)
+lating different single-column TNN designs targeting seven                  achieves better area and leakage than ASAP7.
+different sensory modalities. To evaluate the unsupervised                     For computation latency (i.e., per sample inference) evalu-
+clustering performance, rand index is utilized, following the               ation, we first consider three smaller columns (65 × 2, 96 × 2,
+method outlined in [2]. Table II shows the rand index results               152 × 2) fitted for the same floorplan size, as shown in the
+normalized to k-means for TNN and a state-of-the-art deep                   layouts in Fig. 2. The resulting computation times are 79.2 ns,
+learning algorithm DTCR [6]. The table shows that a single                  93.36 ns, and 98.4 ns, respectively. For the largest 270 × 25
+TNN column performs nearly as well as DTCR for four of                      column, the resulting latency is 180 ns. We can see that these
+the seven benchmarks but underperforms for the remaining                    TNN designs are extremely fast in performing inference and
+three. On average, DTCR outperforms TNNs by nearly 12%,                     thereby ideal for low power real-time edge AI deployment.
+aligning with the results in [2]. It is essential to note that
+DTCR employs a significantly more complex DNN model,                        C. Runtime Evaluation
+rendering it impractical for edge hardware deployment due to                  Authors in [8] report an approximate 3x speedup during
+its computational demands. The simulator results demonstrate                logic synthesis due to the use of TNN7 macros during the map-
+the efficacy of small TNN designs for time-series clustering.               ping and optimization phases. We further validate and extend
+Fig. 3: Innvous place-and-route runtime (in seconds) for base-
+line (ASAP7) and TNNGen (TNN7) column designs.
+
+TABLE V: Forecasted (FC) post-place-and-route 7nm PPA for
+seven representative UCR column designs using TNNGen.
+        UCR          Syn.       FC         FC       FC        FC
+     Benchmark       Count     Area       Area   Leakage   Leakage
+       Name                  (µm2 )      Error    (µW )     Error
+  SonyAIBORobot...   130      627.9    +10.36%       -         -
+      ECG200         192      972.62   +6.07%        -         -     Fig. 4: Area and Leakage power forecasting illustrating actual
+       Wafer         304     1595.34   +2.25%      0.92    +32.9%    data points (‘stars’) and the forecasting trendline equations.
+  ToeSegmentation2   686     3719.26    -0.33%     2.98    +6.14%
+     Lightning2      1274    6988.54    -0.25%     6.16    -1.72%
+        Beef         2350    12971.1     -1.7%    11.98     -5.1%
+   WordSynonyms      6750    37435.1    +0.2%     35.77    +0.52%    Table V along with Fig. 4 report the forecasting (FC) results
+                                                                     for area and leakage power, along with their forecasting errors.
+                                                                     It can be seen that area can be predicted very accurately
+their empirical results by taking a step further and evaluating      within 1% of the original values for large designs. Leakage
+runtime speedup during place-and-route using Innovus.                power, although inaccurate for small designs (omitted for
+   Fig. 3 illustrates the runtime for place-and-route for increas-   the two smallest designs), is also highly accurate for large
+ing column sizes using only ASAP7 cells vs. TNN7 macros.             designs (the largest design only incurs 0.52% error). Fig. 4
+As depicted, runtime scales with increasing column sizes, but        illustrates the efficacy of the linear trendline. The forecasting
+TNN7 macros yield a slower trend. On average, the layout             regression model is part of the TNNGen framework and can
+runtime using TNN7 in Innovus place-and-route is roughly             be continually refined with more actual design data points.
+32% better than ASAP7. For the largest column, the entire
+hardware process flow (synthesis + place-and-route runtime)                                IV. C ONCLUSION
+is reduced by almost 47%, indicating larger designs benefit             This paper serves as the first effort in creating an automated
+more in runtime speedup with TNN7’s custom macros.                   design framework (from PyTorch model to chip layout) for
+D. Area and Leakage Power Forecasting                                the design of application-specific TNN-based neuromorphic
+                                                                     sensory processing units (NSPUs). TNNGen confirms the fea-
+   Hardware development is typically time-consuming. Many            sibility of such a framework. Initial results indicate automated
+researchers may not have access to commercial EDA tools.             designs are highly efficient. Post-layout 7nm results show our
+Hence, we integrate a forecasting feature for predicting silicon     largest benchmark design requires only 0.035 mm2 die area
+die area based on TNN synapse count without actually running         and 0.067 mW total power, with a compute latency of 180 ns.
+the TNNGen hardware flow. This feature leverages the linear          This work also demonstrates the benefits of leveraging custom
+trends of area and leakage power with respect to total synapse       macros in improving both hardware metrics and design flow
+count to build a linear regression model, which is trained on        runtimes. We plan to develop a full library of custom macros
+many TNNGen runs with varying TNN sizes.                             that can be smoothly integrated into the framework. We also
+   The regression model for area follows the equation:               plan to extend the framework to support more diverse appli-
+            Area = 5.56 ∗ SynapseCount − 94.9                        cations and much more complex multi-layer TNN designs.
+                                                                     The current framework stands as an important milestone for
+and leakage power follows the equation:
+                                                                     demonstrating the feasibility and effectiveness of an end-to-
+       Leakage = 0.00541 ∗ SynapseCount − 0.725                      end toolchain for the automated design of application-specific
+TNNs for online sensory signal processing. We plan to open
+source this framework to facilitate the experimentation and
+further enhancements by the research community.
+                              R EFERENCES
+ [1] S. Aghabozorgi, A. S. Shirkhorshidi, and T. Y. Wah, “Time-series
+     clustering–a decade review,” Information systems, vol. 53, pp. 16–38,
+     2015.
+ [2] S. Chaudhari, H. Nair, J. M. Moura, and J. P. Shen, “Unsupervised
+     clustering of time series signals using neuromorphic energy-efficient
+     temporal neural networks,” in ICASSP 2021-2021 IEEE International
+     Conference on Acoustics, Speech and Signal Processing (ICASSP).
+     IEEE, 2021, pp. 7873–7877.
+ [3] L. T. Clark, V. Vashishtha, L. Shifren, A. Gujja, S. Sinha, B. Cline,
+     C. Ramamurthy, and G. Yeric, “Asap7: A 7-nm finfet predictive process
+     design kit,” Microelectronics Journal, vol. 53, pp. 105–115, 2016.
+ [4] H. A. Dau, E. Keogh, K. Kamgar, C.-C. M. Yeh, Y. Zhu, S. Gharghabi,
+     C. A. Ratanamahatana, Yanping, B. Hu, N. Begum, A. Bagnall,
+     A. Mueen, G. Batista, and Hexagon-ML, “The UCR time series classi-
+     fication archive,” October 2018, https://www.cs.ucr.edu/∼eamonn/time
+     series data 2018/.
+ [5] Y. LeCun, Y. Bengio, and G. Hinton, “Deep learning,” nature, vol. 521,
+     no. 7553, pp. 436–444, 2015.
+ [6] Q. Ma, J. Zheng, S. Li, and G. W. Cottrell, “Learning representations
+     for time series clustering,” Advances in neural information processing
+     systems, vol. 32, 2019.
+ [7] H. Nair, J. P. Shen, and J. E. Smith, “A microarchitecture implementation
+     framework for online learning with temporal neural networks,” in 2021
+     IEEE Computer Society Annual Symposium on VLSI (ISVLSI). IEEE,
+     2021, pp. 266–271.
+ [8] H. Nair, P. Vellaisamy, S. Bhasuthkar, and J. P. Shen, “Tnn7: A custom
+     macro suite for implementing highly optimized designs of neuromorphic
+     tnns,” in 2022 IEEE Computer Society Annual Symposium on VLSI
+     (ISVLSI). IEEE, 2022, pp. 152–157.
+ [9] Numenta. (2022) Ai is harming our planet: addressing ai’s staggering
+     energy cost. [Online]. Available: https://www.numenta.com/blog/2022/
+     05/24/ai-is-harming-our-planet/
+[10] C. H. Oliveira, M. T. Moreira, R. A. Guazzelli, and N. L. Calazans,
+     “Ascend-freepdk45: An open source standard cell library for asyn-
+     chronous design,” in 2016 IEEE International Conference on Electron-
+     ics, Circuits and Systems (ICECS). IEEE, 2016, pp. 652–655.
+[11] OpenAI. (2018) Ai and compute. [Online]. Available: https://openai.
+     com/blog/ai-and-compute/
+[12] A. Paszke, S. Gross, F. Massa, A. Lerer, J. Bradbury, G. Chanan,
+     T. Killeen, Z. Lin, N. Gimelshein, L. Antiga et al., “Pytorch: An
+     imperative style, high-performance deep learning library,” Advances in
+     neural information processing systems, vol. 32, 2019.
+[13] J. P. Shen and H. Nair, “Cortical columns computing systems: Microar-
+     chitecture model, functional building blocks, and design tools,” 2023.
+[14] J. Smith, “Space-time algebra: A model for neocortical computation,”
+     in 2018 ACM/IEEE 45th Annual International Symposium on Computer
+     Architecture (ISCA). IEEE, 2018, pp. 289–300.
+[15] J. E. Smith, “Space-time computing with temporal neural networks,”
+     Synthesis Lectures on Computer Architecture, vol. 12, no. 2, pp. i–215,
+     2017.
+[16] J. E. Smith, “A temporal neural network architecture for online learning,”
+     arXiv preprint arXiv:2011.13844, 2020.
+[17] S. Takamaeda-Yamazaki, “Pyverilog: A python-based hardware design
+     processing toolkit for verilog hdl,” in Applied Reconfigurable
+     Computing, ser. Lecture Notes in Computer Science, vol. 9040.
+     Springer International Publishing, Apr 2015, pp. 451–460. [Online].
+     Available: http://dx.doi.org/10.1007/978-3-319-16214-0 42
+[18] N. C. Thompson, K. Greenewald, K. Lee, and G. F. Manso, “The com-
+     putational limits of deep learning,” arXiv preprint arXiv:2007.05558,
+     2020.
+[19] P. Vellaisamy and J. P. Shen, “Towards a design framework for
+     tnn-based neuromorphic sensory processing units,” arXiv preprint
+     arXiv:2205.14248, 2022.
+[20] Q. Zhang, J. Wu, P. Zhang, G. Long, and C. Zhang, “Salient subsequence
+     learning for time series clustering,” IEEE transactions on pattern anal-
+     ysis and machine intelligence, vol. 41, no. 9, pp. 2193–2207, 2018.
+

@@ -1,0 +1,1932 @@
+1
+Fast Inner-Product Algorithms and Architectures
+for Deep Neural Network Accelerators
+Trevor E. Pogue , Nicola Nicolici , Senior Member, IEEE
+Abstract—We introduce a new algorithm called the Free-pipeline Fast Inner Product (FFIP) and its hardware architecture that improve
+an under-explored fast inner-product algorithm (FIP) proposed by Winograd in 1968. Unlike the unrelated Winograd minimal filtering
+algorithms for convolutional layers, FIP is applicable to all machine learning (ML) model layers that can mainly decompose to matrix
+multiplication, including fully-connected, convolutional, recurrent, and attention/transformer layers. We implement FIP for the first time in
+an ML accelerator then present our FFIP algorithm and generalized architecture which inherently improve FIP’s clock frequency and, as
+a consequence, throughput for a similar hardware cost. Finally, we contribute ML-specific optimizations for the FIP and FFIP algorithms
+and architectures. We show that FFIP can be seamlessly incorporated into traditional fixed-point systolic array ML accelerators to
+achieve the same throughput with half the number of multiply-accumulate (MAC) units, or it can double the maximum systolic array size
+that can fit onto devices with a fixed hardware budget. Our FFIP implementation for non-sparse ML models with 8 to 16-bit fixed-point
+inputs achieves higher throughput and compute efficiency than the best-in-class prior solutions on the same type of compute platform.
+Index Terms—Algorithms, hardware acceleration, arithmetic complexity
+✦
+1 INTRODUCTION
+©2023 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including
+reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists, or reuse
+of any copyrighted component of this work in other works.
+Accepted for publication in IEEE Transactions on Computers. DOI: 10.1109/TC.2023.3334140
+RECENT years have seen many works on system-level
+improvements for machine learning hardware acceler-
+ation and hardware-oriented deep neural network (DNN)
+model optimizations. At a certain point, however, after
+hardware-oriented DNN model optimizations reach their
+limit, after the known parallelism and system-level op-
+timizations for executing their compute patterns are ex-
+ploited, and after technology scaling slows to a halt, there
+is an accelerator wall which causes limited improvement
+on the implementation side [1]. A less-explored avenue
+to continue advancement after this point is to reduce the
+workload at the algebraic level, by calculating the same ma-
+chine learning (ML) model algebra, nevertheless using a re-
+arranged compute pattern which produces the same output
+from fewer or cheaper operations performed in hardware.
+This type of arithmetic complexity research has been ex-
+plored with application to deep learning quite extensively in
+the case of Winograd’s minimal filtering algorithms applied
+to convolutional neural networks (CNN)s [2] [3]. However,
+Winograd also introduced an unrelated and less-explored
+algorithm in 1968 on which our work is based that reduces
+the arithmetic complexity of general matrix multiplication.
+We refer to this under-explored algorithm from 1968 as
+the Fast Inner Product (FIP). Compared to the traditional
+inner product (referred to as baseline), FIP allows matrix
+multiplication to be performed with approximately half of
+the multiply-accumulate (MAC) operations traded for low-
+bitwidth additions. Since MAC units are commonly the
+area-dominant computational resource in ML accelerators
+[4] [5] [6], cutting the number of required MAC units in half
+could nearly double the performance per compute area.
+• T. E. Pogue and N. Nicolici are with the Department of Electrical and
+Computer Engineering, McMaster University, Hamilton, ON, L8S 4L8,
+Canada
+Email: poguete@mcmaster.ca; nicolici@mcmaster.ca
+Despite the high impact potential of these benefits, the
+FIP algorithm [7] has never before been implemented in a
+machine learning hardware accelerator. The first step in our
+work is to address this oversight and carry out that inves-
+tigation. We show that, while the number of required MAC
+units is nearly halved as expected, there is also a reduction
+in clock frequency and, as a consequence, throughput.
+In order to address this weakness of FIP, we introduce a
+new inner-product algorithm referred to as the Free-pipeline
+Fast Inner Product (FFIP) that achieves the same near 2×
+reduction in required MAC units, however, it inherently
+improves the clock frequency and, as a consequence, overall
+throughput for a similar hardware cost compared to FIP.
+Additionally, as expected from our theoretical analysis, the
+effective size of the largest systolic array that could be fit
+in our experimental compute platform was increased from
+56×56 processing elements (PE)s when using a baseline
+systolic array to 80×80 PEs when using (F)FIP systolic
+arrays, an increase of over 2× in effective number of PEs.
+Our work shows that the FFIP architecture is function-
+ally equivalent to traditional systolic array architectures,
+and that it can be seamlessly incorporated into any ML
+accelerator system that uses traditional fixed-point systolic
+arrays for the arithmetic to double the throughput per MAC
+unit and significantly increase its performance per compute
+area across all ML models that will execute on the systolic
+array. This is because any such accelerator could substitute
+its traditional systolic array PEs for just nearly half the
+number of proposed FFIP PEs without fundamentally al-
+tering the accelerator’s functionality or internal interfaces in
+any way. Furthermore, systolic array accelerators have been
+proven effective for accelerating a wide range of modern
+ML models [5] [6] [8] [9] [10]. Our results indicate that FFIP,
+when overlaid on top of the most efficient systolic array
+accelerator systems used in practice, can further improve
+compute efficiency and increase the theoretical performance
+arXiv:2311.12224v1
+[cs.AR]
+20
+Nov
+2023
+2
+limits across a wide range of devices, system implementa-
+tions, and ML models.
+In summary, our key contributions are the following:
+• We implement FIP for the first time in a machine learn-
+ing accelerator and validate our generalized analysis
+of its ability to increase an accelerator’s theoretical
+throughput and compute efficiency limits for the data
+types commonly used in ML acceleration. As part of
+this undertaking, we also identify a weakness in FIP
+of a reduction in clock frequency. To address this, we
+introduce a new inner-product algorithm (FFIP) in Sec-
+tion 3.2 to inherently bypass this trade-off. Additionally,
+we provide ML-specific optimizations for both the FIP
+and FFIP algorithms in Section 3.3.
+• We propose a generalized PE architecture in Section 4.2
+for performing FFIP in hardware which inherently im-
+proves the clock frequency and, as a consequence, over-
+all throughput for a similar hardware cost compared
+to FIP. Additionally, we provide ML-specific hardware
+optimizations for the systolic array architectures hous-
+ing FIP or FFIP PEs in Section 4.4. We demonstrate
+in Section 6 how an example implementation of our
+abstract FFIP architecture achieves higher throughput
+and compute efficiency across different ML models
+than the best-in-class prior solutions implemented on
+the same type of compute platform. More importantly,
+the results indicate that when FFIP is overlaid on top
+of the most efficient systolic array systems used in
+practice, it can further increase compute efficiency in
+the general case across a wide range of devices, system
+implementations, and ML models.
+2 RELATED WORK AND BACKGROUND
+The architectures evaluated and proposed in this work are
+systolic arrays, which will also be referred to as matrix
+multiplication units (MXU)s. Systolic arrays are an effective
+choice for use in machine learning accelerators as they
+significantly reduce the required memory traffic and can
+reach higher clock frequencies than other designs due to the
+short and regular nature of their interconnects. This type of
+architecture has been used in state-of-the-art deep learning
+accelerators such as the Tensor Processing Unit (TPU) [5] [6]
+[8], among others [9] [10].
+2.1 Related Work
+The FIP algorithm [7] has been explored by Gustafsson et al.
+for application to finite impulse response (FIR) filtering [11]
+in a non-systolic-array architecture proposal. Three prior
+works have also been proposed for systolic array architec-
+tures for exploiting FIP [12] [13] [14].
+However, none of the prior works on FIP architectures
+are focused on application to machine learning, which uses
+a certain range of matrix sizes and data representations,
+making it deserving of a stand-alone study. For all prior
+works related to ML acceleration which cite FIP [7], upon
+closer inspection, it becomes evident that the work either
+does not evaluate FIP, or the context of the citation is, in
+fact, referring to Winograd’s more-popular minimal filtering
+algorithms for convolutional neural networks [2] [3] rather
+than Winograd’s inner-product algorithm [7], on which our
+work is based. Furthermore, the work from Bravo et al. [14]
+reports no clear improvements from their FIP implemen-
+tation, and all three other prior works on FIP architectures
+[11] [12] [13] are purely design proposals and do not provide
+empirical insight into its trade-offs.
+The benefits of FIP in hardware rely on the premise
+that the hardware footprint of adders are cheaper than
+that of multipliers. Since the arithmetic complexity of
+fixed-point multipliers scales quadratically with the input
+bitwidth compared to linearly for adders, this premise
+has been shown to hold true for fixed-point data types
+[15] [16] [17]. However, the exact benefits in perfor-
+mance/resources/clock frequency when applying FIP to
+ML acceleration are still not immediately clear, and finding
+this out requires a comparison of architecture implementa-
+tions that use multipliers/accumulators of the specific data
+sizes/types commonly used in machine learning accelera-
+tors.
+2.2 Traditional Inner Product (Baseline)
+Consider the matrix multiplication C = AB for A of size
+M × K and B of size K × N. Using the traditional inner
+product, C is calculated from MNK multiplications and
+MN (K − 1) additions, where each element ci,j of C is
+calculated as follows:
+ci,j =
+K
+X
+k=1
+ai,kbk,j . (1)
+When accelerated on systolic array architectures, the
+majority of the computational workload in ML models is
+mapped to matrix multiplication, i.e. Eq. (1), and as can be
+seen, the operations in this equation are a series of multiply-
+accumulate operations. For all ML accelerators, unless ad-
+ditional algebraic innovations are used, the throughput is
+ultimately limited by the maximum number of multiply-
+accumulate operations from Eq. (1) that can be performed
+per clock cycle. Therefore, an accelerator’s computational
+roof is limited by the number of multiplier and adder units
+it contains.
+However, the arithmetic complexity of fixed-point multi-
+pliers scales quadratically with the input bitwidth compared
+to linearly for adders, causing the hardware footprint of
+fixed-point multipliers to dominate that of adders in the
+general case [15] [16] [17]. Therefore, multipliers or MAC
+units are commonly the area-dominant computational re-
+sources in ML accelerators [4] [5] [6], and an accelerator’s
+throughput can be directly limited by how many multipliers
+its hardware budget can afford. Due to this, surpassing
+this theoretical performance per multiplier limit has been
+focused on recently with Winograd’s minimal filtering algo-
+rithms applied to convolutional neural networks (CNN)s [2]
+[3] [4] [18].
+In this work, we detail an under-explored and extremely
+competitive alternative to these prior works for surpassing
+this performance wall and evaluate in-depth how it com-
+pares to previous state-of-the-art solutions in Section 6.2.2.
+3
+3 FAST INNER-PRODUCT ALGORITHMS
+3.1 Fast Inner Product (FIP)
+In FIP [7], each element ci,j of C is calculated as follows:
+ci,j =
+K/2
+X
+k=1
+(ai,2k−1 + b2k,j) (ai,2k + b2k−1,j) − αi − βj , (2)
+where:
+αi =
+K/2
+X
+j=1
+ai,2j−1 · ai,2j (3)
+βj =
+K/2
+X
+i=1
+b2i−1,j · b2i,j . (4)
+Calculating C then requires:
+MNK + MK + NK
+2
+(5)
+multiplications for even K and:
+3 · MNK + MK + NK
+2
+− MN − M − N (6)
+additions. This means that an accelerator performing this
+equation instead of Eq. (1) can trade nearly half of its
+multipliers for low-bitwidth adders while achieving the
+same throughput. Since the hardware footprint of fixed-
+point multipliers dominates that of adders [15] [16] [17], FIP
+can theoretically significantly improve the throughput per
+compute area roof of an accelerator.
+3.2 Free-pipeline Fast Inner Product (FFIP)
+This section introduces a new inner-product algorithm re-
+ferred to as the Free-pipeline Fast Inner Product (FFIP)
+that, in hardware, achieves the same near 2× reduction
+in required MAC units as FIP [7] while also addressing
+a key weakness of FIP by inherently improving the clock
+frequency and, as a consequence, overall throughput of an
+accelerator for a similar hardware cost compared to FIP.
+In FFIP, each element ci,j of C is calculated as follows:
+ci,j =
+K/2
+X
+k=1
+g
+(j)
+i,2k−1 · g
+(j)
+i,2k − αi − βj , (7)
+where α and β are the same as in Eqs. (3) and (4), and:
+g
+(j)
+i,2k−1 = ai,2k + y2k−1,j for j = 1 (8a)
+g
+(j)
+i,2k = ai,2k−1 + y2k,j for j = 1 (8b)
+g
+(j)
+i,k = g
+(j−1)
+i,k + yk,j for j > 1 (8c)
+yi,j =
+(
+bij for j = 1
+bij − bi,j−1 for j > 1 .
+(9)
+The extra subtractions in Eq. (9) require Θ (NK) opera-
+tions to calculate, which is negligible since the complexity is
+dominated by the overall Θ (MNK) from Eq. (7). Similarly
+to Eq. (2), Eq. (7) also results in (MNK + MK + NK) /2
+multiplications for even K and the same number of addi-
+tions as in Eq. (6) as well.
+The resulting terms being multiplied in Eq. (7) are iden-
+tical to those being multiplied in Eq. (2). The difference
+between Eqs. (2) and (7) lies in the terms being fed to the
+addition in Eq. (8c). This allows the addition output g
+(j)
+i,k
+in Eq. (8c) to be passed directly into the adjacent adder for
+g
+(j+1)
+i,k , which we later show improves the inner-product’s
+hardware frequency at essentially no cost. Additionally,
+although each g
+(j−1)
+i,k takes j − 1 iterations to form before
+being passed to the next g
+(j)
+i,k , Section 4 shows how these
+iterations for all g terms in the systolic array are each being
+performed in parallel in a pipeline every clock cycle. There-
+fore, after an initial latency that is negligible relative to the
+entire execution time, every matrix product will thereafter
+be produced in a pipeline at a consistent throughput.
+3.2.1 Proof
+For j = 1, one can substitute the g
+(j)
+i,k and yi,j terms for their
+values specified in Eqs. (8a), (8b), and (9), and observe the
+same terms as in Eq. (2). For j > 1, Eq. (7) is proven by first
+showing that Eq. (2) can be rewritten as:
+ci,j =
+K/2
+X
+k=1
+([ai,2k + b2k−1,j−1] + [b2k−1,j − b2k−1,j−1])
+([ai,2k−1 + b2k,j−1] + [b2k,j − b2k,j−1]) − αi − βj
+=
+K/2
+X
+k=1
+
+h
+(j−1)
+i,2k−1 + y2k−1,j
+ 
+h
+(j−1)
+i,2k + y2k,j
+
+− αi − βj ,
+(10)
+where:
+h
+(j−1)
+i,2k−1 = ai,2k + b2k−1,j−1 (11a)
+h
+(j−1)
+i,2k = ai,2k−1 + b2k,j−1 , (11b)
+and therefore:
+h
+(j)
+i,2k−1 = ai,2k + b2k−1,j (12a)
+h
+(j)
+i,2k = ai,2k−1 + b2k,j . (12b)
+Now, h
+(j)
+i,2k−1 and h
+(j)
+i,2k can also be rewritten as:
+h
+(j)
+i,2k−1 = (ai,2k + b2k−1,j−1) + (b2k−1,j − b2k−1,j−1)
+= h
+(j−1)
+i,2k−1 + y2k−1,j
+(13a)
+h
+(j)
+i,2k = (ai,2k−1 + b2k,j−1) + (b2k,j − b2k,j−1)
+= h
+(j−1)
+i,2k + y2k,j .
+(13b)
+Therefore, h
+(j)
+i,k = h
+(j−1)
+i,k + yk,j and holds the equivalent
+property as Eq. (8c), showing that h
+(j)
+i,k = g
+(j)
+i,k and that Eq.
+(10), which is equivalent to Eq. (2), is equivalent to:
+ci,j =
+K/2
+X
+k=1
+
+g
+(j−1)
+i,2k−1 + y2k−1,j
+ 
+g
+(j−1)
+i,2k + y2k,j
+
+− αi − βj
+=
+K/2
+X
+k=1
+g
+(j)
+i,2k−1 · g
+(j)
+i,2k − αi − βj ,
+(14)
+4
+which is equivalent to Eq. (7).
+3.3 Machine-Learning-Specific Optimizations
+For the application of FIP and FFIP to machine learning, a
+values represent the layer inputs of a DNN layer, b values
+represent the layer weights, and c values correspond to
+the layer’s output values. The β term in the FIP and FFIP
+algorithms is a function of the weights. Hence, it remains
+constant over each inference and can be pre-computed after
+training. The β terms can also be incorporated into the
+biases, allowing the β subtraction in Eq. (2) to be performed
+during the bias addition stage at no extra cost. Each βj term
+is then subtracted from biasj as follows:
+biasj = biasj − βj , (15)
+where each j represents a layer output channel. This allows
+the computation from Eq. (7) to be reduced to:
+c
+′
+i,j =
+K/2
+X
+k=1
+g
+(j)
+i,2k−1 · g
+(j)
+i,2k − αi , (16)
+where c
+′
+is a layer output before biasing and activation.
+Finally, the yi,j values in FFIP from Eq. (9) are also a
+function of the layer weights, and can also be pre-computed
+after training.
+4 FAST INNER-PRODUCT ARCHITECTURES
+4.1 Definitions
+• w: The bitwidth that the weight and activations are
+quantized to.
+• d: A bitwidth increase applied to certain locations in the
+FIP and FFIP PE datapaths, where d = 1 if a and b are
+both signed or both unsigned, and d = 2 if either a or b
+is signed while the other is unsigned.
+• X, Y : The width and height of an MXU, respectively,
+in effective number of MAC units. For a baseline MXU,
+this refers to the the actual width and height in number
+of MAC units. For FIP and FFIP MXUs, X and Y
+refer to the MAC width and height required to achieve
+the same computational power if implemented on a
+baseline MXU. However, for FIP and FFIP, the number
+of actual instantiated MAC columns is X/2, and the
+number of actual instantiated MAC rows is Y + 1
+(where the extra row is for calculating the α terms as
+explained in Section 4.3).
+4.2 Processing Element (PE) Architectures
+Fig. 1a shows two traditional PEs which implement the
+baseline inner-product algorithm as in existing state-of-the-
+art systolic array ML accelerator architectures [5] [6] [8] [9]
+[10]. Figs. 1b and 1c show PE architectures for implementing
+the FIP and FFIP algorithms in an MXU hardware architec-
+ture, respectively. The FIP and FFIP PEs shown in Figs. 1b
+and 1c each individually provide the same effective com-
+putational power as the combined computational power of
+the two baseline PEs shown in Fig. 1a which implement the
+baseline inner product.
+As can be seen, compared to the baseline PEs, the FIP
+and FFIP PEs therefore provide the same computational
+y2k−1,j−1
+g
+(j−1)
+i,2k−1 g
+(j−1)
+i,2k
+(c)
+ci−1,j
+(partial sum)
+y2k−1,j y2k,j
++ +
+×
++
+g
+(j)
+i−1,2k−1 g
+(j)
+i−1,2k
+y2k,j−1
+(b)
+b2k−1,j
+b2k,j
++ +
+×
++
+ai,2k−1
+ci−1,j
+ai,2k
+b2k−1,j−1
+b2k,j−1
+ai+1,2k−1
+(a)
+b2k−1,j
++
+ai,2k−1
+b2k−1,j−1
+ai+1,2k−1
+×
+ci,j
+(partial sum)
+ci,j
+(partial sum)
+PE
+Baseline
+FIP PE
+PE
+FFIP
+ai+1,2k
+load
+load load
+load load
+g
+(j)
+i,2k−1 g
+(j)
+i,2k
+ci−2,j
+ci−1,j
+2w
+w + d
+2w + 2d
+w
+w
+w
+w
+w
+w
+w+1 w+1 w+d
+w+d
+w + d w + d
+2w + clog2(X) + 1
+w + d
+2w + clog2(X) + 1
+2w + 2d
++
+×
+PE
+Baseline
+load
+2w
+w
+w
+ci−2,j
+2w + clog2(X)
+b2k,j ai−1,2k
+b2k,j−1 ai,2k
+Fig. 1: The PE architectures for implementing the (a) base-
+line, (b) FIP, and (c) FFIP algorithms in hardware. The FIP
+and FFIP PEs shown in (b) and (c) each individually provide
+the same effective computational power as the two baseline
+PEs shown in (a) combined which implement the baseline
+inner product as in existing systolic array ML accelerators.
+Critical paths are highlighted.
+power with half the number of multipliers, where the re-
+moved multipliers are instead traded for cheap additions
+on w or w + d bits. Furthermore, half of the accumulations
+on 2w + clog2(X) bits are also traded for lower-bitwidth
+additions on w or w + d bits. Finally, one last benefit is that
+the MXUs using FIP and FFIP PEs have a latency that is X/2
+fewer clock cycles than a baseline MXU.
+The resulting terms being multiplied in Fig. 1c are the
+same as in Fig. 1b, however, the addition outputs g
+(j)
+i,k (the
+elements g
+(j)
+i−1,2k−1 and g
+(j)
+i−1,2k in Fig. 1c) can now be passed
+directly into the adder inputs of the next adjacent PE below.
+5
+This is beneficial because the addition outputs g
+(j)
+i,k stored in
+registers now serve the dual purpose of:
+1) Acting as pipelining registers for the addition outputs
+in Eq. (8), allowing the g
+(j)
+i,k terms to be buffered directly
+before the multiplication, and
+2) Serving as systolic buffers to store the g
+(j)
+i,k input for the
+adjacent PE below.
+In contrast, the FIP algorithm from Eq. (2) requires the
+inputs (a and b in this case) to be stored in systolic buffers
+prior to addition before passing them to the adjacent PEs
+below, but doing so does not serve the dual purpose of
+also acting as pipelining registers before the multiplication.
+Therefore, the FFIP algorithm inherently results in a higher
+maximum frequency for a similar hardware cost.
+However, in order to facilitate the usage of the FFIP PEs
+and gain their benefits, it is mandatory to fundamentally
+change the systolic array data flow of the original FIP algo-
+rithm in a non-obvious way requiring a high-level mathe-
+matical understanding of the algebra being performed, and
+is something that goes beyond the capabilities of today’s
+CAD tools. Our FFIP algorithm defined in Section 3.2 pro-
+vides these required high-level mathematical changes.
+4.2.1 FFIP PE versus FIP PE with Additional Registers
+After investigating and implementing the FIP algorithm in
+hardware, a key downside we found was that the FIP im-
+plementation results in a reduction in clock frequency and,
+as a consequence, throughput in the resulting architecture.
+As illustrated in Fig. 1b, this reduction in clock frequency
+comes from the fact that the longest path between registers
+that the logic in the FIP PE has to traverse through is across
+two adders and one multiplier rather than just one adder
+and multiplier. While additional registers could be placed at
+the FIP PE multiplier inputs to match the critical path of the
+FFIP PE, this adds a significant cost in registers in the PE
+array compared to using FFIP. The register requirements for
+each FIP PE would then increase from Eq. (17) to Eq. (18):
+4w + (2w + clog2(X) + 1) = 6w + clog2(X) + 1 (17)
+2(w + d) + (6w + clog2(X) + 1) (18a)
+= 8w + 2d + clog2(X) + 1 , (18b)
+where Eq. (18) is derived by adding to Eq. (17) the register
+sizes that would be required to buffer the multiplier inputs.
+In contrast, the register requirements for each FFIP PE is:
+2 (w + d) + 2 (w + 1) + (2w + clog2(X) + 1) (19a)
+= 6w + 2d + clog2(X) + 3 . (19b)
+Fig. 2 shows that the FFIP register overhead defined in Eq.
+(19) starts to increase more rapidly for bitwidths below 4,
+which may make it less desirable to use below that width.
+However, outside of this range, FFIP register requirements
+are significantly less than an FIP PE with extra registers
+added to match the critical path/frequency of an FFIP PE.
+Finally, while there will also be other registers to con-
+sider in an accelerator outside of the PEs in the datap-
+ath and control logic, these register utilizations are highly
+implementation-specific and will vary depending on the
+Fig. 2: PE register requirements at different w bitwidths for
+the FIP PE, FFIP PE, and FIP PE with extra registers before
+the multiplier to match the frequency of the FFIP PEs. Values
+are calculated using Eqs. (17) - (19) for X = 64 and d = 1.
+details of the system implementation used to house the sys-
+tolic array. Furthermore, as the systolic array size increases,
+the number of PEs increase quadratically and their total
+register contributions determined by Eqs. (17), (18), or (19)
+will dominate other registers outside of the systolic array.
+4.3 Matrix Multiplication Unit (MXU) Architectures
+Fig. 3 shows how the PEs are laid out into an MXU ar-
+chitecture. The suggested MXU input buffers shown are
+triangular-shaped register arrays containing X shift regis-
+ters of varying depths, with each shift register SRk loading
+one ai,k or bk,j/yk,j value per clock cycle. The depth of
+each SRk is ⌈k/2⌉ for the FIP and FFIP MXUs, and k
+for the baseline MXU. In order to perform general matrix
+multiplication (GEMM) on a MXU, the input matrices are
+divided into tiles fed to the MXU one-by-one. Following
+each tile multiplication, the partial tile products are accu-
+mulated outside of the MXU to generate each final matrix
+product tile. Prior to each tile multiplication, a b/y tile is
+loaded into the MXU. It then remains in place as the a/g tile
+flows through the MXU producing the tile product, during
+which a new ai vector is fed into the MXU each clock cycle.
+Additionally, to hide the latency of loading b/y tiles, we
+suggest the MXU contains an extra b/y tile buffer which
+loads the next tile as the current tile is being multiplied.
+4.4 Machine-Learning-Specific Optimizations
+In quantized ML inference, the weights and activations
+can each be quantized to signed or unsigned integers by
+choosing different zero points to quantize the values with
+[19]. However, for the FIP and FFIP architectures it is bene-
+ficial to quantize the weights and activations such that they
+are both represented on either signed or unsigned integers.
+Otherwise, representing one on signed and the other on
+unsigned adds a penalty in the hardware footprint of the
+FIP and FFIP PEs because then, due to the possible range of
+the result, d must equal 2 instead of 1, and the sum of a and
+6
+c′
+i−X/2−p,1
+−
+αi−X/2
+ai,1...ai,X
+PE PE PE
+PE PE PE −
+c′
+i−X/2−Y −p,Y
+−
+PE PE
+PE
+c′
+i−X/2−1−p,2
++
+×
+×
++
+×
+Triangular buffer
+y1,j ...yX,j−X/2
++
++
++
++
++
+p
+ari−X/2
+b1,j ...bX,j
+α generator
+b zero point (r)
++
+− − − − − −
+y generator (optional)
+Triangular buffer
+Zero-point adjuster (optional)
+×
++ari−X/2
+y1,j ...yX,j−X/2
+Fig. 3: The FFIP MXU architecture. The FIP MXU is the same
+except that FIP PEs are used instead and the y generator
+block is not present, and b inputs are passed in instead of y
+inputs. The α terms are calculated and subtracted as shown
+by first passing the a inputs through an additional row of
+MAC units before they enter the rest of the MXU.
+b elements must then be represented on w + 2 bits rather
+than the w + 1 bits needed if they were both signed or both
+unsigned. This would lead to extra register requirements in
+the FFIP PE and cause multiplication on w + 2-bit inputs
+rather than w + 1 bits for both the FIP and FFIP PEs.
+Furthermore, if the employed quantization scheme uses
+nonzero zero points for the weights, the contributions of the
+zero points in the GEMM product must then be separately
+calculated and subtracted from the result to eliminate their
+contribution (for any architecture, not just FIP and FFIP)
+[19]. We provide a solution to mitigate this penalty in the FIP
+and FFIP architectures when layer-wise zero points are used
+on the weights. We show how to pass some of these extra
+required computations into the pre-existing α generator
+logic as shown in Fig. 3. To help illustrate how this works,
+consider that the weight zero points can be represented
+by a constant matrix R being added to the weights where
+each element has a constant value. This results in the MXU
+performing the following computation:
+A (B + R) = AB + AR . (20)
+MXU
+Accumulation
+Arithmetic Unit
+Post-GEMM Unit
+Bias
+Re-scaling
+Activation
+Pooling
+Memory Unit
+Instruction
+PCIe
+SRAM
+Layer IO
+Weight
+DRAM
+External Layer
+Weight
+Unit
+RxTx
+Unit
+Tiler IO Tiler
+GEMM Unit
+Main clock
+Padding
+Padding
+Padding clock
+Quantization clock
+Pooling clock
+Instruction clock
+RxTx clocks
+DRAM clocks
+Weight Tiler clock
+Layerio IO SRAM clock
+Host DMA
+Fig. 4: The example accelerator system design used to host
+and evaluate the baseline, FIP, and FFIP MXUs when over-
+laid on top of systems based on the most efficient systolic
+array accelerators used in practice, e.g., the TPU [5] [6] [8].
+Therefore, in order to eliminate the contribution of the
+constant matrix R in the matrix product, the AR product
+must be subtracted from the MXU output. In order to do this
+and combine its subtraction with the existing α generator
+logic, we provide the zero-point adjuster block shown in
+Fig. 3, which calculates the AR elements using only one
+multiplier, and show how to efficiently combine its AR
+output elements with the α elements. This way, both the AR
+and α values are subtracted from the MXU output vectors
+at the same time and an additional hardware subtraction
+vector dedicated to subtracting only the AR elements is not
+required on the MXU output.
+Finally, as discussed in Section 3.3, the β terms do not
+need to be calculated as they do for α since they can be
+pre-computed and added to the biases. Furthermore, the
+y values can either be calculated in real time with the y
+generator as shown in Fig. 3, or they can be pre-computed
+at the cost of storing them in 1 extra bit in memory.
+5 SYSTEM ARCHITECTURE
+The key contributions of this work are the proposed FFIP
+algorithm and architectures and their application to ML
+acceleration, which improve the under-explored FIP [7] that
+has never before been applied to ML acceleration. However,
+in order to ensure that there are no unseen side-effects, it
+7
+size=Ht
+stride=Hts
+digit 3
+digit 4
++
+count=ht
+size=KH
+stride=KHs
++
+count=kh
+size=KW
+stride=KWs
++
+count=kw
+carry
+enable
+carry
+size=Cint
+stride=Cints
+carry
+digit 0
+digit 1
+digit 2
++
+count=cint
+size=H
+stride=Hs
++
+count=h
+Counter Unit
+size=W
+stride=Ws
++
+count=w
+digit 3
+Counter Unit
+Counter Unit
+Counter Unit
+Counter Unit
+Counter Unit
+size=Nt
+stride=Nts
+digit 6
++
+count=nt
+Counter Unit
+digit 5
+out
+carry
+in
+carry
+out
+address
+Fig. 5: Layer IO memory access counters for performing in-
+place mapping of 2-D convolution to GEMM.
+is important to integrate the FFIP architecture in a full-
+system implementation to fully assess the end benefits at
+the application level. Furthermore, our goal is to validate the
+benefits of FFIP when overlaid on top of systems based on
+the most efficient systolic array accelerators used in practice.
+Therefore, the high-level organization of our system design
+shown in Fig. 4 intentionally shares similarities with the
+TPUv1 [5] and some similarities with the TPUv2-TPUv4 as
+well [6] [8]. Based on this, we provide here the system-level
+implementation we used for the sake of completeness and
+for better understanding of the context in which our main
+contributions have been validated.
+5.1 Memory Subsystem
+The memory accesses are controlled by multi-digit counters
+(also referred to as tilers) shown in Fig. 5 containing pro-
+grammable digit sizes and strides which calculate GEMM
+read/write patterns, as well as map two-dimensional con-
+volution to matrix multiplication to perform Algorithm 1 for
+any matrix or convolution window sizes without requiring a
+stand-alone memory remapping stage. The size and strides
+for each layer are calculated offline once per neural network,
+and then can be re-used for all inferences of the same neural
+network after that where they are updated in the memory
+tilers in real time between each layer. The tilers allow the
+Memory Unit and external dynamic random-access memory
+(DRAM) to be interfaced from the Arithmetic Unit using
+simple first-in first-out (FIFO) interfaces.
+The convolutional layer inputs consist of three dimen-
+sions, depth Cin, height H, and width W. The Cin and H
+dimensions are each split into two separate dimensions to
+divide them into tiles, and a dimension with the t subscript
+denotes the number of tiles in that dimension (e.g. the H
+dimension is split into Ht tiles each of a new smaller size
+H). Consider that KH and KW stand for the height and
+KW
+b1 bB b1 bB
+KH
+Cin
+Cint
+W
+H
+Ht
+Fig. 6: Layer IO memory access and blocking scheme to
+partition the memory and perform in-place mapping of two-
+dimensional convolution to GEMM, provided for context.
+Algorithm 1 Layer IO memory access pattern implemented
+in the counters from Fig. 5 for in-place mapping of 2-D con-
+volution to GEMM, provided for the sake of completeness.
+1: for nt = 0; nt < Nt · Nts; nt += Nts
+2: for ht = 0; ht < Ht · Hts; ht += Hts
+3: for kh = 0; kh < KH · KHs; kh += KHs
+4: for kw = 0; kw < KW · KWs; kw += KWs
+5: for cint = 0; cint<Cint·Cints; Cint += Cints
+6: for h = 0; h < H · Hs; h += Hs
+7: for w = 0; w < W · Ws; w += Ws
+8: koffset = kh + kw + cint
+9: moffset = ht + h + w
+10: address = moffset + koffset
+11: end for
+12: end for
+13: end for
+14: end for
+15: end for
+16: end for
+17: end for
+width of the kernel size, that a dimension suffixed with
+s represents the dimension’s stride (e.g. Ws is the stride
+for the W dimension), and Nt stands for the number of
+tile columns in the B/weight matrix. The convolution is
+then mapped in-place to GEMM as shown in Algorithm
+1 where all of the layer input dimensions are mapped to
+tiled matrices by mapping each dimension to either a K
+or M dimension. Similarly, the weight dimensions are tiled
+and mapped to either the K or N dimensions for GEMM.
+Each memory location contains X elements along the Cin
+dimension, where X is the MXU width.
+5.1.1 Memory Subsystem Timing Optimizations
+It was initially found that the maximum frequency of the
+memory access control counters was lower than the GEMM
+Unit clock frequency, which would lower the throughput
+of the entire accelerator and restrict the full frequency ad-
+vantages of FFIP from being properly evaluated. To resolve
+this, we partitioned the Layer IO memory into submemories
+each containing a block of the total memory and separate
+memory tiler controllers. This allowed each memory block
+to be accessed concurrently at a slower clock speed and for
+their read data to then be accessed in an interleaved manner
+by the main clock.
+8
+b11
+b12
+b13
+en
+en
+en
+1
+en
+en
+en
+1
+en
+en
+en
+1
+b11
+b12
+b13
+en
+en
+en
+0
+b11
+b12
+b13
+b11
+b12
+b13
+Fig. 7: MXU weight column shift register logic requiring
+control signal to be connected to each element in the column.
+To do this, we derived a memory partitioning scheme for
+dividing the convolutional layer inputs into blocks in a way
+that still supports in-place remapping of two-dimensional
+convolution to GEMM as described above. The partitioning
+scheme supports dividing the memory into B blocks for any
+B that is a power of 2, allowing the memory tiler controllers
+to run at a frequency of 1/B times the main clock frequency.
+In our results, we use B = 2. The W dimension is divided
+into different blocks as show in Fig. 6, where each W slice
+is Ws elements wide.
+One remaining issue, however, is that when the KW
+dimension increments to a certain range, the submemory
+may need to access elements from a block that it does not
+contain. For example, consider the case in Fig. 6 where kh =
+kw = 3, Hs = Ws = 2, and B = 2. When kw ∈ {1, 2} then
+element 1 in block 1 will be accessed by the main clock for
+w = 1 followed by element 1 in block 2 for w = 2. However,
+when kw = 3 then the block 1 submemory should require
+access starting with an element from a block that it does
+not contain. To resolve this, when kw = 3 then block 2 will
+be accessed first by the main memory for w = 1, followed
+by the next block 1 slice for w = 2. In other words, the
+next memory elements are instead taken from the adjacent
+submemory, the kw and w incrementer digits are adjusted
+in each submemory, and the interleaving order in which the
+submemories are accessed from the main clock is modified.
+We also run the weight memory control logic at a fraction
+of the main clock speed by accessing the memory in bursts
+and thus requiring memory control to be communicated to
+the DRAM controller at an infrequent rate relative to the
+main clock speed. The external DRAM memory is used
+only for storing the weights, and the layer inputs/outputs
+always stay in on-chip memory. This allows the device’s
+external memory bandwidth to rarely be a bottleneck for
+the implementations evaluated in our experimental setup
+discussed in Section 6.
+5.2 MXU Timing Optimizations
+As discussed in Section 4.3, prior to each tile multiplication,
+a b/y tile is loaded into the MXU. It then remains in place
+as the a/g tile flows through the MXU to produce the tile
+product. As show in Fig. 7, our initial implementation for
+the mechanism which shifts b/y tiles into the MXU was to
+implement a basic one-dimensional shift register vector to
+shift each column of weights into the MXU, and then have
+an enable control signal that connects to each element in the
+vector to stop the shifting all at once when the weight col-
+umn is fully loaded. However, this required enable control
+en
+en
+en
+1
+b11
+b12
+b11
+b11
+b12
+b11
+b12
+b13
+b11
+b12
+b12
+b13
+1
+1
+en
+en
+en
+1
+1
+1
+en
+en
+en
+1
+1
+1
+en
+en
+en
+0
+0
+0
+en
+en
+en
+1
+0
+0
+en
+en
+en
+1
+0
+1
+1 1 0
+0 0 0
+Fig. 8: MXU weight column shift register logic with control
+connections fully localized to adjacent elements.
+signals to be connected non-locally to every element’s shift
+register enable inputs without being able to locally buffer
+the enable control signals close to their destinations.
+In order to mitigate this, we instead designed an im-
+proved shift-register-based mechanism shown in Fig. 8 in
+which the control signal connections are fully localized by
+being buffered directly before their destination in each ele-
+ment’s shift register enable input to improve the frequency
+potential of the MXU. In this design, the control signal has
+its own shift register mechanism separate from the datapath
+shift register which is pre-loaded with 1’s. To allow this
+mechanism, the weights are shifted in every-other clock
+cycle instead of every clock cycle. Shifting in the weight
+vectors more slowly like this does not affect the throughput
+so long as the layer input Mt tile size can usually be at least
+twice as large as the Nt tile size used for the weights, which
+was found to be true for the models we used for evaluation.
+The key contributions of this work are the proposed FFIP
+algorithm and architecture and their evaluation in an ML
+accelerator system, which improve the under-explored FIP
+[7] that has never before been applied to ML acceleration.
+Furthermore, our goal is to evaluate FFIP when overlaid
+on top of a system based on the most efficient systolic
+array accelerators used in practice. Therefore, this section
+expanded upon our system design shown in Fig. 4 that
+intentionally shares similarities with the TPUv1 [5] and some
+similarities with the TPUv2-TPUv4 as well [6] [8], and
+provides the context in which our main contributions have
+been validated to better understand their overall impact.
+6 RESULTS
+This section demonstrates the generality of the FIP-based
+approaches by evaluating our example (F)FIP implemen-
+tations on neural networks. The theoretical benefits of the
+FIP architecture are validated for the first time in a machine
+learning accelerator. Additionally, we validate the theoret-
+ical benefits of the proposed FFIP architecture against the
+baseline and FIP architectures, and against state-of-the-art
+prior works. Although the theoretical concepts presented in
+this work are general and applicable to both custom inte-
+grated circuits and field-programmable gate array (FPGA)
+implementations, our FFIP algorithm and architecture were
+9
+validated on FPGA, and we therefore confirm our theo-
+retical insights by comparing the benefits of the proposed
+FFIP architecture against the best-in-class of prior state-of-
+the-art ML accelerator solutions that are also evaluated on
+FPGA. We compare designs for non-sparse neural network
+acceleration and input sizes quantized to 8 - 16 bits, which
+are bitwidths commonly used in practice as they provide
+a balanced trade-off between accuracy versus hardware
+efficiency [19].
+The source code for our accelerator implementation is
+available on GitHub [20] and is hand-coded in SystemVer-
+ilog and implemented to be highly configurable. The MXU
+height/width can be parameterized to be any value that is
+a multiple of 4. The bitwidth of the a and b values are also
+fully parameterizable, as well as whether they are on signed
+versus unsigned representations. The design performs inter-
+layer rescaling for quantization [19] in the Post-GEMM Unit,
+which requires an additional Y multipliers (for all MXUs -
+baseline, FIP, and FFIP). The accelerator has direct memory
+access (DMA) to the system memory in the host through
+a Peripheral Component Interconnect Express (PCIe) 3.0
+connection. We use a PCIe DMA controller and host driver
+provided by Xillybus [21]. From the hardware end, the PCIe
+controller is interfaced through FIFOs. From the software
+end, the driver is interfaced through shell scripts which
+we interface with through Python to provide an end-to-end
+framework for running ML applications on the accelerator.
+Full system-level validation of the experimental acceler-
+ator system from Section 5 has been done on an Arria 10
+SoC Developement Kit [22] containing the Arria 10 SX 660
+device by measuring model throughput in real-time. How-
+ever, this device has significantly fewer soft logic resources
+compared to the Arria 10 GX 1150 used in the majority of
+the works we compare against on the same FPGA family
+in this section, and our memory subsystem implementa-
+tion requires the extra memory resources available in the
+Arria 10 GX 1150 device for the 16-bit-input architecture.
+Therefore, in order to provide a comparison with the 16-bit
+input version of our architecture in Section 6.2.2, and to use
+the same identical FPGA from the Arria 10 family as the
+majority of prior works that also use Arria 10, we generate
+compilation results for our design on the Arria 10 GX 1150
+device for a more fair and consistent comparison in Section
+6.2.2. The throughput values for our designs on the Arria
+10 GX 1150 are calculated using an accurate throughput
+estimation analysis based on our highly deterministic and
+time predictable system implementation, which predicts the
+actual model throughputs measured on the Arria 10 SX 660
+device available to us within an error margin of 1% for all
+MXU sizes. The models used for evaluation are AlexNet [23]
+and ResNet [24].
+6.1 FFIP Compared to Baseline and FIP
+The baseline, FIP, and FFIP MXUs from Section 4.3 have
+been instantiated inside an example accelerator system used
+for validation that was discussed in Section 5. Different
+accelerator designs were compiled where the system ar-
+chitecture remained the same, and only the MXU size and
+type changed. The MXU height/width was incremented by
+multiples of 8 from sizes 32 to 80, or until the device no
+Fig. 9: Evaluating the baseline, FIP, and FFIP MXUs at
+different sizes instantiated into an example ML accelerator
+system design used for validation, with 8-bit fixed-point
+inputs on an Arria 10 SX 660 FPGA.
+longer contained enough digital signal processing (DSP)
+units to instantiate the design. For each MXU size, we
+compiled a baseline, FIP, and FFIP MXU, except for the
+baseline MXU designs above size 56×56 which no longer
+fit on the device due to the DSP resources reaching their
+limit.
+The memory resource deviation seen in the 72×72 FFIP
+MXU in Fig. 9 is due to the FPGA compiler placing some
+of the datapath buffers outside of the MXU into memory
+resources. However, due to the heuristic nature of FPGA
+compilers, where even bit-equivalent designs will produce
+small variations in hardware utilizations for different ran-
+dom seeds, this deviation is interpreted as a random outlier
+and not something inherent to FFIP.
+The FIP architecture uses up to 15-20% more ALMs and
+registers than the baseline to implement the pre-adders that
+nearly half the multipliers and accumulators are traded for
+as discussed in Section 4.2. However, as expected from our
+theoretical analysis, the FIP architecture provides the much
+more significant near 2× reduction in DSP units, which
+are hard logic resources used to implement MAC units in
+FPGAs since that operation cannot be mapped efficiently
+10
+onto the soft logic resources [15]. The clock frequency of the
+FIP designs, however, is approximately 30% lower than the
+clock frequency of the baseline designs, which consequently
+reduces the throughput by the same ratio. As anticipated
+from our theoretical analysis, the FFIP architecture inher-
+ently addresses this weakness of the FIP architecture for
+a similar hardware cost by maintaining the same near 2×
+reduction in the number of required DSPs, however, FFIP
+improves the clock frequency by over 30%, and as a
+consequence, the overall throughput of the accelerator is im-
+proved by the same amount compared to FIP. Additionally,
+the effective size of the largest systolic array that can be fit
+onto the device before maxing out the DSPs is increased
+from 56×56 PEs to 80×80 when using FIP and FFIP, a 2×
+increase in effective number of PEs.
+Finally, while additional registers could be placed at
+the FIP PE multiplier inputs to match the critical path of
+the FFIP PEs, this would come at a significant extra cost
+in additional registers compared to using FFIP. A detailed
+analysis for this is provided in Section 4.2.1.
+6.2 FFIP Compared to the State-of-the-Art on FPGA
+Although the theoretical concepts presented in this work are
+general and applicable to both custom integrated circuits
+and FPGA implementations, our FFIP algorithm and archi-
+tecture were validated on FPGA, and we therefore confirm
+our theoretical insights by comparing the benefits of the
+proposed FFIP architecture against the best-in-class of prior
+ML accelerator solutions that are also evaluated on FPGA.
+6.2.1 Performance Metric Definitions and Motivations
+The common practice in the field for judging an ML accel-
+erator’s performance is with the effective throughput metric,
+op/s, which will also be referred to as solely the through-
+put, and is defined as the number of effective inference
+operations the accelerator can execute per second in real
+time. It is also commonly notated as GOPS or TOPS
+to represent its value when scaled down by one billion
+or one trillion, respectively. It is calculated as follows by
+measuring the average number of inferences performed by
+the accelerator per second, multiplied by the number of
+operations required to complete each inference when using
+traditional algorithms for the algebra such as Eq. (1):
+throughput = op/s (21a)
+=
+#inferences
+s
+·
+#operations
+inference
+(21b)
+=
+#operations
+s
+(21c)
+≈
+#multiplications + #additions
+s
+. (21d)
+While there are other operations performed other than
+strictly additions and multiplications such as the greater
+than operator used in Max-Pool layers, the number of addi-
+tions and multiplications performed in the majority of ML
+models dominate the number of other types of operations
+performed [5], which is why Eq. (21d) is an accurate ap-
+proximation of Eq. (21c).
+Therefore, an accelerator’s throughput roof, defined as
+the throughput if all instantiated compute resources are
+utilized in every clock cycle, is accurately approximated
+by the number of instantiated multiplier and adder units
+multiplied by how many executions each multiplier and
+adder unit can perform per second, i.e. the accelerator’s
+clock frequency, as follows:
+op/s roof ≈ (#multipliers + #adders) · f , (22)
+where f is the accelerator’s clock frequency.
+However, the logic complexity of fixed-point multipliers
+scales quadratically with the input bitwidth compared to
+linearly for adders and registers, causing the hardware foot-
+print of multipliers to dominate that of adders and registers
+in the general case [15] [16] [17]. Due to this, multipliers and
+MAC units are commonly the area-dominant computational
+resources in ML accelerators [4] [5] [6]. Based on this and the
+fact that Eq. (1) has the following property:
+Baseline #additions ≈ #multiplications, (23)
+we can rewrite Eq. (22) as follows to more directly reflect
+the computational throughput roof by basing it solely on
+how many of the area-dominant computational resources,
+i.e. multipliers, that a device’s hardware budget can afford:
+Baseline throughput roof = op/s roof (24a)
+≈ (#multipliers + #adders) · f (24b)
+≈ 2 · #multipliers · f , (24c)
+which can also be re-arranged to determine the roof of the
+following performance per compute area metric:
+Baseline
+throughput
+compute area
+roof ≈
+op/s roof
+#multipliers
+(25a)
+≈ 2 · f , (25b)
+and the roof of the following performance per compute area
+per clock cycle metric:
+Baseline
+throughput
+compute area
+clock cycle
+roof ≈
+op/s roof
+#multipliers
+f
+(26a)
+≈ 2 . (26b)
+However, when an accelerator instead uses FIP or FFIP
+for the arithmetic (Eqs. (2) and (7)), the ratio of multiplica-
+tions to additions becomes:
+(F)FIP #additions ≈ 3 · #multiplications . (27)
+This means that the device can trade nearly half of its
+compute-area-dominant multipliers for low-area adders
+while achieving the same throughput and the same number
+of inferences per second. Since the hardware footprint of the
+multipliers still dominates that of the adders as explained
+above, the (F)FIP throughput roof can still be most directly
+reflected by basing it solely on how many of the area-
+dominant computational resources, i.e. multipliers, that a
+device’s hardware budget can afford:
+(F)FIP throughput roof = op/s roof (28a)
+≈ (#multipliers + #adders) · f (28b)
+≈ 4 · #multipliers · f , (28c)
+which can also be re-arranged to determine the roof the
+11
+following performance per compute area metric:
+(F)FIP
+throughput
+compute area
+roof ≈
+op/s roof
+#multipliers
+(29a)
+≈ 4 · f , (29b)
+and the roof of the following performance per compute area
+per clock cycle metric:
+(F)FIP
+throughput
+compute area
+clock cycle
+roof ≈
+op/s roof
+#multipliers
+f
+(30a)
+≈ 4 . (30b)
+Based on the above definitions and reasoning, we use
+the following three performance metrics for judging prior
+state-of-the-art solutions against FFIP:
+throughput (GOPS) = op/s · 10−9
+(31a)
+throughput
+compute area
+
+GOPS
+multiplier
+
+=
+op/s · 10−9
+#multipliers
+(31b)
+throughput
+compute area
+clock cycle
+
+
+operations
+multiplier
+clock cycle
+
+ =
+op/s
+#multipliers
+f
+. (31c)
+For the results in Section 6.2.2, #multipliers is calculated
+as #DSPs for AMD/Xilinx FPGAs where each DSP in-
+stantiates one 18×27-bit multiplier [25], and #DSPs × 2
+for Intel/Altera FPGAs where each DSP instantiates two
+18×19-bit multipliers [26]. The only exception to this is
+for the works using Intel/Altera FPGAs from Liu et al.
+[27] and Fan et al. [28], where two 8-bit multiplications
+are packed onto each 18×19-bit multiplier in the DSPs and
+additional ALMs as explained in Section 6.2.2, and therefore
+#multipliers = #DSP × 4.
+We also note that, when evaluating solutions on FPGA,
+it is more common in the field to measure the performance
+per compute area using throughput/DSP rather than through-
+put/multiplier. However, we use the latter in order to make
+the evaluation more generalized and to detach it from the
+specific DSP architectures currently being used in modern
+FPGAs. For example, the DSPs on most AMD/Xilinx FPGAs
+[25] contain one fixed-point multiplier, whereas the DSPs on
+most Intel/Altera FPGAs [26] contain two fixed-point mul-
+tipliers, which would make GOPS/DSP comparisons unfair
+when comparing designs on Intel versus AMD FPGAs, and
+would decrease the generality of the comparison.
+The throughput metric defined in Eq. (31a) measures
+the raw performance that a solution is able to achieve on
+a device and is the foremost commonly used metric for
+comparison in the field. We use the throughput per compute
+area and throughput per compute area per clock cycle metrics
+defined in Eqs. (31b) - (31c) to help compare the scaling
+potential of a design regardless of how many computational
+resources are available on the device it is scaled onto, or so
+that prejudice is not given towards implementations that
+could theoretically achieve higher throughputs but did not
+scale up their design to take full advantage of all the com-
+pute resources available on the device. The throughput per
+compute area per clock cycle metric serves a similar purpose as
+throughput per compute area, however, it also normalizes for
+clock frequency to further abstract the performance criteria
+from the implementation platforms and their technology
+nodes, which will have varying timing potentials, and this
+metric will also remove any doubt regarding FFIP’s perfor-
+mance improvements coming solely from increase in clock
+frequency compared to the prior works. However, we still
+include the throughput per compute area metric because a key
+benefit of FFIP is that it does inherently allow for a higher
+clock frequency for a similar hardware cost compared to FIP.
+6.2.2 Discussion
+As derived in Eqs. (24) - (26) versus (28) - (30), (F)FIP
+increases the theoretical roof of the performance metrics
+defined in Eqs. (31a) - (31c) in the general case, regardless
+of the implementation technology. To empirically validate
+this, we compare our results in this section against the prior
+state-of-the-art, and since our FFIP algorithm and gener-
+alized architecture were validated on FPGA, we confirm
+our theoretical insights by comparing the benefits of the
+proposed FFIP architecture against the best-in-class prior
+solutions also evaluated on FPGA. We demonstrate that
+FFIP is extremely competitive and surpasses the prior works
+in the evaluated performance metrics.
+Due to the clear advantages, increasing the theoretical
+limits of the performance metrics defined in Eqs. (31a) -
+(31c) from Section 6.2.1 has been focused on recently in other
+works as well. The works by Yepez et al. [18] and Jiang et
+al. [31] do this by exploiting Winograd’s minimal filtering
+algorithms applied to convolutional neural networks as
+shown by the work from Lavin et al. [2]. However, as shown
+in Table 2, the FFIP architectures surpass the prior works
+in effective ability to reduce the multiplication complex-
+ity of the neural network workloads, shown by compar-
+ing the operations/multiplier/clock cycle metric defined in Eq.
+(31c). Furthermore, Winograd’s minimal filtering algorithms
+are applicable only to convolutional layers, whereas FIP
+and FFIP are applicable to all deep learning models and
+layer types that mainly decompose to matrix multiplication,
+such as fully-connected, convolutional, recurrent, and atten-
+tion/transformer layers. Finally, the Winograd convolution
+technique [2] still results in matrix multiplication, which can
+therefore still achieve further compute efficiency improve-
+ments by also executing the resulting matrix multiplication
+on a systolic array architecture housing FFIP PEs.
+Additionally, the Arria 10 DSPs [26] can each perform
+two multiplications between one 18-bit and one 19-bit in-
+teger input. As demonstrated in the works by Liu et al.
+[27] and Fan et al. [28], it is possible to pack the multiplier
+inputs such that each 18×19-bit multiplier performs two
+multiplications of 6-bit inputs. The remaining two 2×8-bit
+multiplications and two 2×6-bit multiplications required are
+then performed and summed using extra ALMs. The works
+by Liu et al. [27] and Fan et al. [28] use this technique to
+improve the DSP efficiency for 8-bit inputs. However, this
+technique requires a noticeable extra cost in ALMs, it is
+specific to the particular DSP architecture currently being
+used in Intel/Altera FPGAs [26], and it does not work for
+16-bit inputs. We also note that the works from Liu et al.
+[27] and Fan et al. [28] report the total resources available on
+the FPGA in their comparison with prior work, however, we
+list their total instantiated resources that are also reported in
+12
+TABLE 1: Comparison with state-of-the-art 8-bit-input accelerators for different models on the same FPGA family.
+TNNLS ’22 [27] TCAD ’22 [28] Entropy ’22 [29] Ours (FFIP 64×64)
+FPGA Arria 10 GX 1150 Arria 10 GX 1150 Arria 10 GX 1150 Arria 10 GX 1150
+Data type 8-bit fixed 8-bit fixed 8-bit fixed 8-bit fixed
+ALMs 304K 304K 303K 118K
+Registers 889K 890K - 311K
+Memories 2334 2334 1953 1782
+DSPs 1473 1473 1503 1072
+Frequency
+(MHz)
+200 220 172 388
+Model ResNet-50 VGG16 Bayes
+ResNet-18
+Bayes
+VGG11
+R-CNN
+(ResNet-50)
+R-CNN
+(VGG16)
+AlexNet ResNet-50 ResNet-101 ResNet-152
+GOPS 1
+1519 1295 1590 534 719 865 2277 2529 2752 2838
+GOPS/ 2
+multiplier
+0.258 0.220 0.270 0.091 0.239 0.288 1.062 1.180 1.284 1.324
+Operations/ 3
+multiplier/
+clock cycle
+1.289 1.099 1.277 0.412 1.391 1.673 2.739 3.042 3.310 3.414
+1
+Throughput, defined in Eq. (31a), motivation and explanation provided in Section 6.2.1.
+2
+Throughput per compute area, defined in Eq. (31b), motivation and explanation provided in Section 6.2.1.
+3
+Throughput per compute area per clock cycle, defined in Eq. (31c), motivation and explanation provided in Section 6.2.1.
+TABLE 2: Comparison with state-of-the-art 16b-bit-input accelerators for different models on the same FPGA family.
+TCAD ’20 [30] TVLSI ’20 [18] TCAS-II
+’22 [31]
+TCAS-I
+’23 [32]
+Ours (FFIP 64×64)
+FPGA Arria 10 GX 1150 Arria 10 Arria 10
+GX 1150
+Arria 10
+SoC
+Arria 10 GX 1150
+Data type 16-bit fixed 16-bit fixed 8/16-bit
+fixed 4
+16-bit
+fixed
+16-bit fixed
+ALMs 286K 335K 208K 181K 180K - 189K 199K
+Registers - - - - - - - 530K
+Memories 2356 2692 2319 1310 1310 1565 - 2713
+DSPs 1518 1518 1518 1344 1344 1161 1536 1072
+Frequency
+(MHz)
+240 240 240 250 250 163 200 346
+Model ResNet-50 ResNet-152 VGG16 VGG16 Modified
+VGG16
+CTPN(
+VGG
++BiLSTM)
+Modified
+StyleNet
+AlexNet ResNet-
+50
+ResNet-
+101
+ResNet-
+152
+GOPS 1
+600 697 968 1642 1788 1224 670 1974 2258 2458 2534
+GOPS/ 2
+multiplier
+0.198 0.230 0.319 0.611 0.655 0.527 0.218 0.921 1.053 1.146 1.182
+Operations/ 3
+multiplier/
+clock cycle
+0.823 0.957 1.329 2.443 5
+2.661 5
+3.234 56
+1.090 2.659 3.042 3.311 3.413
+1-3
+See the corresponding definitions from Table 1.
+4
+Weights and layer outputs are quantized to 8 bits. Layer input is quantized to 16-bit due to Winograd convolutional transformations.
+5
+These works use Winograd’s minimal filtering algorithms [2] to reduce multiplication complexity.
+6
+This is a central processing unit (CPU)-FPGA heterogeneous work where portions of the inference are performed on CPU.
+their work in our comparison since it is the more common
+practice and is more favourable for them to use in the
+comparison here.
+We also note that, while our system implementation
+required more FPGA memory resources than some of the
+other works, the FFIP architecture proposed in this work
+affects only to the systolic array of an accelerator and
+does not consume any of the memory resources itself. The
+memory subsystem design used in our example accelerator
+implementation that is consuming the majority of the FPGA
+memory resources was used to ensure that off-chip memory
+bandwidth was not a bottleneck on the Arria 10 SoC De-
+velopement Kit available to us in order to ensure we could
+properly evaluate the benefits of FFIP on that platform. FFIP
+can be used in any accelerator system that uses traditional
+fixed-point systolic arrays for the arithmetic without funda-
+mentally altering the accelerator’s functionality or internal
+interfaces in any way, and its usage is orthogonal to the
+memory subsystem being used in the accelerator.
+To make comparisons as fair as possible, we aligned
+as many variables as possible to the best of our ability in
+the comparisons in Tables 1 - 3 in regards to making com-
+parisons against implementations on the same FPGA, the
+same input/datapath bitwidths, and the same ML models.
+13
+TABLE 3: Comparison with state-of-the-art accelerators on different FPGAs for the same models and input bitwidths.
+TVLSI
+’19 [33]
+TCAS-
+II ’21
+[34]
+Ours
+(FFIP
+64×64)
+TNNLS
+’22 [27]
+TCAS-I
+’23 [35]
+Ours
+(FFIP
+64×64)
+TCAD
+’20 [30]
+Ours
+(FFIP
+64×64)
+TNNLS
+’22 [36]
+Ours
+(FFIP
+64×64)
+TCAD
+’20 [30]
+Ours
+(FFIP
+64×64)
+Model AlexNet AlexNet AlexNet ResNet-
+50
+ResNet-
+50
+ResNet-
+50
+ResNet-
+50
+ResNet-
+50
+ResNet-
+101
+ResNet-
+101
+ResNet-
+152
+ResNet-
+152
+Data type 16-bit
+fixed
+8/16-
+bit
+fixed 4
+16-bit
+fixed
+8-bit
+fixed
+8-bit
+fixed
+8-bit
+fixed
+16-bit
+fixed
+16-bit
+fixed
+8/16-
+bit
+fixed 5
+16-bit
+fixed
+16-bit
+fixed
+16-bit
+fixed
+FPGA XC7VX
+690T
+VC709 Arria
+10 GX
+1150
+Arria
+10 GX
+1150
+XCVU9P Arria
+10 GX
+1150
+Arria
+10 GX
+1150
+Arria
+10 GX
+1150
+VX980 Arria
+10 GX
+1150
+Arria
+10 GX
+1150
+Arria
+10 GX
+1150
+ALMs (Intel) /
+LUTs (AMD)
+468K 121K 199K 304K - 118K 286K 199K 480K 199K 335K 199K
+Registers 649K 160K 530K 889K - 311K - 530K - 530K - 530K
+Memories
+(20Kb Intel) /
+(36Kb AMD)
+1465 1470 2713 2334 - 1782 2356 2713 1457 2713 2692 2713
+DSPs 1436 664 1072 1473 2048 1072 1518 1072 3121 1072 1518 1072
+Frequency
+(MHz)
+200 200 346 200 200 388 240 346 100 346 240 346
+GOPS 1
+434 220 1974 1519 287 2529 600 2258 600 2458 697 2534
+GOPS/ 2
+multiplier
+0.302 0.331 0.921 0.258 0.140 1.180 0.198 1.053 0.192 1.146 0.230 1.182
+Operations/ 3
+multiplier/
+clock cycle
+1.511 1.657 2.659 1.289 0.701 3.042 0.823 3.042 1.922 3.311 0.957 3.413
+1-3
+See the corresponding definitions from Table 1.
+4
+Weights and layer inputs are quantized to 8 and 16 bits, respectively.
+5
+Weights are quantized to 8 bits and layer input/output is quantized to 8 or 16 bits at different stages.
+However, since it is not feasible in implementation time
+to evaluate any one solution for all ML models on all
+platforms, Tables 1 and 2 compare prior works on the same
+FPGA family and the same datapath/input bitwidths but
+for varying ML models. However, since it was not possible
+to find any more recent prior works evaluated on Arria
+10 devices that also evaluate identical ML models as we
+did, we also provide Table 3, which compares prior works
+sometimes evaluated on different FPGAs than our valida-
+tion platform, but for identical ML models and identical or
+similar input/datapath bitwidths.
+Despite the strategies used in some prior works for
+increasing the theoretical limits of the performance metrics
+defined in Eqs. (31a) - (31c), the results from Tables 1 -
+3, demonstrate that the proposed FFIP approach is the
+most effective at doing so and can provide performance
+improvements against the best-in-class prior works in al-
+most all evaluated performance metrics and every evaluated
+comparison criteria. When comparing the lowest to highest
+performing models evaluated on FFIP for throughput per
+compute area per clock cycle against the next-most competitive
+result from the prior works in each table, FFIP is approx-
+imately 1.6-2× higher in Table 1, it is overall on-par in
+Table 2 (even when including the CPU-FPGA heterogeneous
+system in the comparison [31]), and 1.6-3.7× higher in
+Table 3. Furthermore, once we account for the higher clock
+frequency achieved due to the inherent hardware-efficient
+nature of FFIP, it is further improved over the next-most
+competitive works in each table, achieving approximately a
+3.7-4.6× improvement in Table 1, a 1.4-1.8× improvement
+in Table 2, and a 2.8-6× improvement in Table 3. Finally,
+our FFIP implementation allowed us to achieve the highest
+overall throughput over the next-most competitive prior
+works in each table, achieving approximately a 1.4-1.8×
+improvement in Table 1, a 1.1-1.4× improvement in Table
+2, and a 1.7-4.6× improvement in Table 3, allowing us to
+increase the throughput limits of the evaluation device well
+beyond its theoretical throughput limits determined by Eq.
+(24c).
+7 CONCLUSION
+We present an algorithm and general architecture that im-
+prove Winograd’s under-explored inner-product algorithm
+[7] that can be seamlessly incorporated into any ML ac-
+celerator system that uses traditional fixed-point systolic
+arrays to double the throughput per MAC unit, significantly
+increasing the accelerator’s performance per compute area
+across all ML models that will execute on the systolic array.
+We implement and evaluate FIP for the first time in
+a machine learning accelerator system. We then identify a
+weakness of FIP and propose the new FFIP algorithm and
+generalized hardware architecture that inherently address
+that weakness in the general case. We provide ML-specific
+optimizations for the FIP and FFIP algorithms and systolic
+array hardware architectures. We derive how the (F)FIP
+architectures increase the theoretical compute efficiency and
+performance limits in the general case.
+Finally, although the theoretical concepts presented in
+this work are general and applicable to both custom in-
+tegrated circuits and FPGA implementations, since our
+proposed FFIP algorithm and architecture were validated
+on FPGA, we empirically confirm our theoretical insights
+14
+through comparison with prior state-of-the-art solutions
+also evaluated on FPGA. As anticipated from our theoretical
+analysis, our full-system validation results shown in Fig. 9
+and Tables 1 - 3 confirm that the generalized FFIP systolic
+array architecture we propose, when implemented, does in-
+fact surpass the traditional theoretical compute efficiency
+and performance limits, and can improve performance com-
+pared to the best-in-class prior state-of-the-art solutions in
+almost all evaluated performance metrics, each evaluated
+comparison criteria, and all evaluated ML models. More im-
+portantly, our results indicate that FFIP can directly benefit
+the ML acceleration community by allowing for an increase
+in the theoretical compute efficiency and performance lim-
+itations in the general case across a wide range of devices,
+system implementations, and ML models.
+REFERENCES
+[1] A. Fuchs and D. Wentzlaff, “The accelerator wall: Limits of chip
+specialization,” in IEEE HPCA, 2019, pp. 1–14.
+[2] A. Lavin and S. Gray, “Fast algorithms for convolutional neural
+networks,” in IEEE CVPR, 2016, pp. 4013–4021.
+[3] S. Winograd, Arithmetic complexity of computations. SIAM, 1980,
+vol. 33.
+[4] X. Liu et al., “WinoCNN: Kernel sharing Winograd systolic array
+for efficient convolutional neural network acceleration on FPGAs,”
+in IEEE ASAP, 2021, pp. 258–265.
+[5] N. P. Jouppi et al., “In-datacenter performance analysis of a tensor
+processing unit,” in IEEE ISCA, 2017, pp. 1–12.
+[6] T. Norrie et al., “The design process for Google’s training chips:
+TPUv2 and TPUv3,” IEEE Micro, vol. 41, no. 2, pp. 56–63, 2021.
+[7] S. Winograd, “A new algorithm for inner product,” IEEE TC, vol.
+C-17, no. 7, pp. 693–694, 1968.
+[8] N. P. Jouppi et al., “TPU v4: An optically reconfigurable su-
+percomputer for machine learning with hardware support for
+embeddings,” arXiv preprint arXiv:2304.01433, 2023.
+[9] X. Wei et al., “Automated systolic array architecture synthesis for
+high throughput CNN inference on FPGAs,” in ACM/IEEE DAC,
+2017, pp. 1–6.
+[10] C. Zhang et al., “Caffeine: Toward uniformed representation and
+acceleration for deep convolutional neural networks,” IEEE TCAD,
+vol. 38, no. 11, pp. 2072–2085, 2019.
+[11] O. Gustafsson et al., “Low-complexity general FIR filters based on
+Winograd’s inner product algorithm,” in IEEE ISCAS, 2013, pp.
+93–96.
+[12] L. Elfimova and Y. V. Kapitonova, “A fast algorithm for matrix
+multiplication and its efficient realization on systolic arrays,”
+Cybernetics and Systems Analysis, vol. 37, pp. 109–121, 2001.
+[13] H. Jagadish and T. Kailath, “A family of new efficient arrays for
+matrix multiplication,” IEEE TC, vol. 38, no. 1, pp. 149–155, 1989.
+[14] I. Bravo et al., “Different proposals to matrix multiplication based
+on FPGAs,” in IEEE ISIE, 2007, pp. 1709–1714.
+[15] K. Guo et al., “[DL] a survey of FPGA-based neural network
+inference accelerators,” ACM TRETS, vol. 12, no. 1, pp. 1–26, 2019.
+[16] V. Leon et al., “Walking through the energy-error pareto frontier
+of approximate multipliers,” IEEE Micro, vol. 38, no. 4, pp. 40–49,
+2018.
+[17] K. Pekmestzi, “Multiplexer-based array multipliers,” IEEE TC,
+vol. 48, no. 1, pp. 15–23, 1999.
+[18] J. Yepez and S.-B. Ko, “Stride 2 1-D, 2-D, and 3-D Winograd for
+convolutional neural networks,” IEEE TVLSI, vol. 28, no. 4, pp.
+853–863, 2020.
+[19] B. Jacob et al., “Quantization and training of neural networks for
+efficient integer-arithmetic-only inference,” in IEEE CVPR, 2018,
+pp. 2704–2713.
+[20] T. E. Pogue and N. Nicolici, “FFIP accelerator implementation,”
+2023. [Online]. Available: https://github.com/trevorpogue/
+algebraic-nnhw
+[21] “Xillybus.” [Online]. Available: http://xillybus.com/
+[22] “Intel Arria 10 SoC development kit.” [On-
+line]. Available: https://www.intel.ca/content/www/ca/en/
+products/details/fpga/development-kits/arria/10-sx.html
+[23] A. Krizhevsky et al., “Imagenet classification with deep convolu-
+tional neural networks,” Commun. ACM, vol. 60, no. 6, pp. 84––90,
+2017.
+[24] K. He et al., “Deep residual learning for image recognition,” in
+IEEE CVPR, 2016, pp. 770–778.
+[25] “UltraScale architecture DSP slice,” 2021. [Online]. Available:
+https://docs.xilinx.com/v/u/en-US/ug579-ultrascale-dsp
+[26] “Intel Arria 10 native fixed point DSP IP
+core user guide,” 2017. [Online]. Available: https:
+//www.intel.com/content/www/us/en/docs/programmable/
+683583/current/intel-arria-native-fixed-point-dsp-ip.html
+[27] S. Liu et al., “Toward full-stack acceleration of deep convolutional
+neural networks on FPGAs,” IEEE TNNLS, vol. 33, no. 8, pp. 3974–
+3987, 2022.
+[28] H. Fan et al., “FPGA-based acceleration for bayesian convolutional
+neural networks,” IEEE TCAD, vol. 41, no. 12, pp. 5343–5356, 2022.
+[29] J. An et al., “An OpenCL-based FPGA accelerator for Faster R-
+CNN,” Entropy, vol. 24, no. 10, p. 1346, 2022.
+[30] Y. Ma et al., “Automatic compilation of diverse CNNs onto high-
+performance FPGA accelerators,” IEEE TCAD, vol. 39, no. 2, pp.
+424–437, 2020.
+[31] J. Jiang et al., “A CPU-FPGA heterogeneous acceleration system
+for scene text detection network,” IEEE TCAS-II, vol. 69, no. 6, pp.
+2947–2951, 2022.
+[32] S. Kim et al., “A CNN inference accelerator on FPGA with com-
+pression and layer-chaining techniques for style transfer applica-
+tions,” IEEE TCAS-I, vol. 70, no. 4, pp. 1591–1604, 2023.
+[33] S. Kala et al., “High-performance CNN accelerator on FPGA
+using unified Winograd-GEMM architecture,” IEEE TVLSI, vol. 27,
+no. 12, pp. 2816–2828, 2019.
+[34] J. Li et al., “An FPGA-based energy-efficient reconfigurable convo-
+lutional neural network accelerator for object recognition applica-
+tions,” IEEE TCAS-II, vol. 68, no. 9, pp. 3143–3147, 2021.
+[35] D. Kim et al., “Agamotto: A performance optimization framework
+for CNN accelerator with row stationary dataflow,” IEEE TCAS-I,
+vol. Early Access, 2023.
+[36] W. Huang et al., “FPGA-based high-throughput CNN hardware
+accelerator with high computing resource utilization ratio,” IEEE
+TNNLS, vol. 33, no. 8, pp. 4069–4083, 2022.
+Trevor E. Pogue Trevor E. Pogue received the
+B.Eng. degree in Electrical Engineering and the
+M.A.Sc. degree in Electrical and Computer En-
+gineering from McMaster University, Hamilton,
+Canada, in 2016 and 2019, respectively. In 2018,
+he worked as a design verification intern at Syn-
+opsys Inc., and in 2022-2023 he worked as an
+intern at Advanced Micro Devices Inc. He is
+currently a Ph.D. student in the Department of
+Electrical and Computer Engineering at McMas-
+ter University, Hamilton, Canada. His research
+interests are in the area of hardware acceleration.
+Nicola Nicolici (S’99-M’00-SM’11) Nicola Nicol-
+ici (S99-M00-SM’11) received the Dipl.Ing. de-
+gree in Computer Engineering from the “Po-
+litehnica” University of Timisoara, Romania,
+in 1997 and the Ph.D. degree in Electronics
+and Computer Science from the University of
+Southampton, U.K., in 2000. He is currently
+a Professor with the Department of Electrical
+and Computer Engineering, McMaster Univer-
+sity, Hamilton, Canada. His research interests
+are in the area of computer-aided design and
+test. He has authored a number of papers in this area. Dr. Nicolici
+was the recipient of the IEEE TTTC Beausang Award for the Best
+Student Paper at the International Test Conference in 2000 and the Best
+Paper Award at the IEEE/ACM Design Automation and Test in Europe
+Conference in 2004.
+

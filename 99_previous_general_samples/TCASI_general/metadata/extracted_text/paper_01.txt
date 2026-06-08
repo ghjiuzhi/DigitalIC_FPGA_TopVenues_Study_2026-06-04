@@ -1,0 +1,972 @@
+JOURNAL OF LATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021                                                                                     1
+
+
+
+
+    Memristive Tabu learning neuron generated
+multi-wing attractor with FPGA implementation and
+              application in encryption
+             Quanli Deng, Chunhua Wang, Yichuang Sun Senior Member, IEEE, Zekun Deng, Gang Yang
+
+
+
+   Abstract—Memristors, with their unique nonlinear character-               climb out of local minima thus performing an efficient search
+istics, are highly suitable for construction novel neural mod-               of the energy surface [7].
+els with rich dynamic behaviors. In this paper, a memristor                     Dynamical behaviors of tabu learning neurons (TLNs) have
+with piecewise nonlinear state function is introduced into the
+tabu learning neuron model, resulting in a novel memristive                  attracted attention, prompting a closer examination of the
+tabu learning neuron model capable of generating a double-                   running trajectories of the neural network. Li et al. took the
+wing chaotic butterfly. By modulating the state function of                  memory decay rate as a bifurcation parameter and studied
+the memristor, we can effectively and easily alter the number                the dynamical behaviors of tabu learning neurons, proving
+of wings of the chaotic butterfly. Equilibrium points analysis               that a single TLN can transition between stable and unstable
+further elucidates the mechanism behind the generation of multi-
+wing chaos. Various numerical simulation techniques, including               dynamics through the Hopf bifurcation [8]. Xiao and Cao
+phase portraits, bifurcation diagrams, Lyapunov exponent spec-               studied the stability of a discrete-time tabu learning single neu-
+tra, and local attraction basins, are employed to illustrate the             ron model, finding that Pitchfork, Flip, and Neimark-Sacker
+dynamical behaviors of the proposed model. Moreover, the newly               bifurcations occur when the bifurcation parameter exceeds a
+constructed neuron model is validated using FPGA hardware,                   critical value [9]. Bao et al. studied the dynamical behaviors
+with the results aligning with numerical simulations, thereby
+offering a dependable foundation for a memristor digital circuit-            of a non-autonomous TLN by introducing an external input to
+based brain-like neuron model. Lastly, an image encryption                   the TLN, discovering complex neuron firing patterns in their
+application based on the multi-wing chaotic butterfly is developed           non-autonomous TLN model [10]. Doubla et al. introduced
+to demonstrate the potential application of the model.                       and investigated a model of two-neuron tabu learning network
+  Index Terms—multi-wing, memristor, tabu learning neuron,                   based on a composite hyperbolic tangent function as the
+FPGA implementation, encryption                                              activation function, demonstrating the bistable property in their
+                                                                             novel model [11]. Bao et al. presented a non-autonomous
+                                                                             single TLN model based on a sinusoidal activation function,
+                         I. I NTRODUCTION                                    which can generate a class of multi-scroll chaotic attractors
+    NVESTIGATING the dynamical behaviors of neural net-                      [12].
+I   works can guide us in exploring more appropriate control
+strategies to achieve neural dynamics in the artificial neural
+                                                                                The memristor, considered as the fourth fundamental circuit
+                                                                             component, has garnered attention due to its unique memory
+networks. The recurrent neural network proposed by J. J.                     function. Its non-volatile and nonlinear properties make it a
+Hopfield in 1984 [1], has received extensive attention not only              prime candidate in neural network applications [13]–[15]. In
+because of its engineering applications in optimization prob-                the realm of dynamical behaviors research, memristors are
+lems [2] and content-address memory [3], but also because                    employed to simulate various nonlinear phenomena in neuron
+it can revel some dynamical behaviors of the human brain                     models function [16]–[18]. The memristive neuron models
+[4]–[6]. Aimed at solving non-convex optimization problems,                  have led to the discovery of more abundant dynamic phe-
+Beyer and Ogier introduced tabu learning into the Hopfield                   nomena, promoting the rapid development of neurodynamics
+neural network (HNN), which enables the state trajectory to                  research. For example, Hou et al. introduced a memristor into
+                                                                             a single TLN to reflect the self-adaption physical processing
+                                                                             in biological neurons and found coexisting infinitely many
+  Manuscript received Month xx, 2xxx; revised Month xx, xxxx; accepted       nonchaotic attractors in the novel memristive tabu learning
+Month x, xxxx. This work was supported in part by the National Natural       neuron (MTLN) [19]. Njitacke et al. introduced a memristor
+Science Foundation of China under Grant 62271197, and in part by the
+Guangdong Basic and Applied Basic Research Foundation under Grant            into the TLN and proposed a simple MTLN that can produce
+2024A1515011910.                                                             an infinite number of coexisted chaotic attractors [20]. Ding
+  Quanli Deng, Chunhua Wang, Zekun Deng, and Gang Yang are with              et al. substituted the external stimulus of a TLN with the
+the College of Information Science and Engineering, Hunan University,
+Changsha, 410082, China (Corresponding author: Chunhua Wang, e-mail:         memristive current and proposed a novel memristive TLN that
+wch1227164@hnu.edu.cn).                                                      can generate a multi-scroll chaotic attractor [21].
+  Chunhua Wang is also with the Greater Bay Area Institute for Innovation,      Neural systems with multi-scroll or multi-wing chaotic
+Hunan University, Guangzhou, 511300, China.
+  Yichuang Sun is with the School of Engineering and Computer Science,       attractors exhibit complex topological structures and abundant
+University of Hertfordshire, Hatfield AL10 9AB, U.K.                         dynamic characteristics, holding a significant position in both
+JOURNAL OF LATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021                                                                                     2
+
+
+
+engineering applications and the revelation of neural chaotic                                    TABLE I
+dynamic behaviors [22]–[24]. However, the current proposed                         C OMPARISON OF PIECE - WISE MEMRISTORS
+MTLN models cannot generate multi-wing chaotic attractors.                Literature          memristor model            attractor type
+To address this gap in knowledge, this article proposes a novel           Ref. [27]     sgn-based sawtooth function        multi-scroll
+memristive tabu learning neuron model capable of generating               Ref. [28]        tanh-base step function      grid multi-scroll
+                                                                          Ref. [29]     sgn-based sawtooth function      multi-structure
+multi-wing chaotic attractors by controlling the state function           this work     piece-wise quadratic function      multi-wing
+of the memristor. Firstly, a novel memristor model with
+piecewise nonlinear state function is proposed and verified
+by numerical simulations. Then, the novel memristor is intro-
+                                                                     depending on the state variable w and the applied voltage v
+duced into a single TLN model to construct the novel MTLN
+                                                                     to the memristor [25].
+model. Furthermore, the dynamical behaviors of the novel
+MTLN are analyzed through various methods, including phase              In alignment with the concept of the general voltage-
+portraits, bifurcation diagrams, Lyapunov exponent spectra,          controlled memristor, we introduce a novel memristor model.
+and local attraction basins. The simulation results illustrate       The mathematical representation of this memristor model is
+that the MTLN can generate butterfly-shape chaotic attractors.       formulated as
+Additionally, the multi-wing butterfly can be easily generated                        
+                                                                                         i = (w)v
+by adjusting the state function of the memristor. Moreover, a                                                                (2)
+                                                                                         ẇ = 1 − G(v) − 0.1w
+field programmable gate array (FPGA)-based digital hardware
+implementation of the MTLN model is performed, demonstrat-
+                                                                     where v, i and w denote the voltage, current, and internal state
+ing the correctness of numerical model. Finally, a multi-wing
+                                                                     variable of the memristor, respectively. The state-dependent
+MTLN chaotic attractor-based encryption scheme is designed
+                                                                     function G(v) is given by
+and tested. The numerical simulation results of the encryption
+system demonstrate that the proposed multi-wing based image
+                                                                                                  G0 v 2 , N = 0
+                                                                               
+encryption has good performance in key sensitivity, informa-                   
+                                                                                                 N
+                                                                                       G0 v 2 − n=1 Gn (α + β(sgn(v − En )                  (3)
+                                                                                               P
+tion entropy, and robustness in resisting attacks.                    G(v) =
+   The main contributions of this work can be summarized in                                   −sgn(v + En )), N > 0
+                                                                               
+
+following aspects:
+1) A novel multi-wing butterfly shape attractor generated by         where α, β, G0 , Gn (where Gn =n+2), and En (where
+    a memristive TLN is proposed for the first time.                 En =n+1) are positive parameters, and sgn(·) represents the
+                                                                     sign function. The integer parameter N serves to modulate
+2) The memristive TLN is implemented based on FPGA
+                                                                     the number of wings. The piecewise nonlinear state function
+    digital circuit, which may guide for the hardware imple-
+                                                                     of the memristor is inspired by the method of constructing
+    mentation of tabu learning neural networks.
+                                                                     multi-wing chaotic attractors from the Lorenz-family chaotic
+3) An image encryption system has been designed based on             systems. In Ref. [26], the goal of creating multi-wing chaotic
+    the multi-wing chaotic attractor, which possesses a large        attractors is accomplished by extending the unstable saddle-
+    key space, extreme sensitivity to keys, and the ability to       foci from the Lorenz-family chaotic systems. Motivated by
+    resist various attacks, thus effectively ensuring the security   prior research, we design the state function of the memristor
+    of image data.                                                   as a nonlinear function with piecewise characteristics. This
+   The rest of the article is organized as follows. Section          segmented approach, in turn, imparts greater complexity in
+II describes the model of memristor and the model of the             dynamical behaviors to both neuron model and neural net-
+memristive TLN. In Section III, dynamical behaviors of the           work model. Table I presents a selection of piece-wise linear
+proposed memristive TLN are studied by the numerical simu-           memristor-based neural models and their associated types of
+lation method from multiple perspectives. Section IV designs         chaotic attractors. An examination of the table reveals that the
+and implements the memristive TLN based on FPGA. Section             piece-wise memristor models are instrumental in the emer-
+V presents a chaotic image encryption scheme based on the            gence of complex attractor structures within neural models.
+multi-wing chaotic sequence, and its security performances              To validate the proposed mathematical model of the mem-
+are analyzed. Section VI concludes this paper and provides an        ristor, we conducted tests on the pinched hysteresis loops of
+outlook for future research.                                         the memristor under periodic sinusoidal voltage excitation,
+                                                                     given by v=Asin(ft). For the sake of generality, the parameters
+                   II. M ODEL DESCRIPTION                            are chosen as G0 =1, α=1.5, β=0.75, N =5. Figs.1(a) and (b)
+A. Memristor model                                                   illustrate the hysteresis loops influenced by voltage frequency
+  A voltage controlled memristor can be described as                 and amplitude, respectively. The analysis reveals that in the
+                                                                    v-i plane, the memristor’s hysteresis loops pinched at the
+                        i = f (w)v
+                        dw                                    (1)    origin. The side lobe areas of the loops decrease as the
+                         dt = g(w, v)                                voltage frequency increases, and the loop converge to a single-
+where v and i denote the voltage and current, and w repre-           valued straight line as the frequency approaches infinity. These
+sents the internal state variable of the memrsitor device. The       observations confirm the effectiveness of proposed memristor
+function g(·) defines the switching behavior of the memristor        model [30].
+JOURNAL OF LATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021                                                                                                                                  3
+
+
+
+                                                                                 the nonlinear function in memristor. Compared to previous
+         4                                    4
+                                                                                 works, the key features of this model are that it can generate
+         2                                    2                                  doubling chaotic attractor and the convenience of altering the
+                                                                                 number of wings of the chaotic attractor by modifying the
+         0                                    0
+   iM
+
+
+
+
+                                        iM
+                                                                                 state function of the memristor.
+        −2                      f=0.1        −2                   A=1
+                                f=0.5                             A=1.25
+        −4                      f=1
+                                             −4
+                                                                  A=1.5
+                                                                                 III. DYNAMICS OF MEMRISTIVE TABU LEARNING NEURON
+                                                                                                                                     MODEL
+             −1        0          1               −1      0         1
+                      vM                                  vM
+                      (a)                                 (b)                       In this section, we uncover the intricate dynamics of the
+                                                                                 proposed MTLN through a combination of theoretical analysis
+Fig. 1. Hysteresis loops of the memristor model with sinusoidal voltage          and numerical simulations. The numerical simulations are
+source v=Asin(ft), (a) different frequencies at A=1V; (b) different amplitudes   performed using the MATLAB R2022b software and the
+at f =0.5.
+                                                                                 ODE45 algorithm, with a fixed time step of 0.001, and time
+                                                                                 length of 500.
+B. Memristive tabu learning neuron model
+  In the tabu learning neural network , the linear proximity                     A. Equilibrium points and stability
+function can be used to perform gradient descent on the energy                      The stability of equilibrium points is an important character-
+function [7], thereby resulting in the state equation of the i-th                istic of nonlinear dynamical systems. The equilibrium points
+neuron in the network being expressed as                                         of the model (6), which is denoted by P=(xˆ1 , xˆ2 , xˆ3 ), can be
+          
+              Ci u̇i = − R1i ui + j Tij Vj + Ji + Ii
+                                 P                                               determined by the following equations
+                                                              (4)
+              J˙i = −cJi − dVi                                                    f1 (xˆ1 , xˆ3 ) = −axˆ1 + btanh(xˆ1 ) − (d/c)tanh(xˆ1 ) − kxˆ3 xˆ1
+where Ci , Ri , and ui represent the membrane capacitor, the                      f2 (xˆ1 , xˆ3 ) = G(xˆ1 ) − 0.1xˆ3 − 1
+                                                                                                                                                  (7)
+membrane resistance, and the membrane potential of the i-th
+                                                                                 where xˆ2 = −(d/c)tanh(xˆ1 ). The value of xˆ1 and xˆ3 can be
+neuron in the network, respectively. Tij is the correspondence
+                                                                                 seen as the intersection of the curves drawn by (7). Without
+connection matrix element for the j-th neuron to the i-th
+                                                                                 loss of generality, we set parameters as a = 1.5, b = 2.5, c =
+neuron.
+                                                                                 3.5, d = 17 and k = 3.5 and choose four case of the parameter
+   Since (4) describes the state variations when the i-th neuron
+                                                                                 N in G(·) to plot the the solution of xˆ1 and xˆ3 , as shown in
+interacts with other neurons in the network. Li et al. simplified
+                                                                                 Fig.2.
+it during their study of the bifurcation behavior of individual
+neuron in the neural network, obtaining the single tabu learn-
+                                                                                            
+ing neuron as
+                                                                                    [ 
+
+
+
+
+                                                                                            
+                    ẋ = −ax + bf (x) + y + I
+                                                              (5)                                       D                                         E 
+                    ẏ = −cy − df (x)                                                       
+                                                                                            
+where x and y correspond to state variable u and J in (4),
+respectively, a, b, c and d are constant parameters, and I is
+                                                                                    [ 
+
+
+
+
+                                                                                             
+
+the external input current. Recent studies, such as Ref. [10]–                                          F                                         G 
+                                                                                            
+[12], have paid attention to the dynamic behavior of single                                                                                                               
+                                                                                                                          [                                          [ 
+tabu learning neuron under the influence of memristor. These
+studies focus on dynamics of individual neuron, laying the                       Fig. 2. Numerical simulated curve of (7) in which f1 (xˆ1 , xˆ3 ) denoted by red
+foundation for the research on the dynamics of memristive                        color and f2 (xˆ1 , xˆ3 ) denoted by blue color with parameters α=1.5, β=0.75,
+tabu learning neural networks.                                                   G0 =1 and (a) N =0, (b) N =1, (b) N =2, (b) N =3.
+   Following the concept of studying of the dynamics of
+a single tabu learning neuron, we integrate the memristor                          The Jacobian matrix of the system (6) at the equilibrium
+into the state equation of TLN to study neuron’s dynamical                       points can be calculated by
+behavior. For the sake of simplifying the study, we have                                  
+                                                                                             −a + bsech2 (xˆ1 ) − k xˆ3 1 −k xˆ1
+                                                                                                                                 
+neglected the external input current I in the model. The                                         −dsech2 (xˆ1 )        −c  0 .         (8)
+resulting novel memristive TLN model is formulated as                                               2G0 (xˆ1 )          0  −0.1
+          
+           x˙1 = −ax1 + btanh(x1 ) + x2 − kx3 x1                                   The equilibrium points and their stability can be numer-
+             x˙2 = −cx2 − dtanh(x1 )                       (6)                   ically determined using MATLAB software, based on the
+             x˙3 = G(x1 ) − 0.1x3 − 1
+          
+                                                                                 positions identified in Fig.2. The stability of these points,
+where x1 , x2 , x3 denote the state variables of the tabu learning               as inferred from the eigenvalues of the Jacobian matrix, is
+neuron and the memristor, respectively. The constants a, b, c, d                 visually represented in the same figure with different colors.
+and k are positive parameters. The hyperbolic tangent function                   Pink-colored stars correspond to the equilibrium points with
+tanh(·) serves as the activation function, while G(·) represents                 one positive and two negative eigenvalues of the Jacobian
+JOURNAL OF LATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021                                                                                                                   4
+
+
+
+matrix, indicating an unstable index-1 saddle. Green-colored
+dots represent points with one negative real eigenvalue and a
+pair of conjugate complex eigenvalues with positive real part,
+suggesting that these equilibrium points are unstable index-
+2 saddle-foci. In light of the Shil‘nikov theorem [31], the
+presence of unstable index-2 saddle-foci in the system suggests
+the potential for chaotic attractors to emerge.
+
+
+B. Double-wing chaotic attractor generated by MTLN                                            Fig. 4. Lyapunov exponent spectra and bifurcation diagrams (the blue and
+   For the numerical integration of the model (6), we em-                                     the red trajectories are with initial condition (0.1,0.1,0.1) and(0.1,-0.1,0.1),
+                                                                                              respectively) with parameters (a) fixing c=3.5,d=17 varying k in range [1,15],
+ployed a set of randomly chosen initial conditions x1 (0)=0.1,                                (b) fixing k=3.5,d=17 varying c in range [2,5], (c) fixing k=3.5,c=3.5 varying
+x2 (0)=0.1, and x3 (0)=0.1. The parameters were set to a=1.5,                                 d in range [5,20].
+b=2.5, c=3.5, d = 17 and k = 3.5. Additionally, the parameter
+N was set to zero in the function G(·). The resulting phase
+portraits and time domain waveforms of state variables are                                       Fig.4 presents the Lyapunov exponent spectra and the bi-
+depicted in Fig.3. specifically, Figs.3(a) and (b) display the                                furcation diagrams of state variable x1 , with initial conditions
+phase portraits of the system in x1 − x2 and x1 − x3 planes,                                  (0.1,0.1,0.1), marked in red, and (0.1,-0.1,0.1), marked in
+respectively. Fig.3(c) presents the time domain waveforms of                                  green. In Fig.4(a), the influence of memristor on dynamics
+the state variables x1 and x3 within 500-second simulation                                    is examined by fixing the memory decay rate c=3.5, and the
+period. As observed in the figures, the MTLN generates a                                      learning rate d=17, while varying k in region [1,15]. The
+double-wing butterfly-shaped chaotic attractor in the x1 − x3                                 chaotic region of the model is observed for k ∈ [1.98, 12.36],
+plane.                                                                                        where LE1 is positive and LE2 is zero. As depicted in
+                                                                                              Fig.4(a2), the MLTN demonstrates intricate bifurcation phe-
+                                                              1                               nomena, including forward period-doubling bifurcation, re-
+             2.5                                                                              verse period-doubling bifurcation, as well as several periodic
+                                                              0
+                                                                                              windows as k increments. An increase in the memory decay
+             0.0
+   x2
+
+
+
+
+                                                    x3
+
+
+
+
+                                                        −1                                    rate c leads to the observation of forward period-doubling
+        −2.5                                                                                  bifurcation, crisis scenarios, periodic windows, and reverse
+                   (a)                                  −2 (b)
+                                                                                              period-doubling bifurcation, as depicted in Fig.4(b2). The
+                             −2     0    2                              −2   0      2
+                                    x1                                       x1               chaotic regions corresponding to k=3.5, d=17 and c ∈ [2, 5]
+                                                                                              are determined from Fig.4(b1), which are c ∈ [3.36, 4.17]
+                                                   x1                   x3
+              2                                                                               and c ∈ [4.45, 4.95], respectively. When k=3.5, c=3.5, and
+                                                                                              the learning rate d is varied in the range [5,20], the Lya-
+    x1 /x3
+
+
+
+
+              0
+                                                                                              punov exponent spectra and bifurcation diagram for x1 are
+             −2
+                       (c)
+                                                                                              shown in Fig.4(c). The bifurcation diagram reverses reverse
+                   0              100        200                  300         400       500   and forward period-doubling bifurcations, along with several
+                                                        t/s                                   periodic windows, as d increases. The numerical simulation
+                                                                                              results highlight the complex dynamical behaviors that emerge
+Fig. 3. Numerical simulation results of the model (6) for (a) phase portrait                  by changing the control parameters of the MTLN. Moreover,
+in x1 − x2 plane, (b) phase portrait in x1 − x3 plane, (c) time domain wave
+of the variable x1 and x3 .
+                                                                                              the bifurcation diagrams illustrate that different initial values
+                                                                                              lead to distinct bifurcation trajectories, indicating the multi-
+   To delve deeper into the dynamics of the model (6), we                                     stability phenomenon of the MTLN.
+maintained the parameters a=1.5, and b=2.5 constant while                                        To elucidate the impact of memristor on the dynamical
+treating the parameter k, memory decay rate c, and learning                                   evolution, we selected four representative values of k: 2, 3.5,
+rate d as adjustable control parameters. Our investigation                                    11 and 12.5, while keeping the memory decay rate c=3.5
+focused on the Lyapunov exponent spectra and bifurcation                                      and the learning rate d=17 constant. The phase portraits
+diagrams to understand the dynamical behaviors. In a three-                                   of the MTLN for these values are depicted in Fig.5. As
+dimensional continuous-time system, the state can be deter-                                   the parameter k is incremented, the attractor of the system
+mined by the signs of Lyapunov exponents (LEs). If the first                                  transitions from periodic state to a double-wing chaotic state,
+LE is positive, the second on equals to zeros and the last one                                then to single-wing chaotic state and ultimately returns to
+is negative, the system is in a chaotic state, indicating that the                            a periodic state. This observed behavior is consistent with
+system has inherent instability. Furthermore, by examining the                                the dynamic analysis performed using the Lyapunov exponent
+bifurcation diagram, one can gain insights into the dynamic                                   spectra and bifurcation diagram with respect to parameter k.
+evolution process of the system. This analysis enables a                                         As depicted in Fig.4, varying the initial conditions results
+clear understanding of the system’s long-term behavior under                                  in distinct bifurcation trajectories. The phase portraits of
+various parameter settings and the transition processes that                                  coexisting attractors are presented in Fig.5.Specifically, the
+occur as the system parameters change.                                                        left-side and right-side periodic attractors (in Fig.5(a)) as well
+JOURNAL OF LATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021                                                                                                                                   5
+
+
+
+
+        
+                D                                                  E                                            The system parameters and initial values for these phase por-
+                                                              
+                                                                                                                    traits are consistently set to a=1.5, b=2.5, c=3.5, d=17, k=3.5
+                                                                                                                   and (x1 (0),x2 (0),x3 (0))=(0.1,0.1,0.1). Observation from Fig.7
+x3
+
+
+
+
+                                                     x3
+                                                                                                                 indicate that as the parameter N increases, the number of
+                                                                                                                   wings of the chaotic attractor transitions from 4-wing to 14-
+         
+                                                                                                           wing.
+                                 x1                                                        x1
+           F                                                    G 
+
+                                                             
+x3
+
+
+
+
+                                                  x3
+                                                             
+                                                                                                     
+                                 x1                                                        x1
+
+Fig. 5. Phase portraits of the model (6) with c=3.5, d=17 (a) k=2, (b) k=3.5,
+(c) k=11, (d) k=12.5, where red trajectories are from initial (0.1,0.1,0.1) and
+blue trajectories are from initial (0.1,-0.1,0.1), respectively.
+
+
+
+
+                                                                                                                    Fig. 7. Phase portraits of the model (6) in x1 − x3 plane with (a) 4-wing,
+                                                                                                                    (b) 6-wing, (c) 8-wing, (d) 10-wing, (e) 12-wing, (f) 14-wing.
+
+                                                                                                                       To further investigate the dynamics of the multi-wing
+                                                                                                                    MTLN, we have plotted the bifurcation diagrams of the state
+                                                                                                                    variable X1 for various control parameter values of k, under
+Fig. 6. Attraction basins of the coexisting attractors in (a) x1 (0) − x2 (0)                                       different cases of memristor parameter N =1, 2, 3, 4, 5, and 6.
+plane, (b) x1 (0) − x3 (0) plane, (c) x2 (0) − x3 (0) plane.
+                                                                                                                    These bifurcation diagrams are presented in Fig.8. In contrast
+                                                                                                                    to the bifurcation diagrams shown in Fig.4(a), where the
+as the left-wing and right-wing chaotic attractors (in Fig.5(c))                                                    function G(v) lacks breakpoints, it is evident that the chaotic
+correspond to initial conditions I1 =(0.1,0.1,0.1) and I2 =(0.1,-                                                   regions in the bifurcation diagrams are expanded by the
+0.1,0.1), respectively. The blue curve represents the trajectory                                                    introduction of multi-wing forms. This analysis demonstrates
+for initial condition I1 , while the red curve represents the                                                       that the complexity of the system’s dynamics is enhanced by
+trajectory for initial condition I2 . The basins of attraction                                                      the presence of breakpoints in the state-dependent function of
+for nonlinear system provide a visual representation of the                                                         the memristor, leading to a richer variety of chaotic behaviors.
+dynamical distribution of the nonlinear system. By fixing the
+system control parameters at k=11, setting the initial value of
+x3 to 0.1, and varying the initial values of x1 and x2 within                                                            IV. H ARDWARE IMPLEMENTATION OF THE MTLN
+the region [-5,5], we obtain the 2D attraction basin shown                                                          A. Discretization of the MTLN
+in Fig.6(a). Similarly, Figs.6(b) and (c) display the attraction
+                                                                                                                      FPGA-based digital circuit implementations have gained
+basins of the MTLN in the x1 (0) − x3 (0) and x2 (0) − x3 (0)
+                                                                                                                    widespread adoption in the design of chaotic neurons, sur-
+planes, respectively. In Fig.6, the attraction basins are color-
+                                                                                                                    passing analog circuit implementations. This preference is
+coded to indicate the type of attractor: blue regions represent
+the attraction regions of the right-wing chaotic attractor, while
+red regions indicate the left-wing chaotic attractor. The figure
+reveals that the MTLN exhibits complex coexisting attraction
+basins when generating a single-wing chaotic attractor.
+
+C. Multi-wing chaotic attractors generated by MTLN
+   In accordance with the memristor model in Section II,
+when the parameter N in state-dependent function G(v) is
+positive, additional breaking points are introduced into the
+state function of the memristor. This can lead to the emergence
+of multi-wing attractors. Without loss of generality, we have
+chosen the parameter N in G(v) to be 1, 2, 3, 4, 5, and
+6 to show the dynamics of the multi-wing butterfly chaotic
+attractors. The phase portraits of the MTLN in the x1 − x3                                                          Fig. 8. Bifurcation diagrams of the model (6) with different number of
+plane for these values of N are displayed in Figs.7(a) to (f).                                                      attractor wings.
+JOURNAL OF LATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021                                                                          6
+
+
+
+attributed to the FPGA’s high calculation speed, high stability,     in an FPGA-based neuron model presents challenges due to
+and convenience of altering system parameters and initial val-       hardware resource limitations. To address this issue, Kwan et
+ues, as demonstrated in recent studies [32]–[34]. In this article,   al. introduced a simple sigmoid-like second-order piecewise
+we implement the proposed MTLN using an FPGA platform.               activation function that can be directly implemented in hard-
+The neuron model presented in (6) can be transformed into a          ware and closely approximates the behavior of the hyperbolic
+discrete-time system using the fourth-order Runge-Kutta (Rk4)        tangent function [35]. In pursuit of enhanced hardware effi-
+method. For the three state variables, x1 , x2 , and x3 in (6), we   ciency, we adopt this approximated tanh function in our FPGA
+define xn , yn , and zn as the sample values at the start of the     implementation. The approximation is expressed as
+n-th iteration. Similarly, xn+1 , yn+1 , and zn+1 are defined as                            
+                                                                                             1, M < x
+the sample values at the beginning of the (n+1)-th iteration.
+                                                                                 tanh(x) ≈     Hs (x), −M ≤ x < M              (14)
+   Firstly, three temporary variables x, y, and z are given as
+                                                                                               −1, x < −M
+                                                                                            
+x = xn , y = yn , and z = zn . Then we can get                                           
+                                                                                            x(µ − θx), 0 ≤ x < M
+                                                                                Hs (x) =                                       (15)
+                                                                                            x(µ + θx), −M < x < 0
+           K11 = − axn + btanh(xn ) + yn − kzn xn
+           K21 = − cyn − dtanh(xn )                               where µ=1 and θ=0.25 represent the slop and gain of Hs (x),
+                                                                  respectively, and M =2 determines the length of the middle
+            K31 =G(xn ) − 0.1zn − 1                           (9)
+                                                                  area of the function.
+   Secondly, the temporary variables are reassigned as x =           We have developed an FPGA-based digital circuit for
+xn + 0.5∆hK11 , y = yn + 0.5∆hK21 , and z = zn + the RK4 algorithm-driven discrete-time system (6) using the
+0.5∆hK31 , where ∆h is a sampled interval. Then one gets          Xilinx xc7z020clg400-1 platform, with a sampled interval
+                                                                  of 0.0001. The Verilog Hardware Digital Language (Verilog
+  K12 = − a(xn + 0.5∆hK11 ) + btanh(xn + 0.5∆hK11 )               HDL) was utilized to write the program code, and the variable
+           + (0.5∆hK21 ) − k(zn + 0.5∆hK31 )(xn + 0.5∆hK11 )values are outputted through a digital-to-analog converter
+  K22 = − c(0.5∆hK21 ) − dtanh(xn + 0.5∆hK11 )                    (DAC) chip (AD9767). A 32-bit fixed-point decimal format,
+                                                                  comprising 1 sign bit, 6 integer bits, and 25 decimal bits,
+  K32 =G(xn + 0.5∆hK11 ) − 0.1(zn + 0.5∆hK31 ) − 1 (10)
+                                                                  is employed for precision. The hardware setup, including the
+   Thirdly, reassigning the temporary variables as x = xn + Zynq FPGA, AD9767 DAC, analog oscilloscope, and the Vi-
+0.5∆hK12 , y = yn + 0.5∆hK22 , and z = zn + 0.5∆hK32 , vado simulation platform is exhibited in Fig.9(a). Additionally,
+we can get                                                        the program flow block diagram is provided in Fig.9(b). The
+                                                                  MTLN model features five input signals and three output
+  K13 = − a(xn + 0.5∆hK12 ) + btanh(xn + 0.5∆hK12 )               signals. The CLK and RST are 1-bit input signals used
+           + (0.5∆hK22 ) − k(zn + 0.5∆hK32 )(xn + 0.5∆hK12 )for synchronizing each module unit. To achieve the desired
+  K23 = − c(0.5∆hK22 ) − dtanh(xn + 0.5∆hK12 )                    processing speed, a clock frequency of 50MHz was selected
+  K33 =G(xn + 0.5∆hK12 ) − 0.1(zn + 0.5∆hK32 ) − 1 (11) for the FPGA implementation. The initial values x0 , y0 , and
+                                                                  z0 are 32-bit fixed-point decimals. The three 32-bit output
+   Finally, these three temporary variables are redefined as x = signals xn , yn , and zn represent the state at the n-th iteration,
+xn + ∆hK13 , y = yn + ∆hK23 , and z = zn + ∆hK33 , and which are fed back into the MTLN block for the (n + 1)-
+we can obtain                                                     th iteration and into the Data Transfer block for DAC output
+                                                                  signal preparation. The Data Transfer unit performs truncation
+     K14 = − a(xn + ∆hK13 ) + btanh(xn + ∆hK13 )
+                                                                  of bits [31:18] from the input 32-bit fixed-point decimals.
+             + (∆hK23 ) − k(zn + ∆hK33 )(xn + ∆hK13 )             According to the numerical simulation results presented in
+     K24 = − c(∆hK23 ) − dtanh(xn + ∆hK13 )                       Fig.7, it can be determined that the minimum value of state
+     K34 =G(xn + ∆hK13 ) − 0.1(zn + ∆hK33 ) − 1              (12) variable x1 is greater than -9.5, and the minimum value of state
+                                                                  variable x3 is greater than -2.5. Therefore, in order to ensure
+   With (9) – (12), the discrete-time model can be obtained as that the output data of the data transfer block is positive, offset
+   
+    xn+1 = xn + ∆(K11 + 2K12 + 2K13 + K14 )/6                    values of 9.5 and 2.5 are respectively added to the variables
+       yn+1 = yn + ∆(K21 + 2K22 + 2K23 + K24 )/6             (13) xn and zn . Subsequently, the digital signals are converted to
+   
+       zn+1 = zn + ∆(K31 + 2K32 + 2K33 + K34 )/6                  analog signals by the DAC and captured by an oscilloscope.
+                                                                  The oscilloscope results are presented in Fig.10. These results
+In an iterative process, xn , yn , and zn provide data for the confirm that the phase diagrams of FPGA-implemented MTLN
+system, while xn+1 , yn+1 , and zn+1 provide data for the next are consistent with its numerical simulations, validating the
+iteration.                                                        FPGA implementation.
+
+B. FPGA-based implementation                                                  V. A PPLICATION IN IMAGE ENCRYPTION
+   The hyperbolic tangent function, known for its smooth               Modern cryptographic algorithms, including the Data En-
+saturation characteristics, is used as the activation function in    cryption Standard (DES), Advanced Encryption Standard
+the MTLN. However, implementing this activation function             (AES), and Rivest-Shamir-Adleman (RSA) possess advantages
+JOURNAL OF LATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021                                                                                                                       7
+
+
+
+
+                       Oscilloscope
+
+
+
+     DAC
+                                            CLK
+                                            RST
+                                                         xn[31:0]
+                                                                                  xn[13:0]
+                                                                                                      Out1
+                                                                                                                                    Chaotic System
+
+
+
+
+                                                                       Transfer
+                                                  MTLN
+    AD9767
+                                            x0
+
+
+
+
+                                                                        Data
+                                                         yn[31:0]                             DAC
+                                                                                             AD9767   Out2
+                                            y0           zn[31:0]                 zn[13:0]
+
+      Zynq FPGA
+                        Vivado
+                       Software
+                                            z0                                                                                      K1               K2             K3
+    Xc7z020clg400-1                                    Zynq FPGA
+                                                     Xc7z020clg400-1
+
+
+                      (a)                                           (b)                                                         fD1             fS            fD2
+                                                                                                                     P                 D1             D2                 C
+Fig. 9. FPGA-based circuit implementation for the MTLN, (a) hardware
+experimental prototype with the captured chaotic attractor, (b) flow block
+diagram of FPGA-based MTLN.                                                                                  Fig. 11. Chaotic attractor based image encryption scheme.
+
+
+                                                                                                             and scrambling are typically combined to enhance security
+                                                                                                             [43]. The chaotic sequences K1 , K2 and K3 are obtained by
+                                                                                                             iterating the system (6) using the initial values set by the user.
+    (a)                               (b)                                 (c)                                And they are applied to fD1 , fS and fD2 respectively, resulting
+                                                                                                             in intermediate output variables D1 , D2 and the final encrypted
+                                                                                                             result C.
+
+                                                                                                                         K1 = mod(f loor((Y1 + Y2 ) × 1012 ), 256)           (16)
+    (d)                               (e)                              (f)
+                                                                                                                   D1 (k) = P (k) ⊕ mod(D1 (k − 1) + P (k − 1)
+Fig. 10. FPGA-based implementation of multi-wing chaotic attractors in x1 −
+                                                                                                                                                                             (17)
+                                                                                                                            + K1 (k), 256) ⊕ K1 (k − 1)
+x3 plane with (a) 4-wing, (b) 6-wing, (c) 8-wing, (d) 10-wing, (e) 12-wing,
+(f) 14-wing.                                                                                                 The chaotic sequence K1 consists of M×N random numbers
+                                                                                                             within the region [0,255], and its values can be obtained by
+                                                                                                             (16), where Y1 and Y2 are the state variables of (6). The k-
+like ability to resistance to a wide range of attacks [36],
+                                                                                                             th element of the intermediate output D1 in the first pixel
+high speed [37], and efficient hardware implementation [38].
+                                                                                                             substitution operation fD1 with K1 can be calculated by (17),
+However, these algorithms can encounter challenges when
+                                                                                                             where P (k) and K1 (k) represent the k-th element in the
+dealing with the large volume of image data and the intricate
+                                                                                                             original image P and the chaotic sequence K1 and P (k − 1),
+interdependencies among pixels. Chaotic systems, character-
+                                                                                                             K1 (k − 1) and D1 (k − 1) denote the previous step element of
+ized by their extreme sensitivity and unpredictability, provide
+                                                                                                             the original image P , chaotic sequence K1 and intermediate
+a compelling alternative for image encryption [39]–[41]. The
+                                                                                                             output D1 , respectively.
+adoption of chaos-based encryption methods has gained signif-
+icant traction in the realm of secure communication and has                                                                    [∼, K2 ] = sort(Y1 + Y2 + Y3 )                (18)
+been successfully implemented in practical applications, in-
+cluding optical communication [42]. Therefore, the exploration                                                           D2 (K2 (M × N − k + 1)) = D1 (K2 (k))               (19)
+of chaos-based encryption techniques is of great importance
+                                                                                                             In the pixel scrambling operational, the sum of state variables
+for their application in secure communication.
+                                                                                                             are used to get the chaotic sequence K2 through (18), where
+                                                                                                             sort(·) denotes a function that sorts elements in ascending
+A. Description of the cryptosystem                                                                           order. The single non-repetitive transformation of intermediate
+   This paper introduces an image encryption scheme that                                                     output D1 is realized by (19), where D1 (k) denotes the k-th
+leverages the proposed model (6) to demonstrate its potential                                                element in D1 .
+application in secure communication. The encryption scheme’s
+architecture is depicted in Fig.11. The encryption process                                                               K1 = mod(f loor((Y1 + Y3 ) × 1012 ), 256)           (20)
+begins with a gray-scale plaintext image P of dimensions                                                          C(k) = D2 (k) ⊕ mod(C(k − 1) + K3 (k), 256)
+M and N. For ease of manipulation, the plaintext image P                                                                                                                     (21)
+is stretched into a one-dimensional vector containing M×N                                                                 ⊕ mod(D2 (k − 1) + K3 (k − 1), 256)
+elements. The encryption and decryption procedures within                                                       The final encrypted result C is obtained by applying another
+the cryptosystem are outlined as follows:                                                                    pixel substitution operation fD2 to the scrambled intermediate
+   The encryption operation can be decomposed into three                                                     result D2 . The pixel substitution key K3 for this operation
+main parts: pixel substitution-scrambling-substitution, where                                                is generated by (20), where Y1 and Y3 represent the first
+fD1 and fD2 represent the first and second pixel substitution                                                and the third state variables of (6), respectively. In this
+operations, respectively, and fS denotes the pixel scrambling                                                pixel substitution process, the value of the k-th element is
+operation. The pixel substitution operation refers to chang-                                                 determined by (21), where D2 (k) and K3 (k) represent the k-th
+ing the pixel values of an image, while operation of pixel                                                   element in D2 and K3 , respectively and D2 (k − 1), K1 (k − 1)
+scrambling represents altering the positions of image pixels.                                                and C(k − 1) denote the previous step element of D2 , K3 and
+In chaos-based image encryption systems, pixel substitution                                                  the final output C, respectively.
+JOURNAL OF LATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021                                                                                                 8
+
+
+
+   The primary strengths of the encryption scheme designed in                  (4) Chosen-ciphertext attack: The adversary gains temporary
+this paper reside in its innovative approach to secure generat-             decryption authority within the cryptosystem, enabling them
+ing current ciphertext. Specifically, it meticulously integrates            to choose ciphertext and obtain the corresponding plaintext.
+the current plaintext, preceding plaintext, current key, prior                 In the context of ciphertext-only and known-plaintext at-
+key, and previous ciphertext through bitwise XOR and modulo                 tacks, two prevalent strategies are typically employed: brute
+operations. The strategic integration of the feedback mech-                 force and statistical analysis [47]. As for defending against
+anism significantly enhances the security of the encryption                 brute force attacks, selecting the initial value of the system
+system [44]–[46].                                                           (6) as the encryption key. Given the computational precision
+   The restoration of the original image from the encrypted                 of a computer at 10−14 , the key space of the proposed
+data is achieved by inverting the encryption process. The                   encryption system is calculated to be 1042 , which is exceeds
+MATLAB implementation of the above encryption and                           2100 . This substantial key space renders the system highly
+decryption algorithms have been uploaded to the github                      resistant to brute force attacks [48]. Regarding the defense
+public repository and it can be downloaded by visiting                      against statistical attacks, Fig.13 illustrate the statistical char-
+https://github.com/quanliden/MultiwingEncryptionCode.git.                   acteristics of both the plaintext, Starfish, and its decrypted
+                                                                            counterpart. The figure demonstrates that the pixel histogram
+                                                                            of the encrypted image is uniformly distributed, devoid of any
+                                                                            discernible statistical patterns. Furthermore, the distribution
+                                                                            of adjacent pixel pairs covers the entire area, effectively
+                                                                            disrupting the original diagonal distribution characteristics.
+                                                                            These observations confirm that the designed system is capable
+                                                                            of effectively withstanding statistical attacks [49].
+          (a)                      (b)                    (c)
+
+Fig. 12. Simulation results of the cryptosystem where (a) is the original
+image, (b) is the encrypted image (c) is the decrypted image.
+
+   Initialize the values of (6) to 0.1 for each state variables. For
+the sake of simplicity, all initial values within the pixel sub-
+stitution process, namely P (0), D1 (0), K1 (0), D2 (0), K3 (0)
+and C(0) are uniformly set to 1. In practical applications, users
+have the flexibility to define these initial values. The numerical
+simulation outcomes of the cryptosystem are demonstrated
+in Fig.12. The results indicate that the encrypted image no
+longer contains any visually useful information, while the
+decrypted image is visually indistinguishable from the original
+image. This result reflects the effectiveness of the designed
+cryptosystem in terms of encryption and decryption from a
+visual perspective.
+                                                                            Fig. 13. Statistical analysis of the plaintext and the ciphertext where (a) and
+                                                                            (b) are the histogram of the pixels; (c) and (d) are the correlation of adjacent
+B. Security analysis                                                        pixels.
+   The fundamental components of a cryptosystem are the
+plaintext, ciphertext, encryption algorithm, decryption algo-
+                                                                                D1 (k) = P (k) ⊕ mod(D1 (k − 1) + P (k − 1)
+                                                                              
+rithm, and key. Adhering to Kerckhoff’s principle, the encryp-                
+                                                                              
+tion and decryption algorithms of a cryptosystem are made                              + K1 (k), 256) ⊕ K1 (k − 1)
+                                                                              
+                                                                              
+public, with the key being only confidential element. Given the                                                                                       (22)
+                                                                                0
+                                                                                D1 (k) = P 0 (k) ⊕ mod(D10 (k − 1) + P 0 (k − 1)
+cryptanalyst’s knowledge of plaintext and ciphertext, typical
+                                                                              
+                                                                              
+                                                                                       + K1 (k), 256) ⊕ K1 (k − 1)
+                                                                              
+attack methodologies can be categorized into four distinct
+types:                                                                          ∆D1 (k) ⊕ ∆P (k) = mod((∆D1 (k − 1) + ∆P (k − 1)
+   (1) Ciphertext-only attack: The adversary has access to some
+ciphertext but no corresponding plaintext or key information.                                           + K1 (k)) ⊕ K1 (k), 256)
+   (2) Known-plaintext attack: The adversary is aware of                                                                                              (23)
+certain plaintext-ciphertext pairs, which can be used to analyze
+                                                                              ∆C(k) ⊕ ∆D2 (k) = mod(C(k − 1) + K3 (k), 256)
+the encryption process.
+   (3) Chosen-plaintext attack: The adversary is granted tem-                                          ⊕ mod(D2 (k − 1) + K3 (k − 1), 256)
+porarily access to the encryption capabilities of the cryptosys-                                       ⊕ mod(C 0 (k − 1) + K3 (K), 256)
+tem, allowing them to select specific plaintext and obtain the                                         ⊕ mod(D20 (k − 1) + K3 (k − 1), 256)
+corresponding ciphertext.                                                                                                                (24)
+JOURNAL OF LATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021                                                                                          9
+
+
+
+   In scenarios involving plaintext-ciphertext pair attacks, such                                             TABLE II
+as chosen-plaintext and chosen-ciphertext attacks, let us delve                      C ORRELATION COEFFICIENTS OF ORIGINAL AND ENCRYPTED IMAGES
+into the methodology of differential cryptanalysis, a pivotal                                    Direction    Plain image   Cipher image
+cryptographic analysis technique for assessing the security of                                   Horizontal     0.9582         -0.0154
+encryption systems. Firstly, we consider the pixel substitution                                   Vertical      0.9629          0.0084
+                                                                                                 Diagonal       0.9404         -0.0103
+operation in the first round, characterized by operational rela-
+tionship in (17). Define D10 as an image composed entirely of
+zero elements. Let P 0 represent the plaintext image obtained                      Fig.13 (a) and (b). A comparison of the histograms of the
+after feeding D10 into the first round of the inverse pixel                        encrypted images (Fig.13(b)) with that of the original images
+substitution process of the decryption algorithm. To elucidate                     (Fig.13(a)) reveals that the proposed encryption scheme ef-
+the relationship between the difference plaintext and the dif-                     fectively disrupts the correlation within the original image,
+ference ciphertext, we need to rearrange the formula of (22).                      thereby offering strong defense against statistical attacks.
+According to the computational relationship, we derive the                            Correlation analysis: The correlation coefficient between
+relationship between the difference plaintext and the difference                   adjacent pixels, as defined by (25), is a significant metric for
+ciphertext, as shown in (23). Here ∆P and ∆D1 denote the                           assessing the robustness of the encrypted image. In a plaintext,
+difference plaintext and ciphertext, respectively. The formula                     adjacent pixels typically exhibit a high correlation coefficient,
+reveals that the influence of the chaotic random sequence                          approaching 1 in all directions. Conversely, for an effective
+K1 persists in the form of the difference plaintext-ciphertext                     encryption scheme, the correlation coefficient of the encrypted
+pair, thereby indicating that K1 plays a protective role in                        image should approach zero, indicating a lack of correlation
+this process. Similarly, in the subsequent pixel substitution                      between adjacent pixels. This property is essential for ensuring
+process, we can get the relationship of the difference plaintext-                  that the encrypted image is resistant to pattern recognition
+ciphertext pair as (24). By observing the formula, it can be                       and other forms of statistical analysis that could potentially
+found that the influence of K3 also cannot be eliminated. The                      compromise the security of the encrypted data.
+above analysis based on the plaintext-ciphertext pair verified                                       PN
+the keys in the designed encryption system has a protective                                             i=1 (xi − E(x))(yi − E(y))
+                                                                                       ρxy = P                                                  (25)
+effect on the encryption process, thereby confirming that the
+                                                                                              q                       qP
+                                                                                                   N                      N
+                                                                                                   i=1 (xi − E(x))
+                                                                                                                    2
+                                                                                                                          i=1 (yi − E(y))
+                                                                                                                                          2
+designed system has a certain level of security [50]–[52].
+                                                                                   The correlation coefficients for the Starfish image in various
+                                                                                   directions (horizontal, vertical, diagonal) are depicted in Fig13
+C. Numerical simulations
+                                                                                   (c) and (d). Table II provides a summary of these coefficients
+   Key sensitivity analysis: Key sensitivity refers to the prop-                   before and after encryption. The results clearly show that
+erty where a minor alteration in the encryption key should                         the correlation coefficients for the original image approach
+prevent the decrypted image from revealing any discernible                         1, whereas those for the encrypted images are nearly zero.
+original image information. Fig.14 illustrates the simulation                      This indicates that the encrypted images retain no discernible
+outcomes, showcasing the successful decryption using the                           correlation information from the original image, effectively
+original secret key and unsuccessful attempts with minuscule                       resisting any attempts to deduce the original content based on
+(10−15 ) variations in different key values. The results confirm                   correlation analysis.
+that even the slight change in the secret key makes the                               Differential attack analysis: Differential attack analysis in-
+retrieval of the original image information from the ciphertext                    volves manipulating one or more pixel values in the plaintext
+impossible.                                                                        image to generate a new decrypted image. Subsequently,
+                                                                                   attackers analyze the differences in pixel values between the
+     (0.1,0.1,0.1) x1(0)+10-15 x2(0)+10-15                  x3(0)+10-15            two encrypted images to identify patterns that could potentially
+                                                                                   undermine the encryption algorithm. Quantifying the impact
+                                                                                   of a single-pixel change in the plaintext image on the resulting
+                                                                                   ciphertext image is crucial. To this end, the number of pixel
+                                                                                   change rates (NPCR) and the unified average change intensity
+                                                                                   (UACI) serves as key metrics. Calculation of NPCR and UACI
+            (a)              (b)                (c)               (d)              values can be carried as follows.
+                                                                                           NCPR =  i,j D(i,j)
+                                                                                                      P
+Fig. 14. Decrypted images with (a) correct secret keys, (b)-(d) incorrect secret                            M ·N × 100%
+keys with tiny variations in different initial values.                                                  0, if C1 (i, j) = C2 (i, j)
+                                                                                           D(i, j) =                                            (26)
+                                                                                                        1, if C1 (i, j) 6= C2 (i, j)
+   Histogram analysis: The distribution of pixel values                                                         |C  (i,j)−C (i,j)|
+                                                                                           UACI = M1·N i,j 1 255 2
+                                                                                                          P
+                                                                                                                                   × 100%
+throughout an image is a significant characteristic, and the
+histogram serves as a valuable tool for visualizing this distribu-                 where M and N denote the image width and height of,
+tion. In a robust encryption scheme, generating a flat histogram                   respectively, C1 and C2 represent the cipher image before and
+for the encryption image is crucial to defend against statistical                  after a single-pixel change in the plaintext image, respectively.
+attacks. The pixel histograms for the four original images and                        The NPCR and UACI values, detailed in Table III, reflect
+their corresponding encrypted counterparts are presented in                        the results of altering a single pixel in the plaintext image
+JOURNAL OF LATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021                                                                                 10
+
+
+
+                         TABLE III                                 the simulated non-ideal characteristics in the memristor can
+ R ESULTS OF NCPR AND UACI TEST FOR THE EXPERIMENTAL IMAGES        be written as
+                     changed                                                    ẑ = z + k(max(z) − min(z))rand(N )                     (27)
+        image                       NPCR(%)         UACI(%)
+                     position
+      plaintext      (37,69)          98.87           33.22        where ẑ is the resistance value affected by non-ideal phenom-
+     ciphertext      (95,21)          99.58           33.38        ena, k is the variation strength from the ideal value of z and
+                                                                   N is the total number of state variable z.
+                          TABLE IV
+     C OMPARISON OF ENCRYPTION / DECRYPTION SPEED WITH AES
+
+              AES-128     AES-192    AES-256     This work
+ Encryption    15.71       16.04      16.42        0.53
+ Decryption    26.47       28.01      29.71        0.47
+
+
+
+at random. The close alignment of the calculated NPCR and
+UACI values with these theoretical benchmarks, as observed
+in the cipher images produces by the encryption system,
+demonstrates a high level of resistance to different attacks.
+
+
+
+D. Performance comparison
+   In the field of data encryption, the AES demonstrates robust
+                                                                   Fig. 15. Non-ideal characteristics of memristor effects on decrypted image
+security due to its intricate mechanisms, including byte sub-      measured by PSNR and correlation coefficient.
+stitution, row shifting, column mixing, and other multifaceted
+operations. However, when applying AES to image encryption,           Taking the image of parrot as an example, Fig. reffig:devva
+it also encounters several challenges. For instance, image         shows the simulated results of the decrypted image effect
+data is characterized by its vast volume, high information         caused by the mismatch degree of the memristor during the
+redundancy, and strong correlation among adjacent pixels,          decryption process. The peak signal-to-noise ratio (PSNR) and
+requiring AES to process numerous data blocks during the           the correlation coefficient between the original image and
+encryption process. Despite the notable advantages of AES          decrypted image are selected as indicators to measure the
+in the realm of data security, its encryption speed poses a        impact caused by the variation of memristor in the decryption
+challenge in image encryption tasks. Table IV compares the         process. For clarity, the reciprocal of the logarithm of k is
+speed difference between the chaos-based image encryption          used as the horizontal axis, and the larger the value of the
+method proposed in this work and the AES-based encryption          horizontal axis, the less influence of the non-ideal factors on
+method. For fairness, we utilized an open-source, manually         the memristor during the decryption. It can be observed from
+coded AES encryption algorithm as specified in [53]. The           the figure that the non-ideal state of the memristor during the
+experiment was conducted on a computer equipped with an            decryption process has a significant impact on the performance
+AMD Ryzen 7-5800H CPU with a base clock speed of                   of the decrypted image. When k is approximately 10−14 ,
+3.2GHz, complemented by 32GB of RAM. The operating                 the PSNR value exceeds 30dB, indicating that the quality
+system was Windows 11, and software environment included           of the decrypted image obtained at this time is comparable
+MATLAB version 9.13 (R2022b). By examining the Table               to that of the original image. Through the analysis of this
+IV, it can be seen that chaos-based encryption offers superior     process, we can find that during the decryption process, when
+speed performance compared to AES-based image encryption.          the resistance value of the memristor is affected by strong
+                                                                   non-ideal characteristics such as device-to-device variability,
+E. Analysis of non-ideal characteristics of memristor              it will severely affect the quality of the decrypted image.
+                                                                   Therefore, improving the manufacturing process to fabricate
+   Given the issue of device inconsistency inherent in memris-     memristors with high consistency is of great significance for
+tors produced by the current manufacturing process, we aim         the application and promotion of memristors.
+to more realistically account for the limitations of physical
+memristors within the encryption system. To achieve this, we
+introduce noise into the state variable z to simulation the                        VI. C ONCLUSION AND OUTLOOK
+device inconsistency characteristics that memristors exhibit         This paper introduces, for the first time, a butterfly-shaped
+during their operational lifecycle. Within the system described    double-wing chaotic attractor generated by a memristive TLN.
+by (6), the state variable z represents the resistance value of    The number of chaotic butterfly wings can be effectively
+the memristor. Consequently, incorporating noise into this state   extended by simply manipulating the state function of the
+variable enables us to mimic the non-ideal characteristics of      memristor. The rich dynamical properties of the proposed
+physical memristors to a certain extent. The formulation for       MTLN are verified through multiple numerical simulations,
+JOURNAL OF LATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021                                                                                                    11
+
+
+
+such as Lyapunov exponent spectra, bifurcation diagrams,                        [13] Q. Deng, C. Wang, J. Sun, Y. Sun, J. Jiang, H. Lin, and Z. Deng,
+and attraction basins. This lays the groundwork for revealing                        “Nonvolatile CMOS memristor, reconfigurable array, and its application
+                                                                                     in power load forecasting,” IEEE Transactions on Industrial Informatics,
+chaotic dynamical phenomena in neurons. The digital circuit                          vol. 20, no. 4, pp. 6130–6141, 2024.
+design, implemented on FPGA, not only validates the pro-                        [14] J. Lu, X. Xie, Y. Lu, Y. Wu, C. Li, and M. Ma, “Dynamical behaviors
+posed mathematical model but also offers a reliable circuit                          in discrete memristor-coupled small-world neuronal networks,” Chinese
+                                                                                     Physics B, vol. 33, no. 4, 2024.
+model reference for hardware research in brain-inspired com-                    [15] Q. Deng, C. Wang, and Z. Deng, “Memristive circuit of quaternion
+puting using memristor-based digital circuits. Furthermore, the                      multiplication and its application in aircraft attitude computation,” IEEE
+image encryption application proposed in this paper, which                           Transactions on Circuits and Systems II: Express Briefs, vol. Early
+                                                                                     Access, 2024, doi=10.1109/TCSII.2024.3373017.
+leverages the multi-wing MTLN, demonstrates excellent key                       [16] H. Bao, M. Hua, J. Ma, M. Chen, and B. Bao, “Offset-control plane
+sensitivity, good resistance to statistical attacks, and robustness                  coexisting behaviors in two-memristor-based Hopfield neural network,”
+against noise and data loss attacks through various analytical                       IEEE Transactions on Industrial Electronics, vol. 70, no. 10, pp. 10 526–
+                                                                                     10 535, 2023.
+methods.                                                                        [17] F. Li, L. Bai, Z. Chen, and B. Bao, “Scroll-growth and scroll-control
+   In the aspect of building neural systems with complex                             attractors in memristive bi-neuron Hopfield neural network,” IEEE
+dynamical behaviors, we will devote to study neuron and                              Transactions on Circuits and Systems II: Express Briefs, vol. 71, no. 4,
+                                                                                     pp. 2354–2358, 2024.
+neural network models that incorporate complex topology and                     [18] J. Li, C. Wang, and Q. Deng, ”Symmetric multi-double-scroll attractors
+intricate dynamics, in the future. In encryption applications,                       in Hopfield neural network under pulse controlled memristor”, Nonlinear
+due to the extreme key sensitivity of the encryption system,                         Dynamics, 2024, doi=https://doi.org/10.1007/s11071-024-09791-6.
+                                                                                [19] L. Hou, H. Bao, Q. Xu, M. Chen, and B. Bao, “Coexisting infinitely
+there may be unpredictable impacts on the system caused by                           many nonchaotic attractors in a memristive weight-based tabu learning
+the variability of memristor devices. In our future works, we                        neuron,” International Journal of Bifurcation and Chaos, vol. 31, no. 12,
+will conduct in-depth research on this issue from the perspec-                       p. 2150189, 2021.
+                                                                                [20] Z. T. Njitacke, J. D. D. Nkapkop, V. F. Signing, N. Tsafack, M. E.
+tive of using error correction codes, adaptive management of                         Sone, and J. Awrejcewicz, “Novel extreme multistable tabu learning
+keys and other approaches.                                                           neuron: Circuit implementation and application to cryptography,” IEEE
+                                                                                     Transactions on Industrial Informatics, vol. 19, no. 8, pp. 8943–8952,
+                                                                                     2023.
+                             R EFERENCES                                        [21] R. Ding, H. Bao, N. Wang, H. Wu, and Q. Xu, “Generating multi-
+                                                                                     scroll chaotic attractor in a three-dimensional memristive neuron model,”
+ [1] J. J. Hopfield, “Neurons with graded response have collective compu-            Chinese Journal of Physics, vol. 88, pp. 1053-1067, 2024.
+     tational properties like those of two-state neurons,” Proceedings of the   [22] M. Ma, Y. Lu, “Synchronization in scale-free neural networks under
+     national academy of sciences, vol. 81, no. 10, pp. 3088–3092, 1984.             electromagnetic radiation,” Chaos, vol. 34, p. 033116, 2024.
+ [2] Z. Uykan, “On the working principle of the Hopfield neural networks        [23] Q. Deng, C. Wang, and H. Lin, “Chaotic dynamical system of Hopfield
+     and its equivalence to the GADIA in optimization,” IEEE Transactions            neural network influenced by neuron activation threshold and its image
+     on Neural Networks and Learning Systems, vol. 31, no. 9, pp. 3294–              encryption,” Nonlinear Dynamics, vol. 112, pp. 6629–6646, 2024.
+     3304, 2019.                                                                [24] H. Lin, C. Wang, and Y. Sun, “A universal variable extension method
+ [3] R. McEliece, E. Posner, E. Rodemich, and S. Venkatesh, “The capacity            for designing multiscroll/wing chaotic systems,” IEEE Transactions on
+     of the Hopfield associative memory,” IEEE transactions on Information           Industrial Electronics, vol. 71, no. 7, pp. 7806–7818, 2024.
+     Theory, vol. 33, no. 4, pp. 461–482, 1987.                                 [25] L. Chua, “Everything you wish to know about memristors but are afraid
+ [4] B. Bao, C. Chen, H. Bao, X. Zhang, Q. Xu, and M. Chen, “Dynam-                  to ask,” Handbook of Memristor Networks, pp. 89–157, 2019.
+     ical effects of neuron activation gradient on Hopfield neural network:     [26] S. Yu, W. K. S. Tang, J. Lv and G. Chen,“Design and implemen-
+     numerical analyses and hardware experiments,” International Journal of          tation of multi-wing butterfly chaotic attractors via Lorenz-type sys-
+     Bifurcation and Chaos, vol. 29, no. 04, p. 1930010, 2019.                       tems,”International Journal of Bifurcation and Chaos, vol. 20, no. 1,
+ [5] C. Chen, F. Min, J. Cai, and H. Bao, “Memristor synapse-driven                  pp.29–41, 2010.
+     simplified Hopfield neural network: Hidden dynamics, attractor control,    [27] H. Bao, Z. Chen, M. Chen, Q. Xu, and B. Bao, “Memristive-cyclic
+     and circuit implementation,” IEEE Transactions on Circuits and Systems          Hopfield neural network spatial multi-scroll chaotic attractors and spatial
+     I: Regular Papers, vol. 71, no. 5, pp.2308–2319, 2024.                          initial-offset coexisting behaviors,” Nonlinear Dynamics, vol. 111, pp.
+ [6] C. Wang, J. Liang and Q. Deng, “Dynamics of heterogeneous Hopfield              22 535–22 550, 2023.
+     neural network with adaptive activation function based on memristor,”      [28] Q. Lai, Z. Wan, and P. D. K. Kuate, “Generating grid multi-scroll
+     Neural Networks, vol. 178, p.106408, 2024.                                      attractors in memristive neural networks,” IEEE Transactions on Circuits
+ [7] D. A. Beyer and R. G. Ogier, “Tabu learning: a neural network search            and Systems I: Regular Papers, vol. 70, no. 3, pp. 1324–1336, 2023.
+     method for solving nonconvex optimization problems,” in [Proceedings]      [29] D. Tang, C. Wang, H. Lin, and F. Yu, “Dynamics analysis and hardware
+     1991 IEEE International Joint Conference on Neural Networks. IEEE,              implementation of multi-scroll hyperchaotic hidden attractors based on
+     1991, pp. 953–961.                                                              locally active memristive Hopfield neural network,” Nonlinear Dynam-
+ [8] C. Li, G. Chen, X. Liao, and J. Yu, “Hopf bifurcation and chaos in              ics, vol. 112, no. 2, pp. 1511–1527, 2024.
+     tabu learning neuron models,” International Journal of Bifurcation and     [30] S. P. Adhikari, M. P. Sah, H. Kim, and L. O. Chua, “Three fingerprints
+     Chaos, vol. 15, no. 08, pp. 2633–2642, 2005.                                    of memristor,” IEEE Transactions on Circuits and Systems I: Regular
+ [9] M. Xiao and J. Cao, “Bifurcation analysis on a discrete-time tabu               Papers, vol. 60, no. 11, pp. 3008–3021, 2013.
+     learning model,” Journal of computational and applied mathematics,         [31] C. P. Silva, “Shil’nikov’s theorem-a tutorial,” IEEE Transactions on
+     vol. 220, no. 1-2, pp. 725–738, 2008.                                           Circuits and Systems I: Fundamental Theory and Applications, vol. 40,
+[10] B. Bao, L. Hou, Y. Zhu, H. Wu, and M. Chen, “Bifurcation analysis               no. 10, pp. 675–682, 1993.
+     and circuit implementation for a tabu learning neuron model,” AEU-         [32] F. Yu, C. Wu, Y. Lin, S. He, W. Yao, S. Cai and J. Jin, “Dynamic analysis
+     International Journal of Electronics and Communications, vol. 121, p.           and hardware implementation of multi-scroll Hopfield neural networks
+     153235, 2020.                                                                   with three different memristor synapses,” Nonlinear Dynamics, vol. 112,
+[11] I. S. Doubla, Z. T. Njitacke, S. Ekonde, N. Tsafack, J. D. D. Nkapkop,          pp. 12393–12409, 2024.
+     and J. Kengne, “Multistability and circuit implementation of tabu          [33] M. Ji’e, H. Peng, S. Duan, L. Wang, F. Zhang, and D. Yan, “Design and
+     learning two-neuron model: application to secure biomedical images in           FPGA implementation of grid-scroll hamiltonian conservative chaotic
+     IoMT,” Neural Computing and Applications, vol. 33, pp. 14 945–14 973,           flows with a line equilibrium,” IEEE Transactions on Very Large Scale
+     2021.                                                                           Integration (VLSI) Systems, vol. 32, no. 4, pp. 658–668, 2024.
+[12] H. Bao, R. Ding, B. Chen, Q. Xu, and B. Bao, “Two-dimensional              [34] F. Yu, X. Kong, W. Yao, J. Zhang, S. Cai, H. Lin, and J. Jin, “Dynamics
+     non-autonomous neuron model with parameter-controlled multi-scroll              analysis, synchronization and FPGA implementation of multiscroll Hop-
+     chaotic attractors,” Chaos, Solitons & Fractals, vol. 169, p. 113228,           field neural networks with non-polynomial memristor,” Chaos, Solitons
+     2023.                                                                           & Fractals, vol. 179, p. 114440, 2024.
+JOURNAL OF LATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021                        12
+
+
+
+[35] H. K. Kwan, “Simple sigmoid-like activation function suitable for digital
+     hardware implementation,” Electronics letters, vol. 15, no. 28, pp. 1379–
+     1380, 1992.
+[36] A. Kaminsky, M. Kurdziel, and S. Radziszowski, “An overview of
+     cryptanalysis research for the advanced encryption standard,” in 2010 -
+     MILCOM 2010 MILITARY COMMUNICATIONS CONFERENCE, 2010,
+     pp. 1310–1316.
+[37] J. Blocklove, S. Farris, M. Kurdziel, M. Łukowiak, and S. Radziszowski,
+     “Hardware obfuscation of the 16-bit S-box in the MK-3 cipher,” in 2021
+     28th International Conference on Mixed Design of Integrated Circuits
+     and System, 2021, pp. 104–109.
+[38] M. J. Foster, M. Łukowiak, and S. Radziszowski, “Flexible HLS-
+     based implementation of the karatsuba multiplier targeting homomorphic
+     encryption schemes,” in 2019 MIXDES - 26th International Conference
+     ”Mixed Design of Integrated Circuits and Systems”, 2019, pp. 215–220.
+[39] C. Wang, D. Tang, H. Lin, F. Yu, and Y. Sun, “High-dimensional
+     memristive neural network and its application in commercial data
+     encryption communication,” Expert Systems with Applications, vol. 242,
+     pp. 122513, 2024.
+[40] Q. Deng, C. Wang, and H. Lin, “Memristive Hopfield neural network
+     dynamics with heterogeneous activation functions and its application,”
+     Chaos, Solitons & Fractals, vol. 178, p. 114387, 2024.
+[41] X. Kong, F. Yu, W. Yao, S. Cai, J. Zhang, and H. Lin, “Memristor-
+     induced hyperchaos, multiscroll and extreme multistability in fractional-
+     order HNN: Image encryption and FPGA implementation,” Neural
+     Networks, vol. 171, pp. 85–103, 2024.
+[42] A. Argyris, D. Syvridis, L. Larger, V. Annovazzi-Lodi, P. Colet, I. Fis-
+     cher, J. Garcı́a-Ojalvo, C. Mirasso, L. Pesquera, and K. Shore, ”Chaos-
+     based communications at high bit rates using commerical fibre-optic
+     links”, Nature, vol. 438, pp. 343–346, 2005.
+[43] Y. Zhang, Z. Hua, H. Bao, H. Huang and Y. Zhou, ”Generation of
+     n-dimensional hyperchaotic maps using Gershgorin-type theorem and
+     its application”, IEEE Transactions on Systems, Man, and Cybernetics:
+     Systems, vol. 53, no.10, pp.6516–6529, 2023.
+[44] H. Wen, and S. Yu, ”Cryptanalysis of an image encryption cryptosystem
+     based on binary bit planes extractionn and multiple chaotic maps” The
+     European Physical Journal Plus, vol. 134, no. 337, 2019.
+[45] R. Zhou, S. Yu, and Q. Wang, ”Security analysis of a chaotic encryption
+     algorithm related to the sum of plaintext pixel value”, Applied Physics
+     B, vol. 129, no. 92, 2023.
+[46] J. Chen, L. Chen, and Y. Zhou, ”Cryptanalysis of image cipher with
+     permutation-substitution network and chaos”, IEEE Transactions on
+     Circuits and Systems for Video Technology, vol. 31, no. 6, pp. 2494–
+     2508, 2021.
+[47] X. Sun, Z. Chen, L. Wang and C. He, ”A lossless image compression
+     and encryption algorithm combing JPEG-LS, neural network and hy-
+     perchaotic system”, Nonlinear Dynamics, vol. 111, pp. 15445–15475,
+     2023.
+[48] G. Alvarez and S. Li, ”Some basic cryptanalysis requirements for chaos-
+     based cryptosystems”, International Journal of Bifurcation and Chaos,
+     vol. 16, no. 08, pp. 2129–2151, 2006.
+[49] P. Liu, X. Wang, Y. Su, H. Liu and S. Unar, ”Globally coupled private
+     image encryption algorithm based on infinite interval spatiotemporal
+     chaotic system”, IEEE Transactions on Circuit and Systems I: Regular
+     Papers vol. 70, no. 6, pp. 2511–2522, 2023.
+[50] B. Chen, S. Yu, D. Li, and J. Lv, ”Cryptanalysis of some self-
+     synchronous chaotic stream ciphers and their improve schemes”, Inter-
+     national Journal of Bifurcation and Chaos, vol. 31, no. 08, pp. 2150142,
+     2021
+[51] Q. Jiang, S. Yu, and Q. Wang, ”Cryptanalysis of an image encryption al-
+     gorithm based on two-dimensional hyperchaotic map”, Entropy, vol. 25,
+     no. 3, pp. 395, 2023.
+[52] R. Zhou, S. Yu, ”On the divide-and-conquer attack of a plaintext related
+     image chaotic encryption scheme”, Nonlinear Dynamics, vol. 112,
+     pp. 11571–11594, 2024.
+[53] David Hill (2024). Advanced Encryption Standard (AES)-128,192,
+     256.      https://www.mathworks.com/matlabcentral/fileexchange/73412-
+     advanced-encryption-standard-aes-128-192-256
+

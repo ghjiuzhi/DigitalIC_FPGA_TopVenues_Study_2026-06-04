@@ -1,0 +1,1280 @@
+                     This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                               content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                                     1
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+
+    Multilayer Reflectionless RF Bandpass Filters With
+    Wideband Quasi-Constant Group-Delay Responses
+    Li Yang, Senior Member, IEEE, Mohamed Malki, Graduate Student Member, IEEE, José-María Muñoz-Ferreras,
+               Member, IEEE, Xi Zhu, Senior Member, IEEE, and Roberto Gómez-García, Fellow, IEEE
+
+
+
+   Abstract—A class of reflectionless RF bandpass filters (BPFs)                                    0                                                   0
+with wideband quasi-constant in-band group-delay response in                                                                |S21|                                                |S21|
+
+
+
+
+                                                                                                 Amplitude (dB)
+
+
+
+
+                                                                                                                                                     Amplitude (dB)
+transmission for high-data-rate digital-communication systems is                                                          BW3dB                                               BW3dB
+
+
+
+
+                                                                                                                                           g (ns)
+
+
+
+
+                                                                                                                                                                                               g (ns)
+presented. These BPFs are developed by exploiting multilayer
+wideband microstrip-to-microstrip vertical transitions and lossy
+                                                                                                                                            0
+multi-section microstrip lines in complementary-diplexer-based                                                                                                                                  0
+architectures. A two-port-reflectionless wideband BPF with low-
+in-band-variation equi-ripple-type group-delay characteristics is                                                          f0        Frequency                                  f0       Frequency
+firstly realized by using two resistively-terminated one-section
+                                                                                                                           (a)                                                 (b)
+microstrip lines. To further flatten its passband group delay, its
+counterpart based on lossy two-section microstrip lines is then                                     0                                                   0
+conceived to attain extremely-flat wideband group-delay pattern.
+                                                                                                 Amplitude (dB)
+
+
+
+
+                                                                                                                                                     Amplitude (dB)
+                                                                                                                          BW3dB                                       |S21|   BW3dB
+Subsequently, by means of a modified wideband microstrip
+
+
+
+
+                                                                                                                                           g (ns)
+
+
+
+
+                                                                                                                                                                                               g (ns)
+transition with a short-circuit-ended two-section microstrip line                                                 |S21|
+and a resistively-terminated two-section microstrip line, an input-
+                                                                                                                                            0
+reflectionless BPF with two close-to-passband transmission zeros                                                          Ideal                                                                0
+                                                                                                                                                                              Ideal
+(TZs) and wideband in-band flat group-delay profile is reported.                                                          Expected                                            Expected
+In order to obtain a higher-order flat-group-delay wideband BPF                                                            f0        Frequency                                  f0     Frequency
+response with more TZs, its structure shaped by two in-series-
+                                                                                                                 (c)                                      (d)
+cascaded units of the previous input-absorptive BPF section with
+                                                                                                Fig. 1. Conceptual power transmission (|S21 |) and associated group-delay (τg)
+two TZs is engineered, in which different impedance values for
+                                                                                                responses of typical reflective-type wideband BPFs with flat-amplitude
+their constituent short-circuit-ended microstrip lines are utilized.                            passband and in-band concave rounded-shape group-delay profile and
+The operational foundations of all the proposed wideband flat-                                  proposed reflectionless wideband BPFs with flat group delay beyond their 3-
+group-delay RF BPFs are described in detail. Furthermore, for                                   dB absolute BWs. (a) Typical wideband BPF. (b) Typical wideband BPF
+practical-validation purposes, three 2-GHz microstrip prototypes                                with TZs. (c) Proposed wideband flat-group-delay BPF. (d) Proposed
+of these reflectionless wideband RF BPFs with quasi-constant                                    wideband flat-group-delay BPF with TZs.
+group-delay responses beyond their 3-dB absolute bandwidths
+(BWs) are designed, simulated, manufactured, and characterized.
+                                                                                               communication systems, have been explored for decades [1].
+Index Terms—Absorptive filter, bandpass filter (BPF), digital                                  Normally, such BPFs and filtering devices are designed to
+communications, flat group delay, inter-symbol interference                                    exhibit flat-amplitude passbands with low insertion-loss levels
+(ISI), microstrip filter, multi-functional circuit, multilayer filter,                         and high-selectivity/sharp-rejection transfer functions through
+phase distortion, reflectionless filter, RF filter, transmission zero                          the generation of two/multiple close-to-passband transmission
+(TZ), wideband filter.
+                                                                                               zeros (TZs). Nevertheless, this imposes constraints in their
+                                                                                               transmission-phase responses in terms of high in-band group-
+                        I.     INTRODUCTION
+                                                                                               delay variations especially at the passband edges [2]. Self-
+
+B  ANDPASS filters (BPFs) with highly-versatile
+   functionalities, which are fundamental RF/microwave
+components in the RF front-end transceiver chains of wireless-
+                                                                                               equalization techniques have been engineered to enhance the
+                                                                                               in-band group-delay flatness of RF BPFs initially designed to
+                                                                                               exhibit high in-band amplitude flatness by producing complex
+                                                                                               TZs in their transfer functions through different mechanisms
+   Manuscript received February 19, 2024; revised May 2, 2024. This work                       [3], [4]. Nevertheless, they have been mostly applied to RF
+was supported in part by the Spanish Ministry of Economy, Industry, and                        narrow/moderate-bandwidth (BW) BPF designs and their
+Competitiveness (State Research Agency) under Project PID2020-                                 practical usefulness is limited as the group-delay peaks at the
+116983RBI00 and in part by the SYDNICON PTY LTD under project PC-
+CONT-2023-137. (Corresponding authors: Li Yang; Roberto Gómez-García)                          transmission-band edges cannot be fully flattened or avoided.
+   Li Yang, Mohamed Malki, José-María Muñoz-Ferreras, and Roberto                              Indeed, as illustrated in Fig. 1(a) and (b), reflective-type
+Gómez-García are with the Department of Signal Theory and                                      wideband BPFs with flat-amplitude passbands typically show
+Communications, Polytechnic School, University of Alcalá, 28871 Alcalá de
+Henares, Spain (e-mail: li-yang@ieee.org; mohamed-malki@ieee.org;                              in-band concave rounded-shape group-delay patterns and
+jm.munoz@uah.es; roberto.gomez.garcia@ieee.org).                                               suffer from large group-delay variations at the two passband
+   Xi Zhu is with the Faculty of Engineering and IT, School of Electrical and                  edges. This certainly leads to undesired phase-distortion
+Data Engineering, University of Technology Sydney, Ultimo, NSW 2007,
+Australia (e-mail: xi.zhu@uts.edu.au).
+                                                                                               effects for in-band-processed RF signals in wireless digital-
+
+
+
+                     © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                     This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                               content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                             2
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+
+
+
+Fig. 2. Generalized TL equivalent circuit of the proposed family of two-port-reflectionless wideband flat-group-delay BPFs composed of a microstrip-to-
+microstrip vertical transition, two shunt resistively-terminated multi-section microstrip lines, and three pairs of transformers with turns ratios of Nm, Ns, and Nm1.
+
+
+communication applications [5]. As such, unwanted inter-                                       presented in [21]. Moreover, by means of asymmetrical lossy
+symbol interference (ISI) may arise at the detection times,                                    stubs [22], negative-group-delay admittance inverters [23],
+which are sensitive to jitter errors for high-data-rate carriers—                              and transversal-circuit-based power dividers [24], [25], BPFs
+see Appendix A, in which the benefits derived from using flat-                                 with wideband flat-group-delay properties along with quasi or
+group-delay filters instead of more-typical filters with flatter                               broadband absorptive behavior were engineered, respectively.
+transmission band in amplitude—but not flat group delay—are                                    Furthermore, input- and two-port-reflectionless RF lossy BSFs
+theoretically illustrated for a binary digital communications                                  with static single-band, adaptive dual-band, and wideband
+system example. Hence, it is necessary to equip RF BPFs and                                    negative-group-delay patterns were designed in [26], [27],
+filtering circuits with flat and manipulable group-delay                                       [28], and [29], respectively. Besides, by using a two-branch-
+properties for their exploitation in different RF analog-signal-                               channelized circuit, a class of input-reflectionless multi-
+processing (ASP) scenarios [6], [7], [8], [9], [10], [11], [12],                               functional RF BPF with linear-type-frequency-variant in-band
+[13]. Based on transversal filter topologies and lossy dual-                                   group-delay profile was presented in [30]. Nevertheless, most
+transmission structures, RF circuits with maximally-flat                                       of these reflectionless RF filtering circuits are concentrated on
+wideband negative group delay were reported in [8] and [9],                                    narrow-band group-delay applications, and only some of them
+respectively. In [10], wideband flat group-delay circuits using                                (e.g., [21], [22], [23], [24], [25], and [28]) are equipped with
+microstrip coupled lines were discussed. By means of                                           wideband group-delay responses. Furthermore, they still suffer
+acoustic-wave lumped-element resonators, BPFs and diplexers                                    from one or several of the following drawbacks: (i) relatively-
+with in-band constant group-delay responses were presented in                                  narrow 3-dB BW along with limited reflectionless/absorptive
+[11]. In addition, in order to circumvent the typical drawbacks                                frequency range, (ii) degraded in-band group-delay flatness, or
+of analog-to-digital conversions in ASP hardware, wideband                                     (iii) poor filtering selectivity due to the lack of close-to-
+RF filters with positive-slope linear-type-frequency-dependent                                 passband TZs for BPF applications.
+group-delay profile were presented in [12]. In [13], by                                           In this paper, following the previous works in [30] and [31]
+employing coupled-resonator circuit networks, RF dispersive-                                   on developing multilayer two-port-absorptive wideband BPFs
+delay-structure BPFs with arbitrary asymmetric-type group-                                     and input-absorptive wideband sharp-rejection BPFs with
+delay responses were suggested. However, all the                                               remarkable passband amplitude flatness and high selectivity,
+aforementioned RF BPFs and circuits are designed as                                            respectively, a class of RF wideband BPFs with quasi-constant
+reflective-type RF devices, which means that the out-of-                                       group-delay responses along with broadband reflectionless
+band/non-transmitted RF-signal power is reflected back at                                      behavior is proposed. As illustrated in Fig. 1(c) and (d), the
+their input terminals.                                                                         BPFs reported in this work are designed to exhibit wideband
+   In order to absorb the harmful stopband RF-power                                            flat-group-delay responses beyond their corresponding 3-dB
+reflections inherent to reflective-type filters so as to enhance                               absolute-BW ranges when compared to their conceptual ideal
+the stability/robustness of adjacent RF active-circuit stages,                                 counterparts with fully-flat group delay at the whole frequency
+the development of their absorptive/reflectionless counterparts                                spectrum. The main contributions of this work can be
+is becoming more attractive [14], [15], [16]. Unlike reflective-                               summarized as follows: (i) realization of two-port-absorptive
+type BPFs, the non-transmitted stopband RF-power echoes                                        wideband BPFs with extremely-flat in-band group-delay
+can be mostly dissipated in reflectionless BPFs inside                                         profile, (ii) engineering of input-reflectionless wideband BPFs
+themselves by introducing lossy elements in their circuit                                      with TZs and constant in-band group delay—which may allow
+networks, such as surface-mount-device (SMD) resistors [17],                                   the acquisition of broad-band RF signals with high-data-rate
+[18], [19]. In this context, reflectionless RF filters with various                            modulating waveforms while producing reduced ISI levels for
+group-delay responses have been recently suggested as in [20],                                 digital communications applications—, and (iii) extrapolation
+[21], [22], [23], [24], [25], [26], [27], [28], and [29]. In [20], a                           to higher-order input-reflectionless wideband BPFs with flat
+low-reflection microstrip BPF with narrow-band flat group-                                     in-band group delay and multiple pairs of TZs. To the best of
+delay profile was reported. A switchable absorptive quasi-                                     the authors’ knowledge, this is the first time to design multi-
+constant group-delay wideband bandstop filter (BSF) was then                                   functional wideband RF BPFs simultaneously featuring quasi-
+
+
+
+                     © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                                      This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                                                content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                                               3
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+                                  0      |S21|                                                                                                   Case 1           Case 3 10
+                                                                                                                                                             Case 2
+                                                                                                                                        0
+                              -10                     BW3dB-One-section                                                               |S21|
+                                                                                                                                                                          0
+              S-parameters (dB)
+                                                                                                                                  -10                       |S11|
+                              -20            |S11|                                                                                                                        -10
+                                                                                                                                  -20
+
+
+
+
+                                                                                                                                                                                                  |S11| (dB)
+                                                                                                                          |S21| (dB)
+                              -30                                                                                                                                         -20
+                                                                                                                                  -30
+                              -40                                                                                                                                         -30
+                                                                                                                                  -40                                     -40
+                              -50
+                                                                                                                                  -50                                     -50
+                              -60
+                               0.3                                                                                                -60                                     -60
+                                                               0.023
+             g (ns)
+
+
+
+
+                               0.2                                                                                                  0.0     0.5      1.0      1.5       2.0
+                                                                                                                                          Normalized Frequency (f/f0)
+                               0.1                                                                                                                            (a)
+                                 0.0          0.5     1.0     1.5      2.0
+                                           Normalized Frequency (f/f0)                                                                 0.3
+                                                                                                                                                                                  0.023
+
+
+
+
+                                                                                                                         g (ns)
+Fig. 3. Theoretical power transmission (|S21 |), input-reflection (|S11 |), and                                                                0.03
+group-delay (τ g) responses of the proposed type of wideband BPF with low-                                                             0.2
+                                                                                                                                                                            0.048
+in-band-variation equi-ripple-type group delay using shunt resistively-                                                                0.1
+terminated one-section microstrip lines with zm = 0.98, zs = 1.3, zm1 = 0.8388,                                                          0.0       0.5      1.0     1.5         2.0
+and Nm = Ns = N m1 = 1.                                                                                                                          Normalized Frequency (f/f0)
+                                                                                                                                                        (b)
+constant in-band group-delay behavior, broadband absorptive                                                      Fig. 4. Theoretical power transmission (|S21 |), input-reflection (|S11 |), and
+properties, and out-of-band TZs by means of the use of                                                           group-delay (τ g) responses of the proposed type of wideband BPF with low-
+wideband microstrip vertical transitions. Note that a                                                            in-band-variation equi-ripple-type group delay using shunt resistively-
+                                                                                                                 terminated one-section microstrip lines with Nm = Ns = Nm1 = 1 (Case 1: zm =
+preliminary version of this work was presented in [32], in                                                       0.98, zs = 1.3, and zm1 = 0.8388; Case 2: zm = 1.006, zs = 1.678, and z m1 =
+which an example of this type of wideband flat-group-delay                                                       0.8868; Case 3: zm = 1.01, zs = 2.388, and zm1 = 0.9008). (a) |S21| and |S11|
+reflectionless RF BPF was introduced. The current study,                                                         responses (Case 1: 3-dB BW of 78% from 0.61f0 to 1.39f0; Case 2: 3-dB BW
+                                                                                                                 of 83% from 0.585f0 to 1.415f0; Case 3: 3-dB BW of 89% from 0.555f0 to
+which can be viewed as its expanded version, reports the                                                         1.445f0). (b) τg responses (Case 1: equi-ripple-group-delay BW of 103% from
+complete theoretical background for these newly-conceived                                                        0.485f0 to 1.515f0; Case 2: equi-ripple-group-delay BW of 117% from
+wide-band RF BPFs with absorptive capabilities and flat-                                                         0.415f0 to 1.585f0; Case 3: equi-ripple-group-delay BW of 142% from 0.29f0
+group-delay behavior beyond their 3-dB BWs, along with                                                           to 1.71f0).
+additional proof-of-concept circuits as practical demonstrators.
+   The rest of this paper is organized as follows. Based on a                                                   to-microstrip vertical transition for attaining a wideband BPF
+wideband microstrip vertical transition and two shunt                                                           response [33] and 2) two shunt resistively-terminated multi-
+resistively-terminated one-section microstrip lines, two-port-                                                  section microstrip lines for absorbing the unwanted stopband
+absorptive wideband BPFs with low-in-band-variation equi-                                                       RF-power reflections. The electrical length θ of its constituent
+ripple-type group-delay responses are firstly discussed in                                                      open-circuit-ended stubs, short-circuit-ended stubs, and shunt
+Section II. In order to obtain extremely-flat group-delay                                                       in-series-cascaded TL sections is herein set as π/2—i.e.,
+behavior, its counterpart using shunt lossy two-section                                                         quarter-wavelength—at the design frequency f0 = 2 GHz, and
+microstrip lines is then developed. Afterwards, through a                                                       their associated characteristic impedances are Zm, Zs, Zm1, …,
+modified microstrip transition with a short-circuit-ended two-                                                  and Zm(i+1). Zin refers to the input impedance of the shunt open-
+section microstrip line at the output port and a shunt lossy                                                    circuit-ended stub and the resistively-terminated multi-section
+two-section microstrip line, a type of input-reflectionless                                                     microstrip line, Z0 is the 50-Ω port impedance, and R
+wideband BPF with a pair of TZs and flat in-band group delay                                                    represents the 50-Ω resistance of the terminating resistors that
+is reported in Section III. By exploiting two in-series-cascaded                                                are used to attain the intended broadband two-port-
+replicas of the previously-devised input-reflectionless BPF                                                     reflectionless behavior. Besides, because the radiation,
+unit with two TZs, a higher-order wideband flat-group-delay                                                     impedance-dispersion, and open-/short-circuit-ending effects
+BPF with two more TZs is realized. In Section IV, a detailed                                                    may vary the impedance values of the coupled microstrip and
+comparison between the developed absorptive wideband flat-                                                      slotline resonators in the practical electromagnetic (EM)
+group-delay BPFs and other prior-art reflectionless wideband                                                    design, three pairs of transformers with turns ratios of Nm, Ns,
+BPFs with quasi-constant in-band group-delay properties is                                                      and Nm1 are utilized [34]. In the following, the properties of
+made. Finally, a brief summary and the most relevant                                                            the devised two-port-reflectionless wideband flat-group-delay
+concluding remarks of this work are provided in Section V.                                                      BPFs are determined for various cases of their shunt
+                                                                                                                resistively-terminated microstrip lines and numbers of their
+II. WIDEBAND FLAT-GROUP-DELAY BPFS WITH TWO-PORT                                                                constituent in-series-cascaded sections.
+             REFLECTIONLESS BEHAVIOR                                                                            A. Wideband BPFs With Low-In-Band-Variation Equi-
+  The generalized transmission-line (TL) equivalent circuit of                                                      Ripple-Type Group Delay
+the proposed family of wideband flat-group-delay BPFs with                                                        By considering shunt resistively-terminated one-section
+two-port-reflectionless behavior is depicted in Fig. 2. As can                                                  microstrip lines in the proposed type of two-port-absorptive
+be seen, it consists of two main circuit parts: 1) a microstrip-                                                BPF—i.e., i = 0 in Fig. 2—, its frequency responses are
+
+
+                                      © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                                    This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                                              content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                                            4
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+                                          One-section            Two-section                                                                       Case 1      Case 2
+                                                                                                                                                              Case 3 10
+                                0                                                                                                      0
+                                     |S21|                                                                                                 |S21|
+                                                                                                                                 -10                                  0
+                            -10
+            S-parameters (dB)                                                                                                                            |S11|
+                                                                                                                                                                      -10
+                                                                                                                                 -20
+
+
+
+
+                                                                                                                                                                                               |S11| (dB)
+                                                                                                                         |S21| (dB)
+                            -20
+                                                                                                                                                                      -20
+                            -30                   |S11|                                                                          -30
+                                                                                                                                                                      -30
+                            -40                                                                                                  -40                                  -40
+                            -50                                                                                                  -50                                  -50
+                            -60                                                                                                  -60                                  -60
+                             0.3                   BW3dB-One-section                                                               0.0   0.5      1.0      1.5      2.0
+                                                                       BW3dB-Two-section                                               Normalized Frequency (f/f0)
+           g (ns)
+
+
+
+
+                             0.2                                                                                                                                (a)
+                             0.1                                                                                                      0.3
+                               0.0        0.5     1.0     1.5      2.0                                                                                      BW3dB-Case 2
+
+
+
+
+                                                                                                                       g (ns)
+                                       Normalized Frequency (f/f0)                                                                    0.2
+Fig. 5. Theoretical power transmission (|S21 |), input-reflection (|S11 |), and                                                       0.1                   BW3dB-Case 1    BW3dB-Case 3
+group-delay (τg) responses of the proposed extremely-flat-group-delay                                                                 0.0
+                                                                                                                                        0.0          0.5      1.0     1.5                2.0
+wideband BPF using shunt resistively-terminated two-section microstrip
+                                                                                                                                                   Normalized Frequency (f/f0)
+lines with zm = 0.768, zs = 1.302, zm1 = 0.7838, zm2 = 0.8968, and Nm = Ns =
+Nm1 = 1 (the responses in Fig. 3 are also included for comparison purposes).                                                                         (b)
+                                                                                                               Fig. 6. Theoretical power transmission (|S21 |), input-reflection (|S11 |), and
+                                                                                                               group-delay (τg) responses of the proposed extremely-flat-group-delay
+initially discussed. Through the multiplied ABCD sub-matrices                                                  wideband BPF using shunt resistively-terminated two-section microstrip
+of the constituent elements of the whole BPF network, the                                                      lines with Nm = Ns = Nm1 = 1 (Case 1: zm = 0.768, zs = 1.302, zm1 = 0.7838,
+analytical expressions of its power transmission (S21) and                                                     and zm2 = 0.8968; Case 2: z m = 0.807, zs = 1.834, zm1 = 0.928, and zm2 =
+                                                                                                               0.897; Case 3: zm = 0.797, zs = 2.4, zm1 = 1.0514, and z m2 = 0.902). (a) |S21|
+reflection (S11) parameters can be derived as follows:                                                         and |S11 | responses (Case 1: 3-dB BW of 82% from 0.59f0 to 1.41f0; Case 2:
+                 2                        B z0  Cz0                                                           3-dB BW of 87% from 0.565f0 to 1.435f0; Case 3: 3-dB BW of 91% from
+ S21                       & S11                        (1)                                                  0.545f0 to 1.455f0). (b) τg responses (Case 1: flat-group-delay BW of 114%
+        A  B z0  Cz0  D            A  B z0  Cz0  D                                                       with maximum variation of ±0.0024 ns from 0.43f0 to 1.57f0 and τ g(f0) =
+where                                                                                                          0.1944 ns; Case 2: flat-group-delay BW of 130% with maximum variation of
+                                                                                                               ±0.004 ns from 0.35f0 to 1.65f0 and τg(f0) = 0.169 ns; Case 3: flat-group-delay
+                                                                  
+                                                              2 zin                                            BW of 139% with maximum variation of ±0.0045 ns from 0.305f0 to 1.695f0
+                                          A  D  1                                                (2)        and τ g(f0) = 0.1517 ns).
+                                                            jzs tan 
+                                                        jzs tan  )
+                                                  ( zin
+                                              2 zin
+                                       B                                                           (3)              | S11 |  10 dB with                    Re( S11 )2  Im( S11 )2  0.3162 (7)
+                                                      jzs tan 
+                                                            2                                                    Following the above design requisites with (1)–(7), the
+                                               C                                                   (4)
+                                                       jzs tan                                              values for the impedance parameters of the devised wideband
+                                                                                                              BPF using two shunt resistively-terminated one-section
+                                              rzm zm 1  jzm zm21 tan 
+            
+          zin                                                                                       (5)       microstrip lines can be derived through parametric-analysis
+                                ( zm zm 1  zm21 tan 2  )  j ( zm  zm 1 )r tan                       inspection. An illustrative example of its frequency responses
+and z m = N m2 × zm, z s = Ns2 × zs, zm 1 = Nm21 × zm1, and z0, zm,                                        is shown in Fig. 3. As can be seen, the designed wideband
+                                                                                                              BPF features a rounded passband in amplitude with 3-dB BW
+zs, zm1, and r are the associated normalized impedances. Based                                                range from 0.61f0 to 1.39 f0—i.e., equal to 78% in relative
+on the synthesis design method of wideband reflectionless                                                     terms—and broadband absorptive behavior with power-
+BPFs in [31] and (1)–(5), the proposed two-port-reflectionless                                                matching levels above 13.78 dB within [0, 2f0). Besides, its in-
+wideband BPF featured with quasi-equi-ripple-type passband                                                    band group-delay response with equi-ripple-type shape is
+in amplitude can be determined. Nevertheless, it exhibits an                                                  designed with a maximum variation of -0.023 ns from 0.485f0
+associated group-delay response with an unwanted in-band                                                      to 1.515f0 with regard to the group-delay value τg(f0) = 0.2187
+rounded shape. In order to attain maximum group-delay                                                         ns. It results in a wideband equi-ripple-type-group-delay BW
+variations of ± 0.05 ns beyond the associated 3-dB BW ranges                                                  of 103% for such maximum group-delay variation, which is
+and broadband reflectionless behavior with power-matching                                                     remarkably larger than its 3-dB-passband BW. In addition, the
+levels above 10 dB within the entire frequency spectral period                                                properties of this developed wideband BPF in terms of
+[0, 2f0), the design specifications of the proposed wideband                                                  different group-delay ripples, as well as the associated ripple-
+BPFs corresponding to the real and imaginary parts of their S21                                               referred group-delay BWs and 3-dB-passband BWs for
+and S11 parameters are forced to satisfy the conditions below:                                                distinct values of the design impedances, are illustrated in Fig.
+                  1           Im( S21 )
+                   d{tan 1[           ]}                                                                    4. In all these examples, in order to maintain the expected low-
+                 2           Re( S21 )                                                                       in-band-variation equi-ripple-type group-delay behavior, the
+       g                                  g ( f 0 )   0.05 ns (6)
+                           df                                                                                 values of zm and zm1 were correspondingly adjusted. As shown
+                       g ( f )                                                                               in Fig. 4, the passband BW of the proposed BPF is increased
+
+
+
+                                    © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                              This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                                        content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                                      5
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+                       0      |S21|
+                                                                               0
+                 -10                                        |S11|
+                                                                               -10
+                 -20                                                           -20
+
+
+
+
+                                                                                     |S11| (dB)
+         |S21| (dB)
+
+
+                 -30                                                           -30
+                 -40                                 -40
+                                       Two-section
+                 -50                   Three-section -50
+                 -60                   Four-section -60
+                   0.0   0.5      1.0     1.5      2.0
+                       Normalized Frequency (f/f0)
+                                                  (a)
+                      0.3             BW3dB-Two/Three/Four-section
+        g (ns)
+
+
+
+
+                      0.2
+                      0.1
+                      0.0
+                        0.0       0.5      1.0     1.5                        2.0
+                                Normalized Frequency (f/f0)
+                                                                                                         Fig. 8. 3-D layout of the developed two-port-reflectionless wideband flat-
+                                        (b)                                                              group-delay BPF prototype using shunt resistively-terminated two-section
+Fig. 7. Theoretical power transmission (|S21 |), input-reflection (|S11 |), and                          microstrip lines for i = 1 (LIn = LOut = 40, LA = 21.83, LB = 21.65, LC = 21.82,
+group-delay (τg) responses of the proposed extremely-flat-group-delay                                    LD = 49.5, WIn = WOut = 1.82, WA = 2.43, WB = 2.54, WC = 2.15, WD = 0.56
+wideband BPF using shunt resistively-terminated multi-section microstrip                                 [unit: mm], and θ1 = θ2 = 45°).
+lines for i = 1, 2, and 3, respectively, with zm = 0.79, zs = 1.402, and Nm = Ns
+= Nm1 = 1 (Case 1: zm1 = 0.8098 and zm2 = 0.8988 for i = 1; Case 2: zm1 =
+0.7792, zm2 = 0.8888, and zm3 = 0.9884 for i = 2; Case 3: zm1 = 0.7538, zm2 =                                                                0 |S |
+0.884, zm3 = 0.9768, and zm4 = 1.002). (a) |S21| and |S11| responses (Cases 1, 2,                                                                   21
+and 3: 3-dB BW of 83% from 0.585f0 to 1.415f0). (b) τ g responses (Case 1:                                                                  -5
+                                                                                                                       S-parameters (dB)
+flat-group-delay BW of 114% with maximum variation of ±0.0018 ns from                                                                      -10     -13.16 dB         -13.03 dB
+0.415f0 to 1.585f0 and τg(f0) = 0.1879 ns; Case 2: flat-group-delay BW of                                                                  -15
+130% with maximum variation of -0.004 ns from 0.395f0 to 1.605f0 and τg(f0 )
+= 0.1879 ns; Case 3: flat-group-delay BW of 139% with maximum variation                                                                    -20
+of -0.0071 ns from 0.36f0 to 1.64f0 and τg(f0) = 0.1879 ns).                                                                               -25                  |S11|
+
+for a higher zs value, which represents a larger slotline                                                                                  -30
+                                                                                                                                           -35       Mea.
+impedance of the microstrip transition [33]. Specifically, a                                                                                         EM sim.
+larger 3-dB-passband BW leads to a less rounded passband, a                                                                                -40
+                                                                                                                                             0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0
+larger ripple-referred group-delay BW, a smaller group-delay                                                                                             Frequency (GHz)
+value at f0, but also to a higher group-delay ripple in these                                                                                                 (a)
+examples. Thus, although this BPF with shunt resistively-                                                                                   0.7     ns flat-group-delay BW
+                                                                                                                       g (ns)
+
+
+
+
+ended one-section microstrip lines can attain wideband low-in-                                                                              0.6
+band-variation equi-ripple-type group-delay response, its                                                                                                    3-dB BW
+                                                                                                                                            0.5
+maximum in-band group-delay variation needs to be further                                                                                     0.9 1.2 1.5 1.8 2.1 2.4 2.7 3.0
+reduced as the BW is broadened.                                                                                                                        Frequency (GHz)
+                                                                                                                                                              (b)
+B. Wideband BPFs With Extremely-Flat Group Delay
+    In order to further reduce the in-band group-delay variation
+so as to attain a quasi-constant-group-delay behavior beyond
+the 3-dB BW range, shunt resistively-terminated two-section
+microstrip lines in the conceived type of wideband BPF—i.e.,
+i = 1 in Fig. 2—are now considered. Through the relevant
+equivalent circuit of this BPF in Fig. 2, the formula of its                                                                                    (c)
+normalized input impedance is obtained to be as follows:                                                 Fig. 9. Frequency responses and photograph of the manufactured microstrip
+                                                                                                         prototype of the conceived two-port-reflectionless wideband flat-group-delay
+        rz  z  ( z  z  tan 2  )  jzm zm 1 zm 2 ( zm 1  zm2 ) tan                              BPF in Fig. 8. (a) EM-simulated and measured power transmission (|S21|) and
+    m m1 m2 m1
+ zin                                                                         (8)                         input-reflection (|S11 |) responses. (b) EM-simulated and measured group-
+                                  a1  jb1                                                               delay (τg) responses. (c) Top-/bottom-view photograph of the assembled
+where                                                                                                    prototype.
+
+                a1  zm 1zm2 ( zm  zm 1 )  ( zm  zm 1 ) zm2 2 tan 2                       (9)   responses of an illustrative design example of the proposed
+                                                                                                         BPF using resistively-terminated two-section microstrip lines
+                 zm
+        b1  ( zm   1  zm         1zm2 )r tan   rzm21 tan3 
+                           zm2  zm                                                              (10)   are presented in Fig. 5. In comparison with the responses
+  Following the design procedure discussed in Section II.A                                               associated to its BPF counterpart in Fig. 3 using lossy one-
+with (1)–(4), (6), (7), and (8)–(10), the theoretical frequency                                          section microstrip lines, a slightly-larger 3-dB BW range from
+
+
+
+                              © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                    This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                              content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                            6
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+                                                                                                                                    0    |S21|
+                                                                                                                                -10                  BW3dB-Two-section
+
+
+
+
+                                                                                                                S-parameters (dB)
+                                                                                                                                -20          |S11|
+                                                                                                                                -30
+                                                                                                                                -40
+                                                                                                                                -50
+                                                                                                                                -60
+Fig. 10. Generalized TL equivalent circuit of the proposed class of input-                                                       0.4
+
+
+
+
+                                                                                                               g (ns)
+reflectionless wideband flat-group-delay BPFs with TZs composed of a                                                             0.3                         0.0133
+modified microstrip-to-microstrip vertical transition with a short-circuit-                                                      0.2
+ended two-section microstrip line at the output port, a shunt resistively-                                                       0.1
+terminated multi-section microstrip line, and four different transformers with                                                     0.0       0.5     1.0     1.5      2.0
+turns ratios of Nm, Ns, Nm1, and Nm2.                                                                                                     Normalized Frequency (f/f0)
+                                                                                               Fig. 11. Theoretical power transmission (|S21|), input-reflection (|S11|), and
+                                                                                               group-delay (τ g) responses of the proposed input-reflectionless wideband
+0.59f0 to 1.41f0—i.e., equal to 82% in percentage terms—and                                    flat-group-delay BPF with TZs using a shunt resistively-terminated two-
+power-matching levels higher than 11.165 dB are achieved for                                   section microstrip line with zm = 1.611, zs = 1.359, z1 = 0.3596, z2 = 2.1614,
+a smaller zm value. Furthermore, owing to the employed                                         zm1 = 1.3958, zm2 = 1.0448, and N m = Ns = Nm1 = Nm2 = 1.
+resistively-ended two-section microstrip lines, an extremely-
+flat group-delay profile is now attained in this devised BPF—                                 group-delay range with the allowable maximum variation as
+instead of the equi-ripple-type one in Fig. 3 for lossy one-                                  conditioned by (6) is gradually enlarged as more cascaded TL
+section microstrip lines. Its maximum in-band group-delay                                     sections are assumed in their constituent lossy microstrip lines.
+variation is ±0.0024 ns from 0.43f0 to 1.57f0—i.e., 114% in                                      To experimentally validate the above discussions, a proof-
+fractional terms—with regard to the group-delay value of                                      of-concept microstrip prototype of the proposed reflectionless
+0.192 ns at f0, which covers its associated 3-dB-BW passband.                                 wideband BPF using shunt resistively-terminated two-section
+   Additionally, based on three different sets of values for the                              microstrip lines has been simulated, manufactured, and tested.
+impedance design parameters, various examples of frequency                                    Corresponding to the relevant TL equivalent circuit in Fig. 2
+responses with different 3-dB passband BWs and flat-group-                                    with i = 1, the layout of the developed wideband BPF in a
+delay ranges for the proposed absorptive BPF in Fig. 2 for i =                                two-layer structure is depicted in Fig. 8. Specifically, the
+1 are represented in Fig. 6. As can be seen, as in Fig. 4, a                                  open-circuit-ended stubs, the short-circuit-ended stubs, and the
+broader passband 3-dB BW is obtained for a higher zs value.                                   shunt lossy TL sections in Fig. 2 are represented here by the
+Note that, in all these examples, the other design impedances                                 open-circuit-ended microstrip lines, slotline, and shunt
+were properly adjusted to secure the desired wideband group-                                  microstrip-line sections, respectively. A Rogers RO4003C
+delay profile with extremely-low variation with regard to the                                 substrate with relative dielectric constant εr = 3.55, dielectric
+group-delay value at f0. Besides, it should be remarked upon                                  thickness h = 0.813 mm, metal thickness t = 35µm, and
+that the quasi-constant group-delay ranges exceed the                                         dielectric loss tangent tan(δD) = 0.0027 was herein used for the
+associated 3-dB passband BWs in all cases and reveal that a                                   RF BPF fabrications in this work. Besides, two SMD resistors
+larger flat-group-delay BW range entails a higher maximum                                     measured with resistances of 49.9 Ω were soldered. The
+group-delay variation—although still being small enough.                                      proposed BPF centered at f0 = 2 GHz was initially designed
+Furthermore, in order to investigate the relationship between                                 with Z m = 39.5 Ω, Zs = 70.1 Ω, Z m1 = 40.49 Ω, and Zm2 =
+the resistively-terminated multi-section microstrip lines and                                 44.94 Ω. Owing to the radiation, dispersion, and end effects
+the resulting flat-group-delay responses, illustrative frequency                              existing in the practical design, the EM-simulated impedances
+responses of the proposed class of BPF for distinct numbers of                                were modified to Zm = 40.94 Ω, Zs = 97.18 Ω, Zm1 = 39.74 Ω,
+sections in the shunt lossy microstrip lines—i.e., i = 1, 2, and                              and Zm2 = 44.38 Ω. In this manner, the turns ratios of the used
+3 in Fig. 2—are represented in Fig. 7. The values of the zm and                               transformers were extracted as Nm = 0.982, Ns = 0.849, and
+zs parameters in the designed BPFs are herein fixed, whereas                                  Nm1 = 1.009. The EM-simulated and measured results, along
+the impedances of the employed multiple sections of the                                       with the photograph of the manufactured BPF prototype, are
+resistively-terminated microstrip lines are adjusted to keep the                              shown in Fig. 9. As can be seen in Fig. 9(a), a fairly-close
+expected wideband flat-group-delay profiles. As observed in                                   agreement between the EM-simulated and measured results is
+Fig. 7(a), the 3-dB passband responses of these developed                                     obtained. Some minor discrepancies are observed between the
+BPFs are almost the same, but their associated power-                                         EM-simulated and measured return-loss responses at the
+matching levels are relatively deteriorated as more TL sections                               upper-stopband region, which are mostly attributed to
+are considered in the lossy microstrip lines. Fig. 7(b) depicts                               fabrication/assembly tolerances and the port-impedance
+the corresponding broadband quasi-constant group-delay                                        discontinuity of the soldered RF SMA connectors during the
+responses. As can be seen, for the fixed zm and zs values, the                                practical implementation. The main performance metrics of
+group-delay values at f0 are also unchanged with τg(f0) =                                     the measured BPF circuit are summarized as follows: center
+0.1879 ns. Simultaneously, it is noticed that the quasi-constant                              frequency of 1.956 GHz, 3-dB-BW passband from 1.127 to
+
+
+
+                    © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                            This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                                      content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                                       7
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+                              Case 1           Case 3 10
+                                              Case 2                                                                                       Case 1     Case 3 10
+                                                                                                                                                        Case 2
+                      0                                                                                                        0
+                    |S21|                                                                                                             |S21|
+                -10                                    0                                                                 -10                                  0
+                                         |S11|         -10                                                                                      |S11|         -10
+                -20                                                                                                      -20
+
+
+
+
+                                                                                  |S11| (dB)
+
+
+
+
+                                                                                                                                                                                        |S11| (dB)
+        |S21| (dB)
+
+
+
+
+                                                                                                                 |S21| (dB)
+                                                       -20                                                                                                    -20
+                -30                                                                                                      -30
+                                                       -30                                                                                                    -30
+                -40                                    -40                                                               -40                                  -40
+                -50                                    -50                                                               -50                                  -50
+                -60                                    -60                                                               -60                                  -60
+                  0.0     0.5      1.0      1.5      2.0                                                                   0.0   0.5      1.0      1.5      2.0
+                        Normalized Frequency (f/f0)                                                                            Normalized Frequency (f/f0)
+                                               (a)                                                                                                       (a)
+                     0.5              BW3dB-Case 1                                                                            0.5
+                     0.4 BW                                                                                                   0.4
+       g (ns)
+
+
+
+
+                                                                                                                g (ns)
+                     0.3   3dB-Case 2                                                                                         0.3                   BW3dB-Case 1/2/3
+                     0.2                            BW3dB-Case 3                                                              0.2
+                     0.1                                                                                                      0.1
+                       0.0      0.5     1.0        1.5     2.0                                                                  0.0        0.5      1.0     1.5                   2.0
+                            Normalized Frequency (f/f0)                                                                                  Normalized Frequency (f/f0)
+                                       (b)                                                                                                    (b)
+Fig. 12. Theoretical power transmission (|S21|), input-reflection (|S11|), and                         Fig. 13. Theoretical power transmission (|S21|), input-reflection (|S11|), and
+group-delay (τ g) responses of the proposed input-reflectionless wideband                              group-delay (τ g) responses of the proposed input-reflectionless wideband
+flat-group-delay BPF with TZs using a shunt resistively-terminated two-                                flat-group-delay BPF with TZs using a shunt resistively-terminated two-
+section microstrip line for different z1 values with z2 = 2.1614, zm1 = 1.3958,                        section microstrip line for different z2 values with zm = 1.611, zs = 1.359, z1 =
+zm2 = 1.0448, and Nm = Ns = Nm1 = 1 (Case 1: z1 = 0.5596, zm = 2.153, and zs                           0.3596, zm1 = 1.3958, zm2 = 1.0448, and Nm = Ns = Nm1 = 1 (Case 1: z2 =
+= 0.9074; Case 2: z1 = 0.3596, zm = 1.611, and zs = 1.359; Case 3: z1 =                                1.5614; Case 2: z2 = 2.1614; Case 3: z2 = 2.7614). (a) |S21| and |S11| responses
+0.1596, zm = 1.101, and zs = 2.229). (a) |S21| and |S11 | responses (Case 1: 3-dB                      (Cases 1, 2, and 3: 3-dB BW of around 76% from 0.62f0 to 1.38f0). (b) τg
+BW of 60.2% from 0.699f0 to 1.301f0; Case 2: 3-dB BW of 76% from 0.62f0                                responses (Case 1: flat-group-delay BW of 82% with maximum variation of
+to 1.38f0; Case 3: 3-dB BW of 96.8% from 0.516f0 to 1.484f0). (b) τg                                   0.0237 ns from 0.59f0 to 1.41f0 and τ g(f0) = 0.2203 ns; Case 2: flat-group-
+responses (Case 1: flat-group-delay BW of 85.8% with maximum variation                                 delay BW of 91% with maximum variation of 0.0133 ns from 0.545f0 to
+of 0.0085 ns from 0.571f0 to 1.429f0 and τg(f0) = 0.3163 ns; Case 2: flat-                             1.455f0 and τg(f0) = 0.2189 ns; Case 3: flat-group-delay BW of 100% with
+group-delay BW of 91% with maximum variation of 0.0133 ns from 0.545f0                                 maximum variation of 0.0124 ns from 0.5f0 to 1.5f0 and τ g(f0) = 0.2181 ns).
+to 1.455f0 and τg(f0) = 0.2189 ns; Case 3: flat-group-delay BW of 121.4%
+with maximum variation of 0.0243 ns from 0.393f0 to 1.607f0 and τg(f0) =
+                                                                                                      equivalent circuit using a resistively-terminated multi-section
+0.1356 ns).
+                                                                                                      microstrip line is depicted in Fig. 10. Similarly, the electrical
+                                                                                                      length of all the TL circuit elements—i.e., open-circuit-ended
+2.785 GHz—i.e., 84.76% in relative terms—, minimum in-                                                stub, short-circuit-ended stubs and two-section TL, and shunt
+band insertion-loss and input-power-matching levels of 0.42                                           in-series-cascaded TL sections—is assumed as θ = π/2—i.e.,
+dB and 13.16 dB, respectively, and input-power-matching                                               quarter-wavelength—at f0 = 2 GHz, and their associated line-
+levels above 13.03 dB from DC to 5 GHz. The simulated and                                             impedance parameters are designated as Zm, Zs, Z1, Z2, Zm1, …,
+measured in-band group-delay responses are depicted in Fig.                                           and Zm(i+1), respectively. The input impedances of the shunt-
+9(b). The measured group-delay variation with regard to the                                           connected open-circuit-ended stub and lossy in-series-
+average in-band group-delay value of 0.6084 ns is within                                              cascaded TL sections and the short-circuit-ended two-section
+±0.05 ns from 0.972 to 2.797 GHz—i.e., 96.84% in relative                                             TL are referred to as Zin and Zin1, respectively. Moreover,
+terms—, which fully covers the measured 3-dB-BW frequency                                             compared with the equivalent circuit in Fig. 2 of the two-port-
+range. Besides, Fig. 9(c) shows the top-/bottom-view                                                  reflectionless wideband BPFs, an additional transformer with
+photograph of the assembled BPF prototype, which has a                                                turns ratio of Nm2 is used to model the impedance variations of
+physical size of 80 × 72.46 mm2.                                                                      the short-circuit-ended two-section TL at the output port.
+
+ III. WIDEBAND FLAT-GROUP-DELAY BPFS WITH TZS AND                                                     A. Wideband BPFs With TZs and Flat Group Delay
+           INPUT-REFLECTIONLESS BEHAVIOR                                                                 Following the same design procedure as for the two-port-
+  Based on the design approach of wideband two-port-                                                  reflectionless BPFs reported in Section II, the ABCD matrix
+absorptive quasi-constant-group-delay BPFs in Section II, the                                         corresponding to the generalized TL equivalent circuit of the
+extrapolation to input-reflectionless wideband flat-group-delay                                       proposed type of input-absorptive BPFs with TZs using a
+BPFs with TZs using a shunt resistively-ended two-section                                             shunt resistively-terminated two-section microstrip line—i.e., i
+microstrip line is addressed here. Unlike in the two-port-                                            = 1 in Fig. 10—can be formulated as below:
+absorptive BPFs in Section II, the BPF channel in the devised                                                                              
+                                                                                                                                       2 zin
+                                                                                                                              A  1                            (11)
+input-absorptive BPFs is made up of a modified wideband                                                                              jzs tan 
+microstrip transition with a short-circuit-ended two-section
+                                                                                                                                                    1  jzs tan  )
+                                                                                                                                              (2 zin
+                                                                                                                                            zin
+microstrip line loaded at the output port, whereas only one                                                                            B                                1
+                                                                                                                                                                       zin                          (12)
+shunt lossy microstrip line is employed. Its generalized                                                                                           jzs tan 
+
+
+
+                            © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                              This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                                           content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                                      8
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+                      0       |S21|
+                                                                                0
+                -10                                           |S11|             -10
+                -20                                                             -20
+
+
+
+
+                                                                                       |S11| (dB)
+        |S21| (dB)
+
+
+
+                -30                                                             -30
+                -40                                 -40
+                                      Two-section
+                -50                   Three-section -50
+                -60                   Four-section -60
+                  0.0   0.5      1.0     1.5      2.0
+                      Normalized Frequency (f/f0)
+                                                 (a)
+                     0.30
+                                        BW3dB-Two/Three/Four-section
+       g (ns)
+
+
+
+
+                     0.25
+                     0.20
+                        0.0        0.5      1.0     1.5                          2.0
+                                 Normalized Frequency (f/f0)
+                                                                                                           Fig. 15. 3-D layout of the developed input-reflectionless wideband flat-
+                                          (b)                                                              group-delay BPF prototype with TZs using a shunt resistively-terminated
+Fig. 14. Theoretical power transmission (|S21|), input-reflection (|S11|), and                             two-section microstrip line for i = 1 (LIn = LOut = 40, LA = 22.14, LB = 22.09,
+group-delay (τ g) responses of the proposed input-reflectionless wideband                                  LC = 21.59, LD = 49.7, LE = 19.85, LF = 13.38, LG = 10.015, WIn = WOut =
+flat-group-delay BPF with TZs using a shunt resistively-terminated multi-                                  1.82, WA = 0.72, WB = 1.22, WC = 1.65, WD = 0.48, WE = 7.24, WF = WG = 0.3
+section microstrip lines for i = 1, 2, and 3, respectively, with z m = 1.611, zs =                         [unit: mm], and θ1 = θ2 = 45°).
+1.359, z1 = 0.3596, z2 = 2.1614, and Nm = Ns = Nm1 = 1 (Case 1: z m1 = 1.3958
+and zm2 = 1.0448 for i = 1; Case 2: zm1 = 1.2508, zm2 = 1.0248, and zm3 =
+0.9848 for i = 2; Case 3: zm1 = 1.2408, zm2 = 1.0378, zm3 = 0.9898, and zm4 =                                                                 0     |S21|
+1.009 for i = 3). (a) |S21| and |S11 | responses (Case 1: 3-dB BW of 76% from                                                                -5
+0.62f0 to 1.38f0; Case 2: 3-dB BW of 77% from 0.615f0 to 1.385f0; Case 3: 3-
+dB BW of 77.2% from 0.614f0 to 1.386f0). (b) τg responses (Case 1: flat-                                                S-parameters (dB)   -10                -10.63 dB
+                                                                                                                                                                            -14.03 dB
+group-delay BW of 91% with maximum variation of 0.0133 ns from 0.545f0                                                                      -15
+to 1.455f0 and τg(f0) = 0.2189 ns; Case 2: flat-group-delay BW of 80.6% with
+maximum variation of 0.015 ns from 0.597f0 to 1.403f0 and τg(f0) = 0.2189
+                                                                                                                                            -20
+ns; Case 3: flat-group-delay BW of 83.6% with maximum variation of 0.032                                                                    -25
+ns from 0.582f0 to 1.418f0 and τg(f0) = 0.2189 ns).                                                                                                               |S11|
+                                                                                                                                            -30
+                                                                                                                                            -35           Mea.
+                                                      2
+                                         C                                                         (13)                                    -40           EM sim.
+                                                 jzs tan                                                                                    0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0
+                                                           1
+                                                       2 zin                                                                                              Frequency (GHz)
+                                       D  1                                                       (14)                                                       (a)
+                                                     jzs tan                                                                               0.7        ns flat-group-delay BW
+                                            jz1 ( z1  z2 ) tan 
+                                                                                                                        g (ns)
+
+
+
+
+                                   1 
+                                  zin                                                               (15)                                     0.6
+                                                                                                                                                             3-dB BW
+                                              z1  z2 tan 2                                                                                0.5
+                                                                                                                                               0.9 1.2 1.5 1.8 2.1 2.4 2.7 3.0
+where zin has been derived as in (8)–(10), and z m = N m2 × zm,                                                                                       Frequency (GHz)
+                                                                                                                                                               (b)
+ z s = Ns2 × zs, zm 1 = Nm21 × zm1, z1 = Nm2 2 × z1, and zm, zs, z1, z2,
+zm1, and zm2 are the normalized design impedances. With (1),
+(8)–(10), and (11)–(15), the frequency responses of this BPF
+network can be determined. Regarding the TZ generation
+condition that imposes that S21 = 0, it results in two intrinsic
+TZs appearing at 0 and 2f0 and two additional close-to-
+passband TZs within the [0, 2f0] spectral range. It leads to an
+overall BPF profile with a pair of adjacent-to-passband TZs                                                                                      (c)
+that are produced by the used short-circuit-ended two-section                                              Fig. 16. Frequency responses and photographs of the manufactured
+                                                                                                           microstrip prototype of the conceived input-reflectionless wideband flat-
+TL, whose spectral locations are deduced to be as follows:                                                 group-delay BPF with TZs in Fig. 15. (a) EM-simulated and measured power
+                                                2 f0                                                       transmission (|S21|) and input-reflection (|S11|) responses. (b) EM-simulated
+                                      fTZ 1           tan 1 k                                     (16)   and measured group-delay (τg) responses. (c) Top- and bottom-view
+                                                                                                          photographs of the assembled prototype.
+                                                       1
+                                   tan 1 k )
+                                fTZ 2  2 f 0 (1           (17)
+                                                                                                          wideband in-band flat group delay, its frequency responses
+where k = z1/z2 is the impedance ratio. In this manner, in order                                           associated with (1), (8)–(10), (11)–(15), and a specified k =
+to realize the intended input-absorptive BPF with TZs and                                                  0.1664 with z1 = 0.3596 and z2 = 2.1614 are determined to
+
+
+
+                              © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                                      This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                                                 content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                                              9
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+                                                                                                                                                Two units   Three units         Four units
+                                                                                                                                           0                                             0
+                                                                                                                                                   |S21|
+                                                                                                                                          -20                         |S11|               -10
+                                                                                                                                                                                          -20
+
+
+
+
+                                                                                                                                                                                                |S11| (dB)
+Fig. 17. Block diagram of the proposed input-reflectionless multi-TZ BPF                                                                  -40
+
+
+
+
+                                                                                                                             |S21| (dB)
+network based on the in-series-cascaded connection of n BPF units with one                                                                                                                -30
+pair of TZs using shunt resistively-terminated two-section TLs as in Fig. 10.                                                             -60
+                                                                                                                                                                                          -40
+                                                                                                                                          -80                                             -50
+                                  0
+                              -10         |S21|           BW3dB-Two units                                                            -100                                                -60
+                                                                                                                                        0.0           0.5      1.0     1.5             2.0
+              S-parameters (dB)
+
+
+
+
+                              -20                 |S11|                                                                                             Normalized Frequency (f/f0)
+                                                                                                                                                               (a)
+                              -30                                                                                                                            BW3dB-Four units
+                                                                                                                                           2.1
+                              -40                                                                                                          2.0
+
+
+
+
+                                                                                                                                g (ns)
+                                                                                                                                           1.5
+                              -50                                                                                                          1.4                     BW3dB-Three units
+                                                                                                                                           0.9 BW
+                                                                                                                                           0.8   3dB-Two units
+                              -60                                                                                                            0.0      0.5      1.0   1.5           2.0
+                               0.9                           0.0287                                                                               Normalized Frequency (f/f0)
+             g (ns)
+
+
+
+
+                               0.8                                                                                                                      (b)
+                               0.7                                                                               Fig. 19. Theoretical power transmission (|S21|), reflection (|S11 |), and group-
+                                 0.0          0.5     1.0     1.5      2.0                                       delay (τg) responses of the proposed high-order input-reflectionless wideband
+                                           Normalized Frequency (f/f0)                                           flat-group-delay multi-TZ BPFs based on in-series-cascaded BPF units as in
+Fig. 18. Theoretical power transmission (|S21|), input-reflection (|S11|), and                                   Fig. 10 for n = 2, 3, and 4, respectively, with zm = 1.282, zs = 1.1042, z1 =
+group-delay (τg) responses of the proposed high-order input-reflectionless                                       0.8456, z2 = 0.9668, and Nm = Ns = Nm1 = 1 (Case 1: z1 = 0.3612 and z2 =
+wideband flat-group-delay multi-TZ BPF based on two in-series-cascaded                                           1.9756 for unit 1 and z1 = 0.3948 and z2 = 1.1884 for unit 2; Case 2: z1 =
+BPF units as in Fig. 10 using shunt resistively-terminated two-section                                           0.4652 and z2 = 2.3836 for unit 1, z1 = 0.4388 and z2 = 1.2324 for unit 2, and
+microstrip lines for different values of design impedances for z1 = 0.2046 and                                   z1 = 0.366 and z2 = 0.784 for unit 3; Case 3: z1 = 0.4332 and z2 = 1.6756 for
+z2 = 1.6614 (unit 1) and z1 = 0.4228 and z2 = 1.72 (unit 2) with zm = 1.406, zs                                  unit 1, z1 = 0.5868 and z2 = 1.3484 for unit 2, z1 = 0.428 and z2 = 1.188 for
+= 1.254, zm1 = 0.9648, zm2 = 0.9938, and Nm = Ns = Nm1 = Nm2 = 1.                                                unit 3, and z1 = 0.21 and z2 = 1.438 for unit 4). (a) |S21| and |S11 | responses
+                                                                                                                 (Case 1: 3-dB BW of 57% from 0.715f0 to 1.285f0; Case 2: 3-dB BW of
+                                                                                                                 46.8% from 0.766f0 to 1.234f0; Case 3: 3-dB BW of 40% from 0.8f0 to 1.2 f0 ).
+satisfy the design specifications imposed in (6) and (7). As                                                     (b) τg responses (Case 1: flat-group-delay BW of 73.2% with maximum
+shown in Fig. 11 in which these frequency responses are                                                          variation of ± 0.0184 ns from 0.634f0 to 1.366f0 and τ g(f0) = 0.8212 ns; Case
+                                                                                                                 2: flat-group-delay BW of 66% with maximum variation of ± 0.029 ns from
+depicted, a wideband BPF with a rounded sharp-rejection                                                          0.67f0 to 1.33f0 and τg(f0) = 1.435 ns; Case 3: flat-group-delay BW of 65.2%
+passband is obtained with a 3-dB BW range from 0.62f0 to                                                         with maximum variation of ± 0.05 ns from 0.674f0 to 1.326f0 and τ g(f0) =
+1.38f0—i.e., 76% in relative terms—, two close-to-passband                                                       2.036 ns).
+TZs at 0.247f0 and 1.753f0, input-power-matching levels above
+13.544 dB, and stopband power-rejection levels above 19.503                                                     higher, although the stopband-power-rejection levels are
+dB within [0, 2f0). Besides, its wideband flat-group-delay                                                      increased. In addition, their flat-group-delay ranges with lower
+curve exhibits a maximum in-band variation of 0.0133 ns from                                                    maximum variation are slightly broadened, and they fully
+0.545f0 to 1.455f0—i.e., 91% in relative terms—with regard to                                                   cover the corresponding 3-dB-BW passbands. On the other
+the group-delay value τg(f0) = 0.2189 ns, which covers the                                                      hand, examples of frequency responses of the proposed class
+relevant 3-dB-passband range and meets the design rules in (6).                                                 of input-reflectionless BPFs with TZs using the resistively-
+   In order to investigate adjustment flexibility in terms of 3-                                                terminated multi-section TL for various numbers of in-series-
+dB-passband BW while preserving the wideband flat-group-                                                        cascaded TL sections—i.e., i = 1, 2, and 3 in Fig. 10—are
+delay properties of the conceived input-absorptive BPF with                                                     shown in Fig. 14. As can be seen, their 3-dB-passband BWs
+TZs, examples of its frequency responses for different z1 and                                                   and stopband-power-attenuation profiles are almost unchanged,
+z2 values are drawn in Figs. 12 and 13. As shown in Fig. 12,                                                    while it seems that the in-band input-power-matching levels
+for lower z1 values and properly-adjusted lower zm and higher                                                   can be increased by using a resistively-terminated TL section
+zs values, a larger 3-dB-passband BW with a less-rounded                                                        with more cascaded TLs. It is also observed that the maximum
+shape and wider associated flat group-delay range is attained.                                                  in-band group-delay variations are further reduced as a higher
+Nevertheless, slightly-deteriorated input-power-matching and                                                    number of cascaded TLs is used in the shunt lossy TL section.
+stopband-power-attenuation levels are observed at the same                                                      This leads to a more-flattened in-band group-delay response,
+time when the z2, zm1, and zm2 values are fixed. It is also found                                               while their stopband group-delay shapes are almost unchanged.
+that the flat-group-delay ranges of all these responses fully                                                      As experimental demonstration, an engineered two-layer
+cover their associated 3-dB-BW passbands, whereas the                                                           input-reflectionless wideband flat-group-delay BPF with TZs
+obtained maximum in-band group-delay variation is gradually                                                     using a shunt resistively-terminated two-section TL for i = 1 is
+increased versus a decreased τg(f0) value. On the other hand, as                                                has been designed, simulated, fabricated, and measured. Its
+revealed by Fig. 13, the 3-dB-passband BW and the input-                                                        relevant 3-D layout is depicted in Fig. 15. Similarly, its initial
+power-matching levels remain nearly unchanged as z2 gets                                                        design impedances associated with the TL equivalent circuit
+
+
+
+                                      © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                     This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                               content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                           10
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+                                                                                                                                     0
+                                                                                                                                    -5     |S21|
+                                                                                                                                   -10
+                                                                                                                                                       -14.93 dB -14.12 dB
+
+
+
+
+                                                                                                               S-parameters (dB)
+                                                                                                                                   -15        |S11|
+                                                                                                                                   -20
+                                                                                                                                   -25                             -27.59 dB
+                                                                                                                                   -30
+                                                                                                                                   -35       -35.67 dB
+                                                                                                                                   -40
+                                                                                                                                   -45
+                                                                                                                                   -50                Mea.
+                                                                                                                                   -55                EM  sim.
+                                                                                                                                   -60
+                                                                                                                                     0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0
+                                                                                                                                                  Frequency (GHz)
+                                                                                                                                                      (a)
+                                                                                                                                   1.3        ns flat-group-delay BW
+
+
+
+
+                                                                                                              g (ns)
+                                                                                                                                   1.2
+                                                                                                                                   1.1             3-dB BW
+                                                                                                                                     0.9 1.2 1.5 1.8 2.1 2.4 2.7 3.0
+                                                                                                                                              Frequency (GHz)
+                                                                                                                                                      (b)
+Fig. 20. 3-D layout of the developed high-order input-reflectionless
+wideband flat-group-delay multi-TZ BPF prototype based on two in-series-
+cascaded BPF units as in Fig 10 using shunt resistively-terminated two-
+section microstrip line for i = 1 (LIn = LOut = WH = 40, LA = 21.95, LB = 21.51,
+LC = 21.56, LD = 49.7, LE = 19.72, LF = 13.25, LG = 9.5, LH = 65.61, LI =
+20.38, LJ = 12.01, LK = 10, WIn = WOut = 1.82, WA = 0.96, WB = 1.88, WC =
+1.8, WD = 0.41, WE = 13.95, WF = WG = 0.67, WI = 5.93, WJ = WK = 0.62
+                                                                                                                                     (c)
+(unit: mm), and θ1 = θ2 = 45°).
+                                                                                                Fig. 21. Frequency responses and photographs of the manufactured
+                                                                                                microstrip prototype of the developed high-order input-reflectionless
+for i = 1 are Z m = 80.55 Ω, Zs = 67.95 Ω, Z1 = 17.98 Ω, Z2 =                                wideband flat-group-delay multi-TZ BPF in Fig. 20. (a) EM-simulated and
+108.08 Ω, Z m1 = 69.79 Ω, and Zm2 = 52.24 Ω. To make the                                       measured power transmission (|S21|) and input-reflection (|S11|) responses. (b)
+                                                                                                EM-simulated and measured group-delay (τg) responses. (c) Top- and
+EM simulated results fairly close to the ideal ones, the                                        bottom-view photographs of the assembled prototype.
+simulated impedances are modified to Zm = 80.4473 Ω, Zs =
+94.249 Ω, Z1 = 17.9706 Ω, Z2 = 111.606 Ω, Zm1 = 62.1091 Ω,                                     variation referred to such value is within ±0.05 ns from 1.164
+and Zm2 = 52.3144 Ω. In this manner, the turns ratios of the                                   to 2.766 GHz—i.e., 81.53% in percentage terms—, thus
+employed transformers are extracted as Nm = 1.0006, Ns =                                       beyond its associated 3-dB-BW passband range. The physical
+0.8491, Nm1 = 1.06, and Nm2 = 1.0002. Besides, a SMD                                           size of this assembled BPF prototype, whose top- and bottom-
+resistor with measured resistance of 50.1 Ω was soldered in                                    view photographs are given in Fig. 16(c), are 80 × 69.93 mm2.
+the assembled BPF prototype. Fig. 16 represents the EM-
+                                                                                               B     High-Order Multi-TZ Wideband BPF With Flat Group
+simulated and measured frequency responses of the                                              Delay
+manufactured BPF prototype, along with its top- and bottom-
+view photographs. As can be seen in Fig. 16(a), a close                                           In order to improve the performance of the type of input-
+agreement between the EM-simulated and measured power                                          reflectionless wideband flat-group-delay BPFs with TZs
+transmission and input-reflection responses is obtained. Due to                                designed in Section III.A, its high-order versions equipped
+the unwanted cross-coupling effect between the open-circuit-                                   with additional pairs of close-to-passband TZs and increased
+ended microstrip stub and the shunt resistively-terminated                                     stopband-power-attenuation levels are now explored. Fig. 17
+microstrip line—as well as to the fabrication tolerances and                                   shows the conceptual block diagram of the suggested high-
+the discontinuities of the soldered RF SMA connectors—, the                                    order wideband BPF network. As shown, it is built with n (n =
+measured input-power-matching levels at the high-frequency                                     2, 3, …, N*) in-series-cascaded BPF units with TZs. Herein,
+passband region and the upper stopband are reduced, but still                                  these units are represented by the proposed BPF with TZs in
+above 10 dB. The main performance metrics of the measured                                      Fig. 10 using a shunt resistively-ended two-section TL, and
+BPF circuit with TZs are the following ones: center frequency                                  they are realized with identical impedances zm, zs, zm1, and zm2
+of 1.981 GHz, 3-dB-BW passband range from 1.207 to 2.754                                       but distinct z1 and z2 values in their constituent short-circuit-
+GHz—i.e., equal to 78.09% in relative terms—, minimum in-                                      ended two-section stubs. In addition, for the connection of the
+band power-insertion-loss and input-power-matching levels                                      adjacent BPF units in the practical design, a three-quarter-
+equal to of 0.44 dB and 10.63 dB, respectively, and stopband-                                  wavelength-long—i.e., 3θ electrical length—50-Ω TL is used.
+power-attenuation levels higher than 14.03 dB from DC to 5                                        Based on the design procedure followed for the BPF unit
+GHz. Fig. 16(b) depicts the comparison between the simulated                                   with TZs in Fig. 15, a high-order input-reflectionless
+and measured wideband group-delay responses. In this case,                                     wideband flat-group-delay BPF with more TZs—i.e., n = 2—
+the measured average in-band group-delay value is 0.6333 ns,                                   is addressed. To forcedly meet the design specifications in (6)
+whereas the measured maximum quasi-flat-group-delay                                            and (7) and obtain stopband-power-attenuation levels above
+
+
+
+                     © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                  This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                            content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                        11
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+                                                                               TABLE I
+                                     COMPARISON WITH OTHER PRIOR -ART REFLECTIONLESS FLAT-GROUP -DELAY RF BPFS
+                         3-dB FBW/f0            In-band                            Stopband   RR (GHz)               Close-to-       Design
+         Ref.                                                   FGD FBW/MV                                   RB
+                             (GHz)            IL/RL (dB)                               PAL     /RL (dB)              band TZs       structure
+         [22]                                                        7.72%/
+                            5.7%/3.5         ≤ 2.1/≥ 14.8                              N/A      2–6/≥ 8   Two-port      No           Planar
+  BPF in Fig. 16(b)                                                 ≤ 0.36 ns
+         [22]                                                       11.06%/
+                           6.72%/3.5        ≤ 1.96/≥ 15.65                             N/A    2–6/≥ 13.4  Two-port      No           Planar
+  BPF in Fig. 18(b)                                                 ≤ 0.46 ns
+         [23]                                                       62.25%/
+                             50%/2             ≤ 1*/≥ 13*                              N/A   0.6–3.5/≥ 12 Two-port      No           Planar
+   BPF in Fig. 5(a)                                                 ≤ 0.18 ns
+         [24]                                                       24.49% /*
+                          22.8%/2.45        ≤ 2.46/≥ 11.96                          ≥ 12.5* 1.4–3.1*/≥ 10 Two-port     Yes           Planar
+  BPF in Fig. 14(a)                                                ≤ ± 0.04 ns
+         [24]                                                       23.9%*/
+                          15.7%/2.51        ≤ 4.55/≥ 12.18                            ≥ 25* 1.3–3.1*/≥ 10 Two-port     Yes           Planar
+  BPF in Fig. 14(b)                                                ≤ ± 0.04 ns
+         [25]                                                       10.5%*/
+                          10.2%/5.03         ≤ 5.65/≥ 11.5                            ≥ 40*  DC–10/≥ 9.1  Two-port     Yes           Planar
+     BPF in Fig. 3                                                 ≤ ± 0.02 ns
+                                                                    96.84%/
+     BPF in Fig. 9       84.76%/1.956       ≤ 0.42/≥ 13.16                             N/A  DC–5/≥ 13.03  Two-port      No         Two-layer
+                                                                   ≤ ± 0.05 ns
+                                                                    81.53%/
+    BPF in Fig. 16       78.09%/1.981       ≤ 0.44/≥ 10.63                          ≥ 14.03 DC–5./≥ 10.63   Input      Yes         Two-layer
+                                                                   ≤ ± 0.05 ns
+                                                                    78.43%/
+    BPF in Fig. 21      57.34%/1.9865       ≤ 0.84/≥ 14.93                          ≥ 27.59 DC–5/≥ 14.12    Input      Yes         Two-layer
+                                                                   ≤ ± 0.05 ns
+FBW: fractional bandwidth; IL: insertion loss; RL: return loss; FGD: flat-group-delay; MV: maximum variation; PAL: power-attenuation level; RR:
+reflectionless range; RB: reflectionless behavior; *: estimated from graphs.
+
+
+35 dB, the design impedances of the proposed high-order BPF                                 83.0158 Ω for unit 1, and Z1 = 21.1518 Ω and Z2 = 85.7904 Ω
+with TZs are properly determined. Fig. 18 represents its                                    for unit 2 were used to make the EM-simulation results closely
+theoretical frequency responses. Compared with the single-                                  meet the theoretical ones. In addition, two SMD resistors with
+unit BPF responses in Fig. 11, this high-order wideband BPF                                 measured resistances of 50.2 Ω and 50.1 Ω were employed.
+features a visibly-improved sharp-rejection stopband with four                              The EM-simulated and measured frequency responses and the
+close-to-passband TZs, out-of-band-power-rejection levels                                   photographs of the manufactured high-order BPF prototype
+above 38.2 dB, and input-power-matching levels higher than                                  are provided in Fig. 21. Again, as observed in Fig. 21(a) and
+24.72 dB within [0, 2f0). Its wideband flat group delay exhibits                            (b), a fairly-close agreement between the EM simulations and
+a maximum in-band variation of ± 0.0287 ns from 0.561f0 to                                  measurement is obtained. The main measured performance
+1.439f0—i.e., 87.8% in relative terms—with regard to the                                    metrics of the high-order BPF prototype with four close-to-
+group-delay value τg(f0) = 0.7974 ns, which covers the                                      passband TZs are summarized as follows: center frequency of
+associated 3-dB-BW passband range from 0.712f0 to 1.288f0—                                  1.9865 GHz, 3-dB-bandwidth frequency range from 1.417 to
+i.e., 57.6% in percentage terms. Furthermore, the frequency                                 2.556 GHz—i.e., 57.34% in relative terms—, minimum in-
+responses of the proposed class of high-order wideband BPFs                                 band power-insertion-loss level and stopband-power-
+designed with multiple in-series-cascaded BPF units—i.e., for                               attenuation level of 0.8411 dB and 27.59 dB, respectively, and
+n = 2, 3, and 4, respectively—are compared in Fig. 19. As                                   input-power-matching levels above 14.12 dB from DC to 5
+shown, by cascading more BPF units, a higher-order wideband                                 GHz. Besides, the measured maximum group-delay variation
+BPF with narrowed 3-dB BW range, more pairs of close-to-                                    is within ± 0.05 ns from 1.213 to 2.778 GHz—i.e., 78.43% in
+passband TZs, and highly-enhanced filtering selectivity and                                 percentage terms—in relation to the measured in-band average
+stopband-power-attenuation levels [35] is attained. However,                                group-delay value of 1.178 ns, which is larger than the
+the input-power-matching levels are slightly deteriorated as a                              measured 3-dB-BW passband range. The top- and bottom-
+higher number of BPF units is used. Besides, for more BPF                                   view photographs of the assembled BPF prototype with a
+units and their inter-connection lines, the group-delay value                               circuit size of 145.61 × 69.93 mm2 are depicted in Fig. 21(c).
+τ(f0) and maximum group-delay variation are increased, while
+a narrowed flat-group-delay BW is correspondingly obtained.                                     IV. COMPARISON WITH THE STATE-OF-THE-ART DESIGNS
+     To verify the above-suggested high-order wideband BPF                                     In order to quantitatively demonstrate the superiorities of
+concept, a two-layer microstrip prototype using two in-series-                              the developed two-port- and input-reflectionless wideband
+cascaded input-reflectionless BPF units as in Fig. 10 has been                              flat-group-delay RF BPF prototypes of this work, a
+designed, simulated, implemented, and tested. Fig. 20 depicts                               comparison between them and other prior-art absorptive BPFs
+the resulting 3-D layout structure. It is initially realized with                           with flat-group-delay responses is given in Table I. As can be
+ Z m = 70.3 Ω, Zs = 62.7 Ω, Z m1
+                                 = 48.24 Ω, Zm2 = 49.69 Ω,                                 seen, the reflectionless wideband flat-group-delay BPF circuits
+and Z1 = 10.23 Ω, Z2 = 83.07 Ω for unit 1, and Z1 = 21.14 Ω,                              of this work are featured with the expected superior properties
+Z2 = 86 Ω for unit 2. However, in the practical design,                                     in terms of broader 3-dB BW and associated flat-group-delay
+impedance parameters as Zm = 70.3034 Ω, Zs = 91.4682 Ω, Zm1                                 BW with regard to a remarkably-small maximum in-band
+= 48.3161 Ω, Zm2 = 49.6309 Ω, and Z1 = 10.2283 Ω, Z2 =                                      group-delay variation—which covers the 3-dB-BW passband
+                                                                                            in all cases—, along with wideband absorptive spectral range.
+
+
+                  © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                    This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                              content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                          12
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+                                                                                              levels has been discussed. The RF operational principles and
+                                                                                              theoretical foundations of these engineered wideband BPFs
+                                                                                              have been presented. Moreover, three experimental proof-of-
+                                                                                              concept prototypes of the engineered two-layer absorptive
+                                                                                              wideband flat-group-delay BPF devices have been designed,
+                                                                                              simulated, constructed, and tested. The fairly-close agreement
+                                                                                              obtained between their EM-simulated and measured results
+                                                                                              has validated the devised design concept. This family of RF
+                                                                                              BPFs, which show wideband quasi-flat group-delay responses
+                                                                                              and broadband absorptive behavior, are expected to find
+                                       (a)                                                    application in modern high-data-rate digital-communication
+                                                                                              systems with highly-stringent phase-distortion requisites.
+                                                                                              Further research work to be carried out is the development of a
+                                                                                              complete high-date-rate digital-communication system and the
+                                                                                              practical evaluation of the developed RF BPFs into it for RF
+                                                                                              signals employing different digital-modulation schemes (e.g.,
+                                                                                              quadrature amplitude or phase-shift keying modulations).
+
+                                                                                                                                    APPENDIX A
+                                                                                                  To illustrate the benefits referred in Section I derived from
+                                       (b)                                                    the use of flat-group-delay filters to process communications
+                                                                                              signals in scenarios with stringent phase-distortion requisites,
+                                                                                              the simulated eye diagrams for a binary communications
+                                                                                              system example are shown in Fig. 22. Specifically, three cases
+                                                                                              consisting of employing a non-flat-group-delay filter, a raised-
+                                                                                              cosine filter, and a flat-group-delay filter are contemplated.
+                                                                                                  Fig. 22(a) shows a simulated eye diagram corresponding to
+                                                                                              the output signal of a conventional filter with a non-flat group-
+                                                                                              delay profile—i.e., with remarkable variations or peaks in the
+                                                                                              transition bands. As can be seen, there is no sampling instant
+                                                                                              for which the ISI phenomenon is circumvented. Conversely,
+                                    (c)
+                                                                                              Fig. 22(b) shows the eye diagram for the output signal of a
+Fig. 22. Simulated eye diagrams for a binary communications system (Ts is
+the symbol period and eleven samples per symbol have been considered). (a)                    raised-cosine filter. In this case, there is an optimum sampling
+Non-flat group-delay filter. (b) Raised-cosine filter. (c) Flat group delay                   time—i.e., the center of the eye—for which there is no ISI.
+filter.                                                                                       However, small jitter errors would lead to undesired ISI. This
+                                                                                              jitter can be more apparent for high data rates as in wideband
+                                                                                              digital-communications scenarios, which intrinsically involve
+          V. SUMMARY AND CONCLUDING REMARKS                                                   small symbol periods. This referred intolerance to jitter is
+                                                                                              easily observed in the zero-crossing intervals of the eye
+   A class of two-layer reflectionless microstrip RF BPFs with                                diagram in Fig. 22(b). Contrary to that, a flat group-delay filter
+wideband flat-group-delay responses has been reported. By
+                                                                                              processing communications signals does not add ISI effects at
+means of a microstrip-to-microstrip vertical transition and two                               any instant in the symbol period, thus being fully tolerant to
+shunt resistively-terminated one-section microstrip lines, the
+                                                                                              possibly arising jitter errors. This is demonstrated in Fig. 22(c),
+properties of two-port-reflectionless wideband BPFs with low-
+                                                                                              which attests the benefits of using this type of filter in terms of
+in-band-variation equi-ripple-type group-delay characteristics
+                                                                                              ISI despite its rounded-shaped transmission band in amplitude.
+have been firstly determined. Then, its wideband extremely-
+flat-group-delay BPF counterpart has been conceived by                                                                              REFERENCES
+exploiting shunt resistively-ended two-section microstrip lines.
+                                                                                              [1]    I. C. Hunter, Theory and Design of Microwave Filters. London, U.K.:
+Besides, by using a modified microstrip vertical transition                                          IEE Press, 2001.
+with a short-circuit-ended two-section microstrip line at the                                 [2]    R.-J. Cameron, C.-M. Kudsia, and R R. Mansour, Microwave Filters:
+output port and a shunt lossy two-section microstrip line, a                                         Fundamentals, Designs, and Applications, 1st ed. New York, NY, USA:
+                                                                                                     Wiley, 2007.
+type of input-reflectionless wideband BPF with a pair of TZs                                  [3]    H. Ezzeddine et al., “Optimized synthesis of self-equalized microwave
+and flat-group-delay profile has been designed. By cascading                                         filters,” IEEE Trans. Microw. Theory Techn., vol. 62, no. 8, pp. 1671–
+two replicas of such BPF unit with two TZs, a novel kind of                                          1677, Aug. 2014.
+                                                                                              [4]    L. Szydlowski and M. Mrozowski, “A self-equalized waveguide filter
+high-order wideband flat-group-delay BPF with more pairs of                                          with frequency-dependent (resonant) couplings,” IEEE Microw.
+close-to-passband TZs and increased out-of-band-attenuation                                          Wireless Compon. Lett., vol. 24, no. 11, pp. 769–771, Nov. 2014.
+
+
+
+
+                    © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                     This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                               content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                           13
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+[5]  J. Proais and M. Salehi, Digital Communications, 5th ed. New York,                        [27] R. Gómez-García, J.-M. Muñoz-Ferreras, and D. Psychogiou, “Adaptive
+     NY, USA: McGraw-Hill, 2007.                                                                    multi-band negative-group-delay RF circuits with low reflection,” IEEE
+[6] W. E. Thomson, “Delay network having maximally flat frequency                                   Trans. Circuits Syst. I, Reg. Papers, vol. 68, no. 5, pp. 2196–2209, May
+     characteristics,” Proc. IEE, no. 96, pp. 487–490, Nov. 1949.                                   2021.
+[7] C. Caloz, S. Gupta, Q. Zhang, and B. Nikfal, “Analog signal processing:                    [28] L. Yang, R. Gómez-García, J.-M. Muñoz-Ferreras, and X. Zhu, “Two-
+     A possible alternative or complement to dominantly digital radio                               port-reflectionless negative-group-delay circuit on multilayered lossy
+     schemes,” IEEE Microw. Mag., vol. 14, no. 6, pp. 87–103, Sep./Oct.                             bandstop filter,” in Proc. IEEE Int. Workshop Electromagn., Appl.
+     2013.                                                                                          Student Innov. Competition, Guangzhou, China, Nov. 28–30, 2021, pp.
+[8] C.-T. M. Wu and T. Itoh, “Maximally flat negative group-delay circuit:                          1–3.
+     A microwave transversal filter approach,” IEEE Trans. Microw. Theory                      [29] M. Jasinski, L. Yang, A. Lamecki, R. Gómez-García, and M.
+     Techn., vol. 62, no. 6, pp. 1330–1342, Jun. 2014.                                              Mrozowski, “RF multi-functional input-reflectionless dispersive-delay
+[9] T. Gu, F. Wan, J. Chen, B. Ravelo, and X. Zhao, “Compact and                                    structure with sharp-rejection filtering using channelization techniques,”
+     wideband flat negative group delay circuit investigation,” IEEE Trans.                         IEEE Trans. Circuits Syst. II, Exp. Briefs, vol. 70, no. 4, pp. 1410–1414,
+     Circuits Syst. II, Exp. Briefs, vol. 70, no. 6, pp. 1916–1920, Jun. 2023.                      Apr. 2023.
+[10] G. Chaudhary and Y. Jeong, “Arbitrary prescribed wideband flat group                      [30] L. Yang, R. Gómez-García, J.-M. Muñoz-Ferreras, R. Zhang, D.
+     delay circuits using coupled lines,” IEEE Trans. Microw. Theory Techn.,                        Peroulis, and L. Zhu, “Multilayered reflectionless wideband bandpass
+     vol. 66, no. 4, pp. 1885–1894, Apr. 2018.                                                      filters with shunt/in-series resistively terminated microstrip lines,” IEEE
+[11] D. Psychogiou, R. Gómez-García, and D. Peroulis, “Constant in-band                             Trans. Microw. Theory Techn., vol. 68, no. 3, pp. 877–893, Mar. 2020.
+     group-delay acoustic-wave-lumped-element-resonator-based bandpass                         [31] L. Yang, R. Gómez-García, M. Fan, and R. Zhang, “Multilayered input-
+     filters and diplexers,” IEEE Trans. Microw. Theory Techn., vol. 66, no.                        reflectionless quasi-elliptic-type wideband bandpass filtering devices on
+     5, pp. 2199–2209, May 2018.                                                                    diplexer-based structures,” IEEE Trans. Microw. Theory Techn., vol. 70,
+[12] D. N. Milic, E. Avignon-Meseldzija, J. A. Anastasov, H. Meliani, and A.                        no. 1, pp. 122–138, Jan. 2022.
+     Benlarbi-Delai, “A robust algorithm for the design of wideband positive-                  [32] L. Yang, M. Malki, J.-M. Muñoz-Ferreras, X. Zhu, and R. Gómez-
+     slope linear group delay filters,” IEEE Trans. Circuits Syst. I, Reg.                          García, “High-order multilayer input-absorptive RF filter with wideband
+     Papers, vol. 69, no. 10, pp. 4258–4271, Oct. 2022.                                             quasi-flat group delay and multiple stopband transmission zeros,”
+[13] M. Jasinski, M. Mul, A. Lamecki, R. Gómez-García, and M.                                       accepted for presentation at the 2024 IEEE Int. Circuits Syst. Symp.,
+     Mrozowski, “Dispersive delay structures with asymmetric arbitrary                              Singapore, May 19–22, 2023, pp. 1–5.
+     group-delay response using coupled-resonator networks with frequency-                     [33] L. Yang, L. Zhu, W.-W. Choi, and K.-W. Tam, “Analysis and design of
+     variant couplings,” IEEE Trans. Microw. Theory Techn., vol. 70, no. 5,                         wideband microstrip-to-microstrip equal ripple vertical transitions and
+     pp. 2599–2609, May 2022.                                                                       their application to bandpass filters,” IEEE Trans. Microw. Theory
+[14] Mini-Circuits, Brooklyn, NY., “Reﬂectionless ﬁlters improve linearity                          Techn., vol. 65, no. 8, pp. 2866–2877, Aug. 2017.
+     and dynamic range,” Microw. J., vol. 58, no. 8, pp. 42–50, Aug. 2015.                     [34] L. Yang et al., “Novel multilayered ultra-broadband bandpass filters on
+[15] M. A. Morgan, “Think outside the band: Design and miniaturization of                           high-impedance slotline resonators,” IEEE Trans. Microw. Theory
+     absorptive filters,” IEEE Microw. Mag., vol. 19, no. 7, pp. 54–62, Nov.                        Techn., vol. 67, no. 1, pp. 129–139, Jan. 2019.
+     2018.                                                                                     [35] L. Yang and R. Gómez-García, “High-order quasi-elliptic-type single-
+[16] R. Gómez-García, D. Psychogiou, J.-M. Muñoz-Ferreras, and L. Yang,                             ended and balanced wideband bandpass filters using microstrip-to-
+     “Avoiding RF isolators: Reflectionless microwave bandpass filtering                            microstrip vertical transitions,” IEEE Trans. Circuits Syst. II, Exp.
+     components for advanced RF front ends,” IEEE Microw. Mag., vol. 21,                            Briefs, vol. 70, no. 4, pp. 1425–1429, Apr. 2023.
+     no. 12, pp. 68–86, Dec. 2020.
+[17] M. A. Morgan, W. M. Groves, and T. A. Boyd, “Reflectionless filter
+     topologies supporting arbitrary low-pass ladder prototypes,” IEEE
+     Trans. Circuits Syst. I, Reg. Papers, vol. 66, no. 2, pp. 594–604, Feb.                                             Li Yang (Senior Member, IEEE) received the M.Sc.
+     2019.                                                                                                               degree in electrical and electronics engineering and
+[18] J. Lee and J. Lee, “Transmission-line bandpass filter structures with                                               Ph.D. degree in electrical and computer engineering
+     infinite reflectionless range,” IEEE Trans. Circuits Syst. I, Reg. Papers,                                          from the University of Macau (UM), Macau SAR,
+     vol. 69, no. 6, pp. 2387–2398, Jun. 2022.                                                                           China, in 2013 and 2018, respectively. In 2018, he
+[19] M. Malki, L. Yang, and R. Gómez-García, “Input-reflectionless quasi-                                                was a Postdoctoral Fellow with the Department of
+     elliptic-type single- and dual-band bandpass filters based on passive                                               Electrical and Computer Engineering, UM. Since
+     channelized principles,” IEEE Trans. Circuits Syst. I, Reg. Papers, vol.                                            2018, he joined as a Postdoctoral Researcher with
+     70, no. 1, pp. 190–202, Jan. 2023.                                                                                  the     Department      of     Signal    Theory    and
+[20] A. R. Djordjevic and A. G. Zajic, “Low-reflection bandpass filters with                                             Communications, University of Alcalá, Alcalá de
+     a flat group delay,” IEEE Trans. Microw. Theory Techn., vol. 53, no. 4,                                             Henares, Spain, where he worked as a GOT
+     pp. 1164–1167, Apr. 2005.                                                                 ENERGY TALENT (GET)-COFUND MSCA Fellow during 2020-2022, and
+[21] A. C. Guyette, E. J. Naglich, and S. Shin, “Switched allpass-to-bandstop                  now he is a Senior Research Scientist. His current research interests include
+     absorptive filters with constant group delay,” IEEE Trans. Microw.                        the synthesis and design of RF/microwave planar and multilayered passive
+     Theory Techn., vol. 64, no. 8, pp. 2590–2595, Aug. 2016.                                  filters, reconfigurable filters, reflectionless filters, filtering antennas, and
+[22] G. Chaudhary and Y. Jeong, “Arbitrary prescribed flat wideband group                      multifunctional circuits and systems. Until now, he has authored/co-authored
+     delay absorptive microstrip bandpass filters,” IEEE Trans. Microw.                        57 papers in international journals and 42 papers in international conferences.
+     Theory Techn., vol. 69, no. 2, pp. 1404–1414, Feb. 2021.                                  Dr. Yang serves as a Technical Reviewer for several prestigious IEEE
+[23] A. Zhang, J. Xu, and Z. Liu, “A self-equalized linear-phase absorptive                    journals (e.g., TMTT, MWCL, TCAS-I, and TCAS-II) and Technical Program
+     BPF using negative-group-delay admittance inverters,” IEEE Microw.                        Committer Member for several IEEE and EuMA conferences. He is also a
+     Wireless Compon. Lett., vol. 32, no. 7, pp. 851–854, Jul. 2022.                           Young-Professional Affiliate Member of the IEEE MTT-S Microwave
+[24] R. Gómez-García, L. Yang, M. Malki, and J.-M. Muñoz-Ferreras, “Flat-                      Passive Components and Transmission Line Structures (MTT-4) and the IEEE
+     group-delay RF planar filters with transmission zeros using transversal                   MTT-S Filters (MTT-5) Technical Committees. He currently is an Associate
+     circuits,” IEEE Trans. Circuits Syst. I, Reg. Papers, vol. 70, no. 10, pp.                Editor of IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-II:
+     3843–3856, Oct. 2023.                                                                     EXPRESS BRIEFS and IEEE ACCESS. He was a recipient of the Best
+[25] M. Malki, L. Yang, J.-M. Muñoz-Ferreras, and R. Gómez-García, “All-                       Student Paper Award of the International Symposium on Antennas and
+     frequency-two-port-quasi-absorptive planar bandpass filter with quasi-                    Propagation 2010 in Macau and the Second Prize of Macau Natural Science
+     flat group delay and multi-transmission-zero extended stopbands,” IEEE                    Award in 2020.
+     Microw. Wireless Techn. Lett., vol. 33, no. 12, pp. 1611–1614, Dec.
+     2023.
+[26] L.-F. Qiu, L.-S. Wu, W.-Y. Yin, and J.-F. Mao, “Absorptive bandstop
+     filter with prescribed negative group delay and bandwidth,” IEEE
+     Microw. Wireless Compon. Lett., vol. 27, no. 7, pp. 639–641, Jul. 2017.
+
+
+
+
+                     © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                     This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                               content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3401089
+
+                                                                                                                                                                                           14
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+                         Mohamed Malki (Graduate Student Member, IEEE)                                                  Roberto Gómez-García (Fellow, IEEE) received the
+                         received the B.Sc. and M.Sc. degrees in                                                        Telecommunication Engineer and Ph. D. degrees
+                         telecommunication engineering, in the specialized                                              from the Polytechnic University of Madrid, Madrid,
+                         area of space and defense technologies, from the                                               Spain, in 2001 and 2006, respectively. He is currently
+                         University of Alcalá, Madrid, Spain, in 2020 and                                               a Full Professor at the Department of Signal Theory
+                         2022, respectively, where he is currently pursuing the                                         and Communications, University of Alcalá, Alcalá de
+                         Ph.D. degree in information and communication                                                  Henares, Spain. His current research interests include
+                         technologies. In 2022, he joined the Department of                                             the design of fixed/tunable high-frequency filters and
+                         Signal Theory and Communications, University of                                                multiplexers in planar, hybrid, and monolithic
+                         Alcalá, as a Research Assistant. His main research                                             microwave-integrated        circuit     technologies,
+interests include the analysis, design, and construction of microwave filters                                           multifunction circuits and systems, software-defined
+and multiplexers.                                                                              radio and radar architectures for telecommunications, remote sensing, and
+                                                                                               biomedical applications, and displacement RF sensors. In these topics, he has
+                                                                                               authored/co-authored about 150 papers in international journals and 180
+                                                                                               papers in international conferences.
+                                                                                               Dr. Gómez-García serves as a member of the Technical Review Board for
+                                                                                               several IEEE and EuMA conferences. He is also a member of the IEEE MTT-
+                          José-María Muñoz-Ferreras (Member, IEEE) was                         S Filters (MTT-5), the IEEE MTT-S RF MEMS and Microwave Acoustics
+                          born in Madrid, Spain, in 1981. He received the                      (MTT-6), the IEEE MTT-S Wireless Communications (MTT-23), the IEEE
+                          degree in M. Sc. telecommunication engineering and                   MTT-S Biological Effects and Medical Applications of RF and Microwave
+                          the Ph.D. degree in electrical and electronic                        (MTT-28), and the IEEE CAS-S Analog Signal Processing Technical
+                          engineering from the Polytechnic University of                       Committees. He was a recipient of the 2016 IEEE Microwave Theory and
+                          Madrid, Spain, in 2004 and 2008, respectively. He is                 Techniques Society (MTT-S) Outstanding Young Engineer Award. He was an
+                          currently an Associate Professor with the                            IEEE CAS-S Distinguished Lecturer (2020-2022). He was an Associate Editor
+                          Department of Signal Theory and Communications,                      of the IEEE Transactions on Microwave Theory and Techniques from 2012 to
+                          University of Alcalá, Alcalá de Henares, Spain. His                  2016, the IEEE Transactions on Circuits and Systems-I: Regular Papers from
+                          current research interests include radar signal                      2012 to 2015, the IEEE Microwave and Wireless Components Letters from
+processing, advanced radar systems and concepts, and microwave/RF circuits                     2018 to 2020, as well as other journals such as IEEE Access, IET
+and systems, specifically focusing on high-resolution inverse synthetic                        Microwaves, Antennas, and Propagation, and the International Journal of
+aperture radar images, and the design and validation of radar systems for                      Microwave and Wireless Technologies. He was a Senior Editor of the IEEE
+short-range applications.                                                                      Journal on Emerging and Selected Topics in Circuits and Systems from 2016
+Dr. Muñoz-Ferreras is a Reviewer for several IEEE and IET publications. He                     to 2017 and the MTT-S Newsletter Working Group Chair from 2019 to 2021.
+serves as a member of the Technical Review Board of the IEEE International                     He was a Guest Editor for several Special/Focus Issues and Sections in IEEE
+Geoscience and Remote Sensing Symposium, the IEEE Radar Conference,                            and IET Journals. Currently, he is the Editor-in-Chief of the IEEE Microwave
+and the European Radar Conference.                                                             and Wireless Technology Letters, Associate Editor of the IEEE Journal of
+                                                                                               Electromagnetics, RF and Microwaves in Medicine and Biology, Senior
+                                                                                               Associate Editor of the IEEE Transactions on Circuits and Systems-I: Regular
+                                                                                               Papers, TC-5 Topic Editor of the IEEE Journal of Microwaves, and editorial
+                                                                                               board member of Electromagnetic Science.
+
+
+
+                        Xi (Forest) Zhu (Senior Member, IEEE) received the
+                        B.Eng. and Ph.D. degrees in electronic engineering
+                        from the University of Hertfordshire, Hatfield, U.K.,
+                        in 2005 and 2008, respectively. Since 2016 he has
+                        been with the School of Electrical and Data
+                        Engineering, University of Technology Sydney
+                        (UTS), NSW, Australia. He has authored or co-
+                        authored more than 150 papers in international
+                        journals and conferences. His current research
+interests primarily focus on the design of analog/mixed-signal integrated
+circuits and radio frequency integrated circuits (RFICs) for wireless
+communication and radar sensing applications. In 2023, he received the
+prestigious ARC Future Fellowship. Furthermore, in both 2022 and 2023, Dr
+Zhu was named Australia’s top researcher in the field of Microelectronics and
+Electronic Packaging by The Australian Research Magazine.
+Currently, he is a Senior Associate Editor for the IEEE Trans. on Circuits and
+Systems – I: Regular Papers and he was an Associate Editor for the IEEE
+Trans. on Circuits and Systems – II: Express Briefs between 2022 and 2024.
+Also, he serves as a member of the Technical Review Board for several IEEE
+journals and conferences, including ISCAS which is the flagship conference
+organized by the IEEE CAS-S. He is also a member of the IEEE CAS-S
+Analog Signal Processing Technical Committees (ASPTC).
+
+
+
+
+                     © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+

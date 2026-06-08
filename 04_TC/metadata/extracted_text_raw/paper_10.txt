@@ -1,0 +1,1552 @@
+© 2024 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any
+current or future media, including reprinting/republishing this material for advertising or promotional purposes, creating new
+collective works, for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other
+works. DOI: 10.1109/TC.2024.3449082
+arXiv:2402.12162v2
+[cs.CR]
+28
+Aug
+2024
+2
+SCARF: Securing Chips with a Robust Framework
+against Fabrication-time Hardware Trojans
+Mohammad Eslami , Graduate Student Member, IEEE, Tara Ghasempouri , Member, IEEE,
+Samuel Pagliarini , Member, IEEE
+Abstract—The globalization of the semiconductor industry
+has introduced security challenges to Integrated Circuits (ICs),
+particularly those related to the threat of Hardware Trojans
+(HTs) – malicious logic that can be introduced during IC
+fabrication. While significant efforts are directed towards ver-
+ifying the correctness and reliability of ICs, their security is
+often overlooked. In this paper, we propose a comprehensive
+framework that integrates a suite of methodologies for both
+front-end and back-end stages of design, aimed at enhancing the
+security of ICs. Initially, we outline a systematic methodology to
+transform existing verification assets into potent security check-
+ers by repurposing verification assertions. To further improve
+security, we introduce an innovative methodology for integrating
+online monitors during physical synthesis – a back-end insertion
+providing an additional layer of defense. Experimental results
+demonstrate a significant increase in security, measured by our
+introduced metric, Security Coverage (SC), with a marginal
+rise in area and power consumption, typically under 20%. The
+insertion of online monitors during physical synthesis enhances
+security metrics by up to 33.5%. This holistic framework offers
+a comprehensive defense mechanism across the entire spectrum
+of IC design.
+Index Terms—IC Design, ASIC, Hardware Trojan Horse,
+Verification, Assertions, Online Checkers, DfHT.
+I. INTRODUCTION
+THE fabrication of an Integrated Circuit (IC) is mostly
+performed in a fabless fashion, a model in which the
+fabrication of an IC is performed in other places rather than
+inside the design house. Globalization has commonly led to
+the widespread adoption of this model by most companies,
+primarily driven by the impracticality of establishing pro-
+prietary fabrication facilities that require substantial financial
+investments in the order of billions of dollars. Notably, even
+industry leaders such as Apple opt to outsource the fabrication
+of their chips to external entities [1]. This strategic approach
+highlights the economic sensibility of relying on specialized
+foundries for chip production, especially for advanced node
+technologies, allowing design houses to channel resources
+more efficiently towards innovation and design endeavors.
+Nevertheless, while this fabless model offers numerous
+advantages, it also comes with a tangible dark side. When
+This work was partially supported by the EU through the European Social
+Fund in the context of the project “ICT programme”. M. Eslami was also
+supported by HARNO (Grant No. 11.4-1/23/1).
+M. Eslami, T. Ghasempouri, and S. Pagliarini are with the De-
+partment of Computer Systems, Tallinn University of Technology (Tal-
+Tech), 12618, Tallinn, Estonia (e-mail: mohammad.eslami@taltech.ee;
+tara.ghasempouri@taltech.ee; samuel.pagliarini@taltech.ee)
+Samuel Pagliarini is also with the ECE Department at Carnegie Mellon
+University, Pittsburgh, PA (e-mail: pagliarini@cmu.edu)
+the chip is sent to the foundry for fabrication, there will be no
+guarantee that the returned chip precisely aligns with the initial
+specifications (i.e., it can be modified inside the foundry).
+Even small modifications to the chip’s design can compromise
+its security and pose potential risks to human life or lead
+to financial losses. This modification is commonly referred
+to as Hardware Trojan (HT), which is a malicious alteration,
+addition, or subtraction to the original design with the intent
+to compromise its integrity [2], [3]. The goal of such ma-
+nipulations can range from information leakage, functionality
+change, performance degradation, or the deliberate reduction
+of the chip’s useful lifespan [4], [5]. An HT is composed of
+two parts, namely, the trigger and the payload. Trigger, as its
+name indicates, is the activation mechanism of the HT, while
+the payload is the saboteur function that is executed when
+the trigger is activated. The trigger part can be designed to
+activate under specific temporal and/or temperature conditions
+or through a combination of certain inputs or internal signals of
+the chip. A sophisticated attacker strategically sets the trigger
+to activate only under extremely rare conditions, thus ensuring
+that the HT remains undetected by conventional detection
+schemes during normal chip operation [2], [6].
+Therefore, design companies should proactively implement
+measures to safeguard their chips against fabrication-time
+inserted HTs [7]–[10]. Moreover, the importance of this re-
+search cannot be emphasized enough. Historically, the primary
+focus during the verification stage within design houses has
+been on detecting and fixing bugs. Security, which is often
+overlooked in hardware development in favor of reliability and
+dependability, must no longer be neglected, given the surge in
+hardware attacks [11].
+Given this scenario, our focus is primarily on enhancing HT
+detection by incorporating defensive techniques at different
+stages of chip design, both in the front-end and back-end.
+This approach is rarely observed in prior works. In this paper,
+first, we show how the knowledge generated by verification
+engineers, specifically assertions, can be leveraged as valuable
+security assets during the front-end stage. These data are
+usually utilized to prove that a design is bug-free, and not
+used again. Repurposing this knowledge for security purposes
+has the potential to yield substantial time and effort savings.
+However, relying solely on the reuse of verification data
+may not suffice to attain high levels of security. Therefore,
+we introduce a complementary technique aimed at enhancing
+the security of digital designs, which is the incorporation
+of online checkers during the back-end stage of physical
+synthesis. The insertion of the online monitors serves a dual
+Online Monitors
+Back-end
+Side Channel
+Logic Testing
+Front-end
+Prevention
+Facilitate Detection
+Destructive
+Non-Destructive
+DfHT
+Detection
+Layout Filling
+Obfuscation
+Split Manufacturing
+HT Countermeasures
+Fig. 1. An overview of the HT protection methods. The techniques used in this work are colored in green.
+purpose: not only do they aid in HT detection, but they also
+act as functional layout fillers. By utilizing the free resources
+within the layout, such as gaps and routing resources, these
+monitors contribute to restricting the available resources that
+an adversary might exploit for inserting HTs. Nonetheless,
+adding an online checker is a form of redundancy that may
+pose significant design overheads (in terms of timing, area,
+power, and performance). Yet, by proposing a smart timing-
+and area-aware technique, and performing the checker in-
+sertion by leveraging the Engineering Change Order (ECO)
+features of commercial CAD tools, we considerably minimize
+the overheads in our flow.
+This smart technique seeks to make a balance between
+heightened security measures and the optimization of resource
+utilization, thereby enhancing the overall robustness of digital
+designs. Our overall methodology for reusing the verification
+data for security purposes, as the first contribution of this work,
+is described in our prior work [12]. In this paper, we present
+an in-depth description of how we make use of back-end stage
+techniques to augment our prior research on IC security.
+The remaining sections of the paper are organized as
+follows: Section II provides background information on var-
+ious techniques against hardware attacks during fabrication
+time and reviews related works. Section III explores the
+primary motivation behind this work, focusing on transforming
+verification assertions into security checkers. In Section IV,
+technical details regarding the implementation flow of adding
+online checkers during physical synthesis are explained. Ex-
+perimental results are presented in Section V. The paper
+concludes with Section VI.
+II. BACKGROUND
+Due to the rising concerns regarding hardware attacks,
+design houses try to protect their chips, particularly during
+the post-design stages where the environment is not trusted,
+and there is limited oversight in the chip fabrication process.
+To address this particular oversight, programs such as the
+Microelectronics Quantifiable Assurance (MQA) have started
+to add traceability to devices and systems. In tandem, security
+concerns have also brought the concept of a “Zero Trust”
+model, in which all parties, tools, and assets thereof are
+considered potentially untrusted. These concepts co-exist with
+techniques to improve trust; An overview of the different
+protection techniques is shown in Fig. 1. These techniques are
+based on the concept of either detecting HTs on the fabricated
+chip or preventing the insertion of HTs through Design for
+Hardware Trust (DfHT) [13] approaches.
+A. Detection Techniques
+Once an adversary introduces an HT at fabrication time,
+detection becomes exceptionally challenging [14]. Effective
+detection techniques must be used after fabrication to counter
+this threat. These techniques are mainly based on inspecting
+the fabricated chip to ensure that the chip is HT-free. Detec-
+tion methods are performed either in a destructive or non-
+destructive fashion. In destructive methods, the chip is de-
+packaged and each layer is separately inspected using highly
+advanced methods to check if any logic is added (or removed)
+by an adversary [15].
+However, this approach has significant drawbacks. Firstly, it
+involves significant time and cost. Secondly, the analyzed chip
+is rendered entirely non-operational after inspection, leading
+to its destruction. Consequently, this method is limited to
+analyzing random samples and is not viable for inspecting
+entire lots of chips.
+Therefore, non-destructive methods were introduced to an-
+alyze the fabricated chips before being distributed in the
+market [16]–[22]. These methods are mainly classified into
+side-channel analysis and logic testing.
+Side-channel analysis techniques concentrate on observing
+physical attributes such as power consumption, path delay,
+or electromagnetic emanations [16]–[19]. These attributes are
+then compared to those of golden chips, which are assumed
+to be HT-free.
+Logic testing involves applying test stimuli to evaluate
+chips, comparing the responses with expected ones precom-
+puted through simulation [20]–[22]. Detection relies on de-
+tecting changes in chip functionality during testing, and aims
+to activate potential HTs within a limited test time. To avoid
+detection, attackers create static HTs activated by extremely
+rare conditions.
+B. DfHT Techniques
+In DfHT approaches, the concept is to embed additional
+protection logic in order to either aid in detecting the HTs
+[23]–[25] or to prevent an adversary from inserting an HT
+altogether [26]–[32]. Although complete prevention against
+HT insertion remains impossible in practice, efforts have
+focused on strategically limiting available chip resources,
+Back
+End
+Test
+Netlist
+Netlist
+Defensive
+Techniques
+Defensive
+Techniques
+Physical Synthesis
+Logic Synthesis
+Defensive
+Techniques
+RTL
+RTL
+Trusted Facility (Design House)
+Front
+End
+Layout
+Fabrication
+Untrusted Facility (Foundry)
+Chip
+Trusted Facility (Test House)
+Fig. 2. Different stages of IC design: The design house and the test house are considered trusted, while the foundry is assumed to be untrusted.
+making it exceedingly difficult for adversaries to exploit them
+for malicious logic insertion [29]–[32].
+When referring to the process of designing an IC, the tasks
+are typically divided into two stages: front-end and back-end
+[33]. The front-end stage focuses on the initial specification
+and creation of the chip’s architecture. This involves tasks
+such as specifying the functionality, creating a high-level
+design, and simulating the behavior of the design. Hardware
+Description Languages (HDLs) like Verilog or VHDL are
+commonly used in this stage. Once the front-end design is
+complete, the process transitions to the back-end. In this stage,
+the focus is on transforming the design into a physical layout
+that can be manufactured, and it includes tasks like clock
+tree synthesis, place and route, timing closure, and physical
+verification.
+Due to the distinct characteristics of the front-end and
+back-end stages, the approaches employed for HT prevention
+vary between the two stages. Front-end engineers may deploy
+different obfuscation techniques, such as logic locking [26],
+[27], to protect the Intelectual Property (IP) of the design.
+In these methods, the design is secured with additional keys,
+initiating normal operation only when the correct sequence
+of keys is applied. While these techniques were not developed
+for HT prevention, it is understood that obfuscating the design
+against IP theft perhaps makes the design less evident for an
+adversary attempting to insert an HT.
+Conversely, prevention methods applied in the back-end
+stage focus on protecting the chip layout from potential
+attackers within the foundry. One approach is layout filling
+which is aimed at restricting available resources, such as gaps
+and free routing tracks, to prevent adversaries from inserting
+malicious logic [29]–[31]. Another strategy, known as split
+manufacturing, involves fabricating one part of the chip in one
+foundry and the remainder in a second foundry [34]. Despite
+its promise, practical challenges arise, including finding two
+companies with compatible manufacturing technology and
+managing complex handshakes between the foundries.
+In the domain of DfHT, another research track focuses on
+developing methods to enhance HT detection [35], [36]. For
+this purpose, different types of checkers can be integrated
+into the design to sense irregularities and raise awareness in
+case of incorrect behavior. These checkers contribute to side-
+channel analysis by serving as thermal sensors to magnify
+thermal activity, or act as security checkers by introducing
+redundancy to the design. This approach aligns with strategies
+proposed for enhancing reliability against faults. In some
+works, such as [14], alternative methods like functional testing
+and side-channel analysis are also considered for facilitating
+HT detection. However, in our classification, we view side-
+channel analysis and functional testing as primary methods
+for HT detection rather than simply facilitating detection.
+C. Threat Model
+The chip production process involves several stages, as
+shown in Fig. 2. Front-end engineers transform the high-
+level design description into a gate-level netlist through logic
+synthesis. This netlist is then handed to the back-end team,
+where engineers adjust it based on specific constraints such
+as area, power, and timing. Defensive techniques can be
+incorporated into the design by either the front-end or back-
+end team to protect against potential threats. The resulting
+layout is sent to a foundry for fabrication. After the chip
+is received, specific tests are performed on it to verify its
+functionality.
+In our threat model, we assume the foundry to be an
+untrusted facility, where a potential adversary (e.g., a rogue
+engineer) may be present. This encompasses fabrication-time
+attacks, similar to those explored in prior research, where
+malicious modifications to the design are introduced during
+the IC manufacturing [37]. Conceptually, a malicious foundry
+can incorporate three types of HTs into the layout of an IC:
+additive, substitution, and subtractive HTs. Additive HTs in-
+volve introducing additional circuit components and/or wiring
+into the existing design. Substitution HTs require removing
+logic that is replaced by HT circuit components and/or wiring.
+Subtractive HTs involve removing circuit components and/or
+wiring to alter the behavior of the existing circuit design.
+In this work, we only focus on additive HT attacks due to
+their significant impact on system behavior, their detectability
+through changes in various design characteristics, and the
+extensive body of research on this HT type. Design and test
+stages, including the design house and test house, are assumed
+to be trusted. Front-end and back-end teams implement defen-
+sive techniques in the design before sending it for fabrication,
+aiming to counter fabrication-time attacks.
+Furthermore, we assume the attacker within the foundry
+has the capability to insert sophisticated, small, and rarely
+activated HTs that can evade side-channel analysis, logic
+testing, and simple forms of chip inspection. The attacker,
+due to his/her location, has access to the target technology’s
+Process Design Kit (PDK) and advanced commercial CAD
+tools. Specifically, we focus on functional HTs that alter the
+∀ n ∈
+
+nodes(Des) , n =
+(
+C if functional path exists between (n) and (assertion)
+V if functional path does not exist between (n) and (assertion)
+(1)
+chip’s functionality, allowing their effects to be observed by
+comparing internal signals with the expected ones.
+D. Related Works
+1) Logic Locking: As mentioned before, logic locking is a
+key-based technique used to protect the intellectual property of
+ICs by obfuscating their functionality. However, this technique
+has limitations [38] and has been subject to numerous attacks
+that can discover the key value. Attacks such as boolean
+Satisfiability (SAT) attacks, removal attacks, and bypass at-
+tacks, have demonstrated that logic locking can be vulnerable,
+allowing attackers to uncover the key and compromise the
+security of the design. A logic locking technique that relies on
+a secret key to control circuit functionality is presented in [26].
+The secret key becomes crucial for proper circuit operation,
+serving as an authentication mechanism. Another methodol-
+ogy is presented in [27] to protect gate-level IPs, providing
+obfuscation and authentication. This approach modifies the
+state-transition function and internal-circuit structure, allowing
+normal operation with a predefined enabling sequence or key.
+However, it may have limitations against structural analysis-
+based attacks as it does not explicitly modify the state space
+of the existing Finite State Machine (FSM) [27].
+2) Layout Filling: In [29], the authors propose a method
+of populating unused spaces with functional cells, creating an
+independent combinational circuit for post-fabrication testing
+against cell modifications. Nevertheless, a challenge lies in
+achieving a high occupation ratio while keeping the design
+routable. To overcome this limitation, [31] gives priority
+to filling gaps that could potentially be exploited for HT
+insertion. However, this strategy may lead to alterations in
+the initial routing, posing a risk of violating critical paths due
+to rerouting.
+Addressing the limitation of user control over placement,
+[39] proposes a placing refinement technique in which large
+unused layout spaces are segmented. Despite this refinement,
+there remains a vulnerability where attackers can reverse the
+refinement, creating optimal zones for their malicious logic. In
+a different approach presented in [40], a selective placement
+method is employed, where sensitive logic is positioned in
+denser layout areas, leading to places gaps around less sensi-
+tive regions.
+Another attempt to mitigate layout vulnerabilities is dis-
+cussed in [41], where the authors aim to reduce large gaps by
+shifting cells and utilizing the ECO features of commercial
+CAD tools. However, this technique often results in worsened
+timing, leading to negative timing slack in most cases.
+3) Online Monitors: These techniques have been used
+widely for reliability and dependability, focusing on Con-
+current Error Detection (CED) techniques, which introduce
+redundancy through parity codes or hardware duplication,
+complemented by a dedicated checker [42]. The approach
+in [36] focuses on combining special CED techniques and
+selective programmability to protect digital systems against
+HT attacks. However, this method imposes considerable area
+and power overheads on the design.
+III. REUSING VERIFICATION ASSERTIONS AS HT
+DETECTOR
+The foundation of this work originates from the utilization
+of assertions as HT detectors, as discussed in [12]. A hardware
+assertion is a statement or condition commonly specified in
+HDLs that defines a certain expected behavior or property of
+a digital circuit. This concept gains significance, particularly
+when extensive time and effort are invested in the verification
+of designs to ensure their integrity and the absence of bugs.
+The generated verification assets (i.e., assertions), which are
+often no longer utilized after the verification process, can
+be repurposed for security applications, specifically for the
+detection of HTs. The main challenge lies in the absence of
+a technique to synthesize the assertions as checkers, as well
+as a metric that identifies suitable assertions for use as HT
+detectors. To address this gap, we introduced a novel metric
+termed Security Coverage (SC) that evaluates the security
+effectiveness of verification assertions [12].
+A. Security Coverage
+As the name indicates, SC focuses on assessing the security
+qualifications of existing assertions. It is defined as the ratio
+of nodes covered by the assertion to the total nodes within
+the design. Each node (n) in the design is defined as either
+covered (C) or vulnerable (V ), as indicated in Eq. 1.
+Therefore, the SC of a design is calculated as follows:
+SC(Des) =
+|
+Sk
+i=1 Ci|
+|
+Sk
+i=1 Ci| + |
+Sk
+i=1 Vi|
+(2)
+Where k denotes the total number of the assertions, and Ci
+and Vi are the covered and vulnerable nodes, respectively.
+An illustrative example representing a design with two
+integrated assertions is presented in Fig. 3. To calculate the
+SC for the entire design, Eq. 2 is applied. Furthermore, this
+equation can be employed to determine the SC for each
+individual assertion, enabling a comparative analysis of their
+security properties. Considering the two assertions in this
+scenario, the SC for each assertion is computed by finding the
+number of covered nodes (C). Examining Fig. 3(b), nodes 1,
+2, 3, 6, 7, 9, 12, 13, and 16 (highlighted in green) have at
+least one functional path1
+to Assr 1. Similarly, the covered
+elements for Assr 2 (highlighted in blue) encompass nodes 2,
+3, 4, 5, 7, 8, 10, and 17, as depicted in Fig. 3(c). It is worth
+1A functional path refers to a path within a circuit that can be traversed
+using a combination of valid inputs. This contrasts with non-functional paths
+that are unreachable with a given set of inputs.
+1
+3
+2
+7
+10
+13
+9
+8
+6 12
+5
+4
+15
+18
+16
+14
+11
+17
+D Q
+QN
+(a)
+1
+3
+2
+7
+10
+13
+9
+8
+6 12
+5
+4
+15
+18
+16
+14
+11
+Assr_1
+17
+17
+D Q
+QN
+(b)
+1
+3
+2
+7
+10
+13
+9
+8
+6 12
+5
+4
+15
+18
+16
+14
+11
+Assr_2
+17
+17
+D Q
+QN
+(c)
+Fig. 3. An example of a) original design, b) nodes covered by bound assertion Assr 1, and c) nodes covered by bound assertion Assr 2
+noting that certain nodes may appear in multiple subsets of
+covered nodes for different assertions, exemplified by nodes
+2, 3, and 7, while some other nodes may not be covered by
+any assertions (nodes 11, 14, 15, and 18).
+Nevertheless, several challenges restrict the calculation and
+use of SC for assertions in a design:
+1) Synthesis Limitations: The majority of verification as-
+sertions are written to identify irregularities during sim-
+ulation, and they cannot be synthesized. Consequently,
+they cannot be bound to the design.
+2) Functional Path Requirement: To consider a node
+as covered, there must be a functional path between
+the node and the output of the assertion. Hence, the
+existence of a connection between the node and the
+output of the assertion is not sufficient, and traditional
+methods, such as extracting the input cone(s), cannot be
+used.
+3) Overheads: It is crucial to acknowledge that individual
+assertions introduce specific overheads to the design.
+It is also the case that combined assertions introduce
+overheads that are not the sum of their individual over-
+heads. In evaluating the effectiveness of each assertion,
+it is necessary to consider these factors to allow for a
+comprehensive evaluation of the trade-off space between
+security and the associated design overheads.
+The synthesis limitations problem is the main challenge
+since it affects other problems. The most widely used lan-
+guages for describing assertions are PSL and SystemVerilog,
+but the use of standardized languages does not imply that they
+are synthesizable – some assertions are clearly only meant for
+simulation purposes and have to be filtered out. To address
+this, we utilize the MBAC tool [43] to convert PSL and/or
+SystemVerilog assertions into a synthesizable Verilog format.
+Once the assertions are transformed into synthesizable code,
+they are integrated with the main circuit for an assessment of
+their effectiveness and the overhead they introduce. To address
+the second challenge and obtain the SC for assertions, we
+use the Cadence JasperGold Security Path Verification (SPV)
+tool [44]. This tool allows us to perform a proof analysis for
+verifying the existence of functional paths between desired
+nodes in the design, also known as taint analysis. It should be
+noted that JasperGold could have been replaced by any other
+tool capable of doing taint analysis, academic or commercial.
+In our scenario, the considered origin nodes are all nodes in
+the design; the destination node is the assertion output. The
+existence of a functional path between any node in the design
+(origin) and the assertion output (destination) means that the
+node is covered by the assertion (see Fig. 3).
+In other words, if a covered node’s value is maliciously ma-
+nipulated (e.g., due to an inserted HT activating its payload),
+the assertion can detect it, functioning as an online monitor.
+This concept shares similarities with verification schemes,
+where assertions aim to identify irregularities in the design.
+However, the key difference is that verification assertions are
+only necessary until the logical synthesis step. Verification
+engineers mainly seek to correct the potential mistakes made
+by the design team, and they can achieve their objectives
+through simulation, ensuring the functionality of the design.
+Once they confirm that the design is bug-free, assertions
+are no longer needed since the design’s functionality and
+specification remain constant in subsequent chip design steps.
+In contrast, security engineers must consider potential threats
+during fabrication, and assertions that have transformed into
+online monitors must remain with the design until the chip is
+fabricated.
+The third challenge involves quantifying the overheads
+introduced by each assertion on the design. While simulation
+offers insights into the circuit’s incorrect behavior and internal
+values, it falls short in determining crucial performance char-
+acteristics like power, timing, and area. To address this limita-
+tion, the design undergoes multiple synthesis runs, and precise
+performance reports are generated. Initially, the original circuit
+is synthesized without the assertions, providing maximum
+clock frequency, power, and area reports. Subsequently, the
+circuit, now integrated with the bound assertions functioning
+as embedded security checkers, undergoes synthesis again. The
+evaluation is based on a comparative analysis of results from
+the two synthesis processes, ensuring a comprehensive assess-
+ment of assertion performance in terms of design overhead.
+Once the SC and the overheads of each assertion are known,
+we can decide if the assertion is worth to be kept or not. How-
+ever, this cannot be performed manually since investigating
+the trade-off between SC and overheads for each assertion is
+a time-consuming task. Hence, an automation flow is needed
+to select the assertions. The prerequisite of automation flow
+is defining a strategy to only pick efficient assertions in terms
+of security and overheads. This efficiency can be defined such
+that the assertion has more security properties, imposes less
+overheads on the design, or a balance between both.
+Fig. 4 illustrates a proposed automated flow for the assertion
+Start
+Pick an assertion
+from the candidate list
+Calculate the SC
+for the assertion
+(JasperGold)
+Change the assertion to
+synthesizable format
+(MBAC) Satisfied with
+SC?
+Bind the assertion
+to the original circuit
+Add the assertion
+to the final list
+Synthesize the design
+and check the overheads
+Candidate list
+empty?
+Overheads
+acceptable?
+The netlist is finalized for
+use in the back-end step.
+Yes
+No
+Yes
+No
+No
+Yes
+Fig. 4. Optimization flow for selecting the assertions to be used as security
+checkers
+selection process. The initial step involves selecting an asser-
+tion from the candidate list, which contains assertions with
+synthesizable potential, excluding those with a simulation-
+based nature that have already been filtered out. The chosen
+assertion is then converted into synthesizable logic and inte-
+grated into the design. This prepared design enables overhead
+evaluation, where synthesis is performed with the assertion to
+compare various metrics (e.g., power, performance, and area
+(PPA)) against the values obtained from the original design.
+After assessing the overheads and confirming their com-
+patibility with user-defined requirements, the subsequent step
+involves calculating the SC. This is achieved by employing
+Eq. 2 and utilizing the JasperGold SPV tool. If the assertion
+passes both the overhead evaluation and achieves the desired
+SC, it is included in the final list of assertions. Otherwise (e.g.,
+if the overheads are regarded as unacceptable or the SC falls
+short of the user’s expectations), an alternative assertion from
+the candidate list is considered (if any). It should be noted
+that the decision in this step can be based on either the SC of
+the assertion individually or the overall SC threshold, which
+is specified by the user for the whole design. Once the flow
+is completed, the generated netlist with the embedded asser-
+tion(s) is considered finalized. This finalized netlist will be
+used in the back-end stage for further security improvements
+through the insertion of online monitors.
+B. Evaluation of the Security Properties of Verification Asser-
+tions
+In a practical case study assessing the security properties
+of verification assertions, we conducted an SC calculation for
+predefined assertions in various IPs of the OpenTitan System
+on Chip (SoC). Given that OpenTitan, an open-source silicon
+root of trust project, is developed and maintained by a com-
+munity of experienced engineers, it is recognized as a highly
+reliable and suitable case study for evaluating the effectiveness
+of our proposed framework. The initial experiment focused
+on selecting four distinct assertions present in 35 different
+Register Top modules of OpenTitan, resulting in a set of 140
+assertions. This initial analysis indicates a selection based
+on commonality across different IPs, disregarding specific
+characteristics or overheads.
+The SC of each assertion in different IPs are depicted in
+Fig 5. As shown in this figure, the calculated SC percentages
+for each assertion are less than 5%, which may raise concerns,
+even when overlooking the associated overheads. However, it
+is crucial to recognize that a lower SC does not necessarily
+imply inadequate security properties, as some applications
+prioritize safeguarding specific security-sensitive components
+rather than the entire design.
+The SC of an assertion is influenced by various factors,
+with a crucial one being the nature of how the assertion
+is formulated for verification. Specifically, if an assertion is
+defined to concentrate only on local signals, such as checking
+whether specific bits of a register are 0 or 1, it is generally
+considered less impactful. On the contrary, assertions that are
+not restricted to narrow scopes and instead describe high-level
+behaviors are preferable. Consequently, for users prioritizing
+a higher SC for the entire design over assertions safeguarding
+specific design regions, the emphasis should be on selecting
+assertions covering larger design parts. The initial experiment
+did not prioritize assertions based on high-level descriptions
+but focused on finding synthesizable assertions present in
+multiple IPs. However, as depicted in Fig. 5, the SC results are
+generally unremarkable. This underscores the need for further
+analysis when choosing assertions, rather than blind selection.
+In the subsequent experiment, we investigate the SC of
+assertions uniquely generated for deployment in specific IPs,
+causing them to be unsuitable for use in other IPs. This
+experiment demands more effort, as synthesizable assertions
+undergo a preliminary analysis before binding into the de-
+sign. Consequently, not only unsynthesizable assertions are
+excluded from consideration, but also assertions focused on
+checking local signals are filtered out.
+Figure 6 illustrates the calculated SC percentages for indi-
+vidual assertions within three chosen IPs. As shown in this
+figure, the SC for each assertion is notably higher compared
+to the figures obtained from the initial experiment (Fig. 5).
+The average SC stands at 85.83% for the selected assertions
+in the ALERT HANDLER (Fig. 6(a)), 46.03% for the selected
+assertions in the ALERT HANDLER ESC (Figure 6(b)), and
+38.35% for the selected assertions in the FLASH PHY RD
+module (Figure 6(c)).
+C. Challenges
+While achieving higher SC numbers for different assertions
+(e.g., in the ALERT HANDLER ESC IP as shown in Fig. 6(a))
+may suggest improved design security, it is crucial to acknowl-
+edge that ensuring design security goes beyond relying solely
+0
+1
+2
+3
+4
+5
+SC
+(%)
+ASR_1 ASR_2 ASR_3 ASR_4
+Fig. 5. SC percentage for different IPs of OpenTitan
+0
+20
+40
+60
+80
+100
+(a)
+0
+20
+40
+60
+80
+100
+(b)
+0
+20
+40
+60
+80
+100
+(c)
+Fig. 6. Calculated SC percentage for the different assertions in selected IPs of OpenTitan: a) alert handler esc, b) alert handler, and c) flash phy rd
+on SC metrics, even with high percentages (e.g., exceeding
+80%). There are notable challenges associated with SC, and
+some key ones include:
+1) Ineffectiveness of verification assertions at runtime:
+While functional assertions can cover various security
+properties by ensuring the expected behavior of the
+circuit, they may lack the precision to thoroughly cover
+the negative or unexpected behavior of a circuit under
+attack. Although the SPV tool is employed to calculate
+taint propagation coverage, the effectiveness of detecting
+HT behavior by the synthesized assertions at runtime is
+not guaranteed.
+2) Scalability concerns: The necessity to “bind the asser-
+tion” and synthesize the entire design for characterizing
+overheads may pose scalability challenges for larger de-
+signs. The resource-intensive nature of this process could
+limit its practicality for more extensive and complex
+circuits.
+3) Assertion availability: The methodology aims to reuse
+existing assertions rather than generating new ones.
+However, a potential challenge arises if no suitable
+assertion with acceptable SC is found for a given design.
+This situation is exemplified by the SC numbers obtained
+for different assertions, as depicted in Fig. 5.
+To overcome these challenges, an additional layer of se-
+curity must be incorporated into the design to address the
+limitations associated with reusing the verification assertions
+as online monitors.
+IV. ENHANCING THE SECURITY BY ADDING ONLINE
+MONITORS DURING THE PHYSICAL SYNTHESIS
+In this section, we introduce a novel methodology to in-
+corporate online monitors into the layout during the physical
+synthesis flow. While prior works have explored the idea of
+integrating online monitors, most efforts have concentrated
+on introducing these checkers during the front-end stage of
+design. In our work, we take a different approach by directly
+incorporating the checkers into the layout while considering
+front-end inserted assertions.
+Figure 7 provides a simplified view of the layout of a block
+of an IC. The green polygons represent standard cells that are
+later interconnected through various metal layers, establishing
+the logical function of the design. Due to fabrication complex-
+ities, particularly in modern process nodes, achieving 100%
+density where the layout is entirely filled with standard cells,
+is impractical. Thus, gaps are present in the layout, highlighted
+in red in Fig. 7. These gaps can be later used by an adversary
+for inserting his/her malicious logic (i.e., HTs) [29].
+Despite these gaps being filled with filler cells before being
+sent to fabrication, since these filler cells lack functionality
+and are not connected to the original design, they can be easily
+removed by the attacker inside the foundry. Our methodology
+leverages these gaps and available resources to insert online
+checkers into the design. By doing this, not only do we add
+an extra security layer to the design, but also we limit the
+adversary to put malicious logic by increasing the density and
+congestion in the layout.
+Although this methodology can also be used independently
+with minor modifications in the flow, we use it as a com-
+plementary methodology along with reusing the assertion for
+Free Gaps
+Standard Cells
+VDD
+VSS
+Fig. 7. Illustrative example of a block layout within a chip
+detecting HTs to cover its shortcomings. It should be noted
+that we leverage the ECO features of the CAD tools for
+inserting the online monitors into the layout2
+. This use of ECO
+minimizes alterations to the original layout with each added
+online monitor, ensuring optimal overheads in comparison to
+front-end approaches.
+A. Online Monitors
+As mentioned earlier, the online monitors act as an extra
+protection layer for the nodes not covered by assertions.
+To create this protection strategy, we use a Dual Modular
+Redundancy (DMR) scheme, as shown in Fig. 8. The left
+image (Fig. 8(a)) illustrates a subpart of a design represented in
+Fig. 3, in which the covered nodes (10 and 17) are highlighted
+in green, whereas the vulnerable/uncovered nodes (11, 14, and
+18) are highlighted in red. To construct an online monitor for
+this subset of the design, first, we duplicate the uncovered
+gates with exactly the same equivalent gates from the library
+(i.e., the same gate type, and same drive strength). Then, we
+compare the output of the duplicated part with the output of
+the original part by XORing these two signals, as depicted in
+Fig. 8(b). Therefore, adding an online monitor for this part
+adds seven new covered nodes (11, D11, 14, D14, 18, D18,
+and V18) to the previously covered nodes (10 and 17).
+It is important to highlight that an adversary may attempt to
+substitute the online monitors by a HT. However, the online
+monitors are always on and therefore contribute to the power
+profile of the circuit. An HT, on the other hand, should have
+a stealthy trigger, which is not compatible with an always-on
+functionality. An HT that promotes a noticeable change in the
+chip’s power profile is likely detectable.
+A greater number of connected uncovered gates is desirable,
+as all of these connected gates require only one XOR gate as a
+voter. However, limitations inherent in the physical synthesis
+flow may pose challenges to implementing DMR for all
+uncovered gates, even if they form a cone, as illustrated in
+Fig. 8. Further details on this aspect are elaborated in the
+subsequent section.
+2ECO features in CAD tools allow engineers to make last-minute mod-
+ifications to the existing layout, such as adding or removing components,
+changing connections, etc. These changes may be necessary due to factors
+such as updated specifications, errors discovered in the initial design, or other
+requirements that emerge during the design phase.
+18
+14
+10 17
+11
+(a)
+14
+10
+D11
+D14
+D18
+V18
+17
+17
+11
+18
+(b)
+Fig. 8. An example of a) design before adding online monitors, and b) design
+with the protection logic (D11, D14, and D18 as the duplicates and V18 as
+the voter) to protect the uncovered gates (11, 14, and 18)
+B. Embedding Online Monitors into the Layout
+The comprehensive flow for integrating online monitors
+during the physical synthesis flow is outlined in Fig. 9. It
+involves four major steps that are detailed as follows:
+Netlist
+Uncovered
+Nodes
+Physical Synthesis 1
+Layout
+Density Analysis for the
+Uncovered Nodes 2
+Ranking the Candidates Based
+on the Fanin Cone Size 3
+Generating Layouts for
+the ECO Round 4
+Protected
+Layouts
+Fig. 9. An overall flow of integrating online monitors during the physical
+synthesis
+1) Physical Synthesis: The first step starts with turning
+the netlist into a layout using a physical synthesis tool.
+Here, the netlist includes the main design and all selected
+assertions bound to it. This step involves several stages such as
+placement, clock tree synthesis, and routing. Through physical
+synthesis, vital information such as the precise placement
+of standard cells, the physical distribution of the clock, and
+the structure of interconnections in terms of wire length
+or the utilization of each available metal layer is obtained.
+Essentially, physical synthesis provides insight into the spatial
+configuration of the design. It should be noted that this time-
+consuming step is performed only once for each design.
+2) Density Analysis for the Uncovered Nodes: The resulting
+layout, along with the report of uncovered nodes from the SPV
+tool, becomes the input to our developed analytical tool. The
+objective here is to identify the uncovered nodes with available
+gaps around them, suitable for housing the online checker
+tasked with safeguarding the respective node. If there is no
+space available around the uncovered node, the online checker
+might be placed at a far distance from it, leading to higher
+resource utilization and degradation of the PPA parameters of
+the design. This is a crucial step in our flow to prevent this
+from happening in order to minimize layout modifications. In
+other words, the density analysis provides an adequate basis
+for embedding the online monitors for future ECO rounds.
+This makes the presented methodology different from front-
+end protection schemes where the actual overheads are often
+ignored. It should be noted that the scope of the searching
+area around each node is adjustable and can be changed
+according to the design size and density. A larger search
+area increases the processing time because more potential
+locations must be evaluated, and it can also lead to increased
+use of routing resources, which can negatively impact the
+overall performance of the design due to longer interconnect
+delays and higher power consumption. Therefore, the balance
+between the size of the search area and the associated overhead
+must be carefully managed to optimize both the detection
+capabilities and the design performance.
+3) Ranking the Candidates Based on the Fanin Cone Size:
+The generated candidates from the density analysis tool un-
+dergo a ranking process. As emphasized earlier, our preference
+is to place the online checker for a group of interconnected
+uncovered nodes rather than individual gates. This choice of-
+fers advantages in terms of area, power, and routing resources.
+Therefore, our ranking system assigns higher priority to sub-
+sets of candidate gates with larger input cones, optimizing the
+overall efficiency of the protection scheme. It should be noted
+that in our cone analysis, we only consider the candidates with
+a cone size of 2 or greater to improve the efficiency of our
+methodology.
+4) Generating Layouts for the ECO Round: The final step
+involves the generation of protected layouts. To facilitate this,
+we developed a tool that takes the ranked list of candidates
+(generated in the previous step) and integrates the online
+checkers into the layout incrementally. More specifically, one
+online monitor is added to the design at a time, and a
+new layout containing the added monitor is generated. This
+process is repeated from the top of the ranked list to the end.
+Therefore, if there are n candidates (the nodes suitable to be
+protected by online checkers) in the ranked list, we create n
+different layout files in an iterative fashion. Each protected
+layout file, such as Layout1, contains the online monitor
+from Candidate1; Layout2 contains the online monitors for
+Candidate1 and Candidate2, and so forth. It should be noted
+that these protected layouts are generated to be used along
+with the ECO flow, and the finalized layout, which includes
+all potential online checkers and is intended for fabrication, is
+derived after the conclusion of the ECO round.
+Since the difference between each protected layout and its
+predecessor is the addition of only one online monitor, the
+user can decide whether to keep or discard the introduced
+online monitor. This incremental approach ensures a controlled
+integration of online monitors into the design while precisely
+managing the resources utilized for adding each online mon-
+itor. Moreover, it allows for a fine-grained assessment of the
+impact on the PPA parameters of the design.
+C. ECO Flow
+As described, the insertion of online checkers and the
+generation of protected layouts are efficiently conducted in
+our methodology, prioritizing area and resource utilization. We
+enhance this approach by introducing a timing-aware element
+to the ECO flow. We introduce a metric called the Degrading
+Factor (DF), set at 25% of the total positive slack of the
+design before the addition of online checkers. This DF serves
+as a deterministic parameter for deciding whether to keep or
+discard protected layouts due to the impact on the timing.
+For this purpose, different PPA numbers of the initial layout
+are stored before incorporating online monitors. The ECO
+flow starts by selecting the first protected layout, including
+the highest-ranked online monitor from the cone analysis,
+and calculates the PPA numbers for this modified layout.
+Subsequently, the total slack number is compared with the
+previous layout (the one excluding the newly added monitor).
+If the slack number is negative or the difference between the
+new slack and the previous one exceeds the DF, the ECO flow
+discards the newly added layout since it degrades the timing
+beyond user constraints and proceeds to the next one. This
+process continues until all online monitors are integrated, or
+there is no more slack available for the new logic. Additionally,
+different checks are performed at each ECO round to ensure
+compliance with various design rules and avoid issues arising
+from the application of the new layout.
+V. EXPERIMENTAL RESULTS
+This section presents the experimental results of
+integrating online monitors for five different IPs of
+OpenTitan. Two IPs were chosen for security reasons:
+ALERT HANDLER ESC TIMER has the highest SC, and
+KEYMGR REG TOP has the lowest SC. Other three IPs were
+chosen based on their sizes: AST REG TOP is the largest
+design, FLASH CTRL CORE REG TOP has an average size,
+while the smallest one is NMI GEN REG TOP. It should be
+noted that all these IPs are selected among the ones that
+already have some assertions, to maintain the concept of
+repurposing existing assertions. We do not introduce new
+assertions or modify existing ones across different IPs. The
+calculated SC for all these IPs is previously illustrated in Fig.
+5 and Fig. 6.
+We use the Cadence suite for all results herein reported:
+logical synthesis is performed by Genus, while the physical
+synthesis is performed by Innovus. The formal tool for per-
+forming the taint analysis is JasperGold SPV, as mentioned
+earlier. Our target technology node is a commercial 65nm
+CMOS one.
+A. Impact of Adding Online Monitors on SC
+To assess the impact of integrating online monitors on the
+security properties of each design, we employ the evaluation
+TABLE I
+THE IMPACT OF ADDING ONLINE MONITORS ON THE SECURITY OF SELECTED IPS
+IP Name Instances
+SC
+Before
+SC
+Total
+SC
+Added
+# Nodes Covered
+by Monitors
+# Applied
+Monitors
+# Ignored
+Monitors
+# Total
+Monitors
+Preventing
+Factor
+ALERT HANDLER ESC TIMER 1404 87.82% 88.25% 0.43% 6 1 0 1 Density
+AST REG TOP 7048 2.49% 19.94% 17.45% 1382 183 7 190 Density
+FLASH CTRL CORE REG TOP 7048 1.38% 17.98% 16.6% 954 105 264 369 Timing
+KEYMGR REG TOP 4611 0.91% 10.89% 9.98% 490 55 86 141 Timing
+NMI GEN REG TOP 214 3.53% 37.11% 33.58% 92 14 0 14 Density
+scheme outlined in Eq. 2. The total covered nodes (C) in
+the numerator of Eq. 2 now encompass both the nodes
+previously covered by the assertion and the newly covered
+nodes introduced by the online monitor. It should be noted
+that since the output of the assertion or the voter of the
+online monitors can only be changed by an abnormality in
+the circuit’s expected behavior, the chance of a false positive
+is eliminated. Consequently, the results obtained from the
+embedded checkers and assertions are always considered as
+true positive.
+Table I presents the results concerning the impact of added
+online monitors on the security of the considered designs.
+In this table, the first column denotes the IP name, while
+the second column enumerates the instances in each IP.
+The third column indicates the SC before the integration of
+online monitors. These values are obtained by binding all
+available assertions to each IP and analyzing the coverage
+using the SPV tool. The fourth and fifth columns represent
+the SC after adding the online monitors and the increase
+in SC specifically due to the online monitors, respectively.
+As indicated, the lowest increase in SC is 0.43% for the
+ALERT HANDLER ESC TIMER IP. This is mainly because
+this IP already has a high number of covered nodes, and
+finding suitable candidates that pass all steps of the online
+monitor insertion flow (as shown in Fig. 9) is challenging. In
+other words, finding a set of uncovered connected nodes with
+sufficient space around them is more difficult since the total
+number of uncovered nodes is limited. However, the increased
+SC is not the only benefit we achieve. The introduced logic for
+inserting online monitors also fills the gaps in the layout and
+utilizes routing resources, which positively impacts security
+by reducing potential exploitation opportunities for attackers.
+In column 6, the number of total covered nodes is presented
+after the addition of online monitors. These covered nodes
+include the nodes not covered by the assertions and the new
+redundant logic added to form the online checker. Columns
+7 and 8 represent the number of applied online monitors in
+the IP and the number of ignored ones. Column 9 represents
+the number of online monitors that can be generated for each
+design after performing density and cone analysis (Fig. 9).
+The total number of online monitors is equal to the number
+of individual protected layouts generated for the ECO flow. It
+should be noted that not all generated online monitors can be
+integrated into the design due to timing restrictions.
+The final column indicates the factor preventing the addition
+of more online monitors. If all available online monitors can
+be successfully integrated into the design, it means that there
+are no more online monitors that could be generated, mainly
+because of the high density around the uncovered nodes. In
+contrast, if some online monitors are left unembedded in the
+design (excluding those that exceed the DF), it is mainly
+because the timing resources of the design are exhausted,
+and they have to be ignored. More details about the PPA
+restrictions are discussed in the next part.
+B. Impact of Adding Online Monitors on PPA
+The initial layout (baseline) for each IP is configured such
+that each design has a density ranging between 60% to 65%.
+By doing this, we can preserve a positive setup slack of
+approximately 10% of the clock period for each design. Given
+that the online monitors introduce new logic to the design,
+influencing its timing, this 10% margin allows the utilization
+of positive slack for integrating online monitors.
+Table II presents various PPA metrics before and after
+adding the online monitors to the selected IPs. The first column
+denotes the IP names. The next two columns illustrate the area
+and placement characteristics of the layouts, where the second
+column represents the total area for each design, and the third
+column represents the placement density. It should be noted
+that the total area reported in this table refers to the total
+cell area, and not the overall physical area of the block/chip.
+Among all designs, NMI GEN REG TOP experienced the most
+significant increase in area parameters, as it is the smallest
+design, and even a few online monitors make the size of the
+added logic comparable to the overall design size.
+The fourth column represents the total power consumed by
+each IP, with NMI GEN REG TOP again showing the largest
+increase among the IPs due to its small size. The fifth and sixth
+columns present the timing characteristics of the design. While
+the hold slack remains relatively constant for all designs, the
+setup slack undergoes considerable changes for most of the
+designs, as the redundant logic might impact the timing of
+the design based on its location in different timing paths of
+the design. Consistent with Table I, the two designs with the
+preventing factor of timing (FLASH CTRL CORE REG TOP
+and KEYMGR REG TOP) exhibit the highest decrease in setup
+slack.
+The last column represents the total metal wire length
+for each design. These metal wires are utilized to connect
+different parts of the design (signal routing), distribute power,
+or propagate the clock. As previously mentioned, the adversary
+not only needs gaps to place malicious logic but also requires
+available routing resources to connect the malicious logic
+to other parts of the design. The increase in the total wire
+length of the design suggests that the design has become more
+TABLE II
+THE IMPACT OF ADDING ONLINE MONITORS ON THE PPA METRICS OF SELECTED IPS
+IP Name
+Total Area
+(µm2)
+Placement
+Density
+Total Power
+(mW)
+Setup Slack
+(ns)
+Hold Slack
+(ns)
+Total Wire
+Length (µm)
+ALERT HANDLER ESC TIMER (before) 3692.88 63.94% 1.46 0.328 0.133 22305.40
+ALERT HANDLER ESC TIMER (after) 3700.80 64.07% 1.47 0.328 0.133 22351.75
+Difference +0.21% +0.20% +0.68% 0.00% 0.00% +0.21%
+AST REG TOP (before) 28644.48 61.46% 9.93 0.287 0.084 353799.80
+AST REG TOP (after) 30848.76 66.18% 10.26 0.091 0.07 397612.20
+Difference +7.69% +7.68% +3.32% -68.29% -16.67% +12.38%
+FLASH CTRL CORE REG TOP (before) 14243.40 64.25% 4.94 0.210 0.181 148407.90
+FLASH CTRL CORE REG TOP (after) 15542.28 70.11% 5.13 0.007 0.186 170461.90
+Difference +9.12% +9.12% +3.85% -96.67% +2.76% +14.86%
+KEYMGR REG TOP (before) 18325.80 62.68% 8.11 0.278 0.152 186978.10
+KEYMGR REG TOP (after) 19062.72 65.20% 8.29 0.000 0.151 199832.90
+Difference +4.02% +4.02% +2.22% -100% -0.66% +6.87%
+NMI GEN REG TOP (before) 769.68 61.16% 0.23 0.118 0.178 4841.51
+NMI GEN REG TOP (after) 918.00 72.94% 0.27 0.043 0.179 6077.74
+Difference +19.27% +19.26% +17.39% -63.56% +0.56% +25.53%
+Baseline 1
+0.33
+ALERT HANDLER ESC TIMER
+(a)
+Baseline 90 183
+0.07
+0.17
+0.29
+AST REG TOP
+(b)
+Baseline 50 105
+0
+0.10
+0.21
+FLASH CTRL CORE REG TOP
+(c)
+Baseline 27 55
+0
+0.14
+0.28
+KEYMGR REG TOP
+(d)
+Baseline 7 14
+0.04
+0.08
+0.12
+NMI REG TOP
+(e)
+Fig. 10. Changes in setup slack after each round of adding the online monitors for different IPs
+congested, and the free routing resources are now more limited
+for use by the adversary.
+To provide a more detailed insight into the impact of adding
+each online monitor to the design characteristics, we have
+extracted various PPA results at the end of each ECO round,
+where the new online monitor is successfully integrated into
+the design. This detailed breakdown allows us to observe
+individual impacts on different characteristics throughout the
+iterative ECO process. Fig. 10 illustrates the degradation in the
+setup slack after each successful ECO round. The vertical axis
+represents the total setup slack time in nanoseconds, ranging
+from the worst to the best slack time, while the horizontal axis
+depicts the progression of ECO rounds.
+As previously mentioned, the ECO flow initiates with the
+layout containing the assertions, referred to as the “Baseline”
+in Fig. 10. As depicted in this figure, some rounds have a
+negligible impact on the timing, while others considerably
+degrade the total setup slack. There are also cases in which the
+slack is improved, attributed to the heuristics of the physical
+synthesis tool. However, this degradation does not exceed
+the DF, which is set at 25% of the total setup slack. It is
+worth noting that this parameter can be adjusted based on the
+user’s preferences. For instance, if set to lower values, online
+monitors causing a sudden decrease in the total setup slack
+(e.g., the online monitor added in round 81 in Fig. 10(b)) will
+be discarded, resulting in a smoother overall trend for setup
+slack decrease.
+Fig. 11 illustrates the progressive increase in wire length
+for each metal layer in the protected layouts. The vertical
+axis represents the wire length in µm, while the horizontal
+axis denotes the protected layout in each round. Similar to
+Fig. 10, the “Baseline” term refers to the layout containing
+assertions without online monitors. Although the number of
+available metal stacks varies in different target technologies,
+with new technologies typically offering ten or more metal
+layers, higher consumption of upper metal layers indicates
+increased congestion in the design. As a defender, our focus
+is on higher consumption of upper metal layers, reflecting
+the overall increase in congestion in the protected layouts.
+Excluding ALERT HANDLER ESC TIMER, where only one
+online checker was available to be added, we observe a
+consistent trend of increased wire length in metal layers M3-
+M6 for all designs in Fig. 11, thereby reducing the available
+free routing resources for potential adversaries.
+The visual representations of the layout, including place-
+ment configuration and the routed view of designs before
+and after the integration of online monitors, are illustrated
+in Fig. 12. In each row, the left image pair showcases the
+cell placement, while the right one displays the routed view.
+Specifically, the left image in each pair represents the layout
+before the addition of online monitors, while the right image
+corresponds to the final protected layout after the successful
+completion of all ECO rounds. Upon comparing the images
+on the right with those on the left, it is evident that the overall
+Baseline 1
+0
+10k
+ALERT HANDLER ESC TIMER
+(a)
+Baseline 90 183
+0
+104k
+AST REG TOP
+(b)
+Baseline 50 105
+0
+50k
+FLASH CTRL CORE REG TOP
+(c)
+Baseline 27 55
+0
+62k
+KEYMGR REG TOP
+(d)
+Baseline 14
+0
+2.8k
+NMI REG TOP
+M1
+M2
+M3
+M4
+M5
+M6
+M7
+(e)
+Fig. 11. The impact of adding online monitors on the length of different metal layers in the protected layouts for different IPs
+TABLE III
+COMPARISON OF DIFFERENT DETECTION AND DFHT TECHNIQUES
+Technique Refs
+Detection
+or DfHT
+Design
+Stage
+Attacker
+Location
+Prevents
+HT?
+Pros. Cons.
+IC Fingerprinting,
+Delay Meas.
+[16]–[19] Detection Test
+Des. house,
+Foundry
+No
+Nearly zero overheads,
+Non-destructive method
+Needs reverse engineering for
+attributes of the Golden chip,
+Confusion with environmental
+and process variation effects
+Logic Testing [21] [22] Detection Test
+Des. house,
+Foundry
+No
+Very fast technique,
+Can be fully automatic
+All input combinations are
+not covered to activate HTs,
+Ineffective when dealing with
+HTs with sequential triggers
+BISA,
+Layout Filling
+[29]–[31] DfHT Back-end Foundry Yes
+Replacement of filler cells
+with the functional ones,
+Independent testing circuit
+from the original one
+Design becomes unroutable
+in high occupation ratios,
+Favors layouts with
+large continuous gaps
+Selective
+Placement
+[39]–[41] DfHT Back-end Foundry Yes
+Lowest overheads among
+HT prevention techniques
+Risk of violating the critical
+paths in the routing stage,
+Timing degradation
+TPAD [36] Both
+Front-end,
+Back-end*
+Des. house,
+Foundry
+Yes Zero false positives,
+Applicable to FPGA
+Considerable overheads,
+Risk of degradation
+SCARF This work Both
+Front-end,
+Back-end
+Foundry Yes Reusing verification assets,
+Low PPA overheads
+Achieving high density for
+some designs is challenging
+* This technique is mainly applied in the front-end stage. To prevent CAD tool attacks, the design is split into two parts, each processed by different
+CAD tools independently. The final layouts from these tools are later merged in the back-end stage for being set to the foundry for fabrication.
+placement and routing configuration of the layouts remained
+unchanged, even for larger designs. This highlights the more
+efficient utilization of resources, which is a key advantage of
+our methodology in adding online monitors during the physical
+synthesis compared to similar works performed in the front-
+end step of chip design.
+C. SCARF Versus Other Techniques
+Table III provides a comparative analysis of our framework
+with other detection and DfHT approaches. The first column
+indicates the specific technique or category, while the second
+column references works in that category. The third column
+categorizes the technique into detection or DfHT (or both).
+The subsequent column details the chip design stage where
+the method is applied for protection. Column 5 specifies the
+location of the potential attacker, and column 6 indicates if
+the technique can also be employed to prevent HTs. The last
+two columns briefly outline the advantages and disadvantages
+of the techniques, respectively.
+VI. CONCLUSION
+In this paper, we presented a defensive framework aimed
+at enhancing the security of chips against fabrication-time
+attacks. The first part of the presented framework focused
+on the front-end stage, where we demonstrated the reuse
+of verification assertions by transforming them into secu-
+rity checkers. However, some security checkers may not be
+optimally effective, particularly those designed primarily for
+debugging purposes. To address this limitation, we proposed a
+novel methodology involving the insertion of online checkers
+during the back-end stage of the physical synthesis.
+Although we designed the back-end methodology as a
+complementary approach to the front-end one, both techniques
+can be used independently based on user preferences and re-
+quirements. Our experimental results demonstrate that adding
+online monitors results in a modest increase of less than
+20% in area, power, and placement density in the worst case.
+Simultaneously, it enhances the SC by 33.58% in the best
+case. Notably, our methodology utilizes only positive slack
+time during the ECO flow for adding online monitors, ensuring
+that it does not degrade the overall timing of the design.
+While our framework has demonstrated promising results,
+there is still room for improvement. Future work could focus
+on embedding various optimizations to reduce the imposed
+area and power, as well as incorporating path awareness into
+the flow to make better use of positive slack time.
+95.6 µm
+(a) (b)
+234.2 µm
+(c) (d)
+167.6 µm
+(e) (f)
+189.2 µm
+(g) (h)
+46.2 µm
+(i) (j)
+Fig. 12. The layout view of the IPs before and after adding online monitors, whereas the left pair of images in each row represents the placement configuration,
+while the right one represents the routed view of each design: a, b) ALERT HANDLER ESC TIMER, c, d) AST REG TOP, e, f) FLASH CTRL CORE REG TOP, g, h)
+KEYMGR REG TOP, and i, j) NMI REG TOP
+REFERENCES
+[1] C. Ting-Fang, “Tsmc to triple u.s. chip invest-
+ment to $40bn to serve apple, others,” 2022. [On-
+line]. Available: https://asia.nikkei.com/Business/Tech/Semiconductors/
+TSMC-to-triple-U.S.-chip-investment-to-40bn-to-serve-Apple-others
+[2] S. Bhunia et al., “Hardware trojan attacks: Threat analysis and counter-
+measures,” Proc. IEEE, pp. 1229–1247, 2014.
+[3] M. Tehranipoor et al., “A survey of hardware trojan taxonomy and
+detection,” Des. Test, p. 10–25, 2010.
+[4] C. Helfmeier et al., “Breaking and entering through the silicon,” in Proc.
+Comp. Comm. Sec., 2013, p. 733–744.
+[5] S. E. Quadir et al., “A survey on chip to system reverse engineering,”
+J. Emerg. Technol. Comput. Syst., pp. 1–34, 2016.
+[6] R. Karri et al., “Trustworthy hardware: Identifying and classifying
+hardware trojans,” Computer, pp. 39–46, 2010.
+[7] W. Hu et al., “An overview of hardware security and trust: Threats,
+countermeasures, and design tools,” Trans. Comp.-Aided Des. Integ.
+Circ. Sys., vol. 40, no. 6, pp. 1010–1038, 2021.
+[8] M. Rostami et al., “A primer on hardware security: Models, methods,
+and metrics,” Proc. IEEE, vol. 102, no. 8, pp. 1283–1295, 2014.
+[9] S. Bhunia et al., “Protection against hardware trojan attacks: Towards a
+comprehensive solution,” Des. Test, pp. 6–17, 2013.
+[10] V. Gohil et al., “Deterrent: Detecting trojans using reinforcement learn-
+ing,” in Proc. Des. Autom. Conf., 2022, pp. 697–702.
+[11] “Enisa threat landscape 2023.” [Online]. Available: https://www.enisa.
+europa.eu/publications/enisa-threat-landscape-2023
+[12] M. Eslami et al., “Reusing verification assertions as security checkers
+for hardware trojan detection,” in Proc. Int. Symp. Qual. Elec. Des.,
+2022, pp. 1–6.
+[13] Y. Jin et al., Design for Hardware Trust. New York, NY: Springer New
+York, 2012, pp. 365–384.
+[14] K. Xiao et al., “Hardware trojans: Lessons learned after one decade of
+research,” Trans. Des. Autom. Elec. Sys., pp. 1–23, 2016.
+[15] C. Bao et al., “On reverse engineering-based hardware trojan detection,”
+Trans. Comp.-Aided Des. Integ. Circ. Sys., pp. 49–57, 2016.
+[16] D. Agrawal et al., “Trojan detection using ic fingerprinting,” in Proc.
+Symp. Sec. Priv., 2007, pp. 296–310.
+[17] Y. Jin et al., “Hardware trojan detection using path delay fingerprint,”
+in Proc. Int. Symp. Hardw.-Orient. Sec. Trust, 2008, pp. 51–57.
+[18] I. Exurville et al., “Resilient hardware trojans detection based on path
+delay measurements,” in Proc. Int. Symp. Hardw.-Orient. Sec. Trust,
+2015, pp. 151–156.
+[19] X.-T. Ngo et al., “Hardware trojan detection by delay and electromag-
+netic measurements,” in Proc. Des. Autom. Test Europe, 2015, pp. 782–
+787.
+[20] F. Wolff et al., “Towards trojan-free trusted ics: Problem analysis and
+detection scheme,” in Proc. Des. Autom. Test Europe, 2008, pp. 1362–
+1365.
+[21] S. Dupuis et al., “New testing procedure for finding insertion sites of
+stealthy hardware trojans,” in Proc. Des. Autom. Test Europe, 2015, pp.
+776–781.
+[22] N. Lesperance et al., “Hardware trojan detection using exhaustive testing
+of k-bit subspaces,” in Proc. Asia South Pac. Des. Autom. Conf., 2015,
+pp. 755–760.
+[23] H. Salmani et al., “A novel technique for improving hardware trojan
+detection and reducing trojan activation time,” Trans. VLSI Syst., pp.
+112–125, 2012.
+[24] B. Zhou et al., “Cost-efficient acceleration of hardware trojan detection
+through fan-out cone analysis and weighted random pattern technique,”
+Trans. Comp.-Aided Des. Integ. Circ. Sys., pp. 792–805, 2016.
+[25] R. S. Chakraborty et al., “On-demand transparency for improving
+hardware trojan detectability,” in Proc. Int. Symp. Hardw.-Orient. Sec.
+Trust, 2008, pp. 48–50.
+[26] J. Rajendran et al., “Security analysis of logic obfuscation,” in Proc.
+Des. Autom. Conf., 2012, pp. 83–89.
+[27] R. S. Chakraborty et al., “Harpoon: An obfuscation-based soc design
+methodology for hardware protection,” Trans. Comp.-Aided Des. Integ.
+Circ. Sys., vol. 28, no. 10, pp. 1493–1502, 2009.
+[28] J. Rajendran et al., “Security analysis of integrated circuit camouflaging,”
+in Proc. Comp. Comm. Sec., 2013, p. 709–720.
+[29] K. Xiao et al., “Bisa: Built-in self-authentication for preventing hardware
+trojan insertion,” in Proc. Int. Symp. Hardw.-Orient. Sec. Trust, 2013,
+pp. 45–50.
+[30] ——, “A novel built-in self-authentication technique to prevent inserting
+hardware trojans,” Trans. Comp.-Aided Des. Integ. Circ. Sys., pp. 1778–
+1791, 2014.
+[31] P.-S. Ba et al., “Hardware trust through layout filling: A hardware trojan
+prevention technique,” in Proc. Comp. Soc. Symp. VLSI, 2016, pp. 254–
+259.
+[32] K. Xiao et al., “Efficient and secure split manufacturing via obfuscated
+built-in self-authentication,” in Proc. Int. Symp. Hardw.-Orient. Sec.
+Trust, 2015, pp. 14–19.
+[33] M. Rostami et al., “Hardware security: Threat models and metrics,” in
+Proc. Int. Conf. Comp.-Aided Des., 2013, pp. 819–823.
+[34] T. D. Perez et al., “A survey on split manufacturing: Attacks, defenses,
+and challenges,” IEEE Access, pp. 184 013–184 035, 2020.
+[35] C. Bao et al., “Temperature tracking: Toward robust run-time detection
+of hardware trojans,” Trans. Comp.-Aided Des. Integ. Circ. Sys., pp.
+1577–1585, 2015.
+[36] T. F. Wu et al., “Tpad: Hardware trojan prevention and detection for
+trusted integrated circuits,” Trans. Comp.-Aided Des. Integ. Circ. Sys.,
+pp. 521–534, 2016.
+[37] T. Trippel et al., “Icas: an extensible framework for estimating the
+susceptibility of ic layouts to additive trojans,” in Proc. Symp. Sec. Priv.,
+2020, pp. 1742–1759.
+[38] H. M. Kamali et al., “Advances in logic locking: Past, present, and
+prospects,” Cryptology ePrint Archive, Paper 2022/260, 2022.
+[39] G. Guo et al., “Assurer: A ppa-friendly security closure framework for
+physical design,” in Proc. Asia South Pac. Des. Autom. Conf., 2023, p.
+504–509.
+[40] J. Knechtel et al., “Security closure of physical layouts iccad special
+session paper,” in Proc. Int. Conf. Comp.-Aided Des., 2021, pp. 1–9.
+[41] X. Wei et al., “Gdsii-guard: Eco anti-trojan optimization with ex-
+ploratory timing-security trade-offs,” in Proc. Des. Autom. Conf., 2023,
+pp. 1–6.
+[42] S. Mitra et al., “Which concurrent error detection scheme to choose ?”
+in Proc. Int. Test Conf., 2000, pp. 985–994.
+[43] M. Boulé et al., “Automata-based assertion-checker synthesis of psl
+properties,” ACM Trans. Des. Autom. Electron. Syst., 2008.
+[44] Cadence Design Systems, Inc., “Jasper spv app,”
+2024. [Online]. Available: https://cadence.com/en US/home/
+tools/system-design-and-verification/formal-and-static-verification/
+jasper-gold-verification-platform/security-path-verification-app.html
+Mohammad Eslami received his M.S. degree in
+computer engineering from the Shahid Bahonar Uni-
+versity of Kerman, Kerman, Iran, in 2018. Currently,
+he is pursuing his doctoral studies at the Centre for
+Hardware Security, Tallinn University of Technology
+(TalTech), Tallinn, Estonia.
+His research interests primarily revolve around
+hardware security, with a particular focus on physi-
+cal design automation and secure ASIC design.
+Tara Ghasempouri received the PhD degree from
+University of Verona, Italy in 2016. Currently, she
+is a Senior Researcher at Tallinn University of
+Technology (TalTech) in Tallinn, Estonia. Her fields
+of interest are Hardware verification and Hardware
+security. At the moment, she leads projects con-
+cerned with security of digital system as well as
+self-driving vehicle. She started collaboration with
+Taltech by receiving Mobilitas+ postdoctoral grant.
+She had research visitor position at the University of
+Delft, The Netherlands and TU Munich, Germany.
+Samuel Pagliarini (M’14) received the PhD degree
+from Telecom ParisTech, Paris, France, in 2013.
+He has held research positions with the University
+of Bristol, Bristol, UK, and with Carnegie Mellon
+University, Pittsburgh, PA, USA. From 2019 to 2023,
+he led the Centre for Hardware Security at Tallinn
+University of Technology in Tallinn, Estonia. He is
+currently a professor at Carnegie Mellon University,
+Pittsburgh, PA, USA.
+

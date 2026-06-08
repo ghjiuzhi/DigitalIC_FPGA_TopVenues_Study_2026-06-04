@@ -1,0 +1,510 @@
+                                         IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. XX, NO. X, MONTH 202X                                                           1
+
+
+
+
+                                                ReLANCE: A Resource-Efficient Low-Latency
+                                                    Cortical Neural Acceleration Engine
+                                                                        Sonu Kumar, Arjun S. Nair† , Bhawna Chaudhary† ,
+                                                       Mukul Lokhande, Member, IEEE, and Santosh Kumar Vishvakarma, Senior Member, IEEE
+
+
+
+                                            Abstract—We present a Cortical Neural Pool (CNP) ar-                                                       Teacher
+                                         chitecture featuring a high-speed, resource-efficient CORDIC-                                                  Model
+                                         based Hodgkin–Huxley (RCHH) neuron model. Unlike shared
+                                         CORDIC-based DNN approaches, the proposed neuron leverages
+arXiv:2510.17392v2 [cs.NE] 11 Feb 2026
+
+
+
+
+                                         modular and performance-optimised CORDIC stages with a
+                                                                                                                             Smart wearables
+                                         latency-area trade-off. We introduce a novel Constraint-Aware
+                                                                                                                             Devices      Sensor
+                                         Modular Parallelism (CAMP) with Precision & Stability handling
+                                         to leverage maximum speedup and utilisation of hardware                                                           Post-
+                                                                                                                                                         training
+                                         through hardware software co-design. The FPGA implementation                                                   quantized
+                                         of the RCHH neuron shows 24.5% LUT reduction and 35.2%                                                         inference
+                                         improved speed, compared to SoTA designs, with 70% better
+                                         normalised root mean square error (NRMSE). Furthermore,                                           Data
+                                                                                                                                                        Resource
+                                         the CNP exhibits 2.85× higher throughput (12.69 GOPS) than                                                    Constrained    Low      Low     Low
+                                         a functionally equivalent CORDIC-based DNN engine, with                                                         edge AI     Power   Latency   Area
+                                         only a 0.35% accuracy drop relative to the DNN counterpart
+                                         on the MNIST dataset. The overall results indicate that the
+                                         design shows biologically accurate, low-resource spiking neu-                 Fig. 1. Visualisation depicting SNN use cases in wearable devices, emphasis
+                                         ral network implementations for resource-constrained edge AI                  on resource-constrained implementation, adapted from [6]
+                                         applications. The reproducibility codes are publicly available
+                                         at https://github.com/mukullokhande99/CNP RCHH, facilitating
+                                         rapid integration and further development by researchers.                     from ViT-G [8], an object detection model that performs a
+                                           Index Terms—CORDIC, spiking neural network, biological                      single inference on ImageNet (224x224x3) with 2.86 GMACs
+                                         neuron model, FPGA, HH neuron.                                                and 184B parameters, requiring 3 ×104 days for training and
+                                                                                                                       159 MWh of energy consumption on TPUv3. This empha-
+                                                                                                                       sises focus on low-power, low-latency, and low-area edge AI
+                                                                  I. I NTRODUCTION                                     implementation, close to sensor/data in devices and quantised
+                                               RTIFICAL Intelligence (AI) is a significant decision-
+                                         A     maker in human life, especially in the era of data-driven
+                                         sensory computation. Conventionally, Deep neural networks
+                                                                                                                       inference.
+                                                                                                                          At present, several works [9]–[13] focus on specialised hard-
+                                                                                                                       ware accelerators using application-specific integrated circuits
+                                         (DNNs) have eased daily human tasks; however, the rising                      (ASICs) and field-programmable gate arrays (FPGAs) with
+                                         cost has been a limiting factor due to their computational                    limited resources. Prior works proposed different neuromor-
+                                         complexity and hardware resource requirements [1]–[3]. Fur-                   phic hardware acceleration approaches with neurons such as
+                                         thermore, the significant data dependency leads to high opera-                Leaky Integrate-Fire (LIF) [8], Hodgkin-Huxley (H&H) [9],
+                                         tional power consumption and slow event-triggered responses,                  [12], and Izhikevich [11] for spiking implementations, and
+                                         making practical deployment difficult [4], [5]. Spiking Neural                for enhanced hardware efficiency, they addressed the design
+                                         Networks (SNNs) have shown lower resource consumption                         approach with the CORDIC approach with base-2 function
+                                         than DNNs, with spike-based signal processing similar to                      [10], [13] or multiplier-less implementation, piece-wise linear
+                                         that of biological neurons [6], [7]. The challenges associated                (PWL) approximation and read-only-memory (ROM), etc.
+                                         with a hardware-software co-design approach for resource-                     This extended to inference with low power and high parallel
+                                         constrained SNN implementation in smart wearables are de-                     throughput, yielding comparable detection accuracy. Thus, the
+                                         picted in Fig. 1. The hardware complexity can be gauged                       primary goal of this work is to evaluate the SNN topology,
+                                                                                                                       compare it with its DNN counterpart in terms of FPGA
+                                            Manuscript received Month XX, 202x; revised Month XX, 202x.                utilization, and assess application performance in a real-time
+                                            † Arjun S. Nair and Bhawna Chaudhary contributed equally to this work
+                                         and are with the NSDCS Research Group, Dept. of Electrical Engineering,       environment.
+                                         IIT Indore, India. Sonu Kumar and Santosh K. Vishvakarma thank the Dept          The main contributions of this brief are:
+                                         of Science and Technology (DST), Govt of India, for the INSPIRE PhD
+                                         fellowship, and MeitY/SMDP-C2S for ASIC design tools and are associated          • RCHH         Neuron     (Resource-efficient     CORDIC-
+                                         with the Centre for Advanced Electronics, Indian Institute of Technology            enhanced HH Core): We propose a resource-efficient
+                                         (IIT), Indore, 453552, India. Mukul Lokhande was with the NSDCS Research            CORDIC-based Hodgkin–Huxley (RCHH) neuron that
+                                         Group, IIT Indore, India, and is currently with Qualcomm Technologies Inc.,
+                                         Bengaluru 560066, India.                                                            replaces a shared/generic CORDIC datapath with optimal
+                                            Corr. author: Santosh K. Vishvakarma (e-mail: skvishvakarma@iiti.ac.in).         CORDIC stages and constraint-aware scheduling for rate
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. XX, NO. X, MONTH 202X                                           2
+
+
+
+    computation. On a Xilinx VC707 FPGA, the proposed                                          TABLE I
+    neuron achieves 24.5% LUT reduction and 35.2% speed                         R ATE C ONSTANTS FOR G ATING VARIABLES
+    improvement over the state-of-the-art iterative CORDIC
+                                                                        Gating Variable          αx (V )                βx (V )
+    HH design [9], and reduces Normalised Root Mean
+                                                                                               0.1(V + 40)
+    Square Error (NRMSE) by 70%.                                        m                                           4.0e−(V +65)/18
+                                                                                             1 − e−(V +40)/10
+  • RCHH-Neuron-Based Cortical Neural Pool (CNP)
+                                                                                                                          1
+    Engine: We extend the proposed RCHH neuron into a                   h                    0.07e−(V +65)/20
+                                                                                                                   1 + e−(V +35)/10
+    Cortical Neural Pool (CNP) engine with integrated Pre-                                     0.01(V + 55)
+    cision & Stability handling and constraint-aware modular            n                                          0.125e−(V +65)/80
+                                                                                             1 − e−(V +55)/10
+    scheduling. Specifically, the controller maximises hard-
+    ware utilisation by overlapping high-latency (division-                                  TABLE II
+    intensive) and low-latency (exponential-only) rate com-         HH N EURON PARAMETER S ETS U SED FOR S IMULATION AND T ESTING
+    putations, and by masking the tail latency of division
+                                                                                 Parameter     Set 1       Set 2   unit
+    stages via concurrent state-update execution. As a result,                   Cm            1           1       µF/cm2
+    the proposed CNP achieves 2.85× higher throughput                            VN a          57.86       55      mV
+    (12.69 GOPS) compared to a functionally equivalent                           VK            -75.76      -110    mV
+                                                                                 Vl            -53.86      -95     mV
+    CORDIC-based DNN engine [14], while enabling low-                            gN a          130         70      mS
+    latency neuron stepping without stalling.                                    gK            37          8       mS
+  • System-Level Empirical Evaluation and DNN Baseline                           gl            0.6         0.23    mS
+    Comparison: We implement a 64-neuron Cortical Neural
+    Pool (CNP) engine and benchmark it against a function-
+    ally equivalent CORDIC-based DNN engine [14] on the            x ∈ {m, h, n}. The supporting rate equations are found in
+    same FPGA platform. The proposed CNP achieves 2.85×            Table I.
+    higher throughput (12.69 GOPS) with only a 0.35% drop             A rigorous evaluation was required to validate the CORDIC
+    in accuracy relative to the DNN baseline on MNIST,             algorithm’s effectiveness in minimizing the HH neuron’s hard-
+    demonstrating the practical benefits of the SNN approach.      ware footprint. We conducted simulations across varying input
+    In addition, we provide a scalability analysis up to 1024      currents and system parameters to benchmark the CORDIC-
+    neurons and discuss implications for higher-resolution         based implementation against the standard neuron model.
+    inputs and larger SNN model configurations. The codes          Table II outlines these validation parameters. These distinct
+    are open-sourced at https://github.com/mukullokhande99/        sets were selected to verify the CORDIC architecture’s fidelity
+    CNP RCHH.                                                      across diverse neuronal operating conditions as illustrated in
+                                                                   (Fig. 4).
+                                                                      Thus, selecting the parameters in Table II and also applying
+        II. P ROPOSED R E LANCE A RCHITECTURE                      the modular cordic-based approximations for multiplication
+   RELANCE refers to a deliberate revisiting of classical          operations in the Eq. (1) and division and exponential op-
+CORDIC architectures using a spiking-inspired processing           erations in the rate equations in Table I, we implemented
+paradigm to achieve efficient, low-latency AI acceleration         the RCHH neuron to schedule and pipeline the computations
+for modern AI workloads.The RCHH neuron is optimally               optimally. The RCHH neuron orchestrates its internal data flow
+implemented as a hardware-efficient discrete version of the        as seen in the FSM in (Fig. 3(b)). The neuron state evolves
+Hodgkin-Huxley (HH) model, proposed in 1952 by Hodgkin             from IDLE when start sim becomes high, subsequently it
+and Huxley to describe the mathematical behaviour of biolog-       goes to RATE CALC, POWER CALC, CURRENT CALC,
+ical neurons, as follows:                                          UPDATE STATE and finally DONE.
+                                                                      The major focus for accelerated computing in NCP, using
+                                                                  the RCHH neurons, has been enhancing the operations that
+    
+    
+     I = CM dV          4
+               dt + g K n (V − VK ) + g L (V − VL )                can be pipelined and executed in parallel, while reducing
+            3
+    +g N a m h(V − VN a )
+    
+                                                                  redundant computation. Unlike prior SNN implementations
+      dm                                                           that utilize uniform, shared CORDIC blocks to conserve area
+       dt = αm (V )(1 − m) − βm (V )m
+                                                             (1)
+     dh                                                           [9], ReLANCE introduces CAMP architecture for the RCHH
+      dt = αh (V )(1 − h) − βh (V )h
+    
+    
+    
+    
+     dn = α (V )(1 − n) − β (V )n
+                                                                  neuron. Through simulations, it was fixed 8 iterations for
+      dt     n                n                                    CORDIC exponential terms, while 10 for multiplication and
+                                                                   11 for division. This maintains Precision & Stability, handling
+   Membrane potential (V ) is the output, and injected current
+                                                                   boundary cases.
+(I) is the input, where CM denotes the membrane capaci-
+tance, and g denotes the conductance associated with each
+ion channel. The variables n, m, and h correspond to the           A. Constraint-Aware Modular Parallelism (CAMP)
+gating variables controlling ion flow across the membrane.           Conventional shared architectures time-multiplex a single
+VN a , VK , and Vl indicate the ion channel reversal potentials.   generic CORDIC unit for division, multiplication, and expo-
+The rate functions αx (V ) and βx (V ) describe the transition     nentials. While this minimizes core count, it incurs significant
+rates of these particles between different membrane states,        overhead from wide multiplexers (MUX) required to route
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. XX, NO. X, MONTH 202X                                                                                                                                                                                   3
+
+
+
+                                                        "POWER" state calc. waiting
+
+        Input V[t]                                                                                                                                                                                             Single Spiking CORDIC - Neuron
+
+
+
+
+                                                                                                                                                                           Spiking-Neuron
+                                                                                                                                                                                            .
+                                                                                                                                                                                                                                                 X
+
+
+
+
+                                                                                                                                                                       X
+                                                                                                                                                                                                                              Sign-bit
+
+
+
+
+                                                                                                                                                                                 #1
+
+
+
+                                                                                                                                                                                            .
+                                                                                   "RATE" stage
+      Low-Latency      High-Latency                                                                                                                                                                                Shifter                       1             0
+
+
+
+
+                                                                                     Update to
+
+
+
+
+                                                                                                           dt, dn/dt, dh/dt
+                        (Div + Exp)                                                                                                                                                                                                              2'COMP
+
+
+
+
+                                                                                                            used for dm/
+       (Exp Only)
+
+
+
+
+                                                                                                                                                                   S
+                                                                                                            calculations
+                                                                                                                                                                                                                   (To right)
+        𝛽m, αh, 𝛽n       αm, 𝛽h, αn
+
+
+
+
+                                                                                                                                                                           X
+                                                                                                                                                                           Spiking-Neuron
+                                                                                                                                                                                                             X(M-1)             Integer Part        X2   X1   X0       DFF
+
+
+
+
+                                                                                                                                                                                            .
+                                                                                                                                                                                 #2
+                                                                                                                 Iterative update with
+     Partial Update
+
+
+
+
+                                                                                                                   deeper pipelines
+                                                                                                                                                                                                       Counter
+
+
+
+
+                                                                                                                                                     gNormalized
+                                                                                                                                                                       S
+
+
+
+
+                                                                                                                                                                                            .
+     Calc: 𝛽m . m[t]                                                                                                                                                                                                                           SL
+
+
+
+
+                                                                                                                                                                                                Iext
+
+
+
+
+                                                                                                                                                                                                                                 -
+                                                                                                                                                                                                                                                                   1
+                       Final Update
+
+
+
+
+                                                           High Latency
+                                                                                                                                                                                                        (K-bits)
+                                                                                                                                                                                                                          1
+                       Calc: αm.(1 - m)
+
+
+
+
+                                                                                                                                                                           Spiking-Neuron
+                                                                                                                                                                                                                                 Shifter
+                                                                                                                                                                                                                                                              +        2^x
+
+           +
+
+
+
+
+                                                                                                                                                                                            .
+                                                                                                                                                                                 #3
+                                                                                                                                                                                                                                  (To left)
+                                          Cordic div.
+                                                                          Cordic exp.
+
+
+
+
+                                                                                                                                                                                            .
+                                                                                                  Cordic mul.
+                                                                                                                                                                                                             DFF                X(-1) X(-2)     Fraction Part          X(-N)
+       Next State
+
+
+
+
+                                                                                                                                                                   S
+
+                                                                                                                                                                           X
+                                                                                                                                                                           Spiking-Neuron
+                                                                                                                                                                                                                      1                                  SR
+
+
+
+
+                                                                                                                                                                                 #n
+Fig. 2. Block diagram of CNP methodology with the CAMP Architecture
+
+
+
+
+                                                                                                                                                                                            .
+and scheduling overview.
+                                                                                                                                                                                                              (a)
+
+varying inputs. ReLANCE eliminates this by deploying spe-
+cialized CORDIC units, hardwired specifically for either linear
+or hyperbolic modes. Stripping the generic mode-switching
+logic reduces LUT utilization by 24.5% despite the increased
+instance count.
+   We split the rate functions into two main categories, Firstly
+High-Latency Groups (Division-Intensive): Functions like αm ,
+βh , and αn require both exponential and division operations
+(the ”a/b” format). These are computationally expensive and
+constitute the ”Critical Path.” Secondly Low-Latency Groups
+(Exponential-Only): Functions like βm , αh , and βn rely pri-
+marily on exponentials. These complete in fewer clock cycles.                                                                                                                                                 (b)
+   We deploy six specialized CORDIC cores (exponential,                                                                                  Fig. 3. (a) Architecture for the spiking neuronal pool, the functional equivalent
+multiplication and division) each to calculate all rate functions                                                                        of the DNN neuron engine for the execution of AI workloads with RCHH
+                                                                                                                                         Neuron, and (b) the complete top-level FSM of a single neuron, showing
+in parallel. However, rather than idling the cores assigned to                                                                           different neuron states.
+the Low-Latency Group once they finish, the CPN (Central
+Pipeline Node) Controller dynamically re-tasks them:
+                                                                                                                                         stage; the pipeline depth (3-6 stages for High-Latency and
+  1) Stage A (Concurrent Launch): All 6 CORDIC lanes
+                                                                                                                                         Low-Latency groups, respectively) is fully saturated, ensuring
+     initiate calculation of their respective α and β variables
+                                                                                                                                         maximum utilisation of the FPGA resources.
+     simultaneously.
+  2) Stage B (Staggered Completion & Reuse): As the
+     Low-Latency cores complete their exponential calcula-                                                                               B. Precision and Stability
+     tions (for βm ), they effectively “release” their hardware                                                                             To address numerical instability where rate equation denom-
+     resources early. Instead of waiting for the High-Latency                                                                            inators approach zero (−55mV), ReLANCE integrates ”Spe-
+     (Division) cores to finish, the controller immediately                                                                              cial Case” detectors. Upon detecting an ϵ-neighbourhood (ϵ =
+     pipelines the available results into the next computation                                                                           2−10 ) around singularities, the pipeline triggers L’Hôpital’s
+     stage: the differential gating equations ( dm    dn dh
+                                                 dt , dt , dt ).                                                                         rule approximations via shift-and-add logic. This prevents
+  3) Stage C (Latency Masking): The computation of the                                                                                   overflow and contributes to a 70% improvement in NRMSE
+     state updates ( dmdt , etc.) occurs concurrently with the                                                                           compared to standard fixed-point implementations.
+     final pipeline stages of the slower High-Latency rate                                                                                  Fig. 4 demonstrates our RCHH neuron model’s ability to
+     functions.                                                                                                                          mimic distinct firing modes observed in biological neurons.
+   The approach ensures that the latency for division operations                                                                         These are critical for encoding spatiotemporal features in
+is hidden under the next processing stage, and results in                                                                                neuromorphic applications.
+architectural-level temporal complexity of order O(1) relative
+to gate count by overlapping the Rate Calculation Phase with                                                                                                               III. P ERFORMANCE A NALYSIS
+the State Update Phase. We achieved 34.7% higher utilisation                                                                                The experimental setup for evaluation consists of a quan-
+across all 18 cores with the Modular-Parallel approach, re-                                                                              tised SNN evaluation based on the emulation of the CORDIC-
+sulting in a 42.39% speed-up. We ensure efficiency through a                                                                             based H&H neuron, followed by a hardware implementation
+software-hardware co-design approach by tiling the data before                                                                           using Verilog HDL. We implemented the proposed Neuron
+feeding it to the CNP and finally stitching it back at the end,                                                                          and neuronal pool shown in Fig. 2, and 3 for evaluation
+ensuring no CORDIC core is left stalling (waiting) at any                                                                                using the VC707 FPGA. An FPGA board was chosen for a
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. XX, NO. X, MONTH 202X                                                           4
+
+
+
+                                                                                                          TABLE III
+                                                                                         C OMPARISON FOR FPGA R ESOURCES UTILIZATION ,
+                                                                                                WITH DIFFERENT 16- BIT N EURONS
+
+                                                                                         Design                        LUT      FF       Delay (ns)
+                                                                                         Proposed
+                                                                                                                       1770    862          1.4
+                                                                                         (Pareto CORDIC H&H)
+                                                                                         Iterative CORDIC H&H [9]     2344      460          5
+                                                                                         CORDIC Izhikevich [11]        986      264        2.16
+                                                                                         Multiplier-less H&H [12]     5660     2840        11.77
+                                                                                         RAM H&H [12]                 4735     1552         10
+                                                                                         RPE [1]                      8054     1718        4.62
+                                                                                         MP-RPE [1]                   8065     1072        5.56
+                                                                                         PWL H&H [9]                  29130    25430       39.06
+Fig. 4. Diverse spiking characteristics generated by the RCHH model.                     Parallel CORDIC H&H          86032    50228       15.78
+Top: Fast Spiking: High-frequency non-adapting spikes (cortical neurons);
+Intrinsically Bursting: Spike clusters followed by hyperpolarisation (thala-
+mic neurons); Chattering: Gamma-frequency oscillations (30–80 Hz) during                                  TABLE IV
+sustained input. Bottom: Low-Threshold Spiking: Subthreshold oscillations           H ARDWARE RESOURCE COMPARISON WITH STATE - OF - THE ART
+leading to delayed firing; Tonic/Rebound Spiking: Persistent firing post-          ACCELERATOR DESIGNS , 16- BIT PRECISION , AND VC707 FPGA.
+inhibitory input (thalamocortical cells).
+                                                                                        Design                      LUTs (K)   FFs (K)    Delay (ns)
+                                                                                        Proposed
+                                                                                                                     118.6      57.76     5.04
+                                                                                        (Pareto CORDIC H&H)
+                                                                                        Iterative CORDIC H&H [9]      157       30.82     20.5
+                                                                                        CORDIC Izhikevich [11]         66       17.68     9.288
+                                                                                        Multiplier-less H&H [12]     359.2       190      31.54
+                                                                                        RAM H&H [12]                 317.3       104      35.6
+                                                                                        TCAD’23 [8]                  170.4      113.2     7.38
+                                                                                        TRETS’23 [4]                  115        115      21.46
+                                                                                        TCAS-I’22 [15]                213        352      5
+                                                                                        TCAS-II’23                    132       39.5      6.68
+                                                                                        ESL’24 [3]                    195       95.7      5.36
+
+
+
+
+                                                                                mW). Although our RCHH neuron consumes more resources
+                                                                                compared to the CORDIC-based iterative Izhikevich neuron, it
+                                                                                has proven to be more precise and biologically accurate than
+                                                                                the latter. We further extended the analysis for the MNIST
+                                                                                pattern and evaluated against DNNs (LeNet-5/MNIST) for a
+                                                                                fairer comparison. DNN performance for the CORDIC-based
+                                                                                neuron model [4] was 95.06% (8-bit), 96.70% (16-bit) and
+                                                                                96.80% (32-bit) respectively and 94.5% in [2]. The SNN-
+                                                                                model performance with the proposed CORDIC-based H&H
+                                                                                neuron is reported in Fig. 5. Further, the observation for
+                                                                                spiking-transformer/ImageNet-1K is that accuracy drops from
+                                                                                FxP-16 quantisation (0.75%-1.2%) and an additional 0.6%
+                                                                                from CORDIC RCHH configuration against the FP32 baseline.
+                                                                                   Our design is relatively superior to state-of-the-art LIF and
+                                                                                H&H implementations in terms of NRMSE, NRMSD, and
+                                                                                ERRT metrics: (0.13, 0.34, 0.32) compared to (0.43, 0.39,
+Fig. 5. Network implementation with only 0.35% accuracy drop: a 784-            0.21) and (0.93, 0.74, 5.00) in [9], [10], achieving a CORR
+neuron input layer receives rate-coded spikes from each 28 × 28 MNIST           of 93.81% against 95.66% & 90.4%. This is also attributed
+image. Synaptic weights learned via STDP generate the injected current Iinj ,
+driving spiking activity in downstream neurons to produce the final digit       to the special-case handling required for rate calculations,
+prediction (the class with the maximum output spikes).                          as well as to the near-zero denominator in division, which
+                                                                                results in a lower error rate (ERRT). For comparison with the
+                                                                                DNN accelerator engine, we built an iso-functional neuronal
+fair comparison with the state-of-the-art MAC unit, offering                    pool with 64 neurons. Our design shows significantly reduced
+the same arithmetic precision. From the results in Table IV,                    resource usage (LUTs and FFs) compared to prior SNN
+our proposed unit consumes significantly fewer LUTs and                         models and DNN accelerator engines, as shown in Table IV.
+shows faster computation compared to other neuron types. The                       The evaluation targets architectural scalability, as detailed
+system with VC707 deployment inferred 5.04 ms latency and                       with MNIST-scale end-to-end evaluation and further scaling.
+26.34 mW, outperforming prior works with similiar parame-                       As shown in Fig. 6b, synaptic throughput required scales near-
+ters: FPGA VC707 deployments [4], [5] (21.46 ms / 2.24 W),                      linearly from 10.3 Giga-Spiking ops. per second (GSOPS) for
+Layer-reused (77.2 ms / 1.524 W), Pynq-Z2 [2] (18.4 ms / 0.93                   28 × 28 to 236.8 GSOPS for 224 × 224, indicating efficient
+W ), and baselines: NVIDIA Jetson Nano (GPU only) (53.5                         support for ImageNet-1K inputs without significant control
+ms / 85.45 mW) and Raspberry Pi (CPU only) (75.5 ms / 102.8                     or scheduling bottlenecks as the architecture is parameterized
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. XX, NO. X, MONTH 202X                                                         5
+
+
+
+
+                    (a)                                               (b)                                                    (c)
+Fig. 6. (a) System Throughput (GOPS) vs. Hidden Width across varying Input Resolutions, (b) Synaptic Throughput (MSOPS): Mega Synaptic Operations
+per second vs Input Resolutions, (c) Execution Latency Scaling: Total Time (in seconds) vs. Hidden Layer Width across varying Input Resolutions
+
+
+
+and follows scalable startgey. Fig. 6a shows that compute                                              R EFERENCES
+throughput (GOPS) requirements, defined by counting fixed-                 [1] B. Li, K. Li, J. Zhou, Y. Ren, W. Mao, H. Yu, and N. Wong, “A Reconfig-
+point arithmetic primitives (add, multiply, divide, exponential)               urable Processing Element for Multiple-Precision Floating/Fixed-Point
+per neuron timestep, remain comparable as hidden layer width                   HPC”, IEEE Transactions on Circuits and Systems II: Express Briefs,
+                                                                               vol. 71, pp. 1401–1405, Mar. 2024.
+increases from 256 to 1024 neurons, demonstrating effective                [2] A. Yasoubi, R. Hojabr, and M. Modarressi, “Power-efficient accelerator
+CAMP architecture for latency-critical rate computations. Cor-                 design for neural networks using computation reuse”, IEEE Computer
+respondingly, Fig. 6c shows that despite a 5.2× increase in in-                Architecture Letters, vol. 16, pp. 72–75, June 2017.
+                                                                           [3] X. Yin, Z. Wu, D. Li, C. Shen, and Y. Liu, “An Efficient Hardware Ac-
+put dimensionality from 28×28 to 64×64, normalised latency                     celerator for Block Sparse Convolutional Neural Networks on FPGA”,
+improves by 4.8× (from 8.8µs/s/pixel to 1.8µs/s/pixel)                         IEEE Embedded Systems Letters, vol. 16, pp. 158–161, June 2024.
+and further reaches 1.5µs/s/pixel. at 224 × 224, confirming                [4] G. Raut, S. Karkun, and S. K. Vishvakarma, “An empirical approach to
+                                                                               enhance performance for scalable cordic-based deep neural networks”,
+optimization for high-resolution inputs. Thus, CNP Archi-                      ACM Trans. Reconfigurable Technol. Syst., vol. 16, pp. 1–32, Sept. 2023.
+tecture reported a total energy evaluation of 26.324 mJ per                [5] M. Lokhande, G. Raut, and S. K. Vishvakarma, “Flex-PE: Flexible
+inference run, showing significant improvements compared to                    and SIMD Multiprecision Processing Element for AI Workloads”, IEEE
+                                                                               Transactions on Very Large Scale Integration (VLSI) Systems, vol. 33,
+existing works [9], [11], [12]. Scalability beyond the evaluated               pp. 1610–1623, June 2025.
+neuron pool can be analysed analytically, each RCHH neuron                 [6] H. Chen, Y. Liu, W. Ye, J. Ye, Y. Chen, S. Chen, and C. Han, “Research
+maintains a constant number of state variables, leading to                     on Hardware Acceleration of Traffic Sign Recognition Based on Spiking
+                                                                               Neural Network and FPGA Platform”, IEEE Transactions on Very Large
+linear growth in register memory and AXI bandwidth with                        Scale Integration (VLSI) Systems, vol. 33, pp. 499–511, Feb. 2025.
+network size, while a fixed-depth, neuron-local FSM ensures                [7] M. Jin, X. Wang, C. Guo, and S. Yang, “Research on target detection for
+constant per-neuron control complexity and avoids centralized                  autonomous driving based on ECS-spiking neural networks”, Scientific
+                                                                               Reports, vol. 15, p. 13725, Apr. 2025.
+bottlenecks, making scaling primarily memory-bandwidth-                    [8] W. Ye, Y. Chen, and Y. Liu, “The Implementation and Optimization of
+limited and amenable to tiled or multi-core neuromorphic                       Neuromorphic Hardware for Supporting Spiking Neural Networks With
+systems.                                                                       MLP and CNN Topologies”, IEEE Trans. Comput.-Aided Design Integr.
+                                                                               Circuits Syst., vol. 42, pp. 448–461, Feb. 2023.
+                                                                           [9] S. Haghiri, A. Naderi, B. Ghanbari, and A. Ahmadi, “High Speed and
+                          IV. C ONCLUSION                                      Low Digital Resources Implementation of Hodgkin-Huxley Neuronal
+                                                                               Model Using Base-2 Functions”, IEEE Transactions on Circuits and
+   In this work, we demonstrate a resource-efficient CORDIC-                   Systems I: Regular Papers, vol. 68, pp. 275–287, Jan. 2021.
+based H&H neuron and evaluate it for the Cortical Neural                  [10] M. Heidarpour, A. Ahmadi, and R. Rashidzadeh, “A CORDIC Based
+                                                                               Digital Hardware For Adaptive Exponential Integrate and Fire Neuron”,
+Pool engine used for SNN acceleration. The proposed design                     IEEE Trans. on Cir. and Syst. I, vol. 63, pp. 1986–1996, Nov. 2016.
+significantly reduces resource consumption and latency while              [11] Z. Peng, J. Wang, Y. Zhan, R. Min, G. Yu, J. Luo, K.-S. Chong,
+maintaining high biological accuracy, utilizing a performance-                 and C. Wang, “A High-Accuracy and Energy-Efficient CORDIC-based
+                                                                               Izhikevich Neuron”, in 19th IEEE International New Circuits and
+optimised CORDIC-based design. Thus, our design achieves                       Systems Conference (NEWCAS), pp. 1–4, June 2021.
+24.5% lower LUT consumption, 35.2% faster execution, and                  [12] S. Yaghini Bonabi, H. Asgharian, et al., “FPGA implementation of a
+a 70% improvement in NRMSE compared to prior work                              biological neural network based on the Hodgkin-Huxley neuron model”,
+                                                                               Frontiers in neuroscience, vol. 8, p. 379, Nov. 2014.
+[10], emphasising improved energy efficiency. The CNP                     [13] J. Wang, Z. Peng, Y. Zhan, Y. Li, G. Yu, K.-S. Chong, and C. Wang,
+pool achieves 12.69 GOPS throughput, outperforming iso-                        “A High-Accuracy and Energy-Efficient CORDIC Based Izhikevich
+functional DNN accelerator engines, with just 0.35% accuracy                   Neuron With Error Suppression and Compensation”, IEEE Transactions
+                                                                               on Biomedical Circuits and Systems, vol. 16, pp. 807–821, Oct. 2022.
+degradation on MNIST classification. These overall results                [14] O. Kokane, G. Raut, S. Ullah, M. Lokhande, A. Teman, A. Kumar,
+establish the feasibility of SNN accelerators as promising AI                  and S. K. Vishvakarma, “Retrospective: A CORDIC-Based Configurable
+accelerators focused on low-power, resource-constrained edge                   Activation Function for NN Applications”, in IEEE Computer Society
+                                                                               Annual Symposium on VLSI (ISVLSI), vol. 1, pp. 1–6, July 2025.
+AI systems. Future work involves evaluating application-level             [15] Y. Liu, Y. Chen, W. Ye, and Y. Gui, “FPGA-NHAP: A General FPGA-
+performance in autonomous driving.                                             Based Neuromorphic Hardware Acceleration Platform With High Speed
+                                                                               and Low Power”, IEEE Trans. on Cir. and Syst. I, vol. 69, pp. 2553–
+                                                                               2566, June 2022.
+

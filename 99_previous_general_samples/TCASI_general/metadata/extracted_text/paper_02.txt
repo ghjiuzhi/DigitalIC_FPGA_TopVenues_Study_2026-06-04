@@ -1,0 +1,1108 @@
+A Generalized Adjusted Min-Sum Decoder for 5G LDPC
+Codes
+Citation for published version (APA):
+Ren, Y., Harb, H., Shen, Y., Balatsoukas-Stimming, A., & Burg, A. (2024). A Generalized Adjusted Min-Sum
+Decoder for 5G LDPC Codes: Algorithm and Implementation. IEEE Transactions on Circuits and Systems I:
+Regular Papers, 71(6), 2911-2924. https://doi.org/10.1109/TCSI.2024.3368056
+
+
+
+
+Document license:
+TAVERNE
+
+
+DOI:
+10.1109/TCSI.2024.3368056
+
+
+Document status and date:
+Published: 01/06/2024
+
+
+Document Version:
+Publisher’s PDF, also known as Version of Record (includes final page, issue and volume numbers)
+
+
+Please check the document version of this publication:
+• A submitted manuscript is the version of the article upon submission and before peer-review. There can be
+important differences between the submitted version and the official published version of record. People
+interested in the research are advised to contact the author for the final version of the publication, or visit the
+DOI to the publisher's website.
+• The final author version and the galley proof are versions of the publication after peer review.
+• The final published version features the final layout of the paper including the volume, issue and page
+numbers.
+Link to publication
+
+
+
+
+General rights
+Copyright and moral rights for the publications made accessible in the public portal are retained by the authors and/or other copyright owners
+and it is a condition of accessing publications that users recognise and abide by the legal requirements associated with these rights.
+
+       • Users may download and print one copy of any publication from the public portal for the purpose of private study or research.
+       • You may not further distribute the material or use it for any profit-making activity or commercial gain
+       • You may freely distribute the URL identifying the publication in the public portal.
+
+If the publication is distributed under the terms of Article 25fa of the Dutch Copyright Act, indicated by the “Taverne” license above, please
+follow below link for the End User Agreement:
+www.tue.nl/taverne
+
+Take down policy
+If you believe that this document breaches copyright please contact us at:
+openaccess@tue.nl
+providing details and we will investigate your claim.
+
+
+
+
+Download date: 04. Jun. 2026
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS, VOL. 71, NO. 6, JUNE 2024                                                                    2911
+
+
+
+
+  A Generalized Adjusted Min-Sum Decoder for 5G
+    LDPC Codes: Algorithm and Implementation
+   Yuqing Ren , Graduate Student Member, IEEE, Hassan Harb, Member, IEEE, Yifei Shen , Member, IEEE,
+          Alexios Balatsoukas-Stimming , Member, IEEE, and Andreas Burg , Senior Member, IEEE
+
+   Abstract— 5G New Radio (NR) has stringent demands on                          scheme of the enhanced mobile broadband (eMBB) scenario
+both performance and complexity for the design of low-density                    in 5G standards [5], [6]. However, designing high-performance
+parity-check (LDPC) decoding algorithms and corresponding                        and low-complexity LDPC decoding algorithms and corre-
+VLSI implementations. Furthermore, decoders must fully sup-                      sponding VLSI implementations tailored to 5G New Radio
+port the wide range of all 5G NR blocklengths and code rates,
+                                                                                 (NR) is still an important research challenge.
+which is a significant challenge. In this paper, we present a
+high-performance and low-complexity LDPC decoder, tailor-                           In terms of decoding algorithms, belief propagation decod-
+made to fulfill the 5G requirements. First, to close the gap                     ing (also called sum-product (SP) decoding on factor
+between belief propagation (BP) decoding and its approximations                  graphs [7]) of LDPC codes delivers outstanding error-
+in hardware, we propose an extension of adjusted min-sum decod-                  correcting performance, closely approaching the Shannon
+ing, called generalized adjusted min-sum (GA-MS) decoding. This                  limit [8]. However, SP decoding comes with high computa-
+decoding algorithm flexibly truncates the incoming messages at                   tional complexity and memory overhead [9]. To alleviate these
+the check node level and carefully approximates the non-linear
+functions of BP decoding to balance the error-rate and hardware
+                                                                                 issues, a series of min-sum (MS) decoding algorithms [10],
+complexity. Numerical results demonstrate that the proposed                      [11], [12], [13], [14], [15], [16], [17], [18] and a series of
+fixed-point GA-MS has only a minor gap of 0.1 dB compared                        approximate-min∗ (A-Min∗ ) decoding algorithms [19], [20]
+to floating-point BP under various scenarios of 5G standard                      are proposed as alternatives to SP decoding. For instance,
+specifications. Secondly, we present a fully reconfigurable 5G NR                MS decoding only involves selecting the smallest magnitudes
+LDPC decoder implementation based on GA-MS decoding. Given                       among incoming messages from variable nodes (VNs) to
+that memory occupies a substantial portion of the decoder                        check nodes (CNs), which simultaneously reduces the mem-
+area, we adopt multiple data compression and approximation                       ory of outgoing messages from CNs to VNs. However, this
+techniques to reduce 42.2% of the memory overhead. The
+corresponding 28nm FD-SOI ASIC decoder has a core area of
+                                                                                 process results in performance loss compared to SP decod-
+1.823 mm2 and operates at 895 MHz. It is compatible with                         ing [20], [21]. Therefore, more advanced MS variants have
+all 5G NR LDPC codes and achieves a peak throughput of                           been presented [12], [13], [14], [15], [16], [17], [18], such as
+24.42 Gbps and a maximum area efficiency of 13.40 Gbps/mm2                       normalized MS (NMS) decoding, offset MS (OMS) decoding,
+at 4 decoding iterations.                                                        adaptive MS (AMS) decoding [13], [14], [15], self-correction
+                                                                                 MS decoding [16], and multiple dimensional modified MS
+   Index Terms— LDPC codes, generalized adjusted min-sum
+(GA-MS) decoding, belief propagation (BP), hardware implemen-                    decoding [17], [18].
+tation, 5G NR wireless communications.                                              On the other hand, A-Min∗ decoding first determines the
+                                                                                 edge with the smallest incoming message, then calculates two
+                      I. I NTRODUCTION                                           distinct outgoing magnitudes at each CN, and propagates them
+                                                                                 to adjacent VNs, relying on identical SP functions [19]. While
+L    OW-DENSITY parity-check (LDPC) codes, invented by
+     Gallager [1], have received considerable attention in
+both academia and industry owing to their extraordinary
+                                                                                 this method nearly matches the performance of SP decoding,
+                                                                                 A-Min∗ decoding suffers from two significant drawbacks: long
+error-correcting performance and the inherently parallel decod-                  decoding latency from the above sequential processing and
+ing algorithm. Over the past several decades, LDPC codes have                    substantial computational complexity due to the SP functions.
+been adopted by various communication and storage systems,                       To mitigate the decoding latency issue, the authors of [20] pro-
+such as ATSC [2], IEEE 802.11n [3], and DVB-S2 [4]. Most                         posed a generalized A-Min∗ (GA-Min∗ ) decoding algorithm
+prominently, LDPC codes were ratified as the channel coding                      by truncating the number of incoming messages to optimize
+                                                                                 recursive CN processing. To reduce computational complexity,
+  Manuscript received 24 October 2023; revised 23 January 2024;                  adjusted MS (A-MS) decoding proposed by Qualcomm [21]
+accepted 9 February 2024. Date of publication 8 March 2024; date of current      has drawn significant attention during the development of
+version 30 May 2024. This article was recommended by Associate Editor            5G NR LDPC codes. A-MS decoding can be considered as a
+R. Garg. (Corresponding author: Andreas Burg.)
+  Yuqing Ren, Hassan Harb, Yifei Shen, and Andreas Burg are with                 quantized version of A-Min∗ decoding, as it employs look-up
+the Telecommunications Circuits Laboratory (TCL), École Polytechnique            tables (LUTs) to simplify non-linear CN processing. However,
+Fédérale de Lausanne (EPFL), 1015 Lausanne, Switzerland (e-mail: yuqing.         compared to classical MS-based decoders [22], [23], [24],
+ren@epfl.ch; hassan.harb@epfl.ch; yifei.shen@epfl.ch; andreas.burg@epfl.         [25], A-MS decoding still faces a relatively high implementa-
+ch).
+  Alexios Balatsoukas-Stimming is with the Department of Electrical              tion complexity due to extra additions and comparisons in the
+Engineering, Eindhoven University of Technology, 5600 MB Eindhoven,              approximation process.
+The Netherlands (e-mail: a.k.balatsoukas.stimming@tue.nl).                          In terms of hardware implementations and given that the 5G
+  Color versions of one or more figures in this article are available at         standard stipulates a peak throughput of 20 Gbps in the down-
+https://doi.org/10.1109/TCSI.2024.3368056.
+  Digital Object Identifier 10.1109/TCSI.2024.3368056                            link [26], the 5G NR LDPC decoder is tasked with balancing
+                       1549-8328 © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.
+                                     See https://www.ieee.org/publications/rights/index.html for more information.
+
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+2912                                                    IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS, VOL. 71, NO. 6, JUNE 2024
+
+
+
+throughput, area efficiency, and energy consumption. This                           • A hardware-friendly optimized static schedule (OSS) is
+balance must also uphold compatibility across all code con-                           proposed to both improve error-correcting performance
+figurations, presenting a significant challenge. Notably, since                       and reduce the worst-case decoding latency.
+the large amount of memory required to support the maximum                          • We present a fully reconfigurable 5G NR LDPC decoder
+blocklength in 5G NR already occupies a significant part of the                       implementation using GA-MS decoding, compatible with
+decoder area, these large memories tend to reduce the impact                          all 5G NR LDPC codes. By adding data compression
+of more complex algorithms on overall efficiency. In the litera-                      and approximation techniques, we achieve a significant
+ture [9], [22], [23], [24], [25], [27], [28], [29], numerous clas-                    reduction in memory overhead compared to explicit stor-
+sical LDPC decoders have been presented, featuring varying                            age. The 28nm FD-SOI post-layout implementation has
+degrees of resource sharing. These decoders can be categorized                        a core area of 1.823 mm2 , achieves a peak throughput of
+into fully-parallel [9], [27], [28], [29] and partially-parallel                      24.42 Gbps at 895 MHz, and has an energy consumption
+architectures [22], [23], [24], [25]. Partially-parallel decoders                     of 12.56 pJ/bit with a supply voltage of 1.0 V.
+can be further divided into block-parallel, row-parallel, and                    The remainder of this paper is organized as follows: Section II
+other variants. It is noteworthy that thanks to the quasi-cyclic                 provides symbol definitions and background on LDPC codes
+(QC) property of the LDPC codes in many standards [3],                           and decoding. Section III describes the proposed GA-MS
+[5], [6], block-parallel architectures can implement LDPC                        decoding and its various optimizations. In Section IV,
+decoding in an iteratively decomposed fashion without high                       we present our 5G NR LDPC decoder architecture and the
+routing complexity, resulting in a balance between throughput,                   corresponding optimizations. Section V discusses implemen-
+area efficiency, and decoding flexibility [24], [25].                            tation results. Finally, Section VI concludes the paper.
+   To adhere to the 5G peak throughput requirement, several
+state-of-the-art (SOA) 5G NR LDPC decoders have been                                                   II. P RELIMINARIES
+reported in [15], [30], [31], [32], [33], [34], [35], mainly                        Throughout this paper, we follow the definitions introduced
+using row-parallel architectures or variations thereof. Unlike                   below. Boldface small letters such as u denote vectors, where
+block-parallel ones, these row-parallel architectures can pro-                   u[i] refers to the i-th element of u. Boldface capital letters
+cess multiple blocks simultaneously by a more complex                            such as B represent matrices, where B[i][ j] denotes the
+programmable routing network to improve peak throughput.                         element at the i-th row of the j-th column of B. Blackboard
+However, due to the high routing complexity for long codes,                      letters such as S = {·} denote sets with |S| being the cardinality
+it is difficult for these designs to support the maximum                         of S. The hard decision function is defined as HD(x) = 1 if
+blocklength in 5G NR. Thus, the implementations in [15], [32],                   x < 0 and HD(x) = 0 if x ≥ 0. The signum function, denoted
+[33], [34], and [35] generally target or provide results only for                as sgn(x), returns −1, 0, or 1, when x is negative, zero,
+short to moderate blocklengths. Only recently such a 5G NR                       or positive, respectively. For brevity, we use the term floating-
+LDPC decoder with a novel memory access scheduling [31]                          point to specifically refer to double-precision floating-point.
+was reported to fully meet the requirements of 5G. Based on                                       n                            o
+partially row-parallel (PRP) architecture, the decoder in [31]                                      x ∈ {0, 1} N |H · x = 0 M×1 ,               (1)
+can process each layer of the 5G NR LDPC base graphs                             LDPC codes are linear block codes specified by a sparse M ×
+within a predetermined fixed latency to achieve a high peak                      N parity-check matrix (PCM) H, as shown in (1), where x
+throughput. Nevertheless, the row weights of the base graphs                     is a length-N binary column vector and 0 is a length-M all-
+vary significantly, and most layers have low weights [5], [6].                   zero vector. M denotes the number of parity checks and N
+During decoding at medium to low code rates, the efficiency of                   denotes the code length. Furthermore, LDPC codes can also be
+this PRP architecture [31] is limited by its row-parallel design                 described by a bipartite Tanner graph with a set of M CNs and
+that must still process layers with low weights sequentially at                  N VNs [36]. If H[c][v] = 1 for 0 ≤ c < M and 0 ≤ v < N ,
+a fixed rate, thus diminishing the decoding throughput. Yet,                     the c-th CN is connected to the v-th VN on the Tanner graph.
+considering the wide range of 5G NR LDPC blocklengths                            For each CN, we use Vc to represent the set of the adjacent
+and code rates, the block-parallel architecture has an inherent                  VNs for the c-th CN and we use Cv to denote the set of the
+advantage in balancing flexibility and parallelism, achieving                    neighbours of the v-th VN. The number of neighbours that
+stable performance across all 5G NR code configurations.                         connect to a VN or a CN are referred to as their column-
+Our work demonstrates that a block-parallel architecture                         and row-degree, denoted as dv and dc , i.e., |Cv | = dv and
+can already satisfy the 5G peak throughput requirement of                        |Vc | = dc . Due to the quasi-cyclic property [37], [38], QC-
+20 Gbps, without higher processing parallelism.                                  LDPC codes are further described by a more structured M p ×
+                                                                                 N p prototype matrix H p . Each entry of H p can be expanded
+Contributions and Paper Outline:                                                 by substituting each element of H p with a Z × Z identity
+  The specific contributions of this paper are as follows:                       matrix that is cyclically shifted by ω = H p [c][v] < Z for 0 ≤
+  • We propose a high-performance and low-complexity                             c < M p and 0 ≤ v < N p . The code parameter Z is referred
+    algorithm called generalized A-MS (GA-MS) decod-                             to as the lifting size. If ω = −1 or ω = 0, the corresponding
+    ing to balance the error-rate, computational complexity,                     entry denotes a Z × Z all-zero or identity matrix, respectively.
+    and memory overhead. We also design the required LUTs
+    and propose other optimizations to simplify the hardware.                    A. 5G NR LDPC Codes
+  • We provide a comprehensive performance analysis                                To enable rate-compatibility and incremental redundancy
+    with the designed LUTs, quantization schemes, and                            hybrid automatic repeat request (IR-HARQ), 5G NR adopts
+    approximation techniques. The proposed fixed-point GA-                       protograph-based raptor-like LDPC codes. Combined with the
+    MS decoding has only a 0.1 dB gap compared to                                quasi-cyclic property, 5G NR LDPC codes can be derived from
+    floating-point SP decoding under various scenarios of                        two base graphs (BG1 and BG2). Let K u denote the number
+    5G NR standard specifications.                                               of information columns in the base graphs. In 5G standards,
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+REN et al.: GENERALIZED ADJUSTED MIN-SUM DECODER FOR 5G LDPC CODES                                                                                        2913
+
+
+
+                                                                                  row of H p (i.e., BG1 and BG2) corresponds to the rows c · Z
+                                                                                  to (c + 1) · Z − 1 of H. For simplicity, we call the rows c · Z
+                                                                                  to (c + 1) · Z − 1 of H the c-th layer.
+
+                                                                                  C. Adjusted Min-Sum (A-MS) Decoding
+                                                                                     In A-Min∗ decoding, the smallest magnitude of all incoming
+                                                                                  T-messages is identified first and two distinct outgoing mag-
+Fig. 1.   A bipartite Tanner graph with VN update and CN update process.          nitudes are computed using (3). Unlike MS decoding in (2),
+                                                                                  A-Min∗ decoding still requires complex SP calculations on
+a complete BG1 comprises 46 rows and 68 columns (with the
+                                                                                  all incoming T-messages after finding the minimum, which
+maximum K u = 22), and a complete BG2 consists of 42 rows
+                                                                                  can result in a long decoding latency. However, based on
+and 52 columns (with the maximum K u = 10). A variety of
+                                                                                  the block-parallel architecture, using the same equations (3),
+code lengths and rates are attained by adjusting the lifting size
+                                                                                  A-MS decoding [21] can select the second smallest value when
+Z and by puncturing the columns of the base graphs [6], [39],1                    a new tv arrives, and perform a box-plus operator with the new
+which affects the number of parity-check bits. The leftmost                       second minimum and the previous result to recursively update
+two information columns in the base graphs are always punc-                       the outcome. This approach has the advantage that both results
+tured to boost transmission efficiency in practical scenarios.                    of (3) and the minimum can be obtained simultaneously after
+Let E and K denote the actual transmitted code length and                         the arrival of the last valid block in the current row to avoid
+information length after rate-matching. We can refer to 5G NR                     serial processing. The box-plus operator is approximated using
+LDPC codes as (E, K ) codes, where K = K u · Z and where                          simple LUTs to reduce hardware complexity. Corresponding to
+R = KE represents the code rate.                                                  the edge with the minimum incoming magnitude, the outgoing
+                                                                                  R-message is referred to as a critical message [20] (consistent
+B. Layered LDPC Decoding                                                          with the principle of SP decoding). For the remaining edges,
+    The error-correcting performance and hardware complexity                      the outgoing R-messages are called non-critical messages and
+of an LDPC decoder also depend on its decoding schedule.                          are computed using all incoming messages (including the
+Two classical methods are flooding [8] and layered sched-                         current edge itself). Hence, as a hardware-friendly decoding
+ules [40], [41]. In contrast to the flooding schedule that updates                algorithm, A-MS decoding has a similar storage complexity
+all VNs together at the end of each iteration [8], layered decod-                 as MS-based decoding and can achieve almost the same error-
+ing goes through the PCM and updates the connected VNs row                        correcting performance as SP decoding.
+by row. This update strategy results in faster convergence and                               Y
+                                                                                                     sgn(tv ′ ) ·
+a significant reduction in memory overhead, as fewer messages
+                                                                                            
+                                                                                            
+                                                                                              v ∈V
+                                                                                             ′
+                                                                                                   \v          v
+                                                                                                                   ⊞
+                                                                                                                 ′ ∈V \v
+                                                                                                                        |tv ′ |, if tv is minimum,
+from VNs to CNs need to be stored.                                                  rc,v ←      Yc                   c
+                                                                                                                                                   (3)
+                                                                                                             ′) ·
+    Let qv denote the posterior log-likelihood ratio (LLR)
+associated with the v-th VN, which is the aggregate value
+                                                                                            
+                                                                                            
+                                                                                                    sgn(t
+                                                                                               v ′ ∈Vc \v
+                                                                                                           v       ⊞
+                                                                                                                  v∈Vc
+                                                                                                                       |tv |, otherwise.
+
+of all incoming messages and the channel LLR yv . Let                                Despite its superiority, conventional A-MS decoding still
+rc,v denote the message from the c-th CN to the v-th VN.                          suffers from several points to be optimized. First, the influ-
+We also define an intermediate variable tv , corresponding to                     ence of most incoming T-messages on the final outgoing
+the message from the v-th VN at the current row. Layered                          R-messages is negligible based on our simulations, which
+decoding is completely defined by the aforementioned three                        means that most of the box-plus operators in (3) can be
+message types: Q-message qv , R-message rc,v , and T-message                      skipped to save computational complexity. In A-MS decod-
+tv , as shown in Fig. 1. When processing the c-th row (i.e., the                  ing, the identification of the minimum and the computation
+c-th CN) at the i-th iteration, layered decoding executes the                     of the R-messages are tightly linked. This process relies
+updates shown in (2) (taking MS decoding as an example).                          on the block-parallel architecture that processes the incom-
+Each of the three equations in (2) is only performed after the                    ing message block-by-block to resolve the data dependency,
+previous equation has been evaluated for all VNs, 0 ≤ v < N .                     limiting its potential for increased parallelism. In addition,
+                                                                                  a straightforward way to design the box-plus operator in A-MS
+               tv ← qv − rc,v ,                                          (2a)
+                      Y                                                           decoding is to approximate it as multiple serial small LUTs
+               rc,v ←      sgn(tv ′ ) · ′min (|tv ′ |),                  (2b)     (as referred to [21]), leading to a relatively long data path due
+                                              v ∈Vc \v                            to the comparison, addition, and LUT operations.
+                         v ′ ∈Vc \v
+              qv ← tv + rc,v .                              (2c)                            III. P ROPOSED H IGH -P ERFORMANCE AND
+   First, the intermediate tv values are computed on the fly                              L OW-C OMPLEXITY D ECODING A LGORITHMS
+using the stored qv and rc,v . Subsequently, the minimum and                         In this section, we propose a novel algorithm called GA-MS
+sign are selected, excluding the message along the current edge                   decoding, by extending the above A-MS decoding algorithm to
+itself, to update all qv and rc,v values. At the beginning of                     a generalized form. Our algorithm offers high-performance
+the first iteration, the qv for 0 ≤ v < N are initialized by                      and low-complexity decoding. By truncating the number of
+the channel LLRs yv and the rc,v for 0 ≤ c < M and 0 ≤                            incoming messages in the CN processing, we can make a
+v < N are set to zero. Once the maximum decoding iterations                       trade-off between the error-rate and computational complexity.
+Imax are reached, the tentative codeword can be obtained by                       Moreover, combined with well-designed LUTs, quantization
+x̂v = HD(qv ), 0 ≤ v < N . For 5G NR LDPC codes, the c-th                         schemes, and approximation techniques, we provide a compre-
+   1 In 5G standards, the lifting size Z covers 51 distinct values ranging from   hensive performance analysis of fixed-point GA-MS decoding
+2 to 384 (Z = i × 2n , i ∈ {2, 3, 5, 7, 9, 11, 13, 15}, n are non-negative        to demonstrate its stable and good error-rate across various
+integers). For further details, please refer to Table V.3.2-1 in [6].             code configurations and high-order modulations.
+
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+2914                                                         IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS, VOL. 71, NO. 6, JUNE 2024
+
+
+
+A. Generalized Adjusted Min-Sum (GA-MS) Decoding
+  Let ta and tb denote two arbitrary incoming T-messages.
+The complete box-plus operator between ta and tb is:
+                                            
+                                  ta           tb
+   ta    ⊞
+         tb = 2 tanh−1 tanh
+                                  2
+                                       · tanh
+                                               2
+                                  min (|t |, |t |)          
+                                             a    b
+                                                           
+                                   + ln 1 + e−||ta |+|tb ||   (4)
+            = sgn(ta )·sgn(tb )· 
+                                                            
+                                                          
+                                   − ln 1 + e−||ta |−|tb ||
+               ≤ sgn(ta ) · sgn(tb ) · min (|ta |, |tb |) ,
+where the negative            non-linear term      △(ta , tb )    :=
+ln 1 + e−||ta |+|tb || − ln 1 + e−||ta |−|tb ||
+                      
+                                                        is the reason
+                                                                                 Fig. 2. Floating-point FER comparison of SP, A-Min∗ , MS, NMS, OMS,
+why MS decoding always overestimates SP decoding [10],                           and GA-MS decoding with β and γ ∈ {2, 3, 4} for 5G NR LDPC codes (BG1,
+[11]. If |ta | ≪ |tb |, we can further simplify (4) as                           R = 13 , Z = 384, and K u = 22) using QPSK and Imax = 15.
+                  ta   ⊞ t ≈ sgn(t ) · sgn(t ) · |t |,
+                                b       a           b        a             (5)
+which means that the smallest incoming magnitude dominates                       operators and an additional subtraction together in the CN
+in (4). Hence, in CN processing, more emphasis is placed on                      processing. The above improvement endows GA-MS decoding
+these incoming T-messages with smaller magnitudes, assign-                       with a similar efficient hardware architecture as classical
+ing them greater weights in the outgoing numerical calculation.                  MS-based decoders [24], [25], which significantly facili-
+                                                          γ
+Similar to [20], we define a new set called Vc to only contain                   tates the corresponding decoder implementation (discussed in
+the first γ smallest magnitude values. Note that if dc ≥ γ ,                     Section IV).
+   γ                                               γ
+|Vc | = γ holds, but if dc < γ , Vc is equivalent to Vc                             The floating-point FER performance comparison of SP
+                                                        γ
+without any message truncation (i.e., |Vc | = |Vc | = dc ).                      decoding and our GA-MS decoding with varying values of γ
+The corresponding update of (3) is as follows, where we can                      and β is provided in Fig. 2. The simulation is conducted with
+flexibly configure the parameter γ to adjust the number of                       5G NR LDPC codes (BG1, R = 13 , Z = 384, K u = 22) with
+incoming messages used in CN processing.                                         quadrature phase shift keying (QPSK) over an additive white
+           Y
+          
+                    sgn(tv ′ ) ·   ⊞  |tṽ ′ |, if tv is minimum,               Gaussian noise (AWGN) channel and Imax = 15. To fully
+          
+            v ∈Vc \v
+           ′                       γ                                            demonstrate the capabilities of OMS and NMS decoding [12],
+                               ṽ ∈Vc \v
+                                 ′
+  rc,v ←      Y                                                    (6)           we finely adjust the offset and the normalization factor for
+                             ′) ·
+          
+          
+                    sgn(t
+              v ′ ∈Vc \v
+                           v        ⊞   |tṽ |, otherwise.
+                                        γ
+                                                                                 their optimal performance. Specifically, for each E b /N0 point,
+                                    ṽ∈Vc
+          
+                                                                                 we sweep offsets of OMS within the range of 0.3 to 0.7,
+  As shown in (7), |tv ∗ | is the (γ + 1)-th smallest incom-                     in increments of 0.05, and normalization factors of NMS
+ing magnitude. It is intuitive to prove that when γ is larger,                   between 12 and 15         1
+                                                                                                   16 , in 16 increments to plot the FER for
+the outgoing rc,v approaches the original A-Min* result.                         the best values. This approach ensures a fair comparison with
+                                                                               GA-MS decoding. In all following captions referring to GA-
+                                                                                 MS decoding, the last digit of the label (e.g., GA-MS-2)
+ ⊞ |t | ≥  ⊞ |t | ⊞ |t | = ⊞ |t | ≥ . . . ≥ ⊞ |t |.
+     γ
+         ṽ
+                      γ
+                           ṽ          v∗
+                                                γ +1
+                                                        ṽ
+                                                                    v∈Vc
+                                                                           v     denotes the number γ of used minima during the decoding.
+ ṽ∈Vc            ṽ∈Vc                     ṽ∈Vc                                When γ = 2, GA-MS decoding is simplified to a near-MS
+                                                                 (7)             algorithm (GA-MS-2) that surpasses MS decoding by 0.75 dB,
+   However, if the value of γ is relatively small, GA-MS                         but still underperforms OMS and NMS. If we increase γ to
+decoding truncates too much information, resulting in an                         3 or 4, GA-MS decoding enables a significant improvement,
+obvious performance loss. In order to compensate for this                        closing the gap with SP decoding to 0.25 dB and 0.1 dB at
+degradation, we introduce an additional offset β in (8) to rea-                  FER = 10−3 , respectively. With respect to determining the
+sonably scale the outgoing R-message and effectively alleviate                   compensation factor, a moderate subtraction of β can cause
+the overestimation phenomenon as                                                 a notable performance improvement when γ ∈ {2, 3}. For
+                                                                            example, GA-MS-3 decoding with a value of β equal to
+              Y                                                                 0.1 only has a gap compared to SP decoding by 0.16 dB
+                    sgn(tv ′ ) ·max       ⊞  |tṽ ′ | −β, 0,
+          
+                                                                                 and outperforms OMS decoding by 0.15 dB at FER = 10−3 .
+          
+          
+          
+                                           γ
+                                                                                 However, as γ increases, especially for γ ≥ 4, the original
+          
+           v ∈Vc \v
+             ′
+                                     ṽ ∈Vc \v
+                                       ′
+          
+          
+          
+          
+          
+            if tv is minimum,                                                  outgoing R-message in (6) is accurate enough to approach
+  rc,v ←                                                       (8)             the original A-Min∗ result so that the impact of β is rapidly
+          
+                                                                                 reduced. As shown in Fig. 2, GA-MS-4 decoding without
+               Y
+                    sgn(tv ′ ) ·max       ⊞|tṽ | − β, 0,
+          
+          
+          
+                                                                                 β has nearly the same error-correcting performance as that
+          
+          
+           v ′ ∈V \v                      γ
+          
+                                     ṽ∈Vc
+                                                                                 with a compensation factor β = 0.01. Besides, GA-MS-4
+          
+           c
+          
+          
+            otherwise.                                                           also exhibits almost the same performance as the original
+   It is worth noting that, compared to the original A-MS                        A-Min∗ decoding, which shows that γ = 4 is precise enough
+decoding algorithm [21], the proposed GA-MS decoding has                         for the result of A-Min∗ decoding in CN processing.
+a completely different decoding process, which first collects                       Table I presents a summary of our analysis on the com-
+the γ smallest incoming magnitudes just as the MS-based                          putational complexity per iteration for the proposed GA-MS
+decoders do and then executes γ − 1 approximate box-plus                         decoding algorithm, in comparison with various other LDPC
+
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+REN et al.: GENERALIZED ADJUSTED MIN-SUM DECODER FOR 5G LDPC CODES                                                                                        2915
+
+
+
+                                                               TABLE I
+                      C OMPARISON OF C OMPUTATIONAL C OMPLEXITY I NCURRED BY VARIOUS LDPC D ECODING A LGORITHMS
+
+
+
+
+                                                                                    In conclusion, the proposed GA-MS decoding offers several
+                                                                                 distinct advantages over previous works. First, by adjusting
+                                                                                 the parameter γ to truncate the number of incoming mes-
+                                                                                 sages, GA-MS decoding achieves a good trade-off between
+                                                                                 error-correcting performance and computational complexity.
+                                                                                 Second, even with an increment of γ , GA-MS decoding
+                                                                                 still only computes two distinct outgoing messages using (8),
+                                                                                 with no additional memory overhead. In terms of hardware
+                                                                                 implementation, similar to an MS-based architecture, GA-
+                                                                                 MS decoding can completely decouple the procedures of
+                                                                                 the minima collection and approximate box-plus operators to
+                                                                                 maintain a high operating frequency, which is further dis-
+                                                                                 cussed in Section IV.
+
+                                                                                 B. Quantization of GA-MS Decoding
+                                                                                     In this section, we focus on quantization techniques to
+                                                                                 enhance the fixed-point performance of GA-MS decoding.
+                                                                                 We adopt a uniform quantization:
+                                                                                                                                        
+                                                                                                                    |yv |
+                                                                                       3(yv ) = sgn(yv ) · min            + 0.5 , 2 B−1
+                                                                                                                                        − 1 , (9)
+                                                                                                                     δ
+                                                                                 where the bit-width B is composed of one sign bit, Bi integer
+                                                                                 bits, and Bf fractional bits. The channel gain factor δ is defined
+Fig. 3. Comparison of computational complexity (addition and CS, memory          as 1/2 Bf to scale the inputs. During the LDPC decoding
+requirement, and LUT operations) among GA-MS decoding and various                process, all propagating messages can be categorized into two
+existing LDPC decoding algorithms.                                               types: qv and tv (associated with VNs), and rc,v (associated
+                                                                                 with CNs). As rc,v is only based on the minimum of incoming
+decoding algorithms [11], [12], [19], [21], [34]. The analysis                   T-messages, unlike an aggregate LLR, it has a smaller dynamic
+reveals that the number of comparisons in GA-MS decoding                         range. Namely, rc,v can utilize fewer quantization bits than qv
+increases with γ due to the internal sorting corresponding to                    and tv . Therefore, we adopt a quantization scheme denoted
+multiple minima. Nevertheless, only a single addition oper-                      as (BVN , BCN , Bf ), where BVN and BCN are the numbers of
+ation occurs outside the entire box-plus operator (as shown                      quantization bits for messages associated with VNs and CNs,
+in (8)) within each CN processing unit. As a result, GA-                         respectively and all messages have Bf fractional bits.
+MS decoding outperforms the benchmark A-MS decoding                                  1) Decoding Algorithm: Quantized GA-MS-γ decoding
+in terms of both the number of addition and compare-select                       (for layered decoding of QC-LDPC codes) is outlined in
+(CS) operations and the number of LUTs, especially when                          Algorithm 1. As mentioned in Section II-B, our GA-MS
+γ ∈ {2, 3, 4}. GA-MS decoding also has the same memory                           decoding requires memory for three message types (q v [k],
+consumption as MS-based decoding [11], [12], which involves                      t v [k], r c,v [k]), which are all Z -dimensional vectors for 0 ≤
+storing N channel LLRs and two outgoing messages corre-                          v < N p , 0 ≤ c < M p , and 0 ≤ k < Z . Similar to [24],
+sponding to each CN.                                                             we divide the entire algorithm (excluding early termination)
+   To further demonstrate the advantages of GA-MS decoding,                      into two primary phases (MIN and SEL) to decouple the
+we provide comparative plots in Fig. 3. These plots chart a                      computation of (2) into several procedures that can be executed
+function of the parity-check length M (represented on the                        separately in different clock cycles. This division is benefi-
+horizontal axis) for regular LDPC codes (R = 13 , dc = 8,                        cial for hardware implementation to improve the maximum
+dv = 5), to be consistent with the example in [35]. Considering                  operating frequency. First, we initialize the vectors q v using
+the maximum code length of 5G NR LDPC codes, specified                           the input channel LLR vectors yv and set the vectors r c,v
+for M = 17664, GA-MS-3 decoding exhibits a reduction of                          to all-zero vectors. The algorithm proceeds in a layer-wise
+28.7% addition and CS operations and 22.3% memory over-                          manner (for each row of H p ), and the message computation
+head reduction compared to A-MS decoding. It is noteworthy                       is executed iteratively only for the columns v ∈ Vc of H p
+that GA-MS decoding requires slightly more LUT operations                        for which H p [c][v] ̸ = −1. Note that, in line 7, the magnitude
+relative to OMS and NMS decoding. Despite this, based on the                     set M only contains the magnitude information of collected
+message truncation in the CN processing, GA-MS-3 decoding                        minima, and we need an extra vector s to store all sign bits.
+reduces 87.5% and 83.3% of LUT operations compared to SP                             The first phase, referred to as MIN, calculates the interme-
+and A-MS decoding, respectively.                                                 diate vector t v and gathers γ minima vectors for the t v in
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+2916                                                      IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS, VOL. 71, NO. 6, JUNE 2024
+
+
+
+    Algorithm 1 Quantized GA-MS-γ Decoding
+    (QC-Layered Version)
+  Initialize: q v ← yv , r c,v ← 0 Z ×1 , ∀c, v
+  // Iterative decoding
+1 for i = 0 to Imax − 1 do
+2      for c = 0 to M p − 1 do
+           // Initialize γ minima and sign bit
+3          M = [m1 , m2 , . . . , mγ ] ←
+             ∞ · [I Z ×1 , I Z ×1 , . . . , I Z ×1 ]
+4          s ← I Z ×1
+           // Phase 1: MIN
+5          for v ∈ Vc do
+6               ωv = H p [c][v],
+                  t v ← cyclicShift(q v , ωv ) − r c,v
+                // Sort γ minima, find index of m1
+7               [M, v min ] ← sortMin(M, |t v |)
+8               s ← s · sgn(t v )
+              // Phase 2: SEL
+9             for v ∈ Vc do                                                        Fig. 4. Comparison of the results between the original box-plus operator
+                                                                                   and LUTs with varying values of β in (11).
+                  // LUT-based approx using γ minima
+10                mLUT ← LUTMin(M, v min , v)
+                  // update R- and Q-messages
+11                r c,v ← s · sgn(t v ) · mLUT
+12                q v ← cyclicShift(t v + r c,v , Z − ωv )
+
+     Return : x̂ v = HD(q v ), ∀v
+
+    Algorithm 2 LUTMin()
+1 for k = 0 to Z − 1 do
+2     if v ̸ = v min [k] then
+3         mLUT [k] = m1 [k] // non-critical
+                messages
+4         for t = 2 to γ do
+5               mLUT [k] = LUT(mLUT [k], mt [k])
+6        else                                                                      Fig. 5. Fixed-point FER comparison of GA-MS decoding with different
+                                                                                   quantization strategies and varying values of β for 5G NR LDPC code (BG1,
+7             mLUT [k] = m2 [k] // critical message                                R = 13 , Z = 384, and K u = 22) using QPSK and Imax = 15.
+8             for t = 3 to γ do
+9                 mLUT [k] = LUT(mLUT [k], mt [k])                                 vector q v is cyclically shifted using the inverse rotation Z −wv .
+                                                                                   Note that this additional rotation for Q-messages can be
+                                                                                   eliminated in hardware [25], as discussed in Section IV-A.
+                                                                                      2) LUT Design: The box-plus LUT design is critical in
+the current layer. As a new vector t v arises, the sortMin()                       determining error-correcting performance and computational
+function updates and maintains an ascending ordered set of                         complexity of GA-MS decoding. The truncation of incoming
+γ minima vectors, denoted as M = {m1 , m2 , . . . , mγ }, where                    messages to γ minima, which are dominant in CN processing,
+m1 (a length-Z vector) contains the first minima of Z rows,                        brings advantages for GA-MS decoding, as it helps to design
+m2 holds the second minima of Z rows, and so on. In addition,                      LUTs to approximate the original result.
+the sortMin() function also keeps track of the column index                           If ta and tb have been quantized using the (BVN , BCN , Bf )
+vector v min of m1 to distinguish the calculation of critical and                  scheme, the non-linear term in (4) can be quantized as
+non-critical messages in (6).                                                                                              
+                                                                                                                             |△(ta , tb )|
+                                                                                                                                               
+   The second phase, referred to as SEL, is activated after                            3(△(ta , tb )) = sgn (△(ta , tb ))·                 +0.5 . (10)
+the MIN phase has swept across the entire layer. During the                                                                      δ
+SEL phase, the vectors r c,v and q v of the current iteration are                  To realize a similar effect as the subtraction of a compensation
+block-wise updated based on the collected vectors M, v min ,                       factor in (8), we move the β into (10) to introduce (11) as the
+and s. The LUTMin() function shown in Algorithm 2 cor-                             approximation of the entire box-plus operator,
+responds to (6) in Section III-A. This function represents the                        LUT(ta , tb ) = sgn(ta ) · sgn(tb )·
+recursive processing that repeatedly invokes the box-plus LUT
+                                                                                                                  |△(ta ,tb )|
+                                                                                                                                      
+at lines 5 and 9 (the efficient LUT design is discussed below),                         max min(|ta |,|tb |) −                 + β + 0.5 , 0 . (11)
+and the only difference is the removal of the vector m1 from                                                          δ
+the calculation if the current edge with the minimum incoming                         Fig. 4 demonstrates the impact of β in (11) on the LUT
+message. As the new vector mLUT only contains the magnitude                        results. As β gets larger, the difference between the LUT out-
+information, the updated vector r c,v is computed by using both                    come and the original box-plus operator grows. However, for
+the sign vector s and the vector mLUT . Finally, the updated                       two fully distinct magnitudes, the LUT result directly equals
+
+     Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+REN et al.: GENERALIZED ADJUSTED MIN-SUM DECODER FOR 5G LDPC CODES                                                                                        2917
+
+
+
+
+Fig. 6. Fixed-point FER of GA-MS decoding for various 5G NR LDPC codes and high-order modulations over an AWGN channel, where Imax = 15 and
+the parameters of OMS and NMS decoding have been carefully tuned.
+
+
+the minimum, corresponding to (5). In general, if γ is small,                    0.1 dB gap relative to floating-point SP decoding. Conse-
+a larger β is needed in (11) to compensate for performance                       quently, for the following sections, our fixed-point GA-MS-3
+degradation caused by truncation. The parameter β extends                        decoding employs the quantization scheme (7, 5, 1), while
+the design space of the LUTs for our GA-MS decoding,                             the fixed-point GA-MS-4 algorithm utilizes the quantization
+facilitating the exploration of various quantization strategies                  scheme (8, 6, 2).
+and high-order modulations. Based on a well-designed quanti-
+zation strategy and β in (11), we can generate an efficient LUT
+and use (6) as our fixed-point GA-MS decoding to approach                        C. Comprehensive Performance Analysis
+the floating-point performance of (8).                                               To evaluate the error-correcting capability of the proposed
+   3) Comparison of Different Quantization Strategies: Fig. 5                    GA-MS decoding in practical scenarios, we conduct simu-
+presents the fixed-pointed FER performance of GA-MS decod-                       lations on various 5G NR LDPC codes and with different
+ing under various quantization strategies and with different β                   high-order modulations [42], comparing them with other clas-
+values in (11) (using the same code configuration as Fig. 2).                    sical LDPC decoding algorithms [8], [12], [19] for detailed
+First, we adopt two popular quantization schemes, (7, 5, 1)                      performance analysis. For all modulations, channel LLRs yv
+and (8, 6, 2), from the 5G NR LDPC decoders in [15], [30],                       are obtained using the max-log-MAP method over an AWGN
+[32], [34], and [35], to achieve a balance between high                          channel. Notably, the configurable β in (11) demonstrates
+performance and hardware (including memory) complexity.                          robustness across a wide range of code rates and modulations,
+Second, we provide a selection of empirical β values in (11)                     despite being relatively sensitive to the base graph selection.
+to improve quantized GA-MS decoding, which can be applied                        Hence, we present empirical optimal values of β in (11) for
+in the subsequent analysis and implementations.                                  BG1 and BG2 in Fig. 6, respectively.
+   Under the quantization schemes (7, 5, 1) and (8, 6, 2), fixed-                   For BG1, we set β = 0.25 and β = 0.1 for GA-MS-3 and
+point GA-MS-3 decoding with β = 0 has a loss of 0.2 dB                           GA-MS-4 decoding, respectively. Numerical results show that
+and 0.1 dB from floating-point GA-MS-3. When using β =                           fixed-point GA-MS-3 decoding can approach the performance
+0.25 for (7, 5, 1), the performance gap compared to floating-                    of SP decoding within 0.25 dB before FER = 10−3 , while
+point GA-MS-3 reduces to 0.08 dB. However, GA-MS-4                               fixed-point GA-MS-4 decoding exhibits a gap of 0.1 dB
+decoding demands greater precision for message propagation.                      compared to SP decoding. This gap gradually diminishes as
+The high-resolution (8, 6, 2) scheme thus aligns well with                       the code rate increases. For BG2, we adopt a β value of
+GA-MS-4 decoding to enable more precise numerical calcula-                       0.1 in (11) for both GA-MS-3 and GA-MS-4 decoding. With
+tion based on minima. In Fig. 5, the fixed-point performance                     R = 15 with QPSK, fixed-point GA-MS-4 decoding has an
+using (8, 6, 2) with β = 0.1 almost has the same performance                     improvement of around 0.19 dB compared to floating-point
+as that of floating-point GA-MS-4, which exhibits only a                         OMS decoding. Besides, at medium to high code rates, our
+
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+2918                                                    IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS, VOL. 71, NO. 6, JUNE 2024
+
+
+
+                                                                                                                   TABLE II
+                                                                                             M EMORY S IZES OF O UR 5G NR LDPC D ECODER†
+
+
+
+
+                                                                                 of re-rotating the updated Q-messages when writing them
+                                                                                 back to the Q-memory, the rotation value of the Q-messages
+                                                                                 is tracked during the processing to avoid a second CSU
+                                                                                 instantiation [25]. Namely, in the hardware implementation,
+                                                                                 we remove the cyclicShift() function of line 12 and change
+                                                                                 line 6 to (12) in Algorithm 1
+Fig. 7. High-level architecture of fully reconfigurable 5G NR LDPC decoder         ωv = mod (Z + H p [c][v] − H p [c − 1 ⊕ M p ][v], Z ), (12)
+based on GA-MS decoding.
+                                                                                 where the term H p [c − 1 ⊕ M p ][v] records the rotation value
+                                                                                 of the current block at the previous layer.
+fixed-point GA-MS-4 decoding performs almost the same as                            In our 5G NR LDPC decoder, an early termination tech-
+floating-point A-Min∗ decoding on both BG1 and BG2.                              nique (same as [24], [25]) called partial parity checks (PPCs) is
+                                                                                 adopted to terminate converged codewords and improve aver-
+    IV. P ROPOSED 5G LDPC D ECODER A RCHITECTURE                                 age throughput. In the SEL units, each row of the prototype
+                                                                                 matrix yields a set of Z parity checks which are combined into
+   In this section, we present the implementation of a fully
+                                                                                 a single PPC. If all PPCs are correct, the decoding procedure
+reconfigurable 5G NR LDPC decoder, incorporating our
+                                                                                 terminates prematurely after processing all M p rows of H p .
+GA-MS decoding and all the aforementioned algorithmic
+                                                                                 While the PPC approach is sub-optimal in terms of the number
+optimizations. This decoder is compatible with all 5G NR
+                                                                                 of decoding iterations compared to the conventional complete
+LDPC codes. We provide a comprehensive description of
+                                                                                 H· x̂ = 0, it can be done efficiently in a block-parallel decoder.
+each core component, which contains three embedded memory
+                                                                                    Finally, the whole decoding process is orchestrated by the
+banks (referred to as the Q-memory, the T-memory, and
+                                                                                 controller, which reads from a list of instructions in the
+the R-memory), a pool of node computation units (NCUs),
+                                                                                 SEQ memory and coordinates the components of our 5G NR
+a cyclic shifter unit (CSU), and a controller to complete
+                                                                                 LDPC decoder. Notably, this controller can be configurable by
+layered GA-MS decoding algorithm in a block-parallel iter-
+                                                                                 the lifting size Z (i.e., sub-block size), the prototype matrix
+atively decomposed fashion.
+                                                                                 H p , and Imax , which enables decoder reconfigurability.
+A. High-Level Overview
+   Fig. 7 illustrates the high-level architecture of our fully                   B. Decoder Memories
+reconfigurable 5G NR LDPC decoder, which builds upon the                            In this section, we introduce decoder memories with group-
+baseline architecture proposed in [24] and [25]. To enable lay-                  ing and data compression techniques to fit any 5G NR LDPC
+ered GA-MS decoding in a block-parallel fashion, we decom-                       codes into the allocated memories.
+pose the processing of each layer into multiple cycles. In each                     1) Grouping: As mentioned in Section II-A, VG NR LDPC
+cycle, we update all Z parity checks for the current block                       codes feature 51 distinct lifting sizes. When Z is less than
+simultaneously (i.e., instantiating Z max processing units for                   Z max , it is inefficient and energy-consuming to consistently
+5G) and further optimize the processing units by decoupling                      operate the decoder at maximum parallelism Z max . Therefore,
+them into the MIN and SEL units to enhance the operating                         our LDPC decoder, including the NCU pool, datapaths, and
+frequency. As shown in Fig. 7, the MIN units perform several                     memories, demands a fine-grained structure.
+tasks in each cycle. They read the corresponding vectors q v                        As illustrated in Fig. 7, we pack 24 NCUs into a single
+and r c,v from the associated Q- and R-memories, compute the                     group and thus divide the whole Z max = 384 NCUs into
+intermediate vector t v , and write the results to the associated                16 groups that are driven by different gated clocks. Each
+T-memory. Additionally, the MIN units also track the set M                       group shares a collection of independent memories to maintain
+with γ minima vectors in Algorithm 1 and update pipeline                         macros with reasonable sizes and avoid extremely small (i.e.,
+registers of the NCUs at the end of each layer. Meanwhile,                       inefficient) macros.
+based on the previously stored M, the SEL units read the                            Fig. 8 depicts the corresponding memory wrapper for the
+latest vector t v from the associated T-memory and update                        Q-memories. Each Q memory features a width of 24BVN
+the vectors q v and r c,v . It is noteworthy that the MIN and                    bits and a depth of 68 words, with 24 denoting the number
+SEL units are pipelined to process two consecutive layers                        of Q-messages within each word, and 68 corresponding to
+(the MIN units always work ahead of the SEL units). More-                        N p in BG1. All the Q-memories share the same read and
+over, to rotate the Q-messages according to the QC-LDPC                          write addresses and thus merge a complete vector of length-
+prototype matrix, we implement a CSU to perform a cyclic                         Z max messages to be read and written simultaneously. As the
+left-shift by w = H p [c][v] for the read vector q v . Instead                   same Q-memory block may undergo multiple updates during
+
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+REN et al.: GENERALIZED ADJUSTED MIN-SUM DECODER FOR 5G LDPC CODES                                                                                              2919
+
+
+
+
+Fig. 8. Memory wrapper for the Q-memories, which has the same structure          Fig. 9. Architecture of the k-th NCU in the NCU pool for our GA-MS
+as that of the T-memories.                                                       decoding, which illustrates the critical path (red dotted line) and internal sorter.
+
+
+each iteration, we implement two forwarding paths to prevent                     GA-MS decoding in (6) needs a set of LUTs, as shown in
+possible memory conflicts and enhance throughput. Notably,                       Algorithm 2. This additional computation introduces latency
+the depth of the T-memories can theoretically be reduced from                    in the SEL unit which degrades the maximum operating
+68 to 19 words, due to dcmax = 19 in 5G base graphs. However,                    frequency of the decoder. To alleviate this issue, we further
+this reduction necessitates a complicated peripheral circuit                     decouple the partial calculation of (6) and the updating of
+for address mapping [15]. Furthermore, the memory area                           q v [k] and r c,v [k] into different cycles to balance the datapaths.
+reduction for such small memories is less than proportional                          For instance, when processing the non-critical message
+to the reduction in the number of words. As a result, the                        of (6), we need to sequentially invoke γ − 1 LUTs for γ
+T-memories in our decoder still maintain the same depth as                       minima inputs to calculate the result. Before the MIN unit
+the Q-memories to offer simpler control logic.                                   reaches the last block of each row, the iteratively updated M
+   2) Compressed Format of R-Messages: In this decoder,                          memory has already gathered (at least) γ − 1 correct minima.
+we employ a compressed data format for R-messages instead                        Hence, we can move the calculation of γ − 2 LUTs, based
+of using explicit storage and the clipping of Q-messages                         on the first γ − 1 minima of the M memory, to the MIN unit
+like in [24] and [25]. In (6), the outgoing R-message has                        in advance. Note that this result is only intermediate due to
+only two distinct magnitudes in each row (i.e., critical and                     the absence of one minimum. Upon arriving at the end of
+non-critical messages). By excluding all sign bits, we can                       each row, the MIN unit forwards this intermediate result and
+store a compressed word (only comprising two magnitudes                          γ minima to pipeline registers. The SEL unit only needs to
+and the column index of the critical message) to recover                         perform one LUT based on the fully updated γ minima to
+all R-messages for each row. Hence, each group of the                            accurately compute the non-critical message. This approach
+R-memories consists of two parts: R-sign and R-mag mem-                          can significantly optimize the datapaths without any stalls. The
+ories. As mentioned in Section III-B, all sign bits of the                       critical message of (6) is processed similarly. Moreover, due
+R-messages demand explicit storage, the width of each R-sign                     to the existing strict order of γ minima (in the M memory),
+memory is 24 bits and the depth is 316 words (i.e., maximum                      we can implement a pruned γ + 1 → γ sorter to eliminate
+number of non-zero entries in BG1). It is noticeable that the                    the redundant comparators in the MIN unit. This sorter, which
+column index value can be compressed to require only 5 bits                      comprises a routing network and a layer of γ comparators as
+(instead of the 7 bits required to store the full column index),                 shown in Fig. 9, can be considered as a special case of low-
+due to dcmax = 19 in 5G. In the decoder, we implement a                          latency rank-order sorters [43].
+LUT to perform this index compression operation. For each
+R-mag memory, the width is 24 × (2 × (BCN − 1) + 5) bits and
+the depth is 46 words (corresponding to M p in BG1). Com-                        D. Timing Schedule and Latency Analysis
+pared to conventional explicit storage, the above compressed
+technique can save approximately 42.2% and 46.9% of bits for                        Fig. 10 demonstrates the timing schedule of our 5G NR
+the R-memories with the (7, 5, 1) and (8, 6, 2) quantization                     LDPC decoder from the perspective of the NCUs. As
+schemes, respectively.                                                           discussed before, the MIN and SEL units are pipelined to
+   In our 5G NR LDPC decoder, the detailed memory con-                           work on two consecutive layers to balance the datapaths.
+figurations are outlined in Table II, with each memory                           However, this approach inevitably introduces stalls in the
+instantiated 16 times. Hence, the total memory capacities for                    LDPC decoder. In general, these stalls are categorized into
+the two quantization schemes are 87.47 KB for (7, 5, 1) and                      two types: 1 data dependency and 2 row synchronization.
+98.16 KB for (8, 6, 2).                                                          First, data dependency arises when the MIN units attempt to
+                                                                                 access a block for the Q-memories and T-memories, but the
+                                                                                 SEL units have not yet updated it. Consequently, the MIN
+C. Node Computation Units (NCUs)                                                 units must wait for the updated Q- and R-messages until
+    The architecture of the k-th NCU (0 ≤ k < Z max ) in the                     the SEL units release this block. Second, our LDPC decoder
+NCU pool is illustrated in Fig. 9. Internal pipeline registers                   employs row synchronization to manage the decoding schedule
+separate the NCU computation into two phases. The MIN                            and simplify the control logic, which is beneficial to decode
+unit iteratively computes the intermediate message t v [k] and                   5G NR LDPC codes with flexible code lengths and rates.
+collects the updated γ minima at the ((c + 1) · Z + k)-th row,                   However, this synchronization results in additional stalls if two
+while the SEL unit concurrently updates the corresponding                        consecutive layers have different row degrees. The decoding
+q v [k] and r c,v [k] at the (c · Z + k)-th row. Compared to the                 latency of our 5G NR LDPC decoder is presented in (13),
+original NCU for layered OMS decoding [24], [25] (only a                         where the bound is the summation of non-zero entries, I is
+simple subtraction with a fixed offset in the SEL unit), our                     the actual iteration number, and Dc is the delay of 1 at the
+
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+2920                                                    IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS, VOL. 71, NO. 6, JUNE 2024
+
+
+
+
+Fig. 10.   Example timing schedule of the proposed 5G NR LDPC decoder based on GA-MS decoding.
+
+
+c-th layer.
+                                                                       
+                                                        
+       MX−1     M p −1      M p −1
+       p         X           X                          
+                                                         .
+                                   max dc−1⊕M p − dc , 0 
+                                                        
+L= I ·
+            dc +        Dc +
+       c=0       c=0         c=0                        
+      | {z } | {z } |                       {z         }
+         Bound stalls from 1          stalls from 2
+                                                         (13)
+
+E. Optimized Static Schedule (OSS)
+   In the following, we will optimize the schedule of the
+decoder to improve convergence and to reduce the number
+of stall cycles. Since the posterior LLRs are updated in a
+row-wise fashion, the convergence speed is greatly influenced
+by the order in which layers are processed. Generally, this
+order can be determined by either dynamic schedules [44] or                      Fig. 11. Row-degree distributions of BG1 using various static schedule
+static schedules [45], [46]. Static schedules offer a computa-                   techniques (natural order, OSS 1-2, OSS 1-3).
+tional complexity advantage over dynamic schedules, as they
+do not require real-time calculations. Notably, some static
+schedule techniques are proposed in [45] and [46] for 5G NR                      of P2 in descending order of dc to ensure that adjacent rows
+LDPC codes, but they ignore potential impact on throughput                       have preferably similar row degrees.
+due to hardware constraints. In this section, we introduce a                        Fig. 11 displays the row-degree distributions of BG1 using
+hardware-friendly OSS approach tailored to 5G NR. This OSS                       various static schedule techniques. Note that the set P0 is
+scheme delivers a 0.05 dB performance gain compared to con-                      empty in BG1. Based on OSS 1-2 (incorporating the first two
+ventional layered decoding and reduces the worst-case latency                    principles, equivalent to BGSS in [46]), row-degree discon-
+by around 15×Imax cycles, compared to natural layer ordering.                    tinuities appear at the junctions between P1 and P2 , as well
+   First, we adopt two classical optimization principles to                      as between two consecutive iterations, resulting in redundant
+improve the error-correcting performance. In 5G, the first two                   stalls in the LDPC decoder. However, OSS 1-3 (adopting all
+columns of the base graphs are punctured to boost transmission                   three principles) balance the error-rate and decoding latency.
+efficiency. Let Pi , i ∈ {0, 1, 2}, denote the sets of row                       Since the majority of rows (74%) still adhere to the least
+indices in the base graphs with zero, one, and two punctured                     punctured and least row-degree principles, OSS 1-3 features
+non-zero entries, respectively. The first optimization principle                 a fast decoding convergence. Then, by ordering the set P2
+of our schedule dictates that we prioritize rows with fewer                      by descending dc , we can minimize unnecessary stalls at
+punctured non-zero entries. Subsequently, for the rows in the                    the junctions of internal iterations. Importantly, pruning the
+same Pi , we decode the rows with smaller dc first. These two                    columns or adjusting code rates only extends evenly on both
+optimization principles (least punctured and least row-degree)                   sides of the core rows (the first four rows with the maximum
+are also used in the BG based static schedule (BGSS) in [46]                     row-degree dcmax in BG1 and BG2) and does not affect the
+to speed up the decoding convergence.                                            property that adjacent rows have similar row degrees in OSS
+   The third optimization principle of our OSS scheme aims to                    1-3. Consequently, the OSS algorithm is compatible with all
+diminish the worst-case latency in block-parallel architectures.                 5G NR LDPC codes.
+As outlined in Section III-B, classical LDPC block-parallel                         Fig. 12 illustrates that our OSS algorithm can yield a
+decoders [24], [25] decouple (2) into several steps (e.g. the                    0.05 dB improvement at FER = 10−3 . Fixed-point GA-MS-
+MIN and SEL phases) and execute them separately over                             4 decoding with OSS only has a gap of 0.05 dB compared
+different cycles. In most cases, the aforementioned steps can                    to floating-point SP decoding, and even outperforms floating-
+nearly overlap at two consecutive rows in the base graphs,                       point A-Min∗ decoding before FER = 10−3 . Furthermore,
+i.e., each row can be processed within dc cycles, which is also                  we evaluate the number of cycles required per iteration using
+the latency bound of LDPC block-parallel decoders. However,                      various static schedule schemes in Fig. 12. Our baseline is
+possible stalls occur when two consecutive rows share column                     the conventional layered decoding [24]. The black dashed line
+indices (data dependency) or have apparently higher row                          represents the summation of non-zero entries in H p , serving as
+degrees (row synchronization), which is explained in detail in                   the lower bound on the number of cycles (no stalls) of a single
+Section IV-D. Especially for the latter, stalls are unavoidable                  iteration based on a block-parallel architecture. It is obvious
+due to starvation of the pipeline. Hence, we arrange the rows                    that despite a 0.05 dB error-correcting improvement offered
+
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+REN et al.: GENERALIZED ADJUSTED MIN-SUM DECODER FOR 5G LDPC CODES                                                                                        2921
+
+
+
+                                                                                                              TABLE III
+                                                                                        ASIC R ESULTS OF THE P ROPOSED 5G NR LDPC D ECODER
+
+
+
+
+                                                                                 in 5G. When Z < Z max , our decoder operates in a more
+                                                                                 fine-grained fashion by dividing into 16 groups. Each group is
+                                                                                 driven incrementally by different gating clocks, ensuring that
+                                                                                 block i (i = 0, 1, . . . , 15) is activated only if all other blocks
+                                                                                  j ( j = 0, 1, . . . , i − 1) are active. Based on the worst-case
+                                                                                 latency when using BG1 with R = 13 , the SEQ memory
+                                                                                 comprises 332 instruction words (in line with (14)), with each
+                                                                                 instruction being 59 bits in size.
+
+Fig. 12. FER performance and latency analysis for the proposed OSS scheme        A. Implementation Results for 5G NR LDPC Codes
+on BG1.
+                                                                                    Table III provides both the synthesis results and post-layout
+                                                                                 results of our 5G NR LDPC decoder. The synthesis results
+by BGSS, its row-degree discontinuities lead to increased                        indicate that our decoder has a cell area of 1.274 mm2 with a
+stalls in a single iteration. In contrast, our OSS approach can                  frequency of 1250 MHz. When all physical design processes
+reduce around 15 cycles per iteration, especially at low code                    (e.g., placement and routing) are done, the post-layout of our
+rates, which is beneficial to alleviate the worst-case latency in                decoder has a core area of 1.823 mm2 with a maximum
+practical communication scenarios.                                               operating frequency of 895 MHz. For LDPC codes at BG1
+   Therefore, the aforementioned stalls in (13) can mostly                       with R = 98 and Z = 384, the implemented 5G NR LDPC
+be avoided through reasonable column reordering and the                          decoder (setting a fixed iteration value of 4) achieves a peak
+proposed OSS scheme. For stalls from 1 , they can be removed                     throughput 2T/P of 24.42 Gbps as follows:
+by a simple column reordering [30]. Specifically, in two
+                                                                                                Z max · N p
+consecutive layers, we allow the MIN units to first visit                              2T/P =               ·F
+independent blocks and let the SEL units visit dependent                                            L
+blocks, which can make most of Dc equal to 0, especially                                        384 × 27
+                                                                                             =              × 0.895 Gbps = 24.42 Gbps,       (15)
+at low to medium code rates. For stalls from 2 , following                                         380
+the least punctured and least row-degree principles, our OSS                     where L = 4 × (79+(19−3)) = 380 cycles determined
+scheme can provide a layer reordering that has only one peak                     by (14) and F is the operating frequency. It is noteworthy
+in the row-degree distribution. Therefore, the latency of our                    that using the block-parallel architecture, our throughput 2T/P
+5G NR LDPC decoder can be simplified as (14) from (13)                           already satisfies the peak throughput requirement of 20 Gbps
+                      
+                         M p −1
+                                                                                as stipulated in the 5G standard [26].
+                          X                                                         Fig. 13 illustrates the post-layout of our 5G NR LDPC
+              L≈ I ·           dc + dcmax − dcmin  .       (14)
+                                                                                 decoder, where the core size is 1.35 × 1.35 mm2 with a cell
+                            c=0
+                                                                                 utilization of 72.9%. When running in the case of 2T/P , this
+                                                                                 decoder demonstrates a dynamic power of 306.8 mW and
+                 V. I MPLEMENTATION R ESULTS                                     an energy consumption of 12.56 pJ/bit. Table IV presents a
+   In this section, we present the implementation results of our                 comprehensive power breakdown of our decoder. Notably, the
+5G NR LDPC decoder based on a STM 28nm FD-SOI technol-                           power usage of the NCU logic only accounts for 10.6% of the
+ogy. The decoder is synthesized by Synopsys Design Compiler                      total. In addition, Fig. 14 provides a detailed area analysis of
+and placed and routed using Cadence Innovus Implementa-                          cells. Memory macros account for 60% of the total cell area
+tion System. Power analysis is done under typical operating                      in our 5G NR LDPC decoder, with the Q-memory macros,
+conditions (1.0 V and 25 ◦ C). To balance error-correcting                       T-memory macros, and R-memory macros contributing around
+performance and hardware complexity, we employ the quan-                         14%, 14%, and 32%, respectively. This substantial memory
+tization scheme (7, 5, 1) (as discussed in Section III-B) and                    overhead in the 5G NR LDPC decoder mitigates the impact of
+incorporate fixed-point GA-MS-3 decoding into our decoder.                       complex decoding algorithms on overall hardware efficiency.
+All memory macros are based on STM 28nm FD-SOI dual-                             Hence, within the context of achieving the peak throughput
+port SRAM. The size of the LUTs in the NCUs is 16 × 16 and                       of 20 Gbps, using more complex decoding algorithms is
+each value in (11) is quantized as 4 bits. We instantiate 384                    justified to further enhance the error-correcting performance
+NCUs in the NCU pool to support the maximum lifting size                         of 5G NR LDPC decoders.
+
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+2922                                                    IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS, VOL. 71, NO. 6, JUNE 2024
+
+
+
+                                                                                                             TABLE V
+                                                                                    AVERAGE T/P OF P ROPOSED D ECODER W ITH E ARLY T ERMINATION
+
+
+
+
+Fig. 13. A post-layout of the proposed 5G NR LDPC decoder implemented in
+a 28nm process, wherein the white boxes represent the integrated Q-memory,
+T-memory, and R-memory, implemented by 28nm FD-SOI dual-port SRAM.
+
+
+
+
+                                                                                 Fig. 15. Peak throughput vs. energy (normalized to 28nm) of various SOA
+                                                                                 LDPC decoders.
+
+
+                                                                                 in [15], [23], [25], [30], [31], [33], [34], [35], [47]. To ensure
+                                                                                 fairness, we normalize all previous works to a 28nm process
+                                                                                 with a supply voltage of 1.0 V and set a fixed number of
+                                                                                 iterations to 4. Note that there is no early termination in
+                                                                                 Table VI to focus on the architecture. Compared to a similar
+Fig. 14. Implementation results of our 5G NR LDPC decoder in a 28nm              block-parallel 5G NR LDPC decoder in [30], our work has a
+process across various code configurations and a fixed iteration value of 4.     2.94× peak throughput, a 3.18× area efficiency, and 55% less
+                                TABLE IV
+                                                                                 energy consumption. When compared to the SOA row-parallel
+                                                                                 architectures presented in [15], [33], [34], and [35], our
+   P OWER B REAKDOWN† OF THE P ROPOSED 5G NR LDPC D ECODER
+                                                                                 decoder achieves a throughput that is 2.22× faster than [15]
+                                                                                 and 1.03× faster than [33]. Moreover, it demonstrates 3.32×
+                                                                                 greater area efficiency than [34] and consumes 9.9% less
+                                                                                 energy than [35]. Although the area overhead of these row-
+                                                                                 parallel 5G NR LDPC decoders [15], [33], [34], [35] is better
+                                                                                 than our results, their maximum code lengths are much shorter
+                                                                                 than N = 26112 required by the 5G standard, granting
+                                                                                 them a significant area advantage. Indeed, these row-parallel
+                                                                                 architectures will suffer from high routing complexity to be
+                                                                                 compatible with all 5G NR LDPC codes. In comparison with
+                                                                                 the 5G NR LDPC decoder in [31], our peak throughput is
+                                                                                 35.6% inferior to [31], but the PRP architecture of [31] has
+   As our decoder is compatible with all 5G NR LDPC codes,                       long decoding latency at medium to low code rates. For
+the corresponding throughput and area efficiency vary depend-                    instance, for LDPC codes at BG1 with R = 13 and Z = 384,
+ing on the code configurations. With Z max =384 and the                        our decoder can yield 17.60 Gbps at a fixed iteration value of
+maximum K u , we sweep all code rates of BG1 13 ≤ R ≤ 89                         4, but the normalized throughput of [31] is only 9.74 Gbps
+                                                                               (calculated by (5) in [31]). It is noteworthy that our GA-
+and BG2 51 ≤ R ≤ 32 at a fixed iteration value of 4 and plot                     MS-3 decoder has a lower error-rate than the OMS decoder
+the corresponding throughput and area efficiency in Fig. 14.                     in [31], as shown in Fig. 6. Given that the area overhead
+For BG1 with R = 13 , our decoder achieves a throughput of                       (e.g., routing and storage complexity) of LDPC decoders is
+17.60 Gbps and an area efficiency of 9.66 Gbps/mm2 . When                        largely influenced by varying maximum code lengths that can
+the code rate increases to 89 , our decoder reaches a peak                       be processed and therefore difficult to compare, we only plot
+throughput of 24.42 Gbps and a maximum area efficiency                           the peak throughput against energy in Fig. 15 for various SOA
+of 13.40 Gbps/mm2 . BG2 exhibits a similar trend to BG1,                         LDPC decoders listed in Table VI. From Fig. 15, our decoder
+with corresponding peak throughput and area efficiency values                    outperforms many existing decoders but is still inferior to [31].
+of 24.34 Gbps and 13.36 Gbps/mm2 , respectively. Moreover,                       Nonetheless, as mentioned before, our decoder achieves higher
+our decoder can employ the PPCs as an early termination                          throughput than [31] at medium to low code rates and main-
+criterion to further enhance the average throughput. For LDPC                    tains a lower error-rate. In conclusion, our decoder has an
+codes at BG1 with R = 89 and Z = 384, the average                                energy of 12.56 pJ/bit, consuming 55%, 57.4%, and 9.9%
+iteration and corresponding average throughput, under BPSK                       less than [30], [34], and [35], respectively. This work also
+and Imax = 15, are summarized in Table V.                                        achieves a peak throughput of 24.42 Gbps which is 2.22×,
+                                                                                 2.94×, 5.97×, 1.03×, 4.47×, 1.78×, and 2.47× faster than
+                                                                                 the SOA LDPC decoders [15], [23], [25], [30], [33], [34], [47].
+B. Comparison With Previous Works                                                Moreover, the maximum area efficiency in our 5G NR decoder
+  Table VI provides a detailed comparison between our                            is 13.40 Gbps/mm2 , which is 3.18×, 3.32×, and 1.35× higher
+5G NR LDPC decoder with the SOA decoder implementations                          than [30], [34], and [23], respectively.
+
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+REN et al.: GENERALIZED ADJUSTED MIN-SUM DECODER FOR 5G LDPC CODES                                                                                        2923
+
+
+
+                                                                    TABLE VI
+                                            C OMPARISONS W ITH THE S TATE - OF - THE -A RT LDPC D ECODERS
+
+
+
+
+                     VI. C ONCLUSION                                             [11] M. Fossorier, M. Mihaljevic, and H. Imai, “Reduced complexity iterative
+                                                                                      decoding of low-density parity check codes based on belief propagation,”
+   In this paper, we propose high-performance and low-                                IEEE Trans. Commun., vol. 47, no. 5, pp. 673–680, May 1999.
+complexity GA-MS decoding. By truncating the number                              [12] J. Chen, A. Dholakia, E. Eleftheriou, M. P. C. Fossorier, and X.-Y. Hu,
+of incoming messages in CN processing, we can make a                                  “Reduced-complexity decoding of LDPC codes,” IEEE Trans. Commun.,
+trade-off between error-correcting performance and computa-                           vol. 53, no. 8, pp. 1288–1299, Aug. 2005.
+tional complexity. By incorporating the well-designed LUTs,                      [13] X. Wu, Y. Song, M. Jiang, and C. Zhao, “Adaptive-normalized/offset
+quantization schemes, and other approximation techniques, our                         min-sum algorithm,” IEEE Commun. Lett., vol. 14, no. 7, pp. 667–669,
+                                                                                      Jul. 2010.
+fixed-point GA-MS decoding exhibits only a minor gap of                          [14] K. Le Trung, F. Ghaffari, and D. Declercq, “An adaptation of min-
+0.1 dB compared to floating-point SP decoding under vari-                             sum decoder for 5G low-density parity-check codes,” in Proc. IEEE Int.
+ous 5G NR code configurations and high-order modulations.                             Symp. Circuits Syst. (ISCAS), May 2019, pp. 1–5.
+We also present a fully reconfigurable 5G NR LDPC decoder                        [15] H. Cui, F. Ghaffari, K. Le, D. Declercq, J. Lin, and Z. Wang, “Design
+implementation, compatible with all 5G NR LDPC codes. The                             of high-performance and area-efficient decoder for 5G LDPC codes,”
+28nm FD-SOI post-layout implementation results show that                              IEEE Trans. Circuits Syst. I, Reg. Papers, vol. 68, no. 2, pp. 879–891,
+                                                                                      Feb. 2021.
+our decoder has a core area of 1.823 mm2 , achieves a peak                       [16] V. Savin, “Self-corrected min-sum decoding of LDPC codes,” in Proc.
+throughput of 24.42 Gbps at 895 MHz, and has an energy                                IEEE Int. Symp. Inf. Theory, Jul. 2008, pp. 146–150.
+consumption of 12.56 pJ/bit with a supply voltage of 1.0 V.                      [17] J. Zhang, M. Fossorier, D. Gu, and J. Zhang, “Two-dimensional correc-
+                                                                                      tion for min-sum decoding of irregular LDPC codes,” IEEE Commun.
+                             R EFERENCES                                              Lett., vol. 10, no. 3, pp. 180–182, Mar. 2006.
+                                                                                 [18] P. Kang, Y. Xie, L. Yang, and J. Yuan, “Enhanced quasi-maximum
+ [1] R. G. Gallager, “Low-density parity-check codes,” IRE Trans. Inf.                likelihood decoding based on 2D modified min-sum algorithm for 5G
+     Theory, vol. 8, no. 1, pp. 21–28, Jan. 1962.                                     LDPC codes,” IEEE Trans. Commun., vol. 68, no. 11, pp. 6669–6682,
+ [2] Standard: Synchronization Standard for Distributed Transmission, Adv.            Nov. 2020.
+     Telev. Syst. Committee (ATSC), Boston, MA, USA, Feb. 2007.                  [19] C. Jones, E. VaIles, M. Smith, and J. Villasenor, “Approximate-MIN
+ [3] Wireless LAN Medium Access Control (MAC) and Physical Layer,                     constraint node updating for LDPC code decoding,” in Proc. IEEE Mil.
+     IEEE Standard P802.11n/D5.02, 2008.                                              Commun. Conf., Oct. 2003, pp. 157–162.
+ [4] Digital Video Broadcasting (DVB) User Guidelines for the Sec-               [20] W. Zhou and M. Lentmaier, “Generalized two-magnitude check node
+     ond Generation system for Broadcasting, Interactive Services, News               updating with self correction for 5G LDPC codes decoding,” in Proc.
+     Gathering and Other Broadband Satellite Applications (DVB-S2),                   12th Int. ITG Conf. Syst., Commun. Coding, Feb. 2019, pp. 1–6.
+     document ETSI TR 102 376, 2009.
+ [5] Chairman’s Notes of AI 7.1.5 on Consideration on LDPC Design for            [21] T. J. Richardson, S. Kudekar, and V. Loncke, “Adjusted mim-sum
+     NR, document R1-1611112, 3GPP, Nov. 2016.                                        decoder,” U.S. Patent 2018/0 109 269 A1, 2017.
+ [6] 5G NR: Multiplexing and Channel Coding, document TS 38.212, 3GPP,           [22] T.-C. Kuo and A. N. Willson, “A flexible decoder IC for Wimax QC-
+     2018.                                                                            LDPC codes,” in Proc. IEEE Custom Integr. Circuits Conf., Sep. 2008,
+ [7] F. R. Kschischang, B. J. Frey, and H.-A. Loeliger, “Factor graphs and            pp. 527–530.
+     the sum-product algorithm,” IEEE Trans. Inf. Theory, vol. 47, no. 2,        [23] Z. Zhang, V. Anantharam, M. J. Wainwright, and B. Nikolic, “An
+     pp. 498–519, Feb. 2001.                                                          efficient 10GBASE-T Ethernet LDPC decoder design with low error
+ [8] T. J. Richardson and R. L. Urbanke, “The capacity of low-density parity-         floors,” IEEE J. Solid-State Circuits, vol. 45, no. 4, pp. 843–855,
+     check codes under message-passing decoding,” IEEE Trans. Inf. Theory,            Apr. 2010.
+     vol. 47, no. 2, pp. 599–618, Feb. 2001.                                     [24] C. Studer, N. Preyss, C. Roth, and A. Burg, “Configurable high-
+ [9] M. M. Mansour and N. R. Shanbhag, “High-throughput LDPC                          throughput decoder architecture for quasi-cyclic LDPC codes,” in Proc.
+     decoders,” IEEE Trans. Very Large Scale Integr. (VLSI) Syst., vol. 11,           42nd Asilomar Conf. Signals, Syst. Comput., Oct. 2008, pp. 1137–1142.
+     no. 6, pp. 976–996, Dec. 2003.                                              [25] C. Roth, P. Meinerzhagen, C. Studer, and A. Burg, “A 15.8 pJ/bit/iter
+[10] N. Wiberg, “Codes and decoding on general graph,” Ph.D. dissertation,            quasi-cyclic LDPC decoder for IEEE 802.11n in 90 nm CMOS,” in
+     Dept. Elect. Eng., Linköping Univ., Linköping, Sweden, 1996.                     Proc. IEEE Asian Solid-State Circuits Conf., Nov. 2010, pp. 1–4.
+
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+2924                                                      IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS, VOL. 71, NO. 6, JUNE 2024
+
+
+
+[26] D. Hui, S. Sandberg, Y. Blankenship, M. Andersson, and L. Grosjean,           Yuqing Ren (Graduate Student Member, IEEE) was born in 1996. He received
+     “Channel coding in 5G new radio: A tutorial overview and performance          the B.S. degree from Nanjing University of Science and Technology, Nanjing,
+     comparison with 4G LTE,” IEEE Veh. Technol. Mag., vol. 13, no. 4,             China, in 2018, and the M.E. degree from Southeast University, Nanjing,
+     pp. 60–69, Dec. 2018.                                                         in 2021. He is currently pursuing the Ph.D. degree in electrical engineering
+[27] A. J. Blanksby and C. J. Howland, “A 690-mW 1-Gb/s 1024-b, rate-1/2           with the Telecommunication Circuit Laboratory (TCL), École Polytech-
+     low-density parity-check code decoder,” IEEE J. Solid-State Circuits,         nique Fédérale de Lausanne (EPFL), Switzerland, under the supervision of
+     vol. 37, no. 3, pp. 404–412, Mar. 2002.                                       Prof. Andreas Burg. His research interests include error correction coding
+[28] C.-C. Cheng, J.-D. Yang, H.-C. Lee, C.-H. Yang, and Y.-L. Ueng,               theory and practice, digital signal processing, beyond 5G and 6G, and VLSI
+     “A fully parallel LDPC decoder architecture using probabilistic min-          circuits for communications.
+     sum algorithm for high-throughput applications,” IEEE Trans. Circuits
+     Syst. I, Reg. Papers, vol. 61, no. 9, pp. 2738–2746, Sep. 2014.               Hassan Harb (Member, IEEE) received the bachelor’s and master’s degrees
+[29] R. Ghanaatian et al., “A 588-Gb/s LDPC decoder based on finite-               in communications and electronics from Lebanese University, in 2015, and the
+     alphabet message passing,” IEEE Trans. Very Large Scale Integr. (VLSI)        Ph.D. degree in NB-LDPC codes construction and efficient NB-LDPC decoder
+     Syst., vol. 26, no. 2, pp. 329–340, Feb. 2018.                                hardware design from L’université Bretagne-Sud, Lorient, France, in 2018.
+[30] C.-Y. Lin, L.-W. Liu, Y.-C. Liao, and H.-C. Chang, “A 33.2 Gbps/ITER.         He is an FPGA Engineer with the Research and Development Department,
+     Reconfigurable LDPC decoder fully compliant with 5G NR applica-               Leica Geosystems, Hexagon, Heerbrugg, Switzerland. After the Ph.D. study,
+     tions,” in Proc. IEEE Int. Symp. Circuits Syst. (ISCAS), May 2021,            he was a post-doctoral researcher until February 2022, where he has made
+     pp. 1–5.                                                                      significant contributions to the fields of turbo and LDPC codes, including
+                                                                                   code construction, decoding algorithms, and efficient hardware designs.
+[31] S. Lee, S. Park, B. Jang, and I.-C. Park, “Multi-mode QC-LDPC
+     decoding architecture with novel memory access scheduling for 5G new-
+     radio standard,” IEEE Trans. Circuits Syst. I, Reg. Papers, vol. 69, no. 5,   Yifei Shen (Member, IEEE) was born in 1997. He received the B.S. degree
+     pp. 2035–2048, May 2022.                                                      from the Chien-Shiung Wu College (Honors College) in 2016 and the M.S.
+[32] J. Nadal and A. Baghdadi, “Parallel and flexible 5G LDPC decoder              and Ph.D. degrees from the School of Information Science and Engineering,
+     architecture targeting FPGA,” IEEE Trans. Very Large Scale Integr.            Southeast University, Nanjing, China, in 2018 and 2022, respectively. He is
+     (VLSI) Syst., vol. 29, no. 6, pp. 1141–1151, Jun. 2021.                       currently a Post-Doctoral Researcher with the Telecommunication Circuits
+[33] S. Yun, B. Y. Kong, and Y. Lee, “Area- and energy-efficient LDPC              Laboratory, École Polytechnique Fédérale de Lausanne (EPFL), Switzerland.
+     decoder using mixed-resolution check-node processing,” IEEE Trans.            His research interests include error-correcting codes, VLSI design for digital
+     Circuits Syst. II, Exp. Briefs, vol. 69, no. 3, pp. 999–1003, Mar. 2022.      signal processing, and synthetic biology. He was a recipient of the Best
+                                                                                   Student Paper Award at the 2016 IEEE International Conference on Digital
+[34] B.-S. Su, C.-H. Lee, and T.-D. Chiueh, “A 58.6/91.3 pJ/b dual-mode
+                                                                                   Signal Processing, the 2020 IEEE Circuits and Systems Society Pre-Doctoral
+     belief-propagation decoder for LDPC and polar codes in the 5G commu-
+                                                                                   Scholarship Award, and the 2023 Chinese Institute of Electronics Best
+     nications standard,” IEEE Solid-State Circuits Lett., vol. 5, pp. 98–101,
+                                                                                   Doctoral Thesis Award.
+     2022.
+[35] A. Verma and R. Shrestha, “Low computational-complexity SOMS-
+     algorithm and high-throughput decoder architecture for QC-LDPC                Alexios Balatsoukas-Stimming (Member, IEEE) received the Diploma and
+     codes,” IEEE Trans. Veh. Technol., vol. 72, no. 1, pp. 66–80, Jan. 2023.      M.Sc. degrees in electronics and computer engineering from the Technical
+[36] R. Tanner, “A recursive approach to low complexity codes,” IEEE Trans.        University of Crete, Chania, Greece, in 2010 and 2012, respectively, and
+     Inf. Theory, vol. IT-27, no. 5, pp. 533–547, Sep. 1981.                       the Ph.D. degree in computer and communications sciences from École
+                                                                                   Polytechnique Fédérale de Lausanne (EPFL), Switzerland, in 2016. He was
+[37] M. P. C. Fossorier, “Quasi-cyclic low-density parity-check codes from
+                                                                                   a Marie Skłodowska-Curie Post-Doctoral Fellow with the European Labo-
+     circulant permutation matrices,” IEEE Trans. Inf. Theory, vol. 50, no. 8,
+                                                                                   ratory for Particle Physics, Meyrin, Switzerland, for one year. He was a
+     pp. 1788–1793, Aug. 2004.
+                                                                                   Post-Doctoral Researcher with the Telecommunications Circuits Laboratory,
+[38] H. Zhong and T. Zhang, “Block-LDPC: A practical LDPC coding system            EPFL, from 2018 to 2019. He has been a Visiting Post-Doctoral Researcher
+     design approach,” IEEE Trans. Circuits Syst. I, Reg. Papers, vol. 52,         with Cornell University, Ithaca, NY, USA, and the University of California
+     no. 4, pp. 766–775, Apr. 2005.                                                at Irvine, Irvine, CA, USA. He is currently an Assistant Professor with the
+[39] Z. Zhong, Y. Huang, Z. Zhang, X. You, and C. Zhang, “A flexible and           Department of Electrical Engineering, Eindhoven University of Technology,
+     high parallel permutation network for 5G LDPC decoders,” IEEE Trans.          Eindhoven, The Netherlands. His research interests include VLSI circuits for
+     Circuits Syst. II, Exp. Briefs, vol. 67, no. 12, pp. 3018–3022, Dec. 2020.    communications, error correction coding theory and practice, and the appli-
+[40] E. Sharon, S. Litsyn, and J. Goldberger, “An efficient message-passing        cations of approximate computing and machine learning to signal processing
+     schedule for LDPC decoding,” in Proc. IEEE Conven. Elect. Electron.           for communications.
+     Eng. Isreal, Sep. 2004, pp. 223–226.
+[41] D. E. Hocevar, “A reduced complexity decoder architecture via layered         Andreas Burg (Senior Member, IEEE) was born in Munich, Germany,
+     decoding of LDPC codes,” in Proc. IEEE Workshop Signal Process.               in 1975. He received the Dipl.-Ing. degree from the Swiss Federal Insti-
+     Syst. (SIPS), Oct. 2004, pp. 107–112.                                         tute of Technology (ETH) Zürich, Zürich, Switzerland, in 2000, and the
+[42] J. Mao, M. A. Abdullahi, P. Xiao, and A. Cao, “A low complexity               Dr.sc.techn. degree from the Integrated Systems Laboratory, ETH Zürich,
+     256QAM soft demapper for 5G mobile system,” in Proc. Eur. Conf.               in 2006. In 1998, he was with Siemens Semiconductors, San Jose, CA,
+     Netw. Commun. (EuCNC), Jun. 2016, pp. 16–21.                                  USA. During the Ph.D. study, he was with Bell Labs Wireless Research for
+[43] B. Le Gal, Y. Delomier, C. Leroux, and C. Jégo, “Low-latency sorter           one year. From 2006 to 2007, he was a Post-Doctoral Researcher with the
+     architecture for polar codes successive-cancellation-list decoding,” in       Integrated Systems Laboratory, Communication Theory Group, ETH Zürich.
+     Proc. IEEE Workshop Signal Process. Syst. (SiPS), Oct. 2020, pp. 1–5.         In 2007, he co-founded Celestrius, an ETH-spinoff in the field of MIMO
+[44] T. C.-Y. Chang, P.-H. Wang, J.-J. Weng, I.-H. Lee, and Y. T. Su,              wireless communication, where he was responsible for the ASIC development
+     “Belief-propagation decoding of LDPC codes with variable node-                as the Director for VLSI. In January 2009, he joined ETH Zürich as a
+     centric dynamic schedules,” IEEE Trans. Commun., vol. 69, no. 8,              SNF Assistant Professor and the Head of the Signal Processing Circuits and
+     pp. 5014–5027, Aug. 2021.                                                     Systems Group, Integrated Systems Laboratory. In January 2011, he joined
+                                                                                   École Polytechnique Fédérale de Lausanne (EPFL), where he is leading the
+[45] C.-Y. Liang, M.-R. Li, H.-C. Lee, H.-Y. Lee, and Y.-L. Ueng, “Hardware-       Telecommunications Circuits Laboratory. He was promoted to an Associate
+     friendly LDPC decoding scheduling for 5G HARQ applications,” in               Professor with tenure in June 2018. In 2021, he co-founded RAAAM Memory
+     Proc. IEEE Int. Conf. Acoust., Speech Signal Process. (ICASSP),               Technologies, a spinoff from EPFL and Bar-Ilan University, to commercialize
+     May 2019, pp. 1418–1422.                                                      the highest density embedded memories in any standard CMOS technology.
+[46] K. Tian and H. Wang, “A novel base graph based static scheduling                 He has served on the TPC of various conferences on signal processing,
+     scheme for layered decoding of 5G LDPC codes,” IEEE Commun. Lett.,            communications, and VLSI. He was the TPC Co-Chair of VLSI-SoC 2012 and
+     vol. 26, no. 7, pp. 1450–1453, Jul. 2022.                                     the TCP Co-Chair of ESSCIRC 2016 and SiPS 2017. He was the General
+[47] S. Kumawat, R. Shrestha, N. Daga, and R. Paily, “High-throughput              Chair of ISLPED 2019. He served as an Editor for IEEE T RANSACTION
+     LDPC-decoder architecture using efficient comparison techniques &             ON C IRCUITS AND S YSTEMS in 2013. He is an Editor of IEEE T RANSAC -
+     dynamic multi-frame processing schedule,” IEEE Trans. Circuits Syst. I,       TIONS ON V ERY L ARGE S CALE I NTEGRATION (VLSI) S YSTEMS and IEEE
+     Reg. Papers, vol. 62, no. 5, pp. 1421–1430, May 2015.                         T RANSACTIONS ON S IGNAL P ROCESSING.
+
+   Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 14,2024 at 08:51:09 UTC from IEEE Xplore. Restrictions apply.
+

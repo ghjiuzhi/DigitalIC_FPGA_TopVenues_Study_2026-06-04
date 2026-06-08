@@ -1,0 +1,841 @@
+General Rights
+Copyright and moral rights for the publications made accessible in the public portal are retained by the authors and/or other copyright owners
+and it is a condition of accessing publications that users recognize and abide by the legal requirements associated with these rights.
+• Users may download and print one copy of any publication from the public portal for the purpose of private study or research.
+• You may not further distribute the material or use it for any profit-making activity or commercial gain.
+• You may freely distribute the URL identifying the publication in the public portal.
+If you believe that this document breaches copyright please contact us at oa@kb.dk providing details, and we will remove access to the work
+immediately and investigate your claim.
+If the document is published under a Creative Commons license, this applies instead of the general rights.
+This cover sheet template is made available by AU Library
+Version 3, October 2023
+This is the accepted manuscript (AM)/author accepted manuscript (AAM) of the article
+The content in the accepted manuscript version has been peer reviewed (when applicable)
+and accepted for publication, though any post-acceptance changes such as typography and
+layout may lead to differences between this version and the final published version.
+How to cite this publication
+Please cite the final published version:
+Shafaghi, P., Dolatshahi, M., & Farkhani, H. (2023). Energy-efficient spintronic based
+neuromorphic computing system using current mode track and termination circuit. IEEE
+Transactions on Computer-Aided Design of Integrated Circuits and Systems, 42(9), 2915-
+2923. https://doi.org/10.1109/TCAD.2023.3238879
+© 2023 IEEE. Personal use of this material is permitted. Permission from IEEE must be
+obtained for all other uses, in any current or future media, including reprinting/republishing
+this material for advertising or promotional purposes, creating new collective works, for resale
+or redistribution to servers or lists, or reuse of any copyrighted component of this work in other
+works
+1
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+Energy-efficient spintronic based neuromorphic
+computing system using current mode track and
+termination circuit
+Pegah Shafaghi, Mehdi Dolatshahi and Hooman Farkhani, Member, IEEE
+Abstract— Spintronic nano-devices have shown great potential
+to reduce the energy consumption of neuromorphic computing
+systems (NCSs). In the spintronic-based NCSs, the switching or
+oscillation of a magnetic tunnel junction (MTJ) is a common
+approach to mimic neuron firing. However, still there is a gap
+between the performance (operation/sec/Watt/cm2
+) of the human
+brain and NCSs. To mitigate this gap, it is essential to further
+decrease the energy consumption and the delay of the NCS. The
+high energy consumption of the MTJ-based NCS is mostly related
+to the high current needed to switch the MTJ state. Hence, some
+previous methods tried to perform real-time tracking of the MTJ
+state by monitoring the voltage across the MTJ and cut-off it's
+current immediately after switching. However, due to the small
+voltage changes after switching, these methods suffer from high-
+power consumption. In this paper, a new method based on the
+tracking of the MTJ current (instead of its voltage) and
+terminating the MTJ current after switching is proposed. Due to
+the large changes in the MTJ current after switching (about 40%),
+there is no need to use an amplifier in the proposed common-mode
+tracking and terminating circuit (CM-TTC). The simulation
+results in 65-nm CMOS technology confirm that the proposed
+CM-TTC technique can improve the energy consumption and
+speed of a typical NCS by 53% and 2X. Moreover, the power
+consumption, delay and area overhead of CM-TTC is reduced by
+12.8%, 73% and 95% compared with the best state-of-the-art
+track and termination circuits.
+Index Terms—Energy-efficiency, Memristor, Magnetic tunnel
+junction, Neuromorphic computing system, Spintronics.
+I. INTRODUCTION
+rtificial intelligence (AI) has witnessed explosive
+growth over the past two decades. The core processing
+unit of AI is an artificial neural network (ANN) inspired
+by the human brain with remarkable accuracy progress in
+cognitive applications [1]. Despite all the progress in ANN
+algorithms, the biggest challenge of AI is the low performance
+(operation/Joul/area) of their hardware implementation using
+typical computers (CPUs and GPUs). Brain-inspired hardware
+implementation of ANNs algorithms, called neuromorphic
+computing systems (NCSs), has shown to be a promising
+solution to deal with the low performance of implementing AI
+on typical computers (e.g. TrueNorth by IBM [2] and Loihi by
+Intel [3]). NCSs overcome the limitation of the word-at-a-time
+thinking of typical computers by doing massively parallel data
+processing, similar to the brain. Despite the higher density and
+energy efficiency of implementing ANN algorithms on NCSs,
+they are still far from human brain performance.
+There are different state-of-the-art implementations of NCS
+using CMOS (digital and analog) and emerging technologies
+(e.g. spintronic, phase change memory and memristors).
+Implementation of NCSs using conventional digital and analog
+CMOS is area-and energy-inefficient [4]. This led to a
+significant effort to examine the hybrid implementation of NCS
+through implementing the neural networks using emerging
+technologies and CMOS circuits as controlling blocks. Thanks
+to the advancement of nanotechnology, one of the most
+promising hybrid implementations of NCS is the combination
+of nanoscale spin-based components and CMOS devices (i.e.
+spintronics). Spintronics has made it possible to implement
+NCSs with higher density and lower power consumption [5-6].
+Hardware implementation of the NCS requires massively
+parallel components (act as neurons) interacting with each other
+and the external world through the adaptive or programmable
+devices acting as synapses. In spintronic-based NCS, neurons
+and synapses would be implemented using magnetic elements
+while CMOS circuits can be used as input interfacing circuits
+and readout circuits for sensing outputs. The design of neurons
+determines the performance and the integration density of the
+NCS regardless of the network topology [7-10].
+One of the most popular spintronic-based implementations
+of NCS is to use MTJs and memristors for mimicking the
+neuron and synapse functionalities, respectively. However, the
+MTJ switching behavior is innately stochastic. Hence, there is
+a need for passing the current to MTJ for a time period longer
+than the worst-case switching time of MTJ to guarantee its
+correct switching when its current is higher than the threshold
+current. This means in most cases, the switching current will
+flow through the MTJ even after its switching. This leads to
+high energy consumption during the MTJ switching process. In
+the literature, attempts have been made to solve this problem
+using tracking the voltage across the MTJ for detecting its
+switching and terminating its current [11-13]. However, due to
+the low voltage change after switching, those methods need a
+power-hungry amplifier which results in a high-power
+A
+Pegah Shafaghi, Mehdi Dolatshahi and Hooman Farkhani are with the
+Department of electrical engineering, Najafabad branch, Islamic Azad
+University, Najafabad, Iran. (e-mail: p_shafaghy@yahoo.com;
+me_dolatshahi@yahoo.com; h_farkhani@yahoo.com)
+Hooman Farkhani is also with Electronics and Photonics section, Electrical
+and Computer Engineering Department, Aarhus University, 8200 Aarhus,
+Denmark. (e-mail: farkhani@ece.au.dk)
+2
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+consumption. Note that MTJ switching consumes the majority
+of the energy consumption in spintronic-based NCS [14].
+In this paper, a new technique based on tracking the MTJ
+current (instead of its voltage) and terminating its current
+immediately after switching is proposed. Considering the high
+changes in the MTJ current after switching (about 40%), there
+is no need to use any amplifier in the proposed circuit, which
+reduces the power consumption of the proposed circuit in
+comparison with the state-of-the-art.
+The rest of the paper is organized as follows: Section II
+briefly discusses the implementation of MTJ-based neurons. In
+section III, the proposed CM-TTC method is discussed. Section
+IV presents the simulation results and comparisons. Finally,
+section V concludes the paper.
+II. STATE OF THE ART
+A. Performance of the Neuron
+In a biological neural network, neurons which are known as
+a set of parallel processors work together simultaneously and
+synapses are in charge of transferring signals among different
+neurons. When different input signals come from neurons in the
+previous layer (pre-neurons), the post-neuron integrates these
+signals in the form of membrane potential. If the membrane
+potential of the post-neuron reaches a threshold potential, it
+produces a wave-shaped signal (called an action potential) as
+shown in Fig.1. Then, the synapse transmits the action potential
+to the next neuron. However, it is not a simple transition but the
+synapse amplifies or weakens the signal along the path based
+on past events.
+The artificial neural networks are modeled based on the
+biological neural networks, in which proper modeling of the
+neuron is the starting point. Each neuron has a single output and
+a set of inputs, as shown in Fig. 2. The inputs are weighted and
+as mentioned above the sum of these weighted inputs is applied
+to the activation function. There are different types of activation
+functions discussed in the literature [15-16]. However, in the
+MTJ implementation of a neuron based on switching, the step
+function will be used. The activation function produces the
+output based on the summation of the input signals. The inputs,
+named as v1, v2, …, vn, are weighted by the coefficients w1, w2,
+…, wn and are applied to the input of the neuron. These weights
+represent the biological synaptic functionalities in the neurons
+[17]. The operation of the step function can be given as:
+𝑂𝑢𝑡𝑝𝑢𝑡 = {
+1 𝑖𝑓 ∑ 𝑊𝑖𝑉𝑖 + 𝐵𝑖 ≥ 𝑇ℎ𝑟𝑒𝑠ℎ𝑜𝑙𝑑
+0 𝑖𝑓 ∑ 𝑊𝑖𝑉𝑖 + 𝐵𝑖 < 𝑇ℎ𝑟𝑒𝑠ℎ𝑜𝑙𝑑
+(1)
+where Wi is the corresponding synapse weight, Bi is the neuron
+bias and Vi indicates the neuron input.
+B. Magnetic Tunnel Junction basis
+MTJ is one of the most promising spin-based devices. Fig. 3
+(a) shows the basic structure of an MTJ. It consists of two
+ferromagnetic layers with a non-conductive thin tunneling
+barrier that is sandwiched between the two ferromagnetic
+layers. The pinned layer (PL), also known as a fixed layer, is a
+thick ferromagnetic layer with a fixed magnetic orientation. In
+contrast to the PL, the free layer (FL) magnetization direction
+can be changed by applying an external magnetic field and/or
+passing current in the right direction [18]. As shown in Fig. 3
+(a), the magnetization direction of the FL relative to the PL
+determines the MTJ resistive behavior. When the magnetization
+directions of two layers are in parallel (P-state), the MTJ
+resistance (RP) is low, however, if the magnetization directions
+of the two magnetic layers are anti-parallel (AP-state), the MTJ
+resistance (RAP) is high. Fig. 3 (b) shows the house curve
+characteristic of the MTJ while switching from AP to P and vice
+versa. As illustrated in Fig. 3 (b), the MTJ switching behavior
+is asymmetric, i.e. the MTJ switching time and energy
+consumption while switching from P to AP and AP to P are
+different. In most of the MTJ implementations, the P to AP state
+transition has a higher switching threshold current. It is because
+the PL weakens the spin electrons [19-21]. In other words, the
+PL magnetic field prevents the FL spins from switching to the
+opposite direction of the PL magnetic direction [22]. This
+prevention leads to an increased current needed for the MTJ
+Fig. 2. The typical model of an artificial neuron.
+Fig. 3. (a) The schematic of the MTJ and the switching behavior of the MTJ.
+(b) The house curve characteristic of the MTJ.
+Fig. 1. The simplified model of human brain computation.
+3
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+switching. In contrast, while switching from AP to P, PL
+magnetic field will ease the switching process, leading to a
+lower threshold current. As a result, the initial state of the MTJ-
+based neuron will be set at AP-state to reduce the power
+consumption and delay of the NCS [23]. If a sufficient current
+flows from FL to PL, the MTJ state switches to P-state and the
+MTJ resistance will decrease to Rp [24-26]. Accordingly, by
+using a readout circuit, it is possible to evaluate the resistance
+of MTJ and determine whether the neuron has fired or not.
+C. MTJ and Memristor Functionality in Neuromorphic
+Computing System
+The human brain is a massively parallel computing system
+that employs the neurons as simple computing units and
+synapses as adjustable weighted connections between neurons
+as described in section II. The NCS, tries to mimic the way that
+the brain does computing. To implement the NCS, it is needed
+to implement neuronal and synaptic functionalities through
+electronic elements. Hence, memristors can be used to perform
+synaptic functionality to get low-power operation [27-28]. The
+memristor resistance can be tuned by electrical signals. Each
+input is connected to the neuron by the memristor. Hence,
+different inputs and their corresponding memristors apply
+different currents to the post-neuron. These currents will be
+added together and the total current passes through the MTJ
+which is used to mimic the neuron. If the total current will be
+higher than the critical current (Isum>Icritical), MTJ will switch.
+Then, the MTJ switching will be detected by the readout circuit
+as neuron firing. However, the relatively high threshold current
+of switching and the stochastic nature of the MTJ switching
+increase the energy consumption of the MTJ-based NCS. To
+this end, a novel CM-TTC technique is proposed to mitigate the
+negative impact of the MTJ switching stochasticity.
+III. PROPOSED TRACKING AND TERMINATING TECHNIQUE
+In this section, the structure of the proposed CM-TTC will be
+explained. As mentioned above, the MTJ is used to mimic
+neuron functionality, however, the high energy consumption
+needed for the MTJ switching increases the energy
+consumption of the NCS. The CM-TTC tries to decrease the
+energy consumption of the MTJ switching using high changes
+in the MTJ current after switching and cutting off the MTJ
+current, immediately.
+A. Main Idea
+The schematic of the CM-TTC-based NCS is shown in Fig.
+4 (a). The proposed CM-TTC technique can be added to a
+typical NCS to decrease its energy consumption. A significant
+part of the energy consumption of the MTJ-based NCS is
+related to the high current required to switch the MTJ state.
+Hence, the CM-TTC is proposed to decrease the total energy
+consumption by tracking and terminating the MTJ current
+immediately after switching. To sense the MTJ switching, CM-
+TTC tracks the MTJ current changes. Due to the high changes
+in the MTJ current after switching (about 40%), there is no need
+to use an amplifier in the CM-TTC. This will decrease the
+energy consumption and delay of the CM-TTC-based NCS,
+significantly. In the literature, different methods have been
+proposed to lower the energy consumption of MTJ switching.
+The real-time sensing (RTS) circuit proposed in [11] and the
+Self-Referenced Differential Write Termination (SDWT)
+circuit [13] track the MTJ state during the stimulation phase
+simultaneously by sensing its voltage and cutting off the MTJ
+current immediately after the MTJ switching. Despite the
+decrease in the energy consumption of the MTJ using the RTS
+and SDWT circuits, they consume a remarkable amount of
+energy due to the use of an amplifier. The amplifier is needed
+to amplify the voltage changes after switching (about 40mv) to
+be comparable with a reference voltage using a comparator. In
+the RTS-based NCS, 25-40% of total energy consumption is
+related to the RTS circuit [11]. It is because the amplifier in the
+RTS circuit is turned on for 90% of the stimulation phase.
+Moreover, the delay of the RTS circuit is about 0.55ns and
+during this time not only the RTS consumes energy, but also a
+high current passes through the MTJ. Fig. 4 (b) shows the
+circuit implementation of the CM-TTC. It consists of five main
+blocks including a current mirror, a current comparator, a rail-
+to-rail output buffer, two OR logic gates and a rise edge
+detector. The idea is to compare the MTJ current with a
+reference current equal to the average current of the MTJ after
+and before switching. To do that the MTJ current is mirrored to
+the current comparator via M1 and M2. Then, the current
+comparator formed by M2-8 transistors compares the MTJ
+current with a reference current ((IMTJ-P+IMTJ-AP)/2). The
+reference current, formed by M8, is mirrored to the M6 through
+M7 transistor. The size of M8 is designed in a way that the
+reference current will be the average of IM5 before and after
+switching. On the other hand, the gate of M8 is connected to the
+common node between the transmission gate (TG1) and M1.
+The main advantage of this biasing method is that it will help
+the CM-TTC circuit to detect switching more effectively.
+Before switching, the MTJ resistance is high (RAP) and the gate
+voltage of M8 is relatively low. As a result, the reference current
+is high. After switching, because the gate voltage of M8 will
+increase, the reference current will decrease. This will act as
+positive feedback and increase the voltage of the COM node
+even more which leads to a faster current cut-off in the MTJ
+branch. Finally, the current of the M5 transistor (MTJ current)
+is compared with the reference current passing through M6
+((IMTJ-P+IMTJ-AP)/2). Before switching, MTJ is in AP-state and
+its current is less than the reference current. Hence, IM5 is
+smaller than IM6 which will push M6 to the linear region. This
+will reduce the voltage of the COM node to voltages below
+VDD/2. Then, this voltage will be inverted and amplified to VDD
+at BU which will keep TG1 (MST) turned on (off) through the
+OR gates. The rise edge detector (RED) aims to detect the
+positive edges of Pulse1 and create a short pulse immediately
+afterward. This short pulse will keep TG1 on through the OR
+gates when Pulse1 will be switched from ‘0’ to ‘1’. Without
+RED block, both Pulse1 and (Pulse1
+̅̅̅̅̅̅̅̅̅) will be ‘0’ for a short
+time during the rising edge of Pulse1 which will turn off TG1
+irreversibly. This means that the TG1 will remain off even after
+Pulse1 switching is complete. As soon as the MTJ will be
+switched to P-state, its current will increase to IMTJ-P due to the
+MTJ resistance reduction. Hence, IM5 will be more than IM6 that
+will push M5 to the linear region and increase the voltage of the
+COM node to voltages above VDD/2. Again, this voltage will be
+4
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+inverted to ‘0’ at BU which will cause TG1 (MST) to turn off
+(on). Hence, the MTJ current will be cut off as soon as the MTJ
+switches, preventing excessive energy consumption. At the
+same time, the next layer will be stimulated by turning on MST.
+Hence, there is no need for a read circuit and CM-TTC will
+perform a read and next-layer stimulation operations that can
+effectively improve area and energy consumption of CM-TTC
+based NCS.
+B. Voltage and current change in the MTJ due to switching
+This section compares voltage changes at two ends of the
+MTJ (VCM1 and VCM2) with the MTJ current (IMTJ) changes due
+to the MTJ switching. To do that we studied the effect of the
+MTJ switching on IMTJ, VCM1 and VCM2 for the different number
+of inputs (Fig. 5 (a)) and different input voltages (Fig. 5 (b)). In
+both cases, the IMTJ changes (more than 40%) due to switching
+are much greater than VCM1 changes (less than 5%) and VCM2
+changes (less than 17%). This shows the higher efficiency of
+utilizing the MTJ current changes for the MTJ switching
+detection compared with voltage changes.
+Fig. 5 (a) shows the change in IMTJ, VCM1 and VCM2 due to
+switching in percentage for the different number of inputs (1 to
+10). By increasing the number of inputs, the changes in VCM1
+and VCM2 are almost constant while the changes in IMTJ will
+slightly increase by increasing the number of inputs. Hence, it
+can be concluded that changes in the number of inputs have a
+negligible effect on the changes in IMTJ, VCM1 and VCM2.
+Moreover, in all cases, the percentage of IMTJ change (> 40%)
+is much higher than the percentage change of VCM1 (<3%) and
+VCM2 (<17%). Fig. 5 (b) shows the percentage of changes in
+IMTJ, VCM1 and VCM2 due to switching for different input
+voltages (Vi from 0.95v to 1.2v). The percentage of IMTJ
+changes is much higher than VCM1 and VCM2 changes for
+different input voltages. These results also confirm that using
+current changes to detect the MTJ switching will be much more
+effective than using voltage changes. As a result, after
+switching the MTJ from AP-state to P-state, high changes in the
+MTJ current (around 40%) will occur.
+IV. SIMULATION RESULTS AND DISCUSSIONS
+In this section, the simulation results of the CM-TTC-based
+NCS using the predictive 65-nm CMOS model [29] are
+presented. The supply voltage and the temperature of the
+Fig. 4. (a) The schematic of the CM-TTC-based NCS and (b) its CMOS implementation.
+Fig. 5. (a) The percentage of the MTJ current changes and voltage changes for
+different number of inputs when the input voltage is 1V. (b) The percentage of
+the MTJ current changes and voltage changes for different input voltages when
+the number of inputs is 5.
+5
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+simulation in the HSPICE simulator are considered as 1V and
+25°C, respectively. The compact modular MTJ model [30]
+which is working based on a stochastic LLG solver block is
+used. For the memristor, the TEAM model [31] is used in
+simulations due to its flexibility and accuracy. Table I shows
+the typical values of MTJs, memristors and CMOS transistors
+used in the proposed CM-TTC-based NCS.
+A. Effect of Process Variation on the MTJ Switching Time
+The process variations (PVs) of MTJ, transistors and
+memristors can change the switching time (ST) of the MTJ.
+Hence, in order to investigate the performance of the proposed
+CM-TTC in the presence of PVs, Monte Carlo simulations of
+1000 iterations are run for different MTJ current values. For
+each MTJ current, the mean value and standard deviation of the
+ST are calculated. Fig. 6 shows the 6-sigma variations of ST for
+different MTJ current values. The shortest ST is achieved as
+1.87ns at IMTJ=170µA and the longest ST is calculated as
+13.27ns at IMTJ=120µA. Fig. 6 shows the ST histogram and its
+fitted positively skewed function for IMTJ=120µA. Both thermal
+fluctuations and process variations effects will affect the
+standard deviation. However, the thermal fluctuations are the
+main source of the ST mean value reduction [32].
+B. Transient Simulation
+Fig. 7 shows the transient simulation of the proposed CM-
+TTC circuit. Transient simulation is done for VDD=1V. The
+angle (θ), between the magnetization of the two ferromagnetic
+layers of MTJ (PL and FL), determines the MTJ state. If θ=0, it
+means that the MTJ is in the P-state, while θ=π means that the
+MTJ is in the AP-state. The simulation of NCS starts at t=1ns
+by enabling the Pulse1 signal. The MTJ is switched at 6.97ns
+after enabling Pulse1. For the ST of 6.97ns, the high skew and
+low skew standard deviations are calculated as 1.05ns and
+0.85ns, respectively, using a Monte Carlo (MC) simulation with
+1000 iterations (the details of the MC simulation can be found
+in the next subsection). Considering the high skew standard
+deviation of 1.05ns, the 6sigma+mean value of ST is calculated
+as 13.27ns. Moreover, the low skew standard deviation
+determines the 6sigma-mean value of ST as 1.87ns. Hence, the
+fastest ST and the slowest ST in the presence of 6sigma
+variations are 13.27ns and 1.87ns, respectively. As a result, to
+guarantee the MTJ switching in the typical NCS in the presence
+of 6sigma variations, a pulse period longer than 13.27ns is
+required. Because the MTJ switching never happen before 1ns
+(the fastest ST is calculated as 1.87ns), the CM-TTC circuit will
+be turned on with 1ns delay with respect to Pulse1 to reduce the
+Fig. 7. Transient simulation of the NCS with proposed tracking and terminating
+technique
+Fig. 6. The standard deviation and mean value of the MTJ switching time for
+various MTJ current values. MC is performed for each current with 1000
+iterations. The 6-sigma variations for different currents of MTJ. The maximum
+and minimum ST of MTJ are calculated as 13.27ns at IMTJ=120µA and. 1.87ns
+at IMTJ=170µA. The histogram for the switching time of MTJ and the Gaussian
+function fitted to the histogram by running MC simulation with 1000 iterations
+for the NCS is depicted.
+TABLE I
+NCS PARAMETERS
+MTJ [30]
+Free Layer Dimensions 40nm×116nm×1.5nm
+Oxide Thickness (TMgO) 1.15 nm
+Saturation Magnetization (MS) 850 emu/cm3
+Damping Factor (α) 0.028
+CMOS
+Transistor [29]
+Technology 65 nm
+VDD 1V
+Memristor [31]
+RON/ROFF 10/10000
+Thin-film thickness 3 nm
+K_ON -8×10-13
+K_OFF 8×10-13
+α 3
+6
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+total power consumption of the CM-TTC-based NCS. When the
+CM-TTC circuit is on (t>1ns), the MTJ current will be copied
+to the branch of the current comparator and will be compared
+with the reference current ((IMTJ-P+IMTJ-AP)/2). Before the MTJ
+switching, MTJ is in AP-state and its current is lower than the
+reference voltage. Hence, the output voltage of the current
+comparator (COM) is less than VDD/2 that will be inverted and
+amplified to 1V at the BU. This will keep TG1 turned on
+through OR gates. When the MTJ switching will happen
+(t=6.97ns), the MTJ current will jump above the reference
+current. As a result, the output voltage of the current comparator
+(VCOM) will go above VDD/2. This will force the voltage of the
+BU to be switched from ‘1’ to ‘0’. This will cause the gate
+voltage of the control transistor (TG1) will be switched to ‘0’
+through the OR gates that will turn TG1 off and cut off the MTJ
+current immediately after switching instead of wasting energy
+and time until 13.5ns. The delay of the CM-TTC circuit is
+estimated to be 0.15ns as shown in Fig. 7.
+C. Energy Consumption Reduction in CM-TTC
+To calculate the total energy consumption of the CM-TTC-
+based NCS, the energy consumption of the MTJ branch
+(memristors, MTJ, M1 and transmission gate) and the CM-TTC
+have been calculated. The energy consumption of the CM-TTC-
+based NCS is calculated as 1088fJ at VDD=1V and IMTJ=120μA.
+In the typical NCS, as long as the Pulse1 signal is active, the
+current flows in the memristor, MTJ and transistors. Hence, the
+energy consumed by the typical NCS is ~2316fJ.
+When Pulse1 rises to ‘1’, the MTJ is stimulated and the CM-
+TTC senses the MTJ state, simultaneously. In case, the MTJ
+switching occurs, the CM-TTC cuts off the current path by
+turning off the TG1 and stimulates the post-neuron. This
+reduces the energy consumption of NCS from 2316fJ to 1088fJ.
+The energy consumption of the CM-TTC based NCS at the
+optimal delay (calculated as 0.15ns in section D) is achieved as
+1088fJ. Hence, the energy consumption of CM-TTC-based
+NCS is reduced by 53% compared to the typical NCS.
+The total energy consumption of the CM-TTC-based NCS
+and the typical NCS are shown in Fig. 8 for different MTJ
+currents. In the typical NCS, after MTJ switching, the MTJ
+current will flow until the end of stimulation (13.5ns). By
+increasing the MTJ current, both the average and worst-case ST
+will reduce at the cost of a larger current drawn from the source.
+In the CM-TTC based NCS, a shorter average ST means energy
+reduction in both the MTJ branch and the CM-TTC circuit. As
+a result, the total energy consumption of both the typical NCS
+and the CM-TTC based NCS is reduced by increasing the MTJ
+current. However, increasing the MTJ current will reduce the
+energy consumption more effectively in the CM-TTC based
+NCS compared with the typical NCS. This is due to the fact that
+increasing IMTJ will reduce the mean value of ST faster than the
+worst-case ST. As shown in Fig. 8, the energy consumption of
+CM-TTC based NCS decreases from 1088fJ at IMTJ=120μA to
+534fJ at IMTJ=170μA. Hence, the improvement in CM-TTC
+based NCS energy consumption increases from 53% at IMTJ=
+120μA to 66% at IMTJ=170μA compared with the typical NCS.
+D. Optimization Delay on CM-TTC
+The delay of the CM-TTC can change the total energy
+consumption of the CM-TTC-based NCS. The faster the MTJ
+current cuts off after switching (less delay), the lower the
+energy consumption of NCS is. On the other hand, to increase
+the speed of the CM-TTC, a higher current should be driven in
+this circuit. This leads to the higher energy consumption of the
+CM-TTC. Hence, an optimal delay that minimizes the total
+energy consumption of the CM-TTC based NCS should be
+calculated. The NCS and CM-TTC energy consumption are
+shown in Fig. 9 (a). To find the optimal delay value, the total
+energy consumption of the CM-TTC based NCS is calculated
+versus different delays of CM-TTC for different MTJ currents
+(i.e. 120μA - 170μA) as shown in Fig. 9 (b). The CM-TTC
+delay is determined as the difference between the time in which
+the MTJ is switched and the time in which the MTJ current will
+Fig. 8. The total energy consumption comparison of the CM-TTC-based NCS
+and the typical NCS for different MTJ currents. The improvement of the total
+energy consumption of the CM-TTC-based NCS in comparison with the typical
+NCS is shown as a percentage.
+Fig. 9. The total energy consumption of the CM-TTC-based NCS, the energy
+consumption of the CM-TTC and energy consumption of the NCS versus
+delay of the CM-TTC for different MTJ currents. When the delay of the CM-
+TTC is 0.15ns, the total energy consumption is minimized at 534fJ for
+IMTJ=170μA up to 1088fJ for IMTJ=120μA.
+(a)
+(b)
+0
+200
+400
+600
+800
+1000
+1200
+0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45
+IMTJ=120µA
+IMTJ=170µA
+Energy Consumption
+Energy
+Consumption
+(fJ)
+Delay (ns)
+Optimized Delay
+0
+200
+400
+600
+800
+1000
+1200
+0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45
+Energy
+Consumption
+(fJ)
+Delay (ns)
+NCS
+CM-TTC
+IMTJ=120µA
+IMTJ=170µA
+IMTJ=120µA
+7
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+be cut off (TG1 turns off). The optimal delay is the delay at
+which the total energy consumption of NCS is minimized.
+Consequently, the optimal CM-TTC delay is achieved as
+0.15ns. Hence, the minimum total energy at the optimal CM-
+TTC delay (0.15ns) changes from 1088fJ for IMTJ=120µA up to
+534fJ for IMTJ=170µA as shown in Fig. 9 (b).
+E. Effect of CM-TTC on the Speed Performance
+As mentioned before, according to the 6-sigma worst-case
+analysis of ST, the minimum Pulse1 duration is to be chosen as
+13.5ns and the overall delay of the read-circuit is considered as
+approximately 1ns [25] to guarantee the proper MTJ switching
+activity. Hence, the total delay of the NCS is 14.5ns (i.e.
+68.9MHz). In the CM-TTC-based NCS, the overall delay
+decreases due to the simultaneous tracking of the MTJ state.
+Hence, considering the delay of CM-TTC (0.15ns) and the ST
+mean value of 6.97ns, the overall delay for the CM-TTC-based
+NCS is obtained to be 7.12ns. As a result, the maximum
+frequency of 140MHz at VDD=1v (i.e. 2X faster speed) can be
+achieved for the proposed system. Noted if a higher current will
+be applied to the MTJ, it will be switched faster. This will
+increase the general speed of the network at the cost of higher
+energy consumption. As shown in Fig.10 (a), the frequency of
+the CM-TTC-based NCS increases from 140MHz at IMTJ=
+120µA to 398.98MHz at IMTJ=170μA while the frequency of the
+typical NCS increases from 68.9MHz at IMTJ=120µA to
+154MHz at IMTJ=170ΜHz (Fig. 10 (a)). It shows by increasing
+the current the speed improvement due to using CM-TTC will
+increase from 2x at IMTJ=120µA to 2.6x at IMTJ=170µA. To
+investigate the effect of MTJ scaling on overall speed, the MTJ
+size is changed from 70% to 110% of the size used in Table I
+(40nm×116nm×1.5nm) and ST and CM-TTC delay are
+extracted for VDD=1V (Fig. 10 (b)). Decreasing the MTJ size,
+its switching time decreases and the delay of CM-TTC will
+slightly increase because smaller MTJs have higher resistance
+that will lead to smaller IMTJ that will reduce the speed of CM-
+TTC slightly from 0.15ns (40nm×116nm×1.5nm) to 0.25ns (0.7
+of 40nm×116nm×1.5nm). On the other hand, by scaling MTJ
+its critical current will reduce linearly [33], leading to a linear
+reduction in the size of series transistors (i.e. M1 and TG1).
+E. Comparison with other designs
+Here, different features of the CM-TTC based NCS and its
+effectiveness have been compared with other reported designs
+in the literature. The results of the proposed CM-TTC is
+compared with the best previously proposed methods (RTS [11]
+and SDWT [13]) and summarized in Table II. Because the RTS
+circuit [11] utilizes the voltage variations (~40mV) of PL, FL
+or both to detect the MTJ switching, it requires an amplifier to
+amplify the voltage changes. On the other hand, the amplifier
+in the RTS circuit is turned on during approximately 90% of the
+stimulating phase. This will reduce the energy efficiency of the
+RTS circuit. Moreover, utilizing the voltage variations for
+sensing the switching increases the delay of the RTS circuit.
+This will also affect the energy efficiency of the RTS-based
+NCS since during the delay not only the RTS consumes energy
+but also a high current is passing through the MTJ (MTJ is in
+P-state with low resistance). However, in the CM-TTC-based
+NCS, due to the high changes in the MTJ current after
+switching, there is no need to use an extra amplifier. This will
+decrease the energy consumption of CM-TTC as well as its
+delay in comparison with the RTS circuit. The power
+consumption of CM-TTC is measured 37.8 μW that is 12.8%
+and 14.1% less than RTS and SDWT, respectively. Moreover,
+higher changes of IMTJ (~40%) due to switching compared with
+VMTJ changes (~15%) as shown in Fig. 5 will reduce the delay
+of CM-TTC compared with RTS and SDWT by 73% and 81%,
+respectively. Finally, the size of the proposed CM-TTC is
+estimated to be 2.7 µm2
+that is 95% and 96.4% smaller than
+RTS and SDWT, respectively. This large size reduction is due
+to the lack of capacitors in the CM-TTC structure.
+Another advantage of the CM-TTC compared with state-of-
+the-art voltage-based methods is its higher robustness in the
+presence of process variations. To this end, an MC simulation
+with 1000 iterations is run on the CM-TTC based NCS. Then,
+the current comparator output voltage (VCOM) variations and the
+buffer decision point (DP) variations are calculated (Fig. 11).
+To consider the effect of process variations on transistors,
+parameters reported in [34] are used. As shown in Fig. 11 (a),
+in the CM-TTC-based NCS, the DP has a normal distribution
+with 7.13mV standard deviation while the VCOM distribution is
+Fig. 11. The histogram and fitted Gaussian function of VCOM, VO1 and DP due
+to process variations for the MC simulation with 1000 iterations while using
+(a) CM-TTC-based NCS and (b) RTS-based NCS [11].
+Fig. 10. (a) The overall delay/frequency of the CM-TTC-based and typical NCS
+versus different MTJ currents. (b) The CM-TTC delay and ST versus MTJ size
+normalized to the used size in Table I (40nm×116nm×1.5 nm).
+8
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+negatively skewed with a right tail standard deviation (σ2) of
+2.23mV and left tail standard deviation (σ1) of 6.82mV. It
+means that a 22.5σ variation on both DP of buffer and VCOM is
+needed to face a fault which means the chance of error is almost
+zero (Fig. 11 (a)). Fig. 11 (b) shows the histogram and fitted
+Gaussian function of VO1 and DP for the RTS circuit [11]. The
+probability of erroneous output of NCS (18.9σ variation on VO1
+and DP voltages) is higher than CM-TTC.
+V. CONCLUSION
+In this paper, a new current-mode track and termination
+circuit (CM-TTC) for real-time sensing of MTJ state in the NCS
+application has been presented. The conventional voltage-mode
+sensing circuit is replaced with the proposed CM-TTC, to
+improve the energy efficiency and speed of NCS. In all state-
+of-the-art designs, the voltage changes on nodes across the MTJ
+have been used to detect the MTJ switching. However, the CM-
+TTC detects the MTJ switching by properly sensing the MTJ
+current and terminates its current immediately. Simulation
+results show around 2.7X bigger changes in the MTJ current
+compared with the MTJ voltage due to switching that will ease
+the design of the current-mode track and termination circuit.
+The simulation results in 65-nm CMOS technology confirm
+that the energy consumption of the proposed CM-TTC-based
+NCS and its overall speed are approximately improved by 53%
+and 2X in comparison with the typical NCS.
+REFERENCES
+[1] C. P. langlotz et al., “A roadmap for foundational research on artificial
+intelligence in medical imaging: from the 2018 nih/rsna/acr/the academy
+workshop,” radiology, vol. 291, no.3, pp. 781-791, Apr. 2019.
+[2] IBM’s brain-inspired processor, Online available:
+http://www.research.ibm.com/articles/brain-chip.shtml.
+[3] M. Davies et al., “Loihi: A Neuromorphic Manycore Processor with On-
+Chip Learning,” IEEE Micro, vol. 38, no. 1, pp. 82-99, Jan. 2018.
+[4] B. Rajendran et al., “Specifications of nanoscale devices & circuits for
+neuromorphic computational systems,” IEEE Trans. on Electron Devices,
+vol. 60, no. 1, pp. 246-253, Jan. 2013.
+[5] A. Sengupta, Y. Shim, and K. Roy, “Proposal for an all-spin artificial neural
+network: Emulating neural and synaptic functionalities through domain
+wall motion in ferromagnets,” IEEE Trans. on Biomedical Circuits and
+Systems, vol. 10, no. 6, pp. 1152-1160, May 2016.
+[6] X. Fong et al., “Spin-transfer torque devices for logic and memory:
+prospects and perspectives,” IEEE Trans. on Computer-Aided Design of
+Integrated Circuits and Systems (TCAD), vol. 35, no. 1, pp 1-22, Jan. 2016.
+[7] A. Basu et al., “Neural dynamics in reconfigurable silicon,” IEEE Trans. on
+Biomedical Circuits and Systems, vol. 4, no. 5, pp. 311-319, Oct. 2010.
+[8] S. Ramakrishnan, P. E. Hasler, and C. Gordon, “Floating gate synapses with
+spike-time-dependent plasticity,” IEEE Trans. on Biomedical Circuits and
+Systems, vol. 5, no. 3, pp. 244-252, Jun. 2011.
+[9] M. Sharad, D. Fan, and K. Roy, “Spin-neurons: A possible path to energy-
+efficient neuromorphic computers,” Journal of Applied Physics, vol. 114,
+no. 23, Dec. 2013.
+[10] D. Fan et al, “STT-SNN: A spin-transfer-torque based soft-limiting non-
+linear neuron for low-power artificial neural networks,” IEEE Trans. on
+Nanotechnology, vol. 14, no. 6, pp. 1013 – 1023, Jun. 2015.
+[11] H. Farkhani et al., “A Low-Power High-Speed Spintronics-Based
+Neuromorphic Computing System Using Real Time Tracking Method”,
+IEEE Circuits and Systems Society, Vol. 8, no. 3, pp. 627 – 638, Sept. 2018.
+[12] T. Zheng et al., “Variable-energy write STT-RAM architecture with bit-
+wise write-completion monitoring,” International Symposium on Low
+Power Electronics and Design (ISLPED), Beijing, China, Sep. 2013.
+[13] H. Farkhani et al., “STT-RAM energy reduction using self-referenced
+differential write termination technique,” IEEE Trans. on Very Large Scale
+Integration (VLSI), vol. 25, no. 2, 476 – 487, Feb. 2017.
+[14] H. Farkhani, IL. Prejbeanu, F. Moradi, “LAS-NCS: A Laser-Assisted
+Spintronic Neuromorphic Computing System,” IEEE Trans. on Circuits
+and Systems II: Express Briefs, Vol. 66, no. 5, pp. 838 – 842, May. 2019.
+[15] K. Leboeuf, R. Muscedere, and M. Ahmadi, "Performance analysis of
+table-based approximations of the hyperbolic tangent activation function,"
+IEEE 54th International Midwest Symposium on Circuits and Systems
+Conf. (MWSCAS), Seoul, Korea (South), Aug. 2011.
+[16] Y. Guo et al., “Algorithm Research on Improving Activation Function of
+Convolutional Neural Networks”, Chinese Control and Decision Conf.
+(CCDC), Nanchang, China, June 2019.
+[17] A. Ghomi, M. Dolatshahi, “Design of a New CMOS Low-Power Analogue
+Neuron,” IETE Journal of Research, Vol.64, no. 6, pp. 67-75, Aug. 2017.
+[18] R. Zand et al., “Scalable adaptive spintronic reconfigurable logic using
+area-matched MTJ design,” IEEE Trans. Circuits Syst. II, Exp. Briefs, vol.
+63, no. 7, pp. 678 – 682, Jul. 2016.
+[19] J. Kim et al., “A Technology-Agnostic MTJ SPICE Model with User-
+Defined Dimensions for STT-MRAM Scalability Studies,”IEEE Custom
+Integrated Circuits Conf., San Jose, CA, USA, Sept. 2015.
+[20] K. Nishioka et al., “Novel Quad-Interface MTJ Technology and Its First
+Demonstration With High Thermal Stability Factor and Switching
+Efficiency for STT-MRAM Beyond 2X nm,” IEEE Trans. on Electron
+Devices, vol. 67, no. 3, pp. 995-1000, Mar. 2020.
+[21] H. Sato et al., “Perpendicular-anisotropy CoFeB-MgO magnetic tunnel
+junctions with a MgO/CoFeB/Ta/CoFeB/MgO recording structure,”
+Appl.Phys. Lett., vol. 101, no. 2, Jul. 2012.
+[22] W. Zhu, H. Li, Y. Chen, and X. Wang, “Current Switching in MgO-Based
+Magnetic Tunneling Junctions,” IEEE Tran. on Magnetics, vol. 47, no. 1,
+pp. 156-160, Jan. 2011.
+[23] E. Hirayama et al., “Magnetization reversal by field and current pulses in
+elliptic CoFeB/MgO tunnel junctions with perpendicular easy axis,” IEEE
+Magn. Lett., vol. 7, May 2016.
+[24] X. Fong et al., “Spin-transfer torque devices for logic and memory:
+prospects and perspectives,” IEEE Trans. on Computer-Aided Design of
+Integrated Circuits and Systems, vol. 35, no. 1, pp. 1-22, Jan. 2016.
+[25] A. Sengupta and K. Roy, “A vision for all-spin neural networks: a device
+to system perspective,” IEEE Trans. on Circuits and Systems–I: Regular
+Papers, vol. 63, no. 12, pp. 2267 – 2277, Dec. 2016.
+[26] A. Sengupta and K. Roy, “Spin-transfer torque magnetic neuron for low
+power neuromorphic computing,” IEEE International Joint Conf. on Neural
+Networks (IJCNN), Killarney, Ireland, Jul. 2015.
+[27] H. Thapliyal, F. Sharifi, and S. Dinesh Kumar, “Energy-Efficient Design
+of Hybrid MTJ/CMOS and MTJ/Nanoelectronics Circuits”, IEEE Trans.
+On Magnetics, vol. 54, no. 7, Jul. 2018.
+[28] M.J. Sharifi and Y. M.Banadaki, “General SPICE models for memristor
+and Application to circuit simulation of memristor-based synapses and
+memory cells”, Journal of Circuits, Systems, and Computers, vol. 19, no.
+2, pp. 407-424, Apr. 2010.
+[29] PTM Model, http://ptm.asu.edu/modelcard/2006/65nm_bulk.pm
+[30] K. Y. Camsari, S. Ganguly, and S. Datta, "Modular Spintronics Library,"
+https://nanohub.org/resources/17831, May. 2013.
+[31] S. Kvatinsky et al., “TEAM: threshold adaptive memristor model,” IEEE
+Trans. on Circuits and Systems–I: Regular Papers, vol. 60, no. 1, pp. 211-
+221, Jan. 2013.
+[32] X. Wang et al., “Thermal fluctuation effects on spin torque induced
+switching: Mean and variations,” Journal of Applied Physics, vol. 103, no.
+3, Feb. 2008.
+[33] J.D. Costa et al., “High power and low critical current density spin transfer
+torque nano-oscillators using MgO barriers with intermediate thickness,”
+Nature Scientific Reports, vol. 7, 2017.
+[34] W. Zhao et al., “Rigorous Extraction of Process Variations for 65-nm
+CMOS Design,” IEEE Transactions on Semiconductor Manufacturing, vol.
+22, no. 1, pp. 196-203, Feb. 2009.
+TABLE II
+PERFORMANCE COMPARISON OF PROPOSED CM-TTC, RTS AND SDWT CIRCUITS
+Parameters
+Proposed
+CM-TTC
+RTS [11] SDWT [13]
+Technology
+65-nm
+CMOS
+65-nm
+CMOS
+65-nm
+CMOS
+VDD (v) 1 1 1
+Delay (ns) 0.15 0.55 0.79
+Switching Time (ns) 6.97 7.13 5.28
+Power (μW) 37.8 43.34 44.04
+Area (µm2
+) 2.7 55.08 74.358
+9
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+Pegah Shafaghi received my B.Sc. degree
+in communication engineering and M.Sc.
+degree in electrical engineering from the
+Najaf Abad branch, Islamic Azad
+University, Isfahan, Iran. She has been
+with the Department of Electrical
+Engineering of Najafabad Branch, Islamic
+Azad University, since 2006. Her research
+interests include spintronics, low power
+and low voltage neuromorphic computing systems as well as
+hybrid MTJ/CMOS logic circuit design.
+Mehdi Dolatshahi received the B.Sc.
+and M.Sc. degree in Electrical
+Engineering in 2003, 2006
+respectively. He received the Ph.D.
+degree in Electrical Engineering in
+2012 from Science and Research
+Branch, Islamic Azad University,
+Tehran, Iran. He has been with the
+Department of Electrical Engineering of Najafabad Branch,
+Islamic Azad University, since 2006. His research interests
+include VLSI, Neuromorphic ICs and CMOS low-voltage, low-
+power analog and mixed-signal integrated circuits design and
+optimization; as well as CMOS optical communications circuit
+design.
+Hooman Farkhani received the B.Sc.
+degree in electrical engineering from
+the University of Kashan, Kashan, Iran,
+in 2004, and the M.Sc. and Ph.D.
+degrees in electronic engineering from
+the Ferdowsi University of Mashhad,
+Mashhad, Iran, in 2008 and 2014,
+respectively. He was a Research
+Assistant with the Integrated Circuit Design Laboratory,
+Ferdowsi University of Mashhad. He was an Assistant
+Professor at the Department of Electrical Engineering,
+Najafabad Branch, Islamic Azad University, Isfahan, Iran, from
+2015 to 2017. He was an MSCA-IF postdoc at Aarhus
+University, Denmark from 2017 to 2019, where he is currently
+a Tenure-track Assistant professor collaborating with the ICE-
+Lab on designing low-power neuromorphic computing systems
+using emerging technologies such as spintronics and
+memristive devices. His other fields of interest are low power
+and low voltage STT-RAM and SRAM design, and low-power
+analog and mixed-signal integrated circuits design.
+

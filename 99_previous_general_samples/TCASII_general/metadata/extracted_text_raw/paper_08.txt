@@ -1,0 +1,741 @@
+Aalborg Universitet
+Physics-Informed Surrogate Neural Network for Optimizing Diode-Based Interfaces in
+Leadless Pacemaker Energy Harvesting
+Hua, Qirui; Khazaee, Majid; Enkeshafi, Ali Asghar; Shen, Ming; Riahi, Sam; Rezaniakolaei,
+Alireza
+Published in:
+IEEE Transactions on Circuits and Systems II: Express Briefs
+DOI (link to publication from Publisher):
+10.1109/TCSII.2025.3641701
+Publication date:
+2026
+Document Version
+Accepted author manuscript, peer reviewed version
+Link to publication from Aalborg University
+Citation for published version (APA):
+Hua, Q., Khazaee, M., Enkeshafi, A. A., Shen, M., Riahi, S., & Rezaniakolaei, A. (2026). Physics-Informed
+Surrogate Neural Network for Optimizing Diode-Based Interfaces in Leadless Pacemaker Energy Harvesting.
+IEEE Transactions on Circuits and Systems II: Express Briefs, 73(2), 223-227.
+https://doi.org/10.1109/TCSII.2025.3641701
+General rights
+Copyright and moral rights for the publications made accessible in the public portal are retained by the authors and/or other copyright owners
+and it is a condition of accessing publications that users recognise and abide by the legal requirements associated with these rights.
+- Users may download and print one copy of any publication from the public portal for the purpose of private study or research.
+- You may not further distribute the material or use it for any profit-making activity or commercial gain
+- You may freely distribute the URL identifying the publication in the public portal -
+Take down policy
+If you believe that this document breaches copyright please contact us at vbn@aub.aau.dk providing details, and we will remove access to
+the work immediately and investigate your claim.
+Downloaded from vbn.aau.dk on: June 04, 2026
+© 2025 IEEE. Personal use of this material is permitted. Permission from IEEE must be
+obtained for all other uses, in any current or future media, including reprinting/republishing
+this material for advertising or promotional purposes, creating new collective works, for
+resale or redistribution to servers or lists, or reuse of any copyrighted component of this
+work in other works.
+1
+Physics-Informed Surrogate Neural Network for Optimizing
+Diode-Based Interfaces in Leadless Pacemaker Energy Harvesting
+Qirui Hua, Majid Khazaee, Ali Asghar Enkeshafi, Ming Shen Senior Member, IEEE, Sam Riahi, and
+Alireza Rezaniakolaei
+Abstract—Efficient AC–DC interfaces are essential for low-
+power energy harvesters to power intracardiac leadless pace-
+makers (ICLPs) reliably. For the front-end circuitry, selecting a
+diode that minimizes both conduction and leakage losses under
+specified operating conditions is challenging, as the forward volt-
+age drop and reverse leakage current cannot be simultaneously
+reduced due to the device’s inherent physics. This brief presents
+a machine learning framework that predicts the DC output
+of diode-based AC-DC interfaces directly from specific voltage-
+current (V-I) characteristic points of the diodes and descriptive
+features of the excitation waveform. A physics-informed surrogate
+model is trained on SPICE-simulated data of rectifiers driven by
+experimentally captured cardiac harvester waveforms. Hardware
+validation with printed-circuit rectifiers powered by the same
+harvester source exhibits an average error of 0.03 V between
+prediction and measurement, matching the performance observed
+on the synthetic set and demonstrating robust generalization
+to real-world applications. This data-driven approach offers
+an instant, datasheet-only diode screening without circuit-level
+evaluation and can be integrated into automated multi-objective
+optimization flows for the design of low-power energy harvester
+AC–DC interfaces.
+Index Terms—AC–DC Interface, Diode Screening, Energy
+Harvester, Machine Learning, Physics-Informed Neural Network
+I. INTRODUCTION
+THE rapid development of wearable, medical implants,
+and distributed Internet of Things (IoT) devices has inten-
+sified research in miniature energy harvesters. Piezoelectric en-
+ergy harvesters (PEH) enable long-term power for intracardiac
+leadless pacemakers (ICLPs), removing the need for battery-
+replacement surgeries, as the heart provides kinetic energy
+[1]. A contact-based impact piezoelectric method, validated
+in animal trials, generates pulsating AC power in the tens
+of microwatts range [2], with short pulse durations due to
+shock-driven heart motion [3]. Efficient use of short-duration,
+low-power energy for ICLPs requires a high-performance and
+miniature AC–DC interface to rectify the harvested power and
+deliver it to storage [4].
+Most interfacing circuits rely on diodes as switches to real-
+ize AC-DC conversion. However, diode non-idealities impose
+significant penalties. The forward voltage drop dissipates a
+proportion of the harvested power, reverse leakage current
+Qirui Hua, and Sam Riahi are with the Department of Clinical
+Medicine, Aalborg University Hospital, Aalborg, 9000 Denmark (e-mail:
+qihu@es.aau.dk, sar@rn.dk).
+Majid Khazaee, Ali Asghar Enkeshafi and Alireza Rezaniakolaei are
+with AAU Energy, Aalborg University, Aalborg, 9220 Denmark (e-mail:
+mad@energy.aau.dk, aaen@energy.aau.dk, alr@energy.aau.dk).
+Ming Shen is with the Department of Electronic Systems, Aalborg Univer-
+sity, Aalborg, 9220 Denmark (e-mail: mish@es.aau.dk).
+drains the storage element, and finite reverse-recovery time
+adds loss at every polarity reversal [5]. Bridgeless or syn-
+chronous interfaces promise higher efficiency, but at microwatt
+levels, the control overhead often cancels the gain [6], [7].
+Besides, the complex circuit architecture enlarges the overall
+size and exceeds the limitations of ICLP systems, where all
+components must be mounted in a cylinder measuring 6 mm
+in diameter and 2 mm in height [2]. Consequently, traditional
+diode-based structures remain practical choices for low-power
+harvesters. Within such frameworks, selecting appropriate
+diodes whose electrical properties carefully match specific
+operating conditions is essential for maximizing efficiency and
+utilizing the scarce harvested energy [8].
+In steady state, the diode voltage-current (V-I) character-
+istic can be approximated by the Shockley equation: ID =
+IS eVD/nVT
+− 1
+
+[9], where ID and VD denote the diode
+current and voltage, respectively. IS is the diode’s reverse-
+bias saturation current, n is the ideality factor, and VT is the
+thermal voltage. According to the equation, for a specified
+forward conduction current, achieving a lower forward voltage
+drop across the diode requires a larger saturation current IS,
+which magnifies the leakage current under reverse bias, and
+vice versa. This intrinsic trade-off complicates device selection
+for rectifier optimization.
+For a given operating condition defined by the harvester’s
+properties, an optimal diode exists that minimizes the com-
+bined forward conduction and reverse leakage losses, as low-
+ering the forward voltage drop invariably increases the leakage
+current and vice versa. In practice, however, identifying an
+appropriate diode is far from straightforward, because rectifier
+efficiency depends strongly on both device properties and
+operating conditions [10], and data-sheet parameters alone
+rarely predict in-circuit performance.
+Information from the diode datasheet, including V-I char-
+acteristic plots, cannot comprehensively evaluate the interplay
+between forward and reverse losses. Since miniature harvesters
+operating at low power density and low duty cycle can impose
+different requirements on diode properties, how they can
+match each other is hard to estimate [8]. Thus, designers
+struggle to perform a fair, quantitative comparison of candidate
+devices. In practice, engineers rely on experience to pick
+diode candidates, followed by conducting iterative simulations
+or prototype tests. Each screening loop relies on lengthy
+transient simulations with recorded harvester waveforms or
+laboratory measurements, for example, a 120-s trace sampled
+at 5 kHz needs over 60 s to run, severely limiting rapid diode
+evaluation. Furthermore, comparative simulations require vali-
+dated SPICE models rather than simple datasheet information.
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2025.3641701
+© 2025 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+Authorized licensed use limited to: Aalborg Universitetsbibliotek. Downloaded on December 11,2025 at 11:51:45 UTC from IEEE Xplore. Restrictions apply.
+2
+Piezoelectric
+Harvester
+Reference Diodes
+Reference Diodes
+Reference Diodes
+SPICE Model Parameters
+[Is, Rs, n, Cjo, Vj]
+Excitation Settings
+[f, amplitude, angle]
+Model
+Training
+Diode V-I Characteristics + Signal Features Dataset
+[Vf1, Vf2, Vf3, Ir1, Ir2, Ir3 | wp, σp
+2, Ip, np]
+AC Current Signals
+Reference Diodes
+Reference Diodes
+Pseudo Diodes
+Full-Wave Bridge Rectifier
+Target Circuit Simulation
+Data Augmentation Measure
+SPICE Simulation
+Charge Voltage Dataset
+[VC]
+Circuit
+Components
+Surrogate Model
+Train Data
+Diode Candidates Actual Signals
+Train Target
+Diode V-I Characteristics + Signal Features
+[Vf1, Vf2, Vf3, Ir1, Ir2, Ir3 | wp, σp
+2, Ip, np]
+Emulate &
+Replace
+Apply
+VC
+Data Loss
++
+λ×Physical Loss
+=
+Total Loss
+Optimization
+Physics-Informed
+Neural Network
+Experiment
+Setup
+Calibration
+Predicted Charging
+Performance
+Validation
+Diode
+Optimization
+VC, mea
+VC, sim
+Measure/Simulation
+Coefficient
+Ip Cp Rp
+Equivalent Circuit Model
+k =
+Reduce time consumption and
+eliminate the need for SPICE models.
+Fig. 1. Overview of the PINN-assisted diode screening framework
+For diodes without such models, simulation is not applicable
+unless manual parameter extraction is performed [11], which
+may introduce extra uncertainty and workload. Lacking a
+direct analytical link between datasheet parameters and in-
+circuit performance, this empirical workflow is slow and risks
+overlooking better diodes.
+To overcome these challenges, we are motivated by ma-
+chine learning (ML) techniques that are enhancing low-power
+electronics [12] and automated circuit synthesis [13], [14].
+Datasheet-driven ML surrogates have achieved fast inductor
+characterization for automated filter design [15], and physics-
+informed neural networks (PINN) have been employed for
+converter parameter extraction from measured waveforms [16].
+In this paper, we introduce a data-driven framework to eval-
+uate diode candidates for the AC-DC rectifier circuit through
+an ML surrogate model that predicts conversion performance
+directly from a set of diode V-I characteristic points and statis-
+tical features of the power waveform. We implement the model
+as a PINN [17], trained on synthetic data generated by SPICE
+rectifier simulation with experimentally recorded cardiac PEH
+power waveforms [2]. Furthermore, practical measurements
+on rectifiers built with unseen diodes reveal only a minimal
+average discrepancy between predicted and measured outputs,
+which aligns well with the results on the synthetic data and
+confirms robust generalization. By eliminating repeated proto-
+type iterations and exhaustive simulations with SPICE models,
+the proposed tool accelerates diode screening to maximize
+energy-conversion efficiency for PEHs, which enables leadless
+pacemakers and offers a possibility to realize automated multi-
+objective optimization flows for interface design under given
+operating conditions.
+II. METHODS
+A. Framework Overview
+Recent advances in ML regression have produced surro-
+gate models that can approximate circuit simulation results
+with negligible computation time [14], [18]. This capability
+enables a direct mapping from two readily available inputs:
+(i) datasheet V-I characteristics points of the diode and (ii)
+descriptive features of the energy harvester power waveform,
+to the conversion performance metric. Fig. 1 summarizes
+the workflow of the proposed framework, which comprises
+synthetic data generation from SPICE simulation, surrogate
+model construction, and experiment validation.
+We demonstrate the framework on a full-wave bridge rec-
+tifier that conditions the output of a miniature implantable
+piezoelectric harvester [2]. Since application constraints limit
+the overall size and preclude complex interfacing topologies,
+the conversion efficiency largely depends on the choice of a
+diode that offers the optimal trade-off between forward voltage
+drop and reverse leakage.
+The overall conversion performance of the AC-DC rectifier
+is quantified by the maximum voltage VC on the output
+storage capacitor at steady state, closely mimicking charging
+a micro-battery in practical systems. This metric can reflect
+the combined influence of the forward conduction loss during
+charging intervals and the dissipation due to reverse leakage
+during discharge intervals, as the input power equals the sum
+of these losses at steady state.
+B. Synthetic Dataset Generation
+Training samples comprise 7200 input-output pairs. The in-
+puts combine diode and waveform features. The output labels
+are steady-state capacitor voltages VC, simulated from the
+rectifier driven by experimental cardiac harvester waveforms.
+We start from 75 commercial small-signal switching diode
+SPICE models for their short reverse recovery time and
+small size suited to low-power operation. This baseline is
+augmented as 300 pseudo-diodes by independently perturbing
+their original SPICE parameters (saturation current IS, ideality
+factor n, series resistance RS, zero-bias junction capacitance
+Cj0, and junction potential Vj [19]) within ±5 %, preserving
+realistic correlations.
+The variant current waveforms for simulation are produced
+by an electrodynamic shaker that generates cardiac vibration
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2025.3641701
+© 2025 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+Authorized licensed use limited to: Aalborg Universitetsbibliotek. Downloaded on December 11,2025 at 11:51:45 UTC from IEEE Xplore. Restrictions apply.
+3
+Shaker
+Piezoelectric Harvester
+Test PCB
+Multimeter
+Laser Sensor
+13mm
+6.7mm
+27mm
+Fig. 2. Experiment Setup
+profiles and excites the PEH [2]. The PEH current pulses are
+recorded as the simulation stimulus by measuring the short-
+circuit current. To ensure the waveform diversity, 27 sets of
+current waveforms are collected at shaker frequencies of 1.0,
+1.2, and 1.4 Hz; input cardiac signal amplitudes of 600, 650,
+and 700 mV; and tilt angles from 0◦
+to 45◦
+. From every
+sample, four descriptive statistics are extracted, including the
+mean width of pulses wp, the variance of pulse width σ2
+p,
+the mean amplitude of pulses Ip, and the mean number of
+pulses per minute np, which are appended to the inputs as the
+waveform features.
+The AC-DC interface circuit under study is a full-wave
+bridge comprising four identical diodes that charge a 10 µF
+output capacitor in parallel with a 5 MΩ insulation resistor,
+representing the self-leakage. The piezoelectric harvester is
+modeled by its simplified equivalent model: a current source
+shunted by its intrinsic capacitance Cp and internal resistance
+Rp [20]. The complete SPICE netlist is assembled by placing
+the pseudo-diode model as the rectifier components and ap-
+plying one of the recorded waveforms as the source current.
+A 120 s transient simulation is then executed to reach steady
+state, and the maximum capacitor voltage VC within the final
+10 s is sampled as the target label. Iterating over all diode and
+waveform combinations yields the synthetic dataset.
+C. PINN Surrogate Model
+Within the proposed framework, PINN [17] acts as the
+non-parametric surrogate model that maps the input features
+to the steady-state capacitor voltage VC to evaluate diode
+performance in the target conversion circuit. Prior to training,
+all data are preprocessed by standardization.
+The PINN adopts the deep neural network (DNN) archi-
+tecture with a physics penalty based on power balance at
+steady state. It uses a fully connected 5-layer network with
+hidden widths of 64, 64, 32, 16, and 2 and activated by tanh,
+with a dropout rate of 0.1 and a batch size of 400. Inputs are
+standardized and the training is carried out over 700 epochs
+using the Adam optimizer. These parameters are determined
+via an exhaustive grid search where architectures with 3 to 6
+hidden layers, widths from 2 to 256, and activation functions
+of ReLU, Swish, and tanh are explored. In this framework, the
+physical constraint is the condition for VC to reach the steady-
+state balance point, at which the input power Pin is equal to
+the total loss Ploss.
+Given a predicted voltage on the capacitor VC, pred, the input
+power can be computed by the capacitor voltage times the
+input current, which can be given by:
+Pin =
+1
+2
+VC, pred Ip − Vpiezo/Rp
+ 1
+60
+wp np, (1)
+where wp, np, and Ip are the waveform statistics included
+in the input features. The piezoelectric source voltage is
+estimated as Vpiezo = VC, pred + 2 Vfwd and thus Vpiezo/Rp
+yields the internal loss current of the harvester. The forward
+voltage drop Vfwd at current Ip is calculated by the Shockley
+equation (1), whose coefficients are fitted from the input V-I
+characteristic pairs of the target diode.
+Furthermore, the loss part consists of the diode reverse
+leakage and capacitor self-discharge:
+Ploss = Ileak VC, pred +
+V 2
+C, pred
+RC
+, (2)
+where RC is the insulation resistance of the capacitor. The cur-
+rent leakage Ileak is approximated by an empirical exponential
+model fitted to the input diode V-I features.
+The composite loss for model training is given by:
+L = Ldata + λ Lphys
+=
+1
+N
+N
+X
+i=1
+h
+VC, pred − VC, true
+2
++λ Pin − Ploss
+i
+,
+(3)
+where the first term is the mean squared error (MSE) data loss,
+and the second is the mean absolute error (MAE) for physical
+loss, weighted by a scalar coefficient λ.
+D. Calibration
+To compensate the systematic bias between simulated and
+measured peak capacitor voltages for more accurate prediction,
+we compute a scalar calibration factor k = V C, mea/V C, sim
+from an independent set of calibration diodes and scale all
+predictions as VC, calib = kVC, pred, where V C, mea and V C, sim
+are the average measured and simulated charge voltages,
+respectively. Since systematic errors may vary with operating
+conditions, calibration factors should be determined separately
+for each excitation or measurement setup.
+III. EXPERIMENT SETUP
+A B&K V406 shaker mimics cardiac motion to excite
+the PEH, producing the current waveforms for synthetic data
+generation and for driving practical circuits, with laser sensing
+ensuring accurate motion as presented in Fig. 2. Details on
+the PEH and motion simulation are available in [2]. For
+experimental validation, 13 test diodes (10 without validated
+SPICE models and cannot be simulated) and 6 calibration
+diodes are mounted on a printed circuit board (PCB).
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2025.3641701
+© 2025 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+Authorized licensed use limited to: Aalborg Universitetsbibliotek. Downloaded on December 11,2025 at 11:51:45 UTC from IEEE Xplore. Restrictions apply.
+4
+42.7 51.4
+PMEG3001EEF
+RB751CS40
+1PS70SB40
+BAW56S
+BAV756S
+RB520CS30L
+Diodes
+1
+2
+3
+4
+5
+6
+2
+1
+3
+5
+6
+4
+Simulation Results
+42.7 51.4
+1
+2
+3
+4
+5
+6
+2
+1
+3
+4
+6
+5
+PINN Prediction
+0.4
+0.6
+0.8
+1.0
+1.2
+Maximum
+charge
+voltage
+(V)
+Peak waveform current of PEH output (uA)
+Fig. 3. Heat map and diode relative rankings of PINN prediction and
+simulation (numbers indicate diode rankings)
+0.0 0.5 1.0 1.5
+Simulation Voltage (V)
+0.00
+0.25
+0.50
+0.75
+1.00
+1.25
+1.50
+Prediction
+Voltage
+(V)
+(a)
+PINN Predictions
+Ideal Fit
+0.1 0.0 0.1
+Prediction Error (V)
+0
+10
+20
+30
+40
+50
+Frequency
+(b)
+95% CI
+[-0.115, 0.049] V
+Zero Error
+0.2 0.4 0.6
+Measured Voltage (V)
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+Prediction
+Voltage
+(V)
+(c)
+PINN Predictions
+Ideal Fit
+0.025 0.000 0.025 0.050
+Prediction Error (V)
+0.0
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0
+Frequency
+(d)
+95% CI
+[-0.023, 0.061] V
+Zero Error
+Fig. 4. (a) PINN prediction vs simulation voltage, (b) PINN prediction vs
+simulation error histogram, (c) PINN prediction vs measurement voltage, (d)
+PINN prediction vs measurement error histogram
+IV. RESULTS
+The proposed framework is coded in Python, circuit simu-
+lations are performed with PySpice, and the PINN surrogate
+model is implemented in TensorFlow. The test set comprises
+900 samples simulated from the original diodes under a 650
+mV, 1.2 Hz stimulus, while the training set consists of 7200
+samples (5% as a validation set) from pseudo-diodes with any
+other amplitude–frequency combinations. The PINN achieves
+notable computational speed, requiring around 270 s for model
+training and 47.5 ms for single sample prediction compared to
+60-70 s for SPICE simulation (120 s trace at 5 kHz). Further-
+more, regression accuracy is evaluated by mean absolute error
+(MAE), root mean squared error (RMSE), Pearson correlation
+coefficient ρ, and p-value from paired t-tests.
+A. Prediction vs Simulation
+Fig. 3 compares the peak capacitor voltages VC predicted
+by the PINN model with their simulation values for six
+2
+1
+0
+1
+2
+PEH
+Waveform
+current
+(mA)
+0 20 40 60 80 100 120
+Time (s)
+0.00
+0.25
+0.50
+0.75
+1.00
+1.25
+Charge
+Voltage
+V
+c
+(V)
+Vc PMEG3001EEF
+Vc BAW56W
+Vc RB530S40
+PEH current (mA)
+Fig. 5. Comparison of diode conversion performance
+representative diodes under three excitation levels. Each heat
+map cell is annotated with the diode performance ranking
+under the corresponding operating conditions. Although the
+diode ranking varies with excitation conditions, the PINN can
+reproduce the correct order in almost every case. The few
+mismatches occur mainly when the simulated voltages differ
+by less than 50 mV.
+The performance of the PINN surrogate is presented in
+Fig. 4 (a), which plots the predicted versus simulated VC for
+the entire test set. The points tightly follow the unity-slope
+line, indicating consistent regression within the test range. As
+reported in Table I, the model attains a mean absolute error
+of 0.047 V and a Pearson correlation coefficient of 0.989 on
+the test data. Despite slightly greater dispersion in predicting
+lower voltages, PINN can estimate the diode performance
+from its characteristics and features of the input waveform
+with sufficient accuracy to replace circuit-level simulation for
+component evaluation.
+Fig. 5 illustrates the simulation charged voltage over time
+of the optimal diode chosen by the proposed framework com-
+pared with two representative diodes. The appropriate diode
+contributes to boosting the charged voltage, demonstrating the
+benefit of the diode selection on the conversion efficiency.
+B. Prediction vs Measurements
+To assess generalization, PINN predictions are validated
+against measurements from 13 PCB rectifiers using unseen
+commercial diodes and harvester waveforms not present dur-
+ing model training, replicating real-world applications. Fig.
+4 (b) plots the predicted VC after calibration (k = 1.07
+derived from calibration) versus the measured voltages. The
+plot demonstrates that the PINN model achieves similar per-
+formance on both the measurement and synthetic sets. The
+measurement-prediction points are clustered around the ideal
+fit line, yielding a mean absolute error of 0.03 V and a Pearson
+coefficient of 0.974. These practical results confirm that the
+PINN model generalizes well to unseen diodes and excitation
+profiles and maintains high accuracy.
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2025.3641701
+© 2025 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+Authorized licensed use limited to: Aalborg Universitetsbibliotek. Downloaded on December 11,2025 at 11:51:45 UTC from IEEE Xplore. Restrictions apply.
+5
+TABLE I
+COMPARISON OF ML REGRESSION MODELS.
+Data Metrics Poly DNN XGBoost PINN
+Simulation
+MAE 0.084 0.059 0.045 0.047
+RMSE 0.143 0.081 0.059 0.060
+ρ 0.908 0.979 0.990 0.989
+Paired t-test 6.2e-6 4.0e-15 3.9e-23 7.6e-20
+Measurement
+MAE 0.082 0.045 0.036 0.030
+RMSE 0.114 0.053 0.043 0.035
+ρ 0.588 0.931 0.967 0.974
+Paired t-test 5.0e-1 9.6e-3 9.6e-3 5.1e-3
+C. Comparison of Regression Models
+Table I contrasts four surrogate models across the simulated
+and measurement data, polynomial regression baseline, DNN,
+XGBoost [21] and PINN. In the simulation test, XGBoost
+and PINN achieve comparable accuracy, but in the real mea-
+surement test, PINN demonstrates superior generalization, out-
+performing XGBoost and other two models. The polynomial
+baseline exhibits poor generalization in the measurement test,
+highlighting the necessity of advanced ML methods for this
+nonlinear prediction task. Critically, while purely data-driven
+models suffer a noticeable performance degradation on real
+test data, the physical constraint based on energy balance
+allows the PINN model to prevent overfitting and extrapo-
+late robustly to unseen diodes and waveforms, validating its
+effectiveness for SPICE surrogate approximations.
+V. DISCUSSION AND CONCLUSION
+In the proposed framework, the PINN delivers diode evalu-
+ations in milliseconds with direct datasheet information, even
+when no validated SPICE model exists, and replaces iterative
+simulations or prototyping for optimizing diode selection.
+Although trained solely on synthetic data, it retains high
+accuracy on real-world test cases thanks to the embedded
+physics penalty. Such accuracy and robustness enable rapid
+component screening and fit naturally into automated design
+loops, including optimization or design-space exploration.
+However, the present study employs a lightweight network
+and a dataset restricted to a narrow set of waveforms, diode
+types, and a single circuit topology. Future work will explore
+richer models, enlarge the validation, extend the PINN to
+multi-stage topologies by investigating physics constraints at
+specific nodes, and integrate the surrogate into multi-objective
+optimization flows [22], [23].
+In summary, the proposed framework enables fast and
+accurate estimation of diode performance using datasheet-level
+inputs, paving the way for future circuit design optimization
+and automation. This capability supports low-power, ultra-low-
+frequency PEHs for body energy harvesting by identifying the
+optimal diode and accelerating the design of miniaturized rec-
+tifier stages. This study offers a concrete path toward realizing
+intracardiac leadless pacemakers and brings the vision of fully
+self-powered cardiac devices closer to reality.
+REFERENCES
+[1] M. Hasani et al., “Epicardial heart motion measurement by implanting
+motion sensor,” in 2025 IEEE Medical Measurements & Applications
+(MeMeA), 2025, pp. 1–5.
+[2] M. Khazaee et al., “Contact-based impact energy harvesting from the
+ultralow frequency intracardiac kinetic energy,” ACS Energy Letters,
+vol. 9, no. 6, pp. 2944–2952, 2024.
+[3] ——, “Harnessing cardiac power: heart kinetic motion analysis for
+energy harvesters,” Biomedical Signal Processing and Control, vol. 95,
+p. 106421, 2024.
+[4] B. Zhang et al., “A review of nonlinear piezoelectric energy harvesting
+interface circuits in discrete components,” Applied Mathematics and
+Mechanics, vol. 43, no. 7, pp. 1001–1026, 2022.
+[5] D. W. Hart and D. W. Hart, Power electronics. McGraw-Hill New
+York, 2011, vol. 166.
+[6] Q. Zuo et al., “An ultra-efficient and compact flipping-input synchro-
+nized switch harvesting on inductor and capacitors interface circuit for
+piezoelectric energy harvesting,” IEEE Transactions on Circuits and
+Systems II: Express Briefs, 2024.
+[7] Q. Lian, P. Han, and N. Mei, “A review of converter circuits for ambient
+micro energy harvesting,” Micromachines, vol. 13, no. 12, p. 2222, 2022.
+[8] K. Nadaud, G. Poulin-Vittrant, and D. Alquier, “Influence of topology
+and diode characteristics of ac-dc converters for low power piezoelectric
+energy harvesting,” Sensors and Actuators A: Physical, vol. 330, p.
+112901, 2021.
+[9] W. Shockley, “The theory of p-n junctions in semiconductors and p-n
+junction transistors,” Bell system technical journal, vol. 28, no. 3, pp.
+435–489, 1949.
+[10] A. Elmai et al., “A new configuration of a microstrip rf-dc rectifier for
+rf energy harvesting applications,” in EPJ Web of Conferences, vol. 326.
+EDP Sciences, 2025, p. 01002.
+[11] D. Ren et al., “Improvement of the spice model of diode based on
+measurement and nonlinear fitting random optimization algorithm,”
+Electronics, vol. 11, no. 21, p. 3461, 2022.
+[12] W. Dong et al., “Stretchable self-powered teng sensor array for human
+robot interaction based on conductive ionic gels and lstm neural net-
+work,” IEEE Sensors Journal, 2024.
+[13] H. T. Nguyen and A. F. Peterson, “Machine learning for automating
+millimeter-wave directional coupler designs,” IEEE Transactions on
+Circuits and Systems II: Express Briefs, vol. 69, no. 2, pp. 549–553,
+2021.
+[14] Y. Zhang, Y. Xu, and F. Blaabjerg, “Surrogate models for power
+electronic systems applying machine learning techniques,” in Control of
+Power Electronic Converters and Systems: Volume 4. Elsevier, 2024,
+pp. 333–352.
+[15] T. Guillod, P. Papamanolis, and J. W. Kolar, “Artificial neural network
+(ann) based fast and accurate inductor modeling and design,” IEEE Open
+Journal of Power Electronics, vol. 1, pp. 284–299, 2020.
+[16] S. Zhao et al., “Parameter estimation of power electronic converters
+with physics-informed machine learning,” IEEE Transactions on Power
+Electronics, vol. 37, no. 10, pp. 11 567–11 578, 2022.
+[17] M. Raissi, P. Perdikaris, and G. E. Karniadakis, “Physics-informed
+neural networks: A deep learning framework for solving forward and
+inverse problems involving nonlinear partial differential equations,”
+Journal of Computational physics, vol. 378, pp. 686–707, 2019.
+[18] Z. Tang et al., “Semi-supervised transfer learning framework for aging-
+aware library characterization,” IEEE Transactions on Circuits and
+Systems II: Express Briefs, vol. 71, no. 3, pp. 1156–1160, 2023.
+[19] N. Arora, “Spice diode and mosfet models and their parameters,” in
+MOSFET Models for VLSI Circuit Simulation: Theory and Practice.
+Springer, 1993, pp. 536–562.
+[20] J. Dicken et al., “Power-extraction circuits for piezoelectric energy
+harvesters in miniature and low-power applications,” IEEE Transactions
+on power electronics, vol. 27, no. 11, pp. 4514–4529, 2012.
+[21] T. Chen and C. Guestrin, “Xgboost: A scalable tree boosting system,”
+in Proceedings of the 22nd acm sigkdd international conference on
+knowledge discovery and data mining, 2016, pp. 785–794.
+[22] G. Rodrigues et al., “Maximizing energy harvesting in a miniaturized
+implant with an integrated coil receiver,” IEEE Transactions on Circuits
+and Systems II: Express Briefs, vol. 70, no. 10, pp. 3762–3766, 2023.
+[23] V. Srikanth et al., “Machine learning-based analogue circuit de-
+sign for stage categorization and evolutionary optimization,” in 2024
+Second International Conference Computational and Characterization
+Techniques in Engineering & Sciences (IC3TES). IEEE, 2024, pp.
+1–6.
+This article has been accepted for publication in IEEE Transactions on Circuits and Systems II: Express Briefs. This is the author's version which has not been fully edited and
+content may change prior to final publication. Citation information: DOI 10.1109/TCSII.2025.3641701
+© 2025 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+Authorized licensed use limited to: Aalborg Universitetsbibliotek. Downloaded on December 11,2025 at 11:51:45 UTC from IEEE Xplore. Restrictions apply.
+

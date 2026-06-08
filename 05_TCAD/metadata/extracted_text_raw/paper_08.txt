@@ -1,0 +1,1828 @@
+A highly reliable dual-mode RRAM PUF with key concealment
+scheme
+Li, J., Cui, Y., Gu, C., Wang, C., Liu, W., & Kvatinsky, S. (2025). A highly reliable dual-mode RRAM PUF with
+key concealment scheme. IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems.
+Advance online publication. https://doi.org/10.1109/TCAD.2025.3536376
+Published in:
+IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems
+Document Version:
+Peer reviewed version
+Queen's University Belfast - Research Portal:
+Link to publication record in Queen's University Belfast Research Portal
+Publisher rights
+© 2025 The Authors.
+This is an accepted manuscript distributed under a Creative Commons Attribution License (https://creativecommons.org/licenses/by/4.0/),
+which permits unrestricted use, distribution and reproduction in any medium, provided the author and source are cited
+General rights
+Copyright for the publications made accessible via the Queen's University Belfast Research Portal is retained by the author(s) and / or other
+copyright owners and it is a condition of accessing these publications that users recognise and abide by the legal requirements associated
+with these rights.
+Take down policy
+The Research Portal is Queen's institutional repository that provides access to Queen's research output. Every effort has been made to
+ensure that content in the Research Portal does not infringe any person's rights, or applicable UK laws. If you discover content in the
+Research Portal that you believe breaches copyright or violates any law, please contact openaccess@qub.ac.uk.
+Open Access
+This research has been made openly available by Queen's academics and its Open Research team. We would love to hear how access to
+this research benefits you. – Share your feedback with us: http://go.qub.ac.uk/oa-feedback
+Download date:04. Jun. 2026
+1
+A Highly Reliable Dual-Mode RRAM PUF
+With Key Concealment Scheme
+Jiang Li , Yijun Cui , Member, IEEE, Chongyan Gu , Senior Member, IEEE, Chenghua Wang ,
+Weiqiang Liu , Senior Member, IEEE, and Shahar Kvatinsky , Senior Member, IEEE
+Abstract—Physical Unclonable Function (PUF) has been widely
+used in the Internet of Things (IoT) as a promising hardware
+security primitive. In recent years, PUFs based on resistive
+random access memory (RRAM) have demonstrated excellent
+reliability and integration density. Most previous designs store
+PUF keys directly in RRAMs, increasing vulnerability to attacks.
+This paper proposes a dual-mode RRAM PUF, named differential
+mode and flexible mode, utilizing the difference in switching
+capability between RRAMs during parallel SET operations as
+the entropy source. The proposed PUF can reliably reproduce
+keys between cycles, so a key concealment scheme is used to
+protect PUF keys from being continuously exposed, improving the
+security of the RRAM PUF. The proposed RRAM PUF exhibits
+high reliability over ±10% VDD and a wide temperature range
+from -25°C to 125°C through post-processing operations. The
+flexible mode can generate a significant number of keys for high-
+security applications. Since the PUF keys can be concealed, the
+proposed PUF is compatible with in-memory computing. It can
+be implemented using the same RRAM array as experimentally
+validated using a MAGIC operation, thus reducing the hardware
+overhead.
+Index Terms—Physical unclonable function (PUF), resistive
+random access memory (RRAM), dual-mode, concealable, in-
+memory computing.
+I. INTRODUCTION
+Physical unclonable functions (PUFs) have been considered
+as a distinctive and essential component within the realm of
+hardware security [1], [2]. PUFs offer a unique advantage
+by harnessing the inherent physical variations in hardware
+to generate keys and identifiers. This distinctiveness makes
+PUFs highly resistant to cloning and counterfeiting, providing
+a robust foundation for secure authentication, key generation,
+and various cryptographic applications.
+Conventional PUFs, e.g., Arbiter PUFs [3], [4], ring os-
+cillator (RO) PUFs [5], [6], and SRAM PUFs [7], [8], are
+based on complementary metal-oxide-semiconductor (CMOS)
+technology. However, the scalability constraints of CMOS
+technology not only hinder the continual miniaturization of
+devices but also impose restrictions on reducing the overall
+area and power consumption. CMOS-based PUFs are suscepti-
+ble to environmental variations and having reliability concerns
+J. Li, Y. Cui, C. Wang and W. Liu are with College of Electronic
+and Information Engineering, Nanjing University of Aeronautics and As-
+tronautics, Nanjing, 211106, China. (e-mail: yijun.cui@nuaa.edu.cn; li-
+jiang@nuaa.edu.cn; chwang@nuaa.edu.cn; liuweiqiang@nuaa.edu.cn).
+C. Gu is with the Centre for Secure Information Technologies (CSIT),
+Institute of Electronics, Communications & Information Technology, Queen’s
+University Belfast, Belfast, U.K. (e-mail: c.gu@qub.ac.uk).
+S. Kvatinsky is with the Andrew and Erna Viterbi Faculty of Electrical
+and Computer Engineering, Technion – Israel Institute of Technology, Haifa,
+3200003, Israel. (e-mail: shahar@ee.technion.ac.il).
+[9], [10]. Therefore, due to its high density, low power
+consumption, and excellent scalability, the nanoscale non-
+volatile memory, resistive random access memory (RRAM),
+emerges as a promising alternative [11], [12]. The RRAM has
+been widely applied in various fields such as PUF, embedded
+systems, data storage, and edge computing [13]. In-memory
+computing (IMC) based on RRAMs aims to address the
+bottleneck known as the ”memory wall” in the von Neumann
+architecture [14]. Although the inherent randomness of RRAM
+presents challenges for large-scale commercial applications,
+this also makes it well-suited for hardware security applica-
+tions. RRAM-based PUF designs are considered as a highly
+promising hardware security primitive [15].
+The intrinsic stochasticity of various random sources in
+RRAM, including state switching delay randomness [16],
+probabilistic switching [17], and resistance distribution ran-
+domness [18], [19], is leveraged for PUF implementations. For
+these PUFs, a prevalent approach is used to store PUF keys
+in the resistive state of RRAMs and utilize the high-resistance
+state (HRS) and low-resistance state (LRS) to generate the ”0”
+and ”1” keys, respectively. Unfortunately, these PUF designs
+lack compliance with dynamic key generation characteristics.
+This approach exposes the keys consistently, enabling an
+attacker to use probing to directly access the key and compro-
+mise the security of these PUFs. Additionally, when RRAM
+is used for in-place data computation, it is not compatible
+with PUFs, which means only one process, either IMC or
+PUF, can be carried out. The non-reproducibility of PUF keys
+across cycles prevents the implementation of IMC on an array.
+Therefore, to reduce hardware overhead, a secure PUF that
+does not affect IMC is necessary. Moreover, most RRAM
+PUFs store keys through the resistive state of the RRAM,
+and the number of keys is linearly related to the size of the
+array [16], [17]. This results in a large number of RRAMs and
+significant area overhead. To improve the resource utilization
+of RRAM, flexible PUFs have been proposed [20], [21]. By
+flexibly selecting RRAM paths or combinations, more keys
+can be obtained. However, due to the cycle-to-cycle variations
+in RRAM, their bit error rate (BER) is relatively high. To
+address this, a highly reliable and flexible PUF is needed.
+This paper is an extension of our previous work in [22].
+Based on the previously proposed differential PUF, a dual-
+mode RRAM PUF is introduced, including two modes: the dif-
+ferential mode and the flexible mode. This dual-mode RRAM
+PUF is concealable, preventing key exposure. Specifically, the
+scientific research contributions are as follows:
+1) The overall architecture of the proposed concealable
+2
+-1 -0.5 0 0.5 1
+Voltage (V)
+-4
+-3
+-2
+-1
+0
+1
+2
+Current
+(A)
+10
+-4
+SET
+RESET
+LRS
+HRS
+Fig. 1: Resistive switching characteristic of a TiN/HfO2/Ti/TiN
+RRAM under DC conditions over 100 cycles with successive
+RESET and SET operations measured using the fabricated
+RRAM devices.
+dual-mode RRAM PUF is presented, which is compat-
+ible with IMC.
+2) A flexible mode of the PUF is proposed. Due to its flex-
+ible configuration, this PUF can generate a significant
+number of keys in an RRAM array.
+3) A multiple reference key scheme is proposed to improve
+the reliability of the PUF in the differential mode against
+temperature variations.
+4) The variation of RRAM resistance with temperature is
+experimentally explored. A pre-selection key scheme is
+proposed to enhance the reliability of the PUF in the
+flexible mode, reducing the BER to almost 0%.
+The rest of this paper is organized as follows. Section II
+presents the variation in RRAMs, the overall architecture of
+the proposed dual-mode RRAM PUF, and implementations
+of the PUF in the differential mode and the flexible mode.
+In Section III, the experimental and simulation results are
+provided and compared with the state-of-the-art RRAM PUFs.
+The paper is concluded in Section IV.
+II. PROPOSED CONCEALABLE DUAL-MODE RRAM PUF
+DESIGN
+A. Variations in an RRAM
+The TiN/HfO2/Ti/TiN RRAM devices [23] were fabricated
+for the measurements. Fig. 1 illustrates the resistive switch-
+ing characteristic of an RRAM, including I-V curves over
+100 cycles under DC conditions. The RRAM exhibits two
+resistive states, HRS and LRS. The state switching occurs
+when the applied voltage surpasses the forward or reverse
+thresholds, denoted as SET and RESET, respectively. The for-
+ward and reverse threshold voltages are approximately 0.65V
+and −0.85V. Throughout different cycles, RRAM undergoes
+random variations in HRS and LRS resistances, along with
+threshold voltages. The resistance is influenced by the mor-
+phology and structure of the internal conductive filament. The
+formation and rupture of these filaments happen randomly and
+independently in each RRAM, leading to significant device-to-
+device (D2D) and cycle-to-cycle (C2C) variations in RRAM.
+The resistance distributions of the HRS and LRS of 100
+RRAM cells were collected, and their cumulative probability
+2 4 6 8 10 12
+Resistance (Ohms)
+0
+0.2
+0.4
+0.6
+0.8
+1.0
+HRS
+2.0 2.5 3.0 3.5 4.0
+Resistance (Ohms)
+0
+0.2
+0.4
+0.6
+0.8
+1.0
+10
+3
+10
+4
+Cumulative
+Probability
+Cumulative
+Probability
+Experimental data
+Simulation data
+Experimental data
+Simulation data
+LRS
+(a) (b)
+Fig. 2: Cumulative probability distribution of D2D variations
+in (a) HRS and (b) LRS resistance from 100 fabricated RRAM
+devices and data fitted by simulation.
+1 2 3 4 5 6 7 8 9 10
+RRAM Devices
+4
+5
+6
+7
+8
+9
+1 2 3 4 5 6 7 8 9 10
+RRAM Devices
+2.0
+2.5
+3.0
+3.5
+4.0
+HRS LRS
+(a) (b)
+10
+4
+10
+4
+Resistance
+(Ohms)
+Resistance
+(Ohms)
+Resistance
+(Ohms)
+Resistance
+(Ohms)
+10
+3
+10
+3
+Fig. 3: C2C variations of 10 RRAM devices in (a) HRS and
+(b) LRS over 50 cycles.
+distributions are shown in Fig. 2. The resistance distribution
+of an RRAM exhibits a wide range of D2D variations. The
+resistances of HRS and LRS of HfOx-based RRAMs follow
+a log-normal distribution [24], and the experimental data was
+fitted. In the D2D variations, the log-mean of HRS is approx-
+imately 11.03 with a standard deviation of 0.18, and the log-
+mean of LRS is about 8.01 with a standard deviation of 0.12.
+Additionally, to simulate the C2C variations of RRAMs, the
+resistance variations of the HRS and the LRS of 10 RRAMs
+were measured over 50 cycles, as shown in Fig. 3. The
+maximum variation range for HRS is ±30%, and the maximum
+variation range for LRS is ±20%. These experimental data
+were utilized to establish an RRAM model for simulation. To
+ensure optimal performance of the proposed PUF under worst-
+case conditions, the C2C variation in the RRAM model is set
+to the maximum values.
+B. Overall Architecture
+The overall architecture of the proposed dual-mode RRAM
+PUF, including selector modules and a sense module, is shown
+in Fig. 4. The RRAM array is a classical crossbar structure,
+where row selectors enable wordlines, while column selectors
+enable bitlines and are connected to the sense amplifier (SA).
+To improve readout reliability, an offset-tolerant current-based
+SA with strong positive feedback is employed [25]. This SA
+achieves very high accuracy even with a current difference
+of only 3.8 nA and produces reliable comparison results
+3
+NMOS-Latch
+C1 C2
+VDD
+Vc Vc
+IL IR
+RL RR
+WL
+SA1 SA2
+S1 S2
+S3 S4
+M1 M2
+S5 S6
+DS1 DS2
+NMOS-Latch
+C1 C2
+VDD
+Vc Vc
+IL IR
+RL RR
+WL
+SA1 SA2
+S1 S2
+S3 S4
+M1 M2
+S5 S6
+DS1 DS2
+Sense Amplifier
+R/W
+Driver
+&
+Sense
+Amplifier
+Row
+Selector
+&
+WL
+Driver
+Column Selector
+Controls
+Row Selector
+Ci
+RRAM1 RRAM2
+WLm
+BL
+WLm+1
+RRAM1 RRAM2
+WLm
+BL
+WLm+1
+WL1
+WL2
+WL63
+WL64
+BL1 BL2 BL3 BL63 BL64
+WL3
+WL4
+(d)
+(b) (c)
+(e)
+Column Selector
+BLm
+IL
+IR
+Ci Cj
+IL
+IR
+Ci Cj
+(a)
+Fig. 4: Overall architecture of the proposed dual-mode RRAM
+PUF, including (a) a classic RRAM crossbar array, (b) row
+selectors, (c) column selectors, (d) basic cells, and (e) sense
+amplifiers.
+within 20 ns. It can also operate reliably over a wide voltage
+range. By adding two switches, S5 and S6, to the right
+comparison side, the SA can be connected to either 𝑅𝑅𝐴𝑀𝑅
+or a reference current. This can realize the comparison of two-
+column currents or the readout of the resistance state of RRAM
+to generate PUF keys. Through different configurations and
+operations, this PUF can work in two modes, differential mode
+and flexible mode.
+C. Differential Mode Implementation
+As seen from Fig. 1, the SET process is abrupt while
+the RESET process of the RRAM is gradual. Consequently,
+D2D variations lead to unpredictability during parallel SET
+operations on two RRAMs in the HRS. One device will
+switch to LRS before the other. If the applied voltage is then
+turned off, one RRAM is in LRS, while the other remains
+in HRS. The specific RRAM switching to LRS is random
+across cells, making this behavior a randomness source for
+PUF. Fig. 5(a) shows that the differential mode implementation
+consists of two parallel RRAMs, jointly connected to a ground
+RRAM 𝑅𝑅𝐴𝑀𝐺, initially set to LRS. Fig. 5(b) displays the
+application of a voltage pulse sequence to 𝑊𝐿1 and 𝑊𝐿2 for
+PUF key generation. The process begins with resetting both
+RRAMs to the HRS, followed by a parallel SET operation.
+Due to inherent process variations, one RRAM switches to
+the LRS first. At this point, the BL node’s voltage increases,
+affected by the voltage divider with 𝑅𝑅𝐴𝑀𝐺, preventing the
+other RRAM from changing its resistance state. The PUF key
+is generated by reading the resistance state of 𝑅𝑅𝐴𝑀1. If
+𝑅𝑅𝐴𝑀1 is in LRS, the PUF key is “1”; otherwise, it is “0”.
+The state switching ability of RRAMs is susceptible to
+temperature variations [26]. Therefore, when the temperature
+variations are significant, the switching process of two RRAMs
+may flip, causing the BER of the differential mode to increase.
+Post-processing operations such as masking or temporal ma-
+jority voting (TMV) [27] can be used to reduce the BER,
+however, such approaches increase the area and reduce the
+RRAM1 RRAM2
+WL1 WL2
+BL
+RRAMG
+VRESET
+VRead
+floating
+VRESET
+VSET
+VSET
+WL1
+WL2
+(a) (b)
+0.9V
+-1.0V
+0.1V
+(Initialized
+to LRS)
+Fig. 5: (a) Schematic of the differential mode implementation
+including two parallel RRAMs and a grounded RRAM. (b)
+Diagram of voltage pulses to generate PUF keys.
+Start
+Enrollment with preselected keys
+(e.g., -25, 25, 75, and 100℃)
+Verification with the
+keys generated by PUFs
+Match?
+End
+Compare the keys with the enrolled keys
+at ①25, ②-25, ③75 and ④100 ℃
+Successful Abort
+Yes No
+Fig. 6: Multiple reference key (MRK) scheme, improving the
+reliability against temperature.
+speed. To improve the reliability of the differential PUF against
+temperature variations without sacrificing performance, a mul-
+tiple reference key (MRK) scheme is proposed, as shown in
+Fig. 6. Traditional designs enroll single PUF keys at a server.
+The proposed MRK scheme enrolls the PUF keys at different
+temperatures simultaneously in an enrollment phase (e.g., −25,
+25, 75, 100◦C in this work). In an authentication phase, the
+keys generated by the PUF are compared with the enrolled
+multiple reference keys. As long as there is a successful match
+with any of the reference keys, the authentication is successful.
+The MRK scheme does not require additional overhead on the
+device and can significantly improve the reliability of the PUF
+against temperature variations. Therefore, the proposed PUF
+can achieve high reliability in the differential mode.
+D. Flexible Mode Implementation
+To provide sufficient and reliable keys, a flexible mode of
+the PUF is proposed, as shown in Fig. 7. Initially, all RRAMs
+are programmed to an HRS, and parallel SET operations are
+performed on two adjacent RRAMs in two arbitrarily selected
+4
+HRS LRS
+HRS LRS
+HRS LRS
+HRS LRS
+LRS HRS
+LRS HRS
+HRS HRS
+HRS HRS
+HRS HRS
+HRS HRS
+HRS HRS
+HRS HRS
+LRS HRS
+LRS HRS
+LRS HRS
+LRS HRS
+LRS HRS
+LRS HRS
+HRS LRS
+HRS LRS
+IL IR
+WL1
+BL1 BL64
+WL3
+WL61
+WL63
+BLm
+WL2
+WL4
+WL62
+WL64
+LRS HRS
+LRS HRS HRS HRS
+HRS HRS
+HRS HRS
+HRS HRS HRS HRS
+HRS HRS HRS HRS
+HRS HRS
+WLm WLm+1
+HRS HRS
+HRS HRS HRS HRS
+HRS HRS HRS HRS
+HRS HRS
+WLm+2 WLm+3
+Sense Amplifier
+HRS LRS
+HRS LRS
+LRS HRS
+HRS HRS
+HRS HRS
+HRS HRS
+LRS HRS
+LRS HRS
+LRS HRS
+HRS LRS
+IL IR
+WL1
+BL1 BL64
+WL3
+WL61
+WL63
+BLm
+WL2
+WL4
+WL62
+WL64
+LRS HRS HRS HRS
+HRS HRS HRS HRS HRS HRS
+WLm WLm+1
+HRS HRS HRS HRS HRS HRS
+WLm+2 WLm+3
+Sense Amplifier
+Unstable
+Fig. 7: Schematic of the proposed flexible mode implemen-
+tation. Unused and unstable RRAMs are all reset to HRS to
+reduce power consumption.
+columns. In each pair of RRAMs, one RRAM is in the HRS
+and the other is in the LRS, similar to a differential cell. A read
+voltage can be arbitrarily applied to one of the two RRAMs in
+each pair according to the configuration information (e.g., the
+gray RRAMs are selected). The same WLs are selected each
+time in both columns. A 1-bit key is generated by comparing
+the readout currents of the two symmetric columns through a
+SA. The parallel SET operation in some pairs is unstable, i.e.,
+there are unstable cells in the differential mode presented in
+the above subsection. Therefore, to enhance the reliability of
+the flexible mode, both RRAMs in all unstable cells are kept
+in HRS to prevent the states of the selected RRAMs from
+switching. In an 𝑛 × 𝑚 RRAM array, the number of keys of
+the PUF is 𝐶2
+𝑛 · 2𝑚−𝑖, where 𝑖 is the number of unstable cells.
+Thus, the number of keys can be significantly increased due
+to the flexible configurability.
+In previous RRAM PUFs, RRAMs were uniformly pro-
+grammed to the same resistance state, and the current or delay
+differences were compared through various means to generate
+keys [20], [21]. Since all RRAMs were in the same resistance
+state and C2C variations were inherently present, the reliability
+of the PUFs could not be improved. In contrast, since which
+RRAM in each cell switches to LRS is unpredictable, the
+number of selected RRAMs in HRS is different in the two
+columns, which increases the current difference and improves
+the reliability of the proposed PUF in the flexible mode. For
+example, in Fig. 7, it can be observed that the left column has
+one more HRS than the right column. As a result, the current
+in the left column, denoted as 𝐼𝐿, is significantly smaller than
+the current in the right column, denoted as 𝐼𝑅.
+Futhermore, the C2C variations of RRAMs are noticeable,
+resulting in significant fluctuations in the column currents.
+When the magnitude of the two-column currents flips, the
+PUF generates an error bit. To improve the reliability, a pre-
+selection key scheme is proposed. By enrolling the keys of
+the PUF in the differential mode, the switching process of
+Vread
+GND
+Iread
+Isneak
+Isneak
+Vread
+GND
+Iread
+GND
+GND
+(a) (b)
+Fig. 8: (a) Sneak currents during readout. (b) Read scheme to
+reduce sneak currents.
+each pair of RRAM under parallel SET operation can be
+known. If the number of selected HRS in two columns is
+the same or differs by 1 (simulation results demonstrate that
+a difference of 2 HRS can reduce the BER to nearly 0, as
+shown in Section III-C), the corresponding key is discarded.
+This process is completed during the enrollment phase. In this
+case, the remaining keys exhibit a significant difference in
+two-column currents, and C2C variations do not induce error
+bits. Therefore, the proposed PUF can achieve high reliability
+in the flexible mode.
+Sneak currents exist in an RRAM array [28], as shown
+in Fig. 8(a). Sneak currents are present in the half-selected
+RRAM, which increases readout column currents. The sneak
+currents in the two columns are different and will reduce
+the difference between the two-column currents, affecting
+the reliability of the PUF. To reduce sneak currents and
+power consumption, the RRAMs in the unselected columns
+are maintained in the HRS (e.g., the middle columns in
+Fig. 7). Meanwhile, a read scheme is used to improve the
+reliability [29], as shown in Fig. 8(b). The selected rows are
+applied with readout currents while the unselected rows are
+grounded, which mitigates the effect of sneak currents on
+column currents.
+E. Key Concealment Scheme
+Parallel SET operation is reproducible because D2D vari-
+ations are more dominant than C2C variations during the
+parallel SET process. In successive parallel SET operations,
+only the RRAM that previously underwent state switching
+will switch to LRS, while the other RRAM consistently
+maintains HRS, as demonstrated experimentally in Section III-
+A. Leveraging this characteristic, a key concealment scheme
+is proposed, as shown in Fig. 9. The proposed RRAM PUF
+operates in two states, key state and concealed state. Following
+a parallel SET operation, the PUF changes to the key state,
+enabling direct reading of the PUF keys. When the PUF
+keys are not in use, RESET operations are applied to all
+the RRAMs, changing the PUF to the concealed state. All
+RRAMs are in a HRS, effectively concealing the PUF keys.
+Subsequently, the PUF keys can be easily recovered with
+parallel SET operations. In traditional RRAM PUFs [16], [17],
+PUF keys are directly stored in the form of RRAM’s resistance
+states, continuously exposing the key. If an adversary gains
+5
+Generate
+Recover
+Concealed state
+(RESET operation)
+Key state
+(SET operation)
+1
+2
+3
+4
+5
+6
+7
+8
+1
+2
+3
+4
+5
+6
+7
+8
+1
+2
+3
+4
+5
+6
+7
+8
+1
+2
+3
+4
+5
+6
+7
+8
+1 2 3 4 5 6 7 8
+1 2 3 4 5 6 7 8 1 2 3 4 5 6 7 8
+1 2 3 4 5 6 7 8
+1
+2
+3
+4
+5
+6
+7
+8
+1
+2
+3
+4
+5
+6
+7
+8
+1 2 3 4 5 6 7 8
+1 2 3 4 5 6 7 8
+1
+2
+3
+4
+5
+6
+7
+8
+1
+2
+3
+4
+5
+6
+7
+8
+1 2 3 4 5 6 7 8
+1 2 3 4 5 6 7 8
+HRS
+LRS
+HRS
+LRS
+HRS
+LRS
+HRS
+LRS
+HRS
+LRS
+HRS
+LRS
+HRS
+LRS
+Fig. 9: Key concealment scheme of the proposed RRAM PUF,
+including concealed state and key state. With the SET and
+RESET operation, the proposed PUF can be easily changed
+between the two states.
+a free access to the chip, they could potentially extract the
+PUF key through various analysis techniques [30], [31]. In
+contrast, the proposed concealment scheme keeps the PUF key
+in a concealed state under normal conditions. The key is only
+exposed when an authorized access request from the owner is
+received, such as authentication via a secure credential (e.g.,
+password, biometric scan, or hardware token), at which point
+the key becomes accessible for read-out and then concealed.
+In practical scenarios, an adversary cannot recover the PUF
+key through any unauthorized access, as they cannot initiate a
+legitimate access request. Therefore, the concealment scheme
+enables the proposed PUF to effectively resist physical attacks.
+F. Compatibility with In-memory Computing (IMC)
+Due to the concealable nature of the proposed PUF, the
+RRAM crossbar array can conceal the PUF key when it is
+not required, allowing the array to serve other purposes, such
+as IMC. The compatibility design of the proposed PUF with
+IMC is shown in Fig. 10. Programming the three RRAMs to
+different resistance states and applying different enable signals
+allows both PUF and IMC to be implemented in the same
+RRAM crossbar array. To enhance reliability, all read-and-
+write operations adopt the 𝑉/2 scheme. In the implementation
+of a PUF, the WL0 is connected to the ground RRAM (𝑅𝐺),
+as shown in Fig. 10(a). By grounding the corresponding 𝑅𝐺
+and applying 𝑉𝑆𝐸𝑇 to two selected wordlines, WL1 and WL2,
+a parallel SET operation can be performed to implement the
+proposed PUF.
+In theory, it is possible to implement all in-memory logic
+computations, including both stateful and non-stateful logic
+families [32]. As an example, Fig. 10(b) shows the imple-
+mentation of the memristor-assisted logic (MAGIC) OR gate
+[33], and the implementation of other logic follows a similar
+VSet
+VSet
+V0
+V/2
+GND
+V/2
+GND
+GND
+V/2 V/2
+ROUT
+RIN1
+RIN2
+R1
+R2
+RG
+BL0
+WL0
+(a) (b)
+WL1
+WL2
+BL1 BL2 BL0 BL1 BL2
+WL0
+WL1
+WL2
+Fig. 10: (a) Implementation of the proposed PUF on RRAM
+crossbar array. (b) Implementation of MAGIC OR gate [33]
+on RRAM crossbar array. 𝑅𝐼𝑁1 and 𝑅𝐼𝑁2 are the gate inputs,
+𝑅𝑂𝑈𝑇 is the gate output that is initialized to HRS.
+0.08
+RRAM Array
+RRAM
+layout
+Fig. 11: Top view of the chip micrograph and the layout of
+an RRAM crossbar array, fabricated using Winbond’s 90nm
+HfO2 RRAM technology.
+approach. In the implementation of an IMC, the WL0 is
+connected to the 𝑅𝑂𝑈𝑇 . 𝑉0 is applied to the WL0, while the
+other two wordlines, WL1 and WL2, are grounded. 𝑅𝐼𝑁1 and
+𝑅𝐼𝑁2 are the inputs of the OR gate, and 𝑅𝑂𝑈𝑇 is the output. In
+this work, the HRS and LRS correspond to logic “0” and “1”,
+respectively. Before the logic operation, 𝑅𝑂𝑈𝑇 is initialized to
+HRS. When IN1 and IN2 are “0”, the voltage across 𝑅𝑂𝑈𝑇 is
+approximately 2
+3𝑉0, and its state maintains logic “0”. If either
+input is “1”, 𝑅𝑂𝑈𝑇 switches to logic “1” with a voltage of
+approximately 𝑉0. Therefore, to correctly implement the OR
+logic, 𝑉0 must satisfy the following condition:
+𝑉𝑆𝐸𝑇 < 𝑉0 < 1.5𝑉𝑆𝐸𝑇 , (1)
+when 𝑅𝑂𝑈𝑇 switches from “0” to “1”, the voltage across 𝑅𝐼𝑁
+is insufficient to switch the state of 𝑅𝐼𝑁1, thereby ensuring
+the stability of the operation.
+III. EXPERIMENTAL AND SIMULATION RESULTS
+To verify the feasibility of the proposed dual-mode
+RRAM PUF, RRAM devices were fabricated using Winbond’s
+90nm HfO2 RRAM technology [23], with a cell size of
+0.08𝜇m×0.08𝜇m, as shown in Fig. 11. The top and bottom
+electrodes of the HfO2-based transition metal oxide (TMO)
+6
+(a) (b)
+Fig. 12: (a) Resistive switching characteristics of two fab-
+ricated RRAMs. (b) State transient switching of the two
+fabricated RRAMs during a parallel SET operation.
+(a) (b)
+Fig. 13: (a) Initial resistances of the two fabricated RRAM
+devices in successive 100 cycles. (b) State switching of the two
+fabricated RRAMs after successive parallel SET operations in
+100 cycles.
+stack are TiN and Ti/TiN conventional metals, respectively.
+The TMO was deposited using conventional ALD technology.
+The RRAM devices are highly reliable with a million cycle life
+and can operate at temperatures up to 150𝐶◦, while also having
+a state retention capability of more than 100 years, thus en-
+suring the reliability of the PUF. The feasibility of the parallel
+SET operation and the performance of the PUF in differential
+mode were experimentally verified using a SUMMIT 12000
+Probe Station and a Keysight B1500A Semiconductor Device
+Analyzer. Due to the lack of some peripheral circuits in the
+chip, the proposed PUF in the flexible mode was simulated and
+validated by employing an RRAM model fitted from fabricated
+devices, as described in Section II-A. In the simulation of the
+flexible mode, the parallel SET operation of two RRAMs is
+configured such that the state switching is completed by one
+randomly selected RRAM. A PUF possesses critical metrics
+such as randomness, uniqueness, and reliability [34], which
+are used to evaluate the performance of the proposed PUF.
+A. Functional Verification of the Parallel SET Operation
+Since parallel SET operation is a crucial operation in both
+modes, experimental validation of the parallel SET operation
+was conducted. Fig. 12 shows the experimental results of the
+parallel SET operation for a pair of RRAMs. In Fig. 12(a), the
+resistive switching characteristics of two RRAM devices are
+illustrated. Although their threshold voltages and resistance
+values of HRS and LRS are different, the SET process is
+abrupt for both devices. Fig. 12(b) shows the state switching
+of the two fabricated RRAMs during a parallel SET operation,
+with a 5ns interval for each measurement point. Initially, both
+𝑅𝑅𝐴𝑀1 and 𝑅𝑅𝐴𝑀2 are in the HRS, with 𝑅𝑅𝐴𝑀1 exhibiting
+higher resistance than 𝑅𝑅𝐴𝑀2. Upon applying a parallel SET
+operation, 𝑅𝑅𝐴𝑀1 switches to the LRS around 65ns, while
+the resistance of 𝑅𝑅𝐴𝑀2 slightly decreases but remains in
+the HRS. The discrepancy between the resistances of the two
+RRAM devices exceeds 10 times, ensuring a high readout
+margin.
+The resistance variations of the two fabricated RRAM
+devices in the HRS across different cycles are shown in Fig.
+13(a). There are significant fluctuations in the resistance of
+both RRAM devices in the HRS, with a crossover observed
+in their resistances. Fig. 13(b) shows resistive state switching
+following a parallel SET operation. Over 100 cycles, 𝑅𝑅𝐴𝑀1
+undergoes resistance state switching, whereas 𝑅𝑅𝐴𝑀2 consis-
+tently maintains the HRS. Thus, the parallel SET operation
+can be reliably reproduced over cycles, and the PUF keys
+can be repeatedly generated across cycles, demonstrating the
+reliability of the key concealment scheme. However, due to
+considerable C2C variations of RRAM, the HRS resistance of
+𝑅𝑅𝐴𝑀2 occasionally decreases in certain cycles, leading to a
+reduction in the resistance ratio between the two RRAMs.
+Moreover, the impact of both the SET threshold voltage and
+the pulse voltage of the parallel SET operation on the PUF key
+is investigated. In Fig. 14(a), the distribution of SET thresh-
+old voltages for two fabricated RRAMs across 50 DC scan
+cycles is presented. Notably, 𝑅𝑅𝐴𝑀1 exhibits a marginally
+higher SET threshold voltage compared to 𝑅𝑅𝐴𝑀2, with some
+overlap observed in their thresholds. By changing the pulse
+voltage of the parallel SET operation in 0.02V steps over
+the range of 0.8V to 1V, the output of the two RRAMs is
+shown in Fig. 14(b). Each voltage was tested for 50 cycles,
+with the average resistance of the two RRAMs recorded. The
+difference in resistance between the two RRAMs is significant.
+Consequently, the parallel SET operation remains stable across
+the entire applied voltage range, indicating that this operation
+is independent of the pulse voltage used. Additionally, fluctu-
+ations in the RRAM threshold voltage do not compromise the
+reliability of the parallel SET operation.
+B. Randomness and Uniqueness
+The uniformity is used to evaluate the randomness of a PUF
+key. A PUF should generate keys with the same proportion of
+“0” and “1”. Therefore, the ideal value of uniformity is 50%,
+which indicates that the PUF output has no bias. 128-bit keys
+of the PUF in the differential mode was collected from each
+of the 30 fabricated chips, and the uniformity result is shown
+in Fig. 15(a). The uniformity is 49.64% with a maximum bias
+of 6.08%. Additionally, 30 PUF instances in the flexible mode
+were simulated, and 1024-bit keys were collected from each
+instance. Fig. 15(b) shows the uniformity results of the PUF
+in the flexible mode, which has a uniformity of 49.92% and a
+maximum bias of 3.25%. To further test the randomness of the
+7
+RRAM1 RRAM2
+0.45
+0.5
+0.55
+0.6
+Threshold
+Voltage(V)
+0.8 0.9 1.0
+Voltage (V)
+10
+3
+10
+4
+10
+5
+Resistance
+(Ohms)
+RRAM1
+RRAM2
+(a) (b)
+Fig. 14: (a) Threshold voltages of SET operation obtained in
+50 cycles during DC characterization of the two fabricated
+RRAMs. (b) Average resistances of the two fabricated RRAMs
+after parallel SET operations with different SET voltage,
+where 50 cycles were considered.
+0.45 0.5 0.55
+0.00
+0.25
+0.50
+0.75
+1.00
+Count
+(Normalized)
+Count
+(Normalized)
+0.46 0.48 0.5 0.52 0.54
+0.00
+0.25
+0.50
+0.75
+1.00
+Count
+(Normalized)
+Count
+(Normalized)
+Uniformity
+(a)
+Uniformity
+(a)
+Uniformity
+(b)
+μ = 0.4964
+σ = 0.0608
+μ = 0.4992
+σ = 0.0325
+Fig. 15: Uniformity results of the proposed RRAM PUF in (a)
+the differential mode and (b) the flexible mode.
+TABLE I: NIST SP800-22 TEST RESULTS OF THE PRO-
+POSED PUF IN THE FLEXIBLE MODE.
+NIST Test Prop. P-Value Pass?
+Frequency 100/100 0.681948 Yes
+Block Frequency 99/100 0.745701 Yes
+*Cumulative Sums 100/100 0.760163 Yes
+Runs 100/100 0.658923 Yes
+LongestRun 100/100 0.708986 Yes
+Rank 99/100 0.451130 Yes
+FTT 99/100 0.649850 Yes
+Universal 98/100 0.195004 Yes
+ApproximateEntropy 99/100 0.850720 Yes
+*NonOverlapingTemplate 98/100 0.323928 Yes
+OverlapingTemplate 100/100 0.825223 Yes
+*RandomExcusions 99/100 0.106160 Yes
+*RandomExcusionsVariant 98/100 0.075710 Yes
+*Serial 100/100 0.141515 Yes
+LinearComplexity 98/100 0.179475 Yes
+* This item has more than one sub-test, and the P-value given is the minimum value.
+flexible mode, the widely used NIST SP800-22 test suite was
+used, which contains a total of 15 test items [35]. 10M data
+generated from 10 PUF instances was used for NIST tests [20].
+Table I shows the NIST test results, where “P-value>0.01”
+indicates that the data passed the corresponding test item. It
+can be seen that the proposed PUF in the flexible mode has
+passed all the listed NIST tests with a high proportion and P-
+0.48 0.50 0.52
+0.00
+0.48 0.50 0.52
+0.25
+0.50
+0.75
+1.00
+Inter-chip HD
+(a)
+0.00
+0.25
+0.50
+0.75
+1.00
+Count
+(Normalized)
+Count
+(Normalized)
+Count
+(Normalized)
+Count
+(Normalized)
+Inter-chip HD
+(b)
+μ = 0.4995
+σ = 0.0023
+μ = 0.4997
+σ = 0.0072
+Fig. 16: Uniqueness results of the proposed RRAM PUF in
+(a) the differential mode and (b) the flexible mode.
+0 40 80 120 160 200
+Cycle #
+0
+5
+10
+15
+20
+Measured @ 25℃
+100 PUF cells
+Cycle #
+0 40 80 120 160 200
+-4
+0
+4
+8
+12
+TMV3
+TMV3+Mask
+Raw
+(a) (b)
+Unstable
+Bits
+(%)
+Bit
+Error
+Rate
+(%)
+Fig. 17: (a) Measured unstable bits of 100 PUF cells in the
+differential mode over 200 cycles under normal condition. (b)
+Measured BER of 100 PUF cells in the differential mode over
+200 cycles with different post-processing methods.
+values much larger than 0.01. Thus, the proposed PUF provide
+sufficient randomness.
+The uniqueness is used to evaluate the distinctiveness be-
+tween different PUF instances and indicates the ability of
+a PUF to distinguish a particular instance from others. The
+uniqueness can be calculated using the inter-chip hamming
+distance, which has an ideal value of 0.5. Fig. 16 shows the
+uniqueness results of the proposed PUF in the differential
+mode and the flexible mode from the 30 PUF instances. The
+differential mode achieves a high uniqueness of 0.4995 with a
+standard deviation of 0.0023, while the flexible mode achieves
+a high uniqueness of 0.4997 with a standard deviation of
+0.0072. The uniqueness of both modes is very close to the
+ideal value.
+C. Reliability
+The reliability is used to evaluate the reproducibility of
+a PUF key across different environmental factors, such as
+varying temperatures and voltages, typically quantified via
+the bit error rate (BER). Ideally, a PUF should consistently
+regenerate the key irrespective of conditions, resulting in a
+BER of 0. However, due to inherent C2C variations and
+susceptibility to temperature fluctuations, RRAM PUFs often
+fail to achieve optimal reliability. To assess the reliability of
+the proposed RRAM PUF in the differential mode, both the
+unstable bits and the bit error rate were measured experimen-
+tally. The unstable bits represent the proportion of bits whose
+8
+-1 -0.5 0 0.5
+Voltage (V)
+-8
+-6
+-4
+-2
+0
+2
+4
+10-4
+-25˚C
+0˚C
+25˚C
+50˚C
+75˚C
+100˚C
+125˚C
+HRS
+LRS
+20 cycles @
+each temperature
+Current
+(A)
+Fig. 18: Effect of temperature from -25◦C to 125◦C on the
+resistive switching characteristics of a fabricated RRAM. 20
+cycles were measured at each temperature.
+output flips at least once across different cycles, while the
+bit error rate indicates errors in the current cycle. Fig. 17(a)
+shows the unstable bits in 100 PUF cells in the differential
+mode over 200 cycles under normal conditions (25◦C, 0.9V),
+revealing that 13% of the PUF cells generate unstable keys.
+Fig. 17(b) illustrates the BER of the same 100 PUF cells in
+the differential mode across various cycles. The raw PUF keys
+exhibit a BER of approximately 6%, attributed to the C2C
+variation. When two RRAMs within a PUF cell possess similar
+switching characteristics, this variation can lead to bit flips.
+To improve reliability, post-processing techniques like TMV
+and masking are indispensable [27]. TMV𝑥 uses neighboring
+𝑥 PUF cells to generate a 1-bit key, ensuring the generation
+of reliable keys even in the presence of unstable PUF cells.
+Masking techniques further enhance reliability by concealing
+highly unstable PUF bits. In this study, we employ TMV3
+along with masking (2% of bits) techniques, resulting in a
+significant reduction in BER. Over 200 cycles, the BER of
+these 100 PUF cells in the differential mode is reduced to
+0. It is worth pointing out that as the number of PUF keys
+increases, unstable bits may persist. This challenge can be
+addressed through more sophisticated voting mechanisms and
+higher masking rates.
+The reliability of the proposed differential PUF was assessed
+under various environmental conditions. Fig. 14(b) demon-
+strates that the PUF keys in the differential mode remain
+unchanged despite fluctuations in the supply voltage. Subse-
+quently, we evaluated the reliability of the differential mode
+at different temperatures. In Fig. 18, the resistive switching
+characteristics of a fabricated RRAM across the temperature
+range of -25◦C to 125◦C are provided, with 20 cycles mea-
+sured at each temperature. The RRAM’s characteristics exhibit
+negligible variation with temperature, with C2C variations
+outweighing the temperature effect. Fig. 19(a) shows the BER
+of the proposed PUF in the differential mode at different
+temperatures, with 25◦C as the reference condition. Within
+the range of 0◦C to 50◦C, no bit flips occur. However, as
+the temperature deviates further from this range, the PUF’s
+BER increases. At 100◦C, the PUF reaches its highest BER
+of 4%, indicating the temperature-dependent variability in
+RRAM’s switching capability. Significant temperature changes
+Temperature (˚C )
+0
+1
+2
+3
+4
+Bit
+Error
+Rate
+(%)
+-25 0 25 50 75 100 125
+0
+1
+2
+3
+4
+Bit
+Error
+Rate
+(%)
+-25 0 25 50 75 100 125
+Temperature (˚C )
+-4
+-2
+0
+2
+4
+Bit
+Error
+Rate
+(%)
+-25 0 25 50 75 100 125
+Temperature (˚C )
+(d) TMV3+Masking
+w/ 4 MRKs
+-25 0 25 50 75 100 125
+Temperature (˚C )
+0
+1
+2
+3
+4
+(a) TMV3+Masking
+w/o MRK
+Bit
+Error
+Rate
+(%)
+(b) TMV3+Masking
+w/ 2 MRKs
+(c) TMV3+Masking
+w/ 3 MRKs
+Fig. 19: (a) Measured BER of 100 PUF cells in the differential
+mode at various temperature, using 25◦C as the reference
+standard. (b) Measured BER with MRK scheme using 2
+reference keys (25◦C and 75◦C), (c) 3 reference keys (25◦C,
+75◦C, and 100◦C), and (d) 4 reference keys (−25◦C, 25◦C,
+75◦C, and 100◦C).
+may render the PUF key unstable, posing an inherent challenge
+for RRAM-based PUFs [17].
+The BER distribution in Fig. 19(a) indicates that the MRK
+scheme can reduce the BER by adding reference keys at
+−25◦C, 75◦C, and 100◦C. Fig. 19(b), (c), and (d) show the
+BER of the proposed PUF in the differential mode with the
+MRK scheme using 2, 3, and 4 reference keys, respectively.
+Each additional reference key results in a significant reduction
+in BER, achieving a BER of 0 across the measured tem-
+perature range when 4 reference keys are employed. Thus,
+enrolling reference keys at multiple temperatures effectively
+reduces the sensitivity of the PUF to temperature. Moreover,
+increasing the number of reference keys in the MRK scheme
+can further improve the reliability of the PUF in more complex
+environments.
+To assess the reliability of the proposed PUF in the flexible
+mode, the variation of readout current with the number of
+selected HRS is simulated and shown in Fig. 20. Each case was
+tested for 50 cycles. As described in Section II-D, all unstable
+RRAM pairs during parallel SET operations are required to be
+programmed to HRS. The information about the unstable cells
+can be obtained from the enrollment phase of the differential
+mode. Fig. 17 reveals that 13% of cells are unstable. Therefore,
+in the worst case, 5 pairs of RRAM were programmed to HRS,
+i.e., 5 RRAMs in the HRS are consistently present in each
+selection. Among the remaining pairs of RRAM, an HRS or
+LRS is randomly selected to simulate the random switching
+process of RRAM pairs during parallel SET operations. Only
+cases with a probability of occurrence greater than 1% are
+given in Fig. 20. Due to C2C variations, when the number of
+selected HRS is the same in the two columns, the ranges of
+9
+Number of HRS
+Current
+(A)
+8 9 10 11 12 13 14 15 16 17 18 19
+3
+4
+5
+6
+10
+-4
+Fig. 20: The variation of the readout current with the number
+of HRS selected. Only cases with a probability greater than
+1% are given. Each case was tested for 50 cycles.
+readout currents overlap. When the number of selected HRS in
+the two columns differs by one, there is still a partial crossover
+in the readout currents. Only when the number of selected
+HRS in the two columns differs by 2, the readout currents
+have no crossover and can be well distinguished. Therefore,
+the pre-selection key scheme is needed. The average BER
+of the PUF in the flexible mode using the pre-selection key
+scheme is shown in Table II. 20 PUF instances were tested
+with 256-bit keys collected from each instance. Without the
+pre-selection key scheme, the average BER of the raw PUF
+is 8.26%. The average probability of the cases where the
+same number of HRS are selected in two columns is 10.89%,
+and after discarding these keys, the average BER of the PUF
+decreases to 3.74%. Further, the average probability of the
+cases where the number of selected HRS in the two columns
+differs by 1 is 20.84%, and after discarding keys with a
+difference of 0 or 1 HRS, the BER of the PUF is reduced to
+0. Therefore, through the pre-selection key scheme, the BER
+of the proposed PUF in the flexible mode can be significantly
+reduced. Due to the discarding of unreliable keys, the number
+of keys decreases. However, the flexible configuration allows
+the PUF to still generate a substantial number of usable keys
+even after discarding the unreliable ones. To reduce the BER,
+many RRAM PUFs store keys as resistance states in the same
+RRAM array after the generation of keys [30], [31]. This
+approach not only limits the number of keys but also exposes
+them to physical probing attacks. In contrast, the proposed
+PUF flexibly and reliably generates a significant number of
+keys.
+The reliability of the proposed PUF in the flexible mode
+was also evaluated against voltage and temperature variations.
+The variation of resistance of fabricated RRAMs’ HRS and
+LRS with temperature was experimentally measured within the
+range of -25◦C to 125◦C, as shown in Fig. 21. Each tempera-
+ture was tested for 50 cycles in Fig. 21(a). The resistance of
+RRAM exhibits an insignificant change with temperature and
+a more significant change with C2C variations. The variation
+TABLE II: AVERAGE BER OF THE PROPOSED PUF IN THE
+FLEXIBLE MODE WITH PRE-SELECTION KEY SCHEME.
+Difference Proportion BER*
+Row 100% 8.26%
+0 HRS 10.89% 3.74%
+1 HRS 20.84% 0
+* BER after discarding the CRPs of these items.
+-25 25 75 125
+10
+3
+10
+4
+10
+5
+Temperature (˚C)
+HRS LRS
+Resistance
+(Ohms)
+w/ cycling
+(a) (b)
+-25 0 25 50 75 100 125
+2
+3
+4
+50
+60
+Resistance
+(Ohms)
+10
+3
+Temperature (˚C)
+HRS
+LRS
+RRAM1 RRAM2
+RRAM4 RRAM5
+RRAM3
+w/o cycling
+Fig. 21: (a) The effect of varying temperature from -25◦C
+to 125◦C on the resistance of a fabricated RRAM. Each box
+represents the results of 50 cycles. (b) The effect of varying
+temperature on the resistance of the RRAM in a cycle.
+TABLE III: BER OF THE PROPOSED PUF IN THE FLEXI-
+BLE MODE AGAINST TEMPERATURE AND VOLTAGE VARIA-
+TIONS.
+Temp. (◦C) -25 0 25 50 75 100 125
+BER* 0 0 0 0 0 0 0
+Volt. (V) 0.9 1.0 1.1 1.2 1.3
+BER* 0 0 0 0 0
+* Average BER over 50 cycles.
+of the resistance of 5 RRAMs with temperature was tested in
+a single cycle as shown in Fig. 21(b). The resistance of HRS
+decreases with increasing temperature, while the resistance of
+LRS increases with increasing temperature. It can be seen that
+the resistance of RRAM varies slightly with temperature. This
+fitted data is used for simulation. 10k PUF bits are applied to
+the reliability simulation, and each temperature and voltage
+was tested for 50 cycles with the pre-selection key scheme.
+The BER of the PUF in the flexible mode over 50 cycles
+within a temperature range of -25◦C to 125◦C and a supply
+voltage range of 0.9V to 1.3V is simulated and shown in
+TABLE III. Within the range of -25◦C to 125◦C, the BER
+of the PUF remained at 0. Additionally, within the range of
+0.9V∼1.3V, the BER of the PUF is also 0, indicating that
+temperature and voltage variations do not affect the reliability
+of the PUF in the flexible mode. Therefore, the proposed
+dual-mode RRAM PUF achieves high reliability across a wide
+range of temperature and voltage.
+D. Aging and Security
+To evaluate the uniformity and reliability of the PUF against
+aging, the RRAM chip was tested with multiple cycles and
+10
+0 100 300 600
+10
+3
+10
+3
+10
+4
+10
+5
+10
+5
+Time (s)
+HRS
+HRS LRS
+LRS
+Resistance
+(Ohms)
+Resistance
+(Ohms)
+Baking @ 125°
+C
+(a) (b)
+0 500 1000 1500 2000
+Cycle
+10
+3
+10
+4
+10
+5
+Resistance
+(Ohms)
+Resistance
+(Ohms)
+Fig. 22: (a) Resistance variation of a fabricated RRAM over 2k
+cycles. (b) Resistance distribution of an RRAM after baking
+for 10 min at 125◦C. 50 cycles were measured at each point.
+high temperature baking. The resistance variation of an RRAM
+over 2k cycles was tested, as shown in Fig. 22(a). The
+fabricated RRAM maintains good switching characteristics
+after 2k cycles, and there is no significant degradation of both
+HRS and LRS. [23] demonstrates that the RRAM exhibits
+excellent switching characteristics within 200k cycles, with a
+maximum endurance of over 108 cycles. The resistances of
+HRS and LRS do not drift significantly during 200k cycles,
+showing good retention capability.
+Additionally, the fabricated chip was baked for 10 minutes
+at 125◦C. Fig. 22(b) shows the resistance distribution of an
+RRAM cell over 50 cycles after baking. The resistances of
+both the HRS and LRS remained stable, with no significant
+fluctuations. The BER of 20 PUF cells in differential mode
+was measured after baking, and the BER remained stable at 0.
+As reported in [23], the fabricated RRAM exhibits excellent
+retention even after baking for 1000 hours at 150◦C, which
+does not compromise the uniformity and reliability of the
+proposed PUF. Therefore, the proposed PUF shows robust
+performance under aging. However, it should be point out
+that the HRS and LRS of the RRAM undergo significant
+degradation after 108 cycles at 95◦C [23]. The uniformity and
+reliability of the PUF will degrade with prolonged aging.
+Due to its concealability, the proposed PUF prevents physi-
+cal attacks from directly probing the key. Furthermore, ma-
+chine learning (ML) attacks have shown security threat to
+PUFs. When the proposed PUF is used for a local key
+generation, it should be resistant to ML attacks. The key
+generation process does not rely on external inputs or outputs
+and is not exposed to attackers for modelling. When the PUF
+is used for authentication, it requires external challenges to
+generate responses. If an attacker collects a sufficient number
+of challenge-response pairs (CRPs), it may be possible to
+successfully model the PUF using ML techniques. To resist
+ML attacks, generic authentication protocols can be applied
+[36], [37]. For example, [36] utilizes an active deception
+technique to fool/poison the ML attack and thus achieve high
+resistance to ML attacks. With such authentication protocols,
+the proposed PUF can reach ML attacks’ resistance.
+E. IMC Compatibility
+As the proposed dual-mode PUF can be concealed and
+recovered across cycles, it enables the execution of IMC in
+IN1 IN2 OUT
+10
+4
+10
+6
+Resistance
+(Ohms)
+IN1 IN2 OUT
+OR
+1 1
+0
+1 1 1
+10
+4
+10
+6
+Resistance
+(Ohms)
+IN1 IN2 OUT
+1
+0 0
+IN1 IN2 OUT
+1 1
+0
+10
+4
+10
+6
+Resistance
+(Ohms)
+IN1 IN2 OUT IN1 IN2 OUT
+0
+1
+0 0
+1 1
+10
+4
+10
+6
+Resistance
+(Ohms)
+IN1 IN2 OUT IN1 IN2 OUT
+0 0
+0 0 0
+0
+Fig. 23: Experimental results of 50 cycles of MAGIC OR
+operation measured on the fabricated RRAM crossbar array.
+The results show correct logic operation and exhibit output
+stability.
+concealed state, as shown in Fig. 9. To validate its com-
+patibility with IMC, a MAGIC OR gate was constructed
+on the same fabricated RRAM chips, and its output was
+measured over 50 cycles, as shown in Fig. 23. On the y-
+axis, the measured resistance of the RRAMs is depicted on
+a logarithmic scale, with labeled resistance states, while the
+x-axis denotes the states of the RRAMs. The output RRAM
+is initialized to HRS, while inputs IN1 and IN2 are set to
+four different combinations. Following the application of an
+OR operation, the result is stored as the resistance state of
+the output RRAM. Despite notable C2C variations in the
+resistance of the input and output RRAMs, Fig. 23 reveals
+a consistent distinguishable margin between the two logical
+states, indicating accurate logic operations and stable outputs
+of the OR gate. Importantly, the inputs of the OR gate remain
+uncompromised during computation. Consequently, the pro-
+posed PUF demonstrate exceptional compatibility with IMC.
+F. Performance Comparison
+The performance of the proposed RRAM PUF is summa-
+rized and compared with other state-of-the-art designs in Table
+IV. Both differential mode and flexible mode achieve high uni-
+formity and uniqueness. Through post-processing techniques,
+they achieve a BER of 0 over a wide range of temperatures
+and supply voltages. [20] designed an RRAM-based arbiter
+PUF that achieves high flexibility, but it has a high BER. The
+proposed RRAM PUF exhibits high reliability over a wide
+range of temperatures and voltages through post-processing
+11
+TABLE IV: COMPARISON OF THE PROPOSED RRAM PUF WITH OTHER DESIGNS.
+IEDM’20 [16] TED’20 [17] TDSC’20 [20] JSSC’21 [30] TED’23 [31]
+This work
+Differential Flexible
+Technology (nm) 130 130 65 130 28 90
+Entropy Source Memory Time Switch Voltage HRS Resistance HRS Resistance Switch Delay Switch Capability Resistance State
+Uniformity N/A N/A 50-53% 50.01% 49.99% 49.64% 49.92%
+Uniqueness 0.4999 0.4989 0.5130 0.4999 0.5000 0.4995 0.4997
+Temp. Range 25∼125◦C -50∼150◦C -10∼90◦C 25∼150◦C N/A -25∼125◦C
+Vol. Range N/A 4∼6V ±10% ±20% N/A ±10% ±20%
+Stabilization
+Method
+Digital
+Storage
+Digital
+Storage
+N/A
+Split
+Resistance
+Soaking
+TMV3
+Masking
+Pre-selection
+Key Scheme
+BER 0 0.12% 0.13% 0 0 0 0
+No. of Key∗ 4,096 4,096 ∼ 2128 2,048 2,048 2,048 ∼237
+Concealable? No No No No No Yes
+IMC Compatible? No No No No No Yes
+∗ The number of key in a 64 × 64 RRAM array.
+operations. [16], [17], [30], and [31] extract key from process
+errors during RRAM state switching, providing high density.
+However, due to RRAM’s C2C variations, these PUFs cannot
+effectively reproduce the PUF key between cycles. To improve
+reliability, they store the key directly as RRAM resistance
+states, contradicting the PUFs’ property of generating the dy-
+namic key and increasing the risk of being attacked. Attackers
+can read the PUF key directly through probing attacks. In
+contrast, the proposed dual-mode PUF can reliably reproduce
+the key between cycles and thus can conceal the key to avoid
+the risk of being read directly, which improves security.
+Meanwhile, the proposed dual-mode PUF are compatible
+with IMC due to the concealable feature. The PUF can be
+implemented on the same RRAM array as IMC, thus reducing
+hardware overhead. Due to their implementation on the same
+array, they cannot operate simultaneously. In practice, device
+authentication is usually performed first and IMC can be
+performed only after successful authentication [38]. Therefore,
+PUF and IMC can be time-division multiplexed. In contrast,
+other RRAM PUFs cannot reproduce the key between cycles,
+and store the key in the form of the resistive state of the
+RRAM after using the RRAM array to generate the key. After
+that, no further operations can be performed on the RRAMs.
+Therefore, these PUFs are not compatible with IMC. The
+differential mode can be easily implemented with high density,
+suitable for lightweight IoT applications, while the flexible
+mode can generate a significant number of keys, showing good
+potential for high-security level applications.
+IV. CONCLUSION
+In this paper, we proposed a dual-mode RRAM PUF,
+including differential mode and flexible mode. Based on the
+parellel SET operation, the randomness of the resistance state
+switching capability of RRAM pairs is used to implement the
+proposed PUF. The generated PUF keys can be consistently
+reproduced across cycles, so a key concealment scheme is
+proposed to enable the PUF to conceal or recover PUF keys
+as needed. This concealable ability improves the security of
+the proposed PUF compared to previous RRAM PUF designs.
+Through post-processing techniques, the proposed dual-mode
+PUF have a good reliability across a wide range of ±10%
+VDD variations and a temperature range from -25◦C to 125◦C.
+Furthermore, experimental results demonstrate the excellent
+compatibility of the proposed PUF with IMC. In summary,
+the proposed concealable dual-mode PUF provide a more
+secure and efficient solution for generating keys in security
+applications.
+ACKNOWLEDGMENT
+This work was supported by grants from National Nat-
+ural Science Foundation of China (62474092, 62371226,
+62425404, 62104107, 62022041, 62134002), Natural Science
+Foundation of Jiangsu Province (BK20210287) and NSF-BSF
+(2020-613). This work was also partially funded by the EPSRC
+New Investigator Award (EP/X009602/1) and Innovate UK
+SCHEME Project (IUK10065634).
+REFERENCES
+[1] W. Yan, F. Tehranipoor, and J. A. Chandy, “PUF-based fuzzy au-
+thentication without error correcting codes,” IEEE Transactions on
+Computer-Aided Design of Integrated Circuits and Systems, vol. 36,
+no. 9, pp. 1445–1457, 2017.
+[2] Y. Lao, B. Yuan, C. H. Kim, and K. K. Parhi, “Reliable PUF-based local
+authentication with self-correction,” IEEE Transactions on Computer-
+Aided Design of Integrated Circuits and Systems, vol. 36, no. 2, pp. 201–
+213, 2017.
+[3] U. Chatterjee, R. S. Chakraborty, J. Mathew, and D. K. Pradhan,
+“Memristor based arbiter PUF: Cryptanalysis threat and its mitigation,”
+in Proc. International Conference on VLSI Design and 2016 15th
+International Conference on Embedded Systems, pp. 535–540, 2016.
+[4] C. Gu, W. Liu, Y. Cui, N. Hanley, M. O’Neill, and F. Lombardi, “A flip-
+flop based arbiter physical unclonable function (APUF) design with high
+entropy and uniqueness for FPGA implementation,” IEEE Transactions
+on Emerging Topics in Computing, pp. 1–1, 2019.
+[5] Y. Cao, L. Zhang, C.-H. Chang, and S. Chen, “A low-power hybrid
+RO PUF with improved thermal stability for lightweight applications,”
+IEEE Transactions on Computer-Aided Design of Integrated Circuits
+and Systems, vol. 34, no. 7, pp. 1143–1147, 2015.
+[6] J. Li, H. Gao, Y. Cui, C. Wang, Y. Wang, C. Gu, and W. Liu, “Theoretical
+analysis of configurable RO PUFs and strategies to enhance security,”
+in Proc. IEEE International Workshop on Signal Processing Systems
+(SiPS), pp. 91–96, 2019.
+12
+[7] L. T. Clark, S. B. Medapuram, D. K. Kadiyala, and J. Brunhaver,
+“Physically unclonable functions using foundry SRAM cells,” IEEE
+Transactions on Circuits and Systems I: Regular Papers, vol. 66, no. 3,
+pp. 955–966, 2018.
+[8] R. Maes and V. van der Leest, “Countering the effects of silicon aging
+on SRAM PUFs,” in Proc. IEEE International Symposium on Hardware-
+Oriented Security and Trust (HOST), pp. 148–153, 2014.
+[9] A. Chen, “Comprehensive assessment of RRAM-based PUF for hard-
+ware security applications,” in Proc. IEEE International Electron De-
+vices Meeting, pp. 10.7.1–10.7.4, 2015.
+[10] J. Li, Y. Cui, C. Gu, C. Wang, W. Liu, and F. Lombardi, “A physical
+unclonable function using a configurable tristate hybrid scheme with
+non-volatile memory,” IEEE Open Journal of Nanotechnology, vol. 2,
+pp. 31–40, 2021.
+[11] Q. Zhao, W. Zheng, X. Zhao, Y. Cao, F. Zhang, and M.-K. Law, “A 108
+𝑓 2/bit fully reconfigurable RRAM PUF based on truly random dynamic
+entropy of jitter noise,” IEEE Transactions on Circuits and Systems I:
+Regular Papers, vol. 67, no. 11, pp. 3866–3879, 2020.
+[12] J. Li, Y. Cui, C. Wang, C. Gu, and W. Liu, “A fully configurable PUF us-
+ing dynamic variations of resistive crossbar arrays,” IEEE Transactions
+on Nanotechnology, vol. 21, pp. 737–746, 2022.
+[13] H.-S. P. Wong, H.-Y. Lee, S. Yu, Y.-S. Chen, Y. Wu, P.-S. Chen, B. Lee,
+F. T. Chen, and M.-J. Tsai, “Metal–oxide RRAM,” Proceedings of the
+IEEE, vol. 100, no. 6, pp. 1951–1970, 2012.
+[14] B. Hoffer, V. Rana, S. Menzel, R. Waser, and S. Kvatinsky, “Experi-
+mental demonstration of memristor-aided logic (MAGIC) using valence
+change memory (VCM),” IEEE Transactions on Electron Devices,
+vol. 67, no. 8, pp. 3115–3122, 2020.
+[15] B. Gao, B. Lin, X. Li, J. Tang, H. Qian, and H. Wu, “A unified PUF and
+TRNG design based on 40-nm RRAM with high entropy and robustness
+for IoT security,” IEEE Transactions on Electron Devices, vol. 69, no. 2,
+pp. 536–542, 2022.
+[16] J. Yang, D. Chen, Q. Ding, J. Fang, X. Xue, H. Lv, X. Zeng, and
+M. Liu, “A novel PUF using stochastic short-term memory time of oxide-
+based RRAM for embedded applications,” in Proc. IEEE International
+Electron Devices Meeting, pp. 39.2.1–39.2.4, 2020.
+[17] X. Zhao, Q. Zhao, Y. Liu, and F. Zhang, “An ultracompact switching-
+voltage-based fully reconfigurable RRAM PUF with low native instabil-
+ity,” IEEE Transactions on Electron Devices, vol. 67, no. 7, pp. 3010–
+3013, 2020.
+[18] Y. Pang, B. Gao, D. Wu, S. Yi, Q. Liu, W. Chen, T. Chang, W. Lin,
+X. Sun, S. Yu, H. Qian, M. Chang, and H. Wu, “A reconfigurable RRAM
+physically unclonable function utilizing post-process randomness source
+with < 6×10−6 native bit error rate,” in Proc. IEEE International Solid-
+State Circuits Conference (ISSCC), pp. 402–404, 2019.
+[19] L. Lu, Y. Z. Chen, and T. T.-H. Kim, “A configurable randomness
+enhanced RRAM PUF with biased current sensing scheme,” in Proc.
+IEEE International Symposium on Circuits and Systems (ISCAS), pp. 1–
+5, 2021.
+[20] R. Govindaraj, S. Ghosh, and S. Katkoori, “Design, analysis and
+application of embedded resistive RAM based strong arbiter PUF,” IEEE
+Transactions on Dependable and Secure Computing, vol. 17, no. 6,
+pp. 1232–1242, 2020.
+[21] J. Park, T.-H. Kim, S. Kim, M. S. Song, S. Youn, K. Hong, B.-G.
+Park, and H. Kim, “Highly reliable physical unclonable functions using
+memristor crossbar with tunneling conduction,” in Proc. International
+Electron Devices Meeting (IEDM), pp. 18.3.1–18.3.4, 2022.
+[22] J. Li, Y. Cui, C. Wang, W. Liu, and S. Kvatinsky, “A concealable RRAM
+physical unclonable function compatible with in-memory computing,”
+in Design, Automation Test in Europe Conference Exhibition (DATE),
+pp. 1–6, 2024.
+[23] C. Ho, S.-C. Chang, C.-Y. Huang, Y.-C. Chuang, S.-F. Lim, M.-H. Hsieh,
+S.-C. Chang, and H.-H. Liao, “Integrated HfO2-RRAM to achieve highly
+reliable, greener, faster, cost-effective, and scaled devices,” in Proc. IEEE
+International Electron Devices Meeting (IEDM), pp. 2.6.1–2.6.4, 2017.
+[24] P.-Y. Chen and S. Yu, “Compact modeling of RRAM devices and its
+applications in 1T1R and 1S1R array design,” IEEE Transactions on
+Electron Devices, vol. 62, no. 12, pp. 4022–4028, 2015.
+[25] T. Na, B. Song, J. P. Kim, S. H. Kang, and S.-O. Jung, “Offset-canceling
+current-sampling sense amplifier for resistive nonvolatile memory in
+65 nm CMOS,” IEEE Journal of Solid-State Circuits, vol. 52, no. 2,
+pp. 496–504, 2017.
+[26] C. Walczyk, D. Walczyk, T. Schroeder, T. Bertaud, M. Sowinska,
+M. Lukosius, M. Fraschke, D. Wolansky, B. Tillack, E. Miranda, and
+C. Wenger, “Impact of temperature on the resistive switching behavior
+of embedded HfO2-based rram devices,” IEEE Transactions on Electron
+Devices, vol. 58, no. 9, pp. 3124–3131, 2011.
+[27] K. Yang, Q. Dong, D. Blaauw, and D. Sylvester, “8.3 A 553 𝑓 2 2-
+transistor amplifier-based physically unclonable function (PUF) with
+1.67% native instability,” in Proc. IEEE International Solid-State Cir-
+cuits Conference (ISSCC), pp. 146–147, 2017.
+[28] S. Yu and P.-Y. Chen, “Emerging memory technologies: Recent trends
+and prospects,” IEEE Solid-State Circuits Magazine, vol. 8, no. 2,
+pp. 43–56, 2016.
+[29] Y. Cassuto, S. Kvatinsky, and E. Yaakobi, “Information-theoretic sneak-
+path mitigation in memristor crossbar arrays,” IEEE Transactions on
+Information Theory, vol. 62, no. 9, pp. 4801–4813, 2016.
+[30] B. Lin, Y. Pang, B. Gao, J. Tang, D. Wu, T.-W. Chang, W.-E. Lin,
+X. Sun, S. Yu, M.-F. Chang, H. Qian, and H. Wu, “A highly reliable
+RRAM physically unclonable function utilizing post-process random-
+ness source,” IEEE Journal of Solid-State Circuits, vol. 56, no. 5,
+pp. 1641–1650, 2021.
+[31] T. K. Esatu, A. Prakash, Z. Li, D. Lau, S. H. Jo, and T.-J. K. Liu, “Highly
+reliable and secure PUF using resistive memory integrated into a 28 nm
+CMOS process,” IEEE Transactions on Electron Devices, vol. 70, no. 5,
+pp. 2291–2296, 2023.
+[32] J. Reuben, R. Ben-Hur, N. Wald, N. Talati, A. H. Ali, P.-E. Gaillardon,
+and S. Kvatinsky, “Memristive logic: A framework for evaluation and
+comparison,” in Proc. International Symposium on Power and Timing
+Modeling, Optimization and Simulation (PATMOS), pp. 1–8, 2017.
+[33] S. Kvatinsky, D. Belousov, S. Liman, G. Satat, N. Wald, E. G. Friedman,
+A. Kolodny, and U. C. Weiser, “MAGIC—Memristor-aided logic,” IEEE
+Transactions on Circuits and Systems II: Express Briefs, vol. 61, no. 11,
+pp. 895–899, 2014.
+[34] A. Maiti, V. Gunreddy, and P. Schaumont, A Systematic Method to Eval-
+uate and Compare the Performance of Physical Unclonable Functions,
+pp. 245–267. Springer, 2013.
+[35] A. Rukhin, J. Soto, J. Nechvatal, E. Barker, S. Leigh, M. Levenson,
+D. Banks, A. Heckert, J. Dray, and S. Vo, “A statistical test suite
+for random and pseudorandom number generators for cryptographic
+applications,” NIST special publication, Nat. Inst. Standards Technol.,
+Gaithersburg, MD, USA, Tech. Rep. 800-22 Rev 1a, 2010.
+[36] C. Gu, C.-H. Chang, W. Liu, S. Yu, Y. Wang, and M. O’Neill, “A mod-
+eling attack resistant deception technique for securing lightweight-PUF-
+based authentication,” IEEE Transactions on Computer-Aided Design of
+Integrated Circuits and Systems, vol. 40, no. 6, pp. 1183–1196, 2021.
+[37] P. Gope, O. Millwood, and B. Sikdar, “A scalable protocol level approach
+to prevent machine learning attacks on physically unclonable function
+based authentication mechanisms for internet of medical things,” IEEE
+Transactions on Industrial Informatics, vol. 18, no. 3, pp. 1971–1980,
+2022.
+[38] Z. Chen, M. Wu, Y. Zhou, R. Li, J. Tan, and D. Ding, “PUF-
+CIM: SRAM-based compute-in-memory with zero bit-error-rate physical
+unclonable function for lightweight secure edge computing,” IEEE
+Transactions on Very Large Scale Integration (VLSI) Systems, vol. 31,
+no. 8, pp. 1234–1247, 2023.
+Jiang Li received the B.E. degree in information
+engineering from the Nanjing University of Aero-
+nautics and Astronautics, Nanjing, China, in 2020,
+where he is currently pursuing the Ph.D. degree.
+His current research interests include physical un-
+clonable functions based on nanodevice and resistive
+random access memory (RRAM).
+Yijun Cui received the B.Sc. degree in Information
+Engineering and Ph.D. degree in Information and
+Communication System from the Nanjing University
+of Aeronautics and Astronautics, Nanjing, China,
+in 2010 and 2020, respectively. He was a visiting
+PhD student in the Data Security System Group
+in the Centre of Secure Information Technologies,
+at Queen’s University Belfast, UK from 2014 to
+2015. He is currently a Lecturer in the College of
+Electronics and Information Engineering of NUAA.
+His current research interests are mainly in the
+hardware security.
+13
+Chenghua Wang received the B.Sc. and M.Sc. de-
+grees from Southeast University, Nanjing, China, in
+1984 and 1987, respectively. In 1987, he joined the
+College of Electronic and Information Engineering,
+Nanjing University of Aeronautics and Astronautics,
+Nanjing, where he became a full Professor in 2001.
+He has published 6 books and over 100 technical
+papers in journals and conference proceedings. He
+is the recipient of more than ten teaching and
+research awards at the provincial and ministerial
+level. His current research interests include testing
+of integrated circuits and systems for communications.
+Chongyan Gu (S’14–M’16–SM’21) received the
+Ph.D. degree from Queen’s University Belfast
+(QUB), Belfast, U.K., in 2016. She is currently a
+Senior Lecturer (Associate Professor) in the School
+of EEECS at QUB. She has been awarded the EP-
+SRC New Investigator Award in 2022. Her research
+into PUF has been utilised as part of a security
+architecture for electronic vehicle charging systems,
+licensed by LG-CNS, South Korea. Her team was
+the overall winner of INVENT 2015, a biggest
+competition to accelerate the commercialisation of
+innovative ideas in Northern Ireland. She currently serves as an Associate
+Editor of IEEE TETC and Guest Editor of IEEE TCAS-I. She also serves on
+Technical Programme Committees of the ISCAS, ASP-DAC, and AsianHOST
+conferences. She serves on the Organising Committee of AsianHOST 2024
+and served on the workshop and tutorial chair of the 32nd FPL 2022 confer-
+ence. Her current research interests include PUFs, security in/for approximate
+computing, hardware Trojan detection and machine learning attacks.
+Weiqiang Liu (M’12–SM’15) received the B.Sc. de-
+gree in Information Engineering from Nanjing Uni-
+versity of Aeronautics and Astronautics (NUAA),
+Nanjing, China and the Ph.D. degree in Electronic
+Engineering from the Queens University Belfast
+(QUB), Belfast, UK, in 2006 and 2012, respectively.
+He is currently a Professor and the Vice Dean of
+College of Electronic and Information Engineering
+& College of Integrated Circuits, NUAA. He has
+published two research books and over 190 leading
+journal and conference papers (over 70 IEEE and
+ACM journals including 8 invited papers). He is the VP-Elect for TA of the
+IEEE Nanotechnology Council (NTC). He serves as the Associate Editors
+for IEEE TCAS-I, TETC and TC, the Steering Committee Member of IEEE
+TVLSI, the Guest Editor of Proceedings of the IEEE. His research interest
+focuses on energy efficient and secure computing integrated circuits and
+systems.
+Shahar Kvatinsky (S’12-M’15-SM’16) is a Full
+Professor at the Andrew and Erna Viterbi Faculty
+of Electrical and Computer Engineering, Technion –
+Israel Institute of Technology. Shahar received the
+B.Sc. degree in Computer Engineering and Applied
+Physics and an MBA degree in 2009 and 2010,
+respectively, both from the Hebrew University of
+Jerusalem, and the Ph.D. degree in Electrical En-
+gineering from the Technion – Israel Institute of
+Technology in 2014. From 2006 to 2009, he worked
+as a circuit designer at Intel. From 2014 to 2015,
+he was a post-doctoral research fellow at Stanford University. Kvatinsky is
+a member of the Israel Young Academy. He is the head of the Architecture
+and Circuits Research Center at the Technion, chair of the IEEE Circuits
+and Systems in Israel, and an editor of Microelectronics Journal and Array.
+Kvatinsky has been the recipient of numerous awards: the 2023 Uzi and
+Michal Halevy Award for Innovative Applied Engineering, the 2021 Norman
+Seiden Prize for Academic Excellence, the 2020 MDPI Electronics Young
+Investigator Award, the 2019 Wolf Foundation’s Krill Prize for Excellence
+in Scientific Research, the 2015 IEEE Guillemin-Cauer Best Paper Award,
+the 2015 Best Paper of Computer Architecture Letters, Viterbi Fellowship,
+Jacobs Fellowship, an ERC starting grant, the 2017 Pazy Memorial Award,
+2014, 2017 and 2021 Hershel Rich Technion Innovation Awards, the 2013
+Sanford Kaplan Prize for Creative Management in High Tech, 2010 Benin
+prize, and seven Technion excellence teaching awards. His current research
+is focused on circuits and architectures with emerging memory technologies
+and the design of energy-efficient architectures.
+

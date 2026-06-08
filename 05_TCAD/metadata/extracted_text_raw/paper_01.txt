@@ -1,0 +1,2076 @@
+1
+A Triple-Memristor Hopfield Neural Network With
+Space Multi-Structure Attractors And Space
+Initial-Offset Behaviors
+Hairong Lin ID
+, Member, IEEE, Chunhua Wang ID
+, Fei Yu, Qinghui Hong, Cong Xu, and Yichuang Sun ID
+,
+Senior Member, IEEE
+Abstract—Memristors have recently demonstrated great
+promise in constructing memristive neural networks with com-
+plex dynamics. This paper proposes a memristive Hopfield neural
+network with three memristive coupling synaptic weights. The
+complex dynamical behaviors of the triple-memristor Hopfield
+neural network (TM-HNN), which have never been observed
+in previous Hopfield-type neural networks, include space multi-
+structure chaotic attractors and space initial-offset coexisting
+behaviors. Bifurcation diagrams, Lyapunov exponents, phase
+portraits, Poincaré maps, and basins of attraction are used to
+reveal and examine the specific dynamics. Theoretical analysis
+and numerical simulation show that the number of space
+multi-structure attractors can be adjusted by changing the
+control parameters of the memristors, and the position of space
+coexisting attractors can be changed by switching the initial
+states of the memristors. Extreme multistability emerges as a
+result of the TM-HNN’s unique dynamical behaviors, making
+it more suitable for applications based on chaos. Moreover, a
+digital hardware platform is developed and the space multi-
+structure attractors as well as the space coexisting attractors
+are experimentally demonstrated. Finally, we design a pseudo-
+random number generator to explore the potential application
+of the proposed TM-HNN.
+Index Terms—Hopfield neural network (HNN), memristor
+synapse, multi-structure attractor, initial-offset behavior, coex-
+isting attractors, field-programmable gate array (FPGA) imple-
+mentation
+I. INTRODUCTION
+BIOLOGICAL brain is a highly complex nonlinear system
+with chaotic dynamical behaviors [1, 2]. Artificial neural
+networks have received a lot of attention for their design and
+research in an effort to imitate the structure and characteristics
+of the biological brain [3, 4]. Among them, Hopfield neural
+network (HNN) with brain-like network structure and brain-
+like dynamics is an especially significant model [5]. On one
+hand, some brain functions can be well understood through
+the study of the dynamics of the HNN, for example, memory
+[6], neuroregulation [7], and so on [8]. On the other hand, the
+HNN with complex dynamics can be widely applied in the
+field of artificial intelligence to solve practical issues, such
+Manuscript received Jan 18, 2023; This work is supported by the National
+Natural Science Foundation of China (62201204, 62271197, 61971185,
+62001163), the China Postdoctoral Science Foundation (2022M71104), the
+Natural Science Foundation of Hunan Province (2023JJ40168). (Correspond-
+ing author: Chunhua Wang.)
+Hairong Lin, Chunhua Wang and Qinghui Hong are with the College of
+Computer Science and Electronic Engineering, Hunan University, Changsha,
+410082, China. (haironglin@hnu.edu.cn; wch1227164@hnu.edu.cn)
+Fei Yu and Cong Xu are with School of Computer and Communication
+Engineering in Changsha University of Science and Technology, Changsha,
+410114, China.
+Yichuang Sun is with the School of Engineering and Computer Science,
+University of Hertfordshire, Hatfield AL10 9AB, U.K.
+as pattern recognition [9], image processing [10], as well as
+combinatorial optimization [11]. Over the past few decades,
+an enormous number of improved HNN models have emerged
+to generate complex dynamical behaviors such as chaos [12],
+coexisting behaviors [13], and synchronization [14]. These
+research results not only help to further understand how the
+brain works, but also to promote the development of artificial
+intelligence.
+Based on the symmetry theory of fundamental circuit
+variables, Chua proposed the memristor concept in 1971 [15].
+Hewlett-Packard Lab produced the first physical memristor
+successfully in 2008 [16], which significantly increased appli-
+cations of memristors. The unique nonvolatility and nonlin-
+earity of the memristor, which bridges the gap between charge
+and flux, makes it a novel circuit element [17]. Last twenty
+years, the memristor has been widely applied to construct
+memristive chaotic systems [18] and memristive neural net-
+works [19-21]. Especially, it can be used to build memristive
+Hopfield neural networks (MHNNs) [22, 23], which makes the
+artificial neural networks closer to the biological brain. On one
+hand, the memristor can be used to describe electromagnetic
+induction effect in biological nervous systems because of
+its characteristic of magnetic flux. Under electromagnetic
+radiation, for instance, the MHNNs can be constructed using
+the HNNs [24, 25]. Furthermore, memristive electromagnetic
+induction effects between neurons can also be used to model
+the MHNNs [26, 27]. The memristor, on the other hand,
+is typically used to emulate biological synapses due to its
+unique nonlinearity and nonvolatility. For example, memristor
+synapses can be used to replace resistor synapses in HNNs to
+create MHNNs [28-30]. Numerous MHNN models based on
+these strategies have been proposed over the past ten years.
+The MHNNs have been found to have a variety of complex
+dynamical behaviors, such as hyperchaos [31], hidden attrac-
+tors [32], chimera [33], and multistability [34, 35].
+Recently, several works on complex multi-scroll attractors
+have been reported in the MHNNs. Multi-scroll attractors are
+complex chaotic behaviors [36, 37], which have special scroll
+trajectories. Compared with single-scroll attractors, multi-
+scroll attractors have higher adjustability and complexity.
+The multi-scroll dynamics of the MHNN, for example, has
+been first revealed in Ref. [38]. The authors found four-
+scroll and six-scroll attractors after investigating the effect
+on the dynamical behaviors of the neural network under
+electromagnetic radiation. Multi-double-scroll attractors in the
+MHNN have been reported in Ref. [39]. In an HNN with three
+neurons, the authors demonstrated that the memristive self-
+2
+connection synaptic weight can encourage the formation of
+multiple double-scroll attractors. Besides, plane multi-scroll
+attractors have been observed from an MHNN with two
+memristor synapses [40]. In the meantime, some similar multi-
+scroll MHNNs have been proposed and successfully applied
+in the information security field [41-43]. More recently, Ref.
+[44] proposed an MHNN which can generate multi-structure
+chaotic attractors that are more complex than multi-scroll at-
+tractors. However, the MHNN realized only single-directional
+multi-structure chaotic attractors. Is it possible to achieve
+plane or space multi-structure attractors in an MHNN?
+Additionally, the work on initial-offset behavior in the
+MHNNs has become a hot topic. Following multistability and
+extreme multistability, a new type of complex dynamics is the
+initial-offset behavior [45, 46]. It refers to the existence of
+an infinite number of attractors with identical topologies but
+distinct positions. In particular, the initial-offset behavior has
+the potential to produce stable and robust chaotic sequences
+with oscillating amplitudes that can be non-destructively con-
+trolled by flexibly switching initial states. In Ref. [47], the
+initial-offset behavior of the MHNN has been examined. Line
+initial-offset coexisting attractors can be seen in the MHNN
+with a single memristive self-connection synaptic weight,
+according to the findings of the study. Ref. [48] demonstrates
+that the MHNN with a single memristor synapse can produce
+hidden chaotic attractors with identical initial offsets. And the
+dynamics of initial-offset coexisting hyperchaotic attractors
+have been revealed in a coupled MHNN [49]. Furthermore,
+in Ref. [50], the plane initial-offset coexisting behaviors in the
+MHNN have been discovered. The authors demonstrated that
+two memristive self-connected synaptic weights can make the
+HNN with two neurons produce plane initial-offset coexisting
+attractors. Space initial-offset behaviors in the MHNN have
+not yet been documented, however.
+Drawing inspiration from the above analyses, this pa-
+per presents a triple-memristor HNN (TM-HNN), which is
+constructed by substituting three resistive coupling synaptic
+weights with three memristive coupling synaptic weights.
+Wonderfully, the TM-HNN not only can exhibit space multi-
+structure attractors by adjusting the memristors’ control pa-
+rameters, but also can exhibit space initial-offset behavior by
+switching the memristors’ initial states. As far as the authors
+know, the space multi-structure attractors and the space initial-
+offset behavior in the HNN have not been reported in the
+literature.
+This article’s novelty and major contributions can be
+summarized as follows:(1) We design a multistable locally
+active memristor and propose a TM-HNN with four neurons.
+Unlike other MHNN models, the TM-HNN is constructed
+considering three memristive coupling synaptic weights. (2)
+The space multi-structure attractors and space initial-offset
+coexisting behaviors are demonstrated through theoretical
+analysis and numerical methods. Emphatically, by altering the
+control parameters and initial conditions of the memristors,
+respectively, one can conveniently control the number of space
+multi-structure attractors and the position of the space initial-
+offset coexisting attractors. (3) A FPGA-based hardware plat-
+form is developed and the space multi-structure attractors
+and space initial-offset coexisting attractors are experimentally
+reproduced. Experimental results show that the TM-HNN is
+capable of producing highly random numbers.
+The following is how the rest of this paper is laid out.
+Section II designs a multistable locally active memristor
+and presents a TM-HNN model. Section III investigates the
+space multi-structure attractors and the space initial-offset
+behavior. The hardware platform based on an FPGA is made
+to check the numerical results in Section IV. Finally, Section
+V concludes with a few conclusions.
+II. DESCRIPTION OF TRIPLE-MEMRISTOR HOPFIELD
+NEURAL NETWORK
+First, a multistable locally active memristor model is de-
+signed in this section. The designed memristor is then used
+to construct a triple-memristor Hopfield neural network.
+A. Design Of Multistable Locally Active Memristor
+Memristors with nature nonlinearity and memory are typi-
+cally accustomed to emulating neural synapses. Recently, Lai
+et al. [41] designed a robust hyperbolic tangent memristor to
+simulate the neural synapse in a memristive neural network.
+Due to its adjustable parameters, this memristor has signifi-
+cantly more adjustability and diversity than other memristor
+models. Unfortunately, the memristor is not locally active.
+Inspired by this memristor model, we design a multistable
+locally active memristor as follows
+
+i = W(ϕ)v = bϕv
+dϕ/dt = cv−dh(ϕ) , (1)
+where h(ϕ) contains two parts h1(ϕ) and h2(ϕ):
+h1(ϕ)=
+
+
+
+
+
+ϕ,N = 0
+ϕ −
+N
+∑
+i=1
+(tanh(p(ϕ +(2i−1)))+tanh(p(ϕ −(2i−1))))
+N = 1,2,3,...
+(2)
+h2(ϕ)=
+
+
+
+
+
+ϕ −tanh(pϕ),M = 0
+ϕ −tanh(pϕ)−
+M
+∑
+j=1
+(tanh(p(ϕ +2 j))+tanh(p(ϕ −2j)))
+M = 1,2,3,...
+(3)
+where b, c, and d are three memristor parameters, p=104 is
+a fixed coefficient, and N, M are two control parameters.
+The intrinsic properties including pinched hysteresis loop,
+nonvolatility, multistability, and local activity of the designed
+memristor are analyzed as follows. Setting b=0.01, and c=d=1,
+taking M=2 as an example, when a sinusoidal voltage v =
+Asin(2πFt) with signal amplitudes A=8 and different signal
+frequencies F (10, 20, 100) is applied in the memristor, it
+exhibits classical pinched hysteresis loop on the v−i plane, as
+shown in Fig.1(a). Especially, with the increase in frequency,
+the area of the pinched hysteresis loop of the memristor
+decreases gradually, which implies that the proposed model
+is a memristor device.
+According to the memristor theory [51], the power-off plot
+(POP) can be used to verify the nonvolatility of the memristor.
+For the memristor state equation in equation (1), let v=0, it
+can be reduced as
+dϕ/dt = −dh(ϕ). (4)
+The dynamic route of the dynamical equation (4), namely
+POP, is drawn in Fig.1(b). As we can see, when dϕ/dt=0,
+3
+(b)
+(c) (d)
+0 4
+-4 2 6
+-2
+-6
+φ
+dφ/dt
+0
+0.8
+-0.8
+-1.6
+0 4
+-4 2 6
+-2
+-6
+v
+0
+-0.5 0.5 1.0
+-1.0
+V
+-0.6
+1.6
+E1 E2 E3 E4 E5 E6
+0
+0.2
+0.4
+-0.2
+-0.4
+i
+φ0=5
+φ0=3
+φ0=1
+φ0=-1
+φ0=-3
+φ0=-5
+-0.3
+0
+0.3
+0.6
+I
+-6<φ<-4
+-4<φ<-2
+-2<φ<0
+0<φ<2
+2<φ<4
+4<φ<6
+0
+0
+-8
+0.1
+0.05
+-0.05
+-4
+v
+i
+4 8
+-0.1
+(a)
+F=10
+F=100
+F=20
+Fig. 1: Characteristics of the multistable locally active memristor with
+b=0.01, c=d=1, p=104, and M=2. (a) Pinched hysteresis loops related to
+frequency, where A=8, ϕ0=0. (b) POP. (c) Pinched hysteresis loops related
+to initial states, where A=6, F=10. (d) DC V-I loci.
+there are six stable equilibrium points (E1-E6) with a negative
+slope. Therefore, the designed memristor has the characteristic
+of non-volatile memory. Meanwhile, the memristor can exhibit
+coexisting six pinched hysteresis loops with A=6, F=10, and
+different initial values (-5, -3, -1, 1, 3, 5), as shown in Fig.1(c).
+In fact, further study shows that the memristor can generate
+coexisting (2N+1) or (2M+2) pinched hysteresis loops, which
+means that the designed memristor is multistable. The local
+activity of the designed memristor can be proved by using the
+direct current voltage-current (DC V-I) loci [51]. In equation
+(1), letting dϕ/dt=0, it can be rewritten as
+
+I = bϕV
+V = dh(ϕ)/c . (5)
+where V and I denote input DC voltage and output DC current.
+Considering equation (5), the input voltage V value changes
+from -1.2 V to 1.2 V and the variable ϕ value varies within
+[-6, 6], the DC V-I loci of the memristor can be derived,
+as shown in Fig.1(d). From Fig.1(d), when the state variable
+ϕ < 0, the slope of the V-I loci is negative, which shows
+that the designed memristor is locally active. To sum up, the
+designed multistable locally active memristor has synapse-
+like features of multistability, non-volatile memory, and local
+activity, which means that it is very appropriate for emulating
+neural synapses.
+B. Construction Of Triple-Memristor Hopfield Neural Net-
+work
+Hopfield neural networks are widely studied because of
+their brain-like network structure and complicated chaotic dy-
+namics. It can be described by a set of differential equations:
+[5]
+Ciẋi = −
+xi
+Ri
++
+n
+∑
+j=1
+wij tanh(xj)+Ii (i, j ∈ N∗
+), (6)
+where xi, Ci, and Ri represent the membrane voltage, mem-
+brane capacitance, and membrane resistance of the i-th neu-
+ron, respectively. Besides, tanh(.) and Ii are the neuron acti-
+vation function and external input current, respectively. wij
+Neuron1
+Neuron2
+Neuron3
+Neuron4
+0.7
+2
+-11
+-1
+1.5
+7
+-4
+1.8
+4
+0.6
+-0.4
+2
+k2W2
+k1W1
+k3W3
+Fig. 2: Connection structure for the TM-HNN.
+denotes synaptic weight between neuron i and neuron j.
+Usually, the synaptic weight is a resistive synaptic weight
+that is realized by a resistor. When the resistor is replaced
+with a memristor, the synaptic weight becomes a memris-
+tive synaptic weight and a memristive neural network can
+be constructed thereby [23]. According to this strategy, a
+TM-HNN is constructed by using three memristive synaptic
+weights to substitute three resistive synaptic weights in a four-
+neuron-based HNN, as shown in Fig.2. Where the memristive
+synaptic weights are realized with the designed multistable
+locally active memristors. Combined with the original HNN
+model (6) with Ri=1, Ci=1, and Ii=0 (i=1, 2, 3, and 4), the
+mathematical model of the TM-HNN can be described as
+follows
+
+
+
+
+
+
+
+
+
+
+
+
+
+ẋ1 = −x1 +0.7tanh(x1)+k2W2(ϕ2)tanh(x2)+2tanh(x3)−11tanh(x4)
+ẋ2 = −x2 −tanh(x1)+1.5tanh(x2)+7tanh(x3)+k3W3(ϕ3)tanh(x4)
+ẋ3 = −x3 +k1W1(ϕ1)tanh(x1)−4tanh(x2)+1.8tanh(x3)+4tanh(x4)
+ẋ4 = −x4 +0.6tanh(x1)−0.4tanh(x3)+2tanh(x4)
+ϕ̇1 = c1 tanh(x1)−d1h1(ϕ1)
+ϕ̇2 = c2 tanh(x2)−d2h2(ϕ2)
+ϕ̇3 = c3 tanh(x4)−d3h3(ϕ3)
+(7)
+where W1, W2, and W3 are three memristive coupling synaptic
+weights, k1, k2, and k3 are three coupling coefficients, and
+c1, c2, c3, d1, d2, and d3 are parameters of the memristor
+synapses.
+III. INVESTIGATION OF DYNAMICAL BEHAVIORS
+The study on dynamical behaviors of artificial neurons
+and neural networks is significant to better understand brain
+functions and to develop new neuromorphic systems [52-54].
+This section analyzes the dynamical behaviors of the TM-
+HNN, including distribution and stability for the equilibrium
+points, reveals the space multi-structure chaotic attractors, and
+investigates the space initial-offset behavior.
+A. Distribution And Stability Of Equilibrium Points
+Letting equation (7) equal to 0, the equilibrium points of the
+TM-HNN can be solved by calculating the following equation
+
+
+
+
+
+
+
+
+
+
+
+
+
+−x1 +0.7tanh(x1)+k2W2(ϕ2)tanh(x2)+2tanh(x3)−11tanh(x4) = 0
+−x2 −tanh(x1)+1.5tanh(x2)+7tanh(x3)+k3W3(ϕ3)tanh(x4) = 0
+−x3 +k1W1(ϕ1)tanh(x1)−4tanh(x2)+1.8tanh(x3)+4tanh(x4) = 0
+−x4 +0.6tanh(x1)−0.4tanh(x3)+2tanh(x4) = 0
+c1 tanh(x1)−d1h1(ϕ1) = 0
+c2 tanh(x2)−d2h2(ϕ2) = 0
+c3 tanh(x4)−d3h3(ϕ3) = 0
+(8)
+4
+(a) (b) (c)
+0 2
+-2 1 3
+-1
+-3
+φ1
+φ
+2
+0
+2
+-2
+1
+3
+-1
+-3
+f1(φ1,φ2,0) f2(φ1,φ2,0) f3(0,φ2,φ3)
+f2(0,φ2,φ3) f1(φ1,0,φ3) f3(φ1,0,φ3)
+0 2
+-2 1 3
+-1
+-3
+φ2
+φ
+3
+0
+2
+-2
+1
+3
+-1
+-3
+0 2
+-2 1 3
+-1
+-3
+φ1
+φ
+3
+0
+2
+-2
+1
+3
+-1
+-3
+P0 P0 P0
+Fig. 3: Distribution of equilibrium points of the TM-HNN with
+N1=N2=N3=1. (a) ϕ1-ϕ2 plane. (b) ϕ2-ϕ3 plane. (c) ϕ1-ϕ3 plane.
+Obviously, equation (8) is difficult to solve with common
+methods because of its higher-order characteristics. Thus,
+the solutions will be obtained by using the graphic analysis
+method. First, equation (8) is changed as
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+x1 = atanh(d1h1(ϕ1)/c1)
+x2 = atanh(d2h2(ϕ2)/c2)
+x4 = atanh(d3h3(ϕ3)/c3)
+x3 = atanh((x1 −0.7tanh(x1)−k2W2(ϕ2)+11tanh(x4))/2)
+f1(ϕ1,ϕ2,ϕ3) = −x2 −tanh(x1)+1.5tanh(x2)+7tanh(x3)
++k3W3(ϕ3)tanh(x4)
+f2(ϕ1,ϕ2,ϕ3) = −x3 +k1W1(ϕ1)tanh(x1)−4tanh(x2)
++1.8tanh(x3)+4tanh(x4)
+f3(ϕ1,ϕ2,ϕ3) = −x4 +0.6tanh(x1)−0.4tanh(x3)+2tanh(x4)
+(9)
+Then, the parameters are set to b=0.01, c1=2.42, c2=4.75,
+c3=1.3, d1=2.42, d2=4.736, d3=0.6, k1=2, k2=1, and k3=-0.1,
+respectively. Taking N1=N2=N3=1 as an example, according
+to equation (9), the distribution of the equilibrium points on
+the ϕ1-ϕ2, ϕ2-ϕ3, and ϕ1-ϕ3 planes are drawn in Fig.3(a),
+(b), and (c), respectively. As we can see, each phase plane
+has nine equilibrium points. Namely, the TM-HNN has 27
+equilibrium points. It should be noted that there are some
+non-equilibrium point intersections due to the boundedness
+of the hyperbolic tangent function. From the distribution of
+equilibrium points, the equilibrium point P0 is synchronously
+extended along the ϕ1-axis, ϕ2-axis, and ϕ3-axis, respectively.
+That is to say, with the increase of control parameters Ni and
+Mi, the number of equilibrium points will be extended along
+multiple directions including ϕ1-axis, ϕ2-axis, and ϕ3-axis.
+The number of equilibrium points is determined by further
+investigation to be equal to ((2N1+1) or (2M1+2))×((2N2+1)
+or (2M2+2))×((2N3+1) or (2M3+2)). In addition, numerical
+calculations show that all the equilibrium points are unstable
+saddle-focus equilibrium points, which means that the TM-
+HNN can generate self-excited chaotic attractors. Notably, the
+increase of the control parameters in the TM-HNN leads to
+the extension of the equilibrium points, which could generate
+the phenomenon of chaotic attractor reconstruction.
+B. Parameter-Related Space Multi-Structure Attractors
+The phenomenon of the space multi-structure chaotic at-
+tractors is demonstrated by using bifurcation diagrams, Lya-
+punov exponents, phase portraits, and Poincare maps. Taking
+N1=N2=N3=0 as a basic example, setting k1=2, k2=1, k3=-
+0.1, c1=2.42, c2=4.75, c3=1.3, d1=2.42, d2=4.736, d3=0.6, and
+initial states (x10, x20, x30, x40, ϕ10, ϕ20, ϕ30)=(0.1, 0.1, 0.1,
+0.1, 0.1, 0.1, 0.1), the bifurcation diagram related to parameter
+b is plotted in Fig.4(a). As can be seen from the bifurcation
+diagram, the TM-HNN generates chaotic behavior in three
+discontinuous intervals, namely, b ∈[0, 0.2], b ∈[0.24,0.25],
+0.2
+0
+0
+-10
+5
+-5
+0.1
+b
+x
+1
+max
+0.4
+10
+0
+0.3
+-0.3
+-0.6
+(a) (b)
+0.3
+L1
+0.6
+0.5 0.2
+0 0.1
+b
+0.4
+0.3 0.6
+0.5
+LEs
+L2
+L3
+L4
+Fig. 4: Dynamical behaviors related to parameter b, where N1=N2=N3=0.
+(a) Bifurcation diagram. (b) Lyapunov exponents (LEs).
+(d) (e) (f)
+0 0.6
+-0.6
+φ1
+0
+1.2
+-0.6
+-1.2
+φ
+2
+-1.2
+0.6
+1.2
+0 0.6
+-0.6
+φ2
+1.2
+-1.2
+φ
+3
+0 0.6
+-0.6
+φ1
+1.2
+-1.2
+φ
+3
+(a) (b) (c)
+0 0.5
+-0.5
+φ1
+0
+1
+-2.5
+-1
+x
+2
+-5
+2.5
+5
+φ2 φ3
+0 0.5
+-0.5 1
+-1
+x
+2
+0 0.5
+-0.5 1
+-1
+x
+2
+Fig. 5: Single-structure chaotic attractor on different phase planes, where
+N1=N2=N3=0. (a) ϕ1-x2 plane. (b) ϕ2-x2 plane. (c) ϕ3-x2 plane. (d) ϕ1-ϕ2
+plane. (e) ϕ2-ϕ3 plane. (f) ϕ1-ϕ3 plane.
+and b ∈[0.29, 0.46]. The corresponding Lyapunov exponents
+are shown in Fig.4(b), which further verifies the chaos char-
+acteristics. Meanwhile, by selecting b=0.01, a self-excited
+chaotic attractor with complex structure can be generated
+from the TM-HNN, as shown in Fig.5. The phase portraits
+in Fig.5 directly show that the self-excited chaotic attractor
+has a complex non-scroll/wing structure. So, it is known as
+a chaotic attractor with a single structure. There is no doubt
+that an attractor with multiple single structures is considered
+a multi-structure attractor.
+Interestingly, with the increase of the control parameters
+Ni/Mi, the single-structure chaotic attractor is reconstructed
+along ϕ1-, ϕ2-, and ϕ3-axes, respectively. As a result, a
+space multi-structure chaotic attractor is formed in the TM-
+HNN. For example, when M1=M2=M3=2, keeping the above
+parameter values unchanged, the single-structure attractor
+is reconstructed 6 times along the ϕ1-, ϕ2-, and ϕ3-axes,
+respectively. The corresponding phase portraits on the ϕ1-x2
+plane, ϕ2-x2 plane, and ϕ3-x2 plane are given in Fig.6(a1),
+(a2), and (a3), respectively. Clearly, the TM-HNN generates
+a 6×6×6-structure chaotic attractor in ϕ1-ϕ2-ϕ3 phase space.
+Furthermore, in this case, the dynamical behaviors related to
+the coupling coefficients are studied. Taking k1, k2, and k3
+as adjustable parameters, three groups of different bifurcation
+diagrams are drawn in Fig.6(b1),(b2), and (b3), respectively.
+As we can see, that each bifurcation diagram has six clear
+bar-type areas, which shows that the TM-HNN generates 6-
+structure chaotic attractors on ϕ1-, ϕ2-, and ϕ3-directions,
+respectively. Also, it illustrates that the space multi-structure
+chaotic attractors occur over a wide range. Meanwhile, the
+corresponding Lyapunov exponents in Fig.6(c1)-(c3) further
+verify the chaos characteristic.
+5
+(a1) (a2) (a3)
+2 3
+1
+k1
+4
+0
+φ
+1
+max
+1 1.5
+0.5
+k2
+2
+0
+φ
+2
+max
+0.5 0.75
+0.25
+k3
+1
+0
+φ
+3
+max
+-6
+-3
+3
+6
+0
+x
+2
+-2
+-6
+φ1
+-4 4 6
+2
+0
+x
+2
+-2
+-6
+φ2
+-4 4 6
+2
+0
+x
+2
+-2
+-6
+φ3
+-4 4 6
+2
+0
+0
+-4
+-6
+2
+4
+-2
+6
+8
+(b1)
+2 3
+1
+k1
+4
+0
+-0.6
+-0.3
+0
+0.3
+LEs
+(b2)
+1 1.5
+0.5
+k1
+2
+0
+LEs
+(b3)
+0.5 0.75
+0.25
+k1
+4
+0
+LEs
+(c1) (c2) (c3)
+L1
+L2
+L3
+L4
+L1
+L2
+L3
+L4
+L1
+L2
+L3
+L4
+Fig. 6: Dynamical behaviors of the TM-HNN with M1=M2=M3=2. (a1)-
+(a3) Phase portraits on different phase planes of the space 6×6×6-structure
+chaotic attractor. (b1)-(b3) Bifurcation diagram related to parameters k1, k2,
+and k3, respectively. (c1)-(c3) Corresponding Lyapunov exponents (LEs).
+(b1) (b2) (b3)
+-2
+-1
+1
+2
+0
+-1
+-3
+φ1
+-2 2 3
+1
+0
+3
+-3
+-1
+-3
+φ2
+-2 2 3
+1
+0
+φ
+3
+-1
+-3
+φ1
+-2 2 3
+1
+0
+φ
+3
+(a1) (a2) (a3)
+-2
+-1
+1
+2
+0
+-1
+-3
+φ1
+-2 2 3
+1
+0
+3
+-3
+-1
+-3
+φ2
+-2 2 3
+1
+0
+φ
+3
+-1
+-3
+φ1
+-2 2 3
+1
+0
+φ
+3
+φ
+2
+φ
+2
+Fig. 7: Phase plane view of the space 3×3×3-structure chaotic attractor. (a1)
+Phase portrait on ϕ1-ϕ2 plane. (a2) Phase portrait on ϕ2-ϕ3 plane. (a3) Phase
+portrait on ϕ1-ϕ3 plane. (b1) Poincaré map on ϕ1-ϕ2 plane. (b2) Poincaré
+map on ϕ2-ϕ3 plane. (b3) Poincaré map on ϕ1-ϕ3 plane.
+To further verify the complex dynamical behavior of the
+space multi-structure attractors, taking control parameters
+N1=N2=N3=1 as another example, a space 3×3×3-structure
+chaotic attractor can be obtained from the TM-HNN. Its plane
+views are shown in Fig.7(a1)-(a3). As we can see, the TM-
+HNN generates 3×3-structure chaotic attractors on ϕ1-ϕ2, ϕ2-
+ϕ3, and ϕ1-ϕ3 planes, respectively. At the same time, the cor-
+responding Poincaré maps with x3=0 are drawn in Fig.7(b1)-
+(b3) to further prove the chaos property of the space 3×3×3-
+structure attractor. The Poincaré maps exhibit complex irregu-
+lar multi-structure phase trajectories on different phase planes,
+implying that the TM-HNN generates extremely complex
+space multi-structure chaotic attractors. Furthermore, different
+numbers of space multi-structure chaotic attractors in ϕ1-ϕ3-
+ϕ2 phase space are obtained with different control parameters,
+as shown in Fig.8. Fig.8 shows that the number of the structure
+on ϕ1-, ϕ2-, and ϕ3-directions can be easily controlled by
+control parameters N1/M1, N2/M2, and N3/M3, respectively.
+And the number of the space multi-structure chaotic attractors
+is ((2N1+1) or (2M1+2))×((2N2+1) or (2M2+2))×((2N3+1) or
+(2M3+2)). Consequently, the TM-HNN can generate arbitrary
+number of space multi-structure chaotic attractors.
+(a) (b) (c)
+-1.5
+-3
+φ
+2
+-2
+1.5
+3
+1
+0
+-1
+-2
+2
+0
+-4
+0
+2
+4
+φ1
+φ3
+-2
+1
+-1
+-2 0
+-4
+0
+2
+4
+φ1
+φ3
+2
+φ
+2
+-2
+1
+-1
+-2 0
+-4
+0
+2
+4
+φ1
+φ3
+(d) (e) (f)
+-2
+-4
+φ
+2
+-2
+2
+4
+1
+0
+-1
+-2
+2
+0
+-4
+0
+2
+4
+φ1
+φ3
+-4
+2
+-2
+-2 0
+-4
+0
+2
+4
+φ1
+φ3
+4
+φ
+2
+-4
+2
+-2
+-2 0
+-4
+0
+2
+4
+φ1
+φ3
+φ
+2
+φ
+2
+2
+4
+Fig. 8: Phase space view of the space multi-structure chaotic attractors.
+(a) Space 2×2×2-structure attractor with M1=M2=M3=0. (b) Space 2×3×2-
+structure attractor with M1=M3=0, N2=1. (c) Space 2×2×3-structure attractor
+with M1=M2=0, N3=1. (d) Space 2×3×3-structure attractor with N2=N3=1,
+M1=0. (e) Space 3×3×2-structure attractor with N1=N2=1, M3=0. (f) Space
+3×3×3-structure attractor with N1=N2=N3=1.
+C. Initial-Related Space Initial-Offset Behaviors
+Keeping the parameters b=0.01, k1=2, k2=1, k3=-0.1,
+d1=2.42, d2=4.736, d3=0.6, unchanged, setting c1=2, c2=4,
+c3=1, the dynamical characteristic of the initial-offset space
+coexisting behaviors is investigated by adopting bifurcation
+diagrams, Lyapunov exponents, phase portraits, and basins
+of attraction. First, taking M1=M2=M3=3 as an example,
+three bifurcation diagrams related to initial values ϕ10, ϕ20,
+and ϕ30 as well as their corresponding first four Lyapunov
+exponents are given in Fig.9. As can be seen in Fig.9(a1)-(a3),
+the bifurcation diagrams exhibit multiple long strip-shaped
+regions with the same dynamical amplitude but different
+positions. Each of the long strip regions can evolve to be
+a single-structure chaotic attractor. Therefore, the position of
+the chaotic attractors can be controlled by initial states ϕ10,
+ϕ20, and ϕ30, respectively. In other words, the TM-HNN can
+generate coexisting chaotic attractors in ϕ1-, ϕ2-, and ϕ3-
+directions, respectively. When the initial value ϕ10 is set as
+-1, -3, -5, 1, 3, 5, respectively, and other initial values are
+fixed as 0.1, the TM-HNN generates coexisting six chaotic
+attractors on ϕ1–direction, as shown in Fig.9(c1). Adopting a
+similar method, coexisting six chaotic attractors on ϕ2- and
+ϕ3-directions are given in Fig.9(c2) and (c3), respectively. And
+these coexisting chaotic attractors have the same structure but
+different positions, which have a one-to-one correspondence
+with the bifurcation diagram in Fig.9(a1)-(a3). Fig.9 shows
+that the TM-HNN can generate coexisting multiple chaotic
+attractors distributed along the ϕ1-, ϕ2-, and ϕ3-directions,
+respectively. Therefore, the TM-HNN generates space initial-
+offset coexisting behaviors.
+To further reveal the space characteristic of the initial-
+offset coexisting behaviors, taking N1=N2=N3=1 as another
+example, the local attraction basins in the ϕ10-ϕ20, ϕ20-
+ϕ30, and ϕ10-ϕ30 planes are drawn in Fig.10(a1)-(a3). It can
+be seen that each of basin of attraction has nine different
+regions painted with different colors. Hence, the initial-offset
+coexisting behavior occurs along ϕ10, ϕ20, and ϕ30 directions,
+simultaneously. Namely, the TM-HNN exhibits space initial-
+offset coexisting behaviors. Meanwhile, by setting (ϕ10, ϕ20,
+ϕ30)=(-2/0/2, -2/0/2, -2/0/2), coexisting nine chaotic attractors
+can be obtained in the ϕ1-ϕ2, ϕ2-ϕ3, and ϕ1-ϕ3 plane, respec-
+6
+(a1) (a2) (a3)
+0 6
+-2 8
+-8
+φ
+1
+max
+φ
+2
+max
+φ
+3
+max
+-3
+3
+6
+0
+-2
+-6
+φ1
+-4 4 6
+2
+0
+0
+-4
+-6
+2
+4
+-2
+6
+8
+4
+2
+-4
+-6
+φ10
+0 6
+-2
+-8 4
+2
+-4
+-6
+φ20
+8 0 6
+-2
+-8 4
+2
+-4
+-6
+φ30
+8
+-6
+x
+2
+-2
+-6
+φ2
+-4 4 6
+2
+0
+x
+2
+-2
+-6
+φ3
+-4 4 6
+2
+0
+x
+2
+(c1) (c2) (c3)
+(b1) (b2) (b3)
+0 6
+-2 8
+-8
+LEs
+0
+-0.8
+-0.4
+0.4
+4
+2
+-4
+-6
+φ10
+0 6
+-2
+-8 4
+2
+-4
+-6
+φ20
+8 0 6
+-2
+-8 4
+2
+-4
+-6
+φ30
+8
+LEs
+LEs
+L1
+L2
+L3
+L4
+L1
+L2
+L3
+L4
+L1
+L2
+L3
+L4
+-5 -3 -1 1 3 5 -5 -3 -1 1 3 5 -5 -3 -1 1 3 5
+Fig. 9: Dynamical behaviors related to initial states of the TM-HNN with
+M1=M2=M3=3. (a1)-(a3) bifurcation diagrams related to initial values ϕ10,
+ϕ20, and ϕ30, respectively. (b1)-(b3) Corresponding Lyapunov exponents
+(LEs). (c1)-(c3) Phase portraits on different phase planes of the space
+coexisting 6×6×6 chaotic attractors.
+(b1) (b2) (b3)
+-2
+-1
+1
+2
+0
+-1
+-3
+φ1
+-2 2 3
+1
+0
+3
+-3
+φ
+2
+-1
+-3
+φ2
+-2 2 3
+1
+0
+φ
+3
+-1
+-3
+φ1
+-2 2
+1
+0
+φ
+3
+(a1) (a2) (a3)
+-2
+-1
+1
+2
+0
+-1
+-3
+φ10
+-2 2 3
+1
+0
+3
+-3
+φ
+20
+-1
+-3
+φ20
+-2 2 3
+1
+0
+φ
+30
+-1
+-3
+φ10
+-2 2
+1
+0
+φ
+30
+(-2,2) (0,2) (2,2)
+(-2,0) (0,0) (2,0)
+(-2,-2) (0,-2) (2,-2)
+(-2,2) (0,2) (2,2)
+(-2,0) (0,0) (2,0)
+(-2,-2) (0,-2) (2,-2)
+(-2,2) (0,2) (2,2)
+(-2,0) (0,0) (2,0)
+(-2,-2) (0,-2) (2,-2)
+3
+3
+Fig. 10: Basins of attraction and space initial-offset coexisting attractors,
+where N1=N2=N3=1. (a1) Basins of attraction on ϕ10-ϕ20 plane. (a2) Basins
+of attraction on ϕ20-ϕ30 plane. (a3) Basins of attraction on ϕ10-ϕ30 plane.
+(b1) Space coexisting 3×3×3 attractors on ϕ1-ϕ2 plane. (b2) Space coexisting
+3×3×3 attractors on ϕ2-ϕ3 plane. (b3) Space coexisting 3×3×3 attractors
+on ϕ1-ϕ3 plane.
+tively, as shown in Fig.10(b1)-(b3). Obviously, the positions
+of the coexisting attractors on ϕ1-, ϕ2-, and ϕ3-directions
+can be determined by changing initial states ϕ10, ϕ20, and
+ϕ30, respectively. Accordingly, the TM-HNN generates space
+initial-offset coexisting behaviors. Moreover, different posi-
+tions and numbers of space coexisting chaotic attractors in
+ϕ1-ϕ3-ϕ2 phase space are given with different initial states and
+control parameters, as shown in Fig.11. To better understand
+the coexisting behavior, the relationship between the initial
+values and attractors is given in Table I. Fig.11 shows that
+the position and number of the coexisting attractors can be
+controlled by changing the memristors’ initial conditions and
+control parameters, respectively.
+IV. HARDWARE VERIFICATION AND APPLICATION
+In this section, a digital hardware platform based on FPGA
+is developed for physically implementing the proposed TM-
+HNN to verify its various dynamical behaviors. Subsequently,
+the TM-HNN is applied in the pseudorandom number gener-
+ator.
+(a) (b) (c)
+-1
+-2
+φ
+2
+-2
+1
+2
+1
+0
+-1
+-1
+2
+0
+-2
+0
+1
+2
+φ1
+φ3
+-2
+-4
+φ
+2
+-2
+2
+4
+1
+0
+-1
+-1 0
+-2
+0
+1
+2
+φ1
+φ3
+2
+-1
+-2
+φ
+2
+-2
+1
+2
+1
+0
+-1
+-2
+2
+0
+-4
+0
+2
+4
+φ1
+φ3
+(d) (e) (f)
+-2
+-4
+φ
+2
+-2
+2
+4
+1
+0
+-1
+-2
+2
+0
+-4
+0
+2
+4
+φ1
+φ3
+-2
+-4
+φ
+2
+-4
+2
+4
+2
+0
+-2
+-1 0
+-2
+0
+1
+2
+φ1
+φ3
+4
+-2
+-4
+φ
+2
+-4
+2
+4
+2
+0
+-2
+-2
+4
+0
+-4
+0
+2
+4
+φ1
+φ3
+6
+4
+5
+3
+2
+1
+7
+9
+8
+7
+6
+5
+4
+3
+2
+1
+8
+7
+6
+5
+3
+1
+4
+2
+9
+8
+7
+12
+11
+10
+6
+5
+4
+3
+2
+1
+12
+11
+10
+9
+8
+7
+6
+5
+4
+3
+2
+1
+15
+14
+13
+12
+11
+10
+9
+8
+7
+6
+5
+4
+3
+2
+1
+8
+Fig. 11: Phase space view of the space initial-offset coexisting behaviors.
+(a) Space coexisting 2×2×2 attractors with M1=M2=M3=0. (b) Space coex-
+isting 2×3×2 attractors with M1=M3=0, N2=1. (c) Space coexisting 2×2×3
+attractors with M1=M2=0, N3=1. (d) Space coexisting 2×3×3 attractors with
+N2=N3=1, M1=0. (e) Space coexisting 3×3×2 attractors with N1=N2=1,
+M3=0. (f) Space coexisting 3×3×3 attractors with N1=N2=N3=1.
+Algorithm Module
+(Vivado 2017.4)
+FPGA Module
+(ZYNQ-XC7Z020)
+DAC Module
+(AN9767)
+Display Module
+(GDS-1102-AU)
+Load program Digital signal
+Channel-1
+Channel-2
+CLK
+RST
+x10,x20,x30,x40,φ10,φ20,φ30
+x2_out(31:0)
+x3_out(31:0)
+x4_out(31:0)
+φ1_out(31:0)
+φ2_out(31:0)
+Floating to
+Fixed Unit
+φ3_out(13:0)
+φ2_out(13:0)
+Δh
+(a)
+(b)
+x1_out(31:0)
+φ3_out(31:0)
+φ1_out(13:0)
+x2_out(13:0)
+TMNN
+Chaotic Oscillator
+Fig. 12: FPGA-based digital hardware platform. (a) Block diagram of the
+hardware platform. (b) Flow diagram of the TM-HNN implementation.
+A. FPGA-Based Hardware Implementation
+Due to the hyperbolic tangent nonlinearity, the hardware
+implementation of the TM-HNN using an analog circuit
+is extremely complex. Additionally, the space initial-offset
+coexisting behaviors in the TM-HNN are highly dependent on
+the initial states, but the initial states can not be preconfigured
+in the analog circuit. Different from the analog circuit, the
+initial states in the digital circuits based on FPGA can be
+controlled accurately by the software [55]. Thus, the TM-
+HNN is implemented by using FPGA technology. As shown in
+Fig.12(a), the block diagram of the FPGA hardware platform
+is composed of four parts: algorithm module, FPGA module,
+DAC module, and display module. Among them, the function
+of the algorithm module is to solve the TM-HNN. The
+function of the FPGA module is to implement the TM-HNN
+chaotic oscillator. The DAC (digital-to-analog converter) is
+used to convert digital signals into analog signals. And the
+display module aims to capture the experimental results with
+an oscilloscope.
+The key step for the FPGA hardware implementation is
+to numerically solve the TM-HNN in the algorithm module.
+Here, the TM-HNN is solved by using the fourth-order Runge-
+Kutta (RK4) algorithm on the Vivado 2017.4 platform. As
+shown in Fig.12(b), the key step consists of two modules: TM-
+HNN chaotic oscillator and floating-to-fixed unit. The chaotic
+oscillator module contains four input signals and seven output
+signals, where the system clock ”CLK” and the reset signal
+”RST” are two 1-bit control signals, h and the initial values
+(x10, x20, x30, x40, ϕ10, ϕ20, ϕ30) are both 32-bit input signals.
+The seven 32-bit output signals (x1 out, x2 out, x3 out, x4 out,
+7
+TABLE I: THE RELATIONSHIP BETWEEN ATTRACTORS AND INITIAL VALUES.
+Initial values-ϕ10 -1 1 0 -2 2
+Attractors
+(a)-(1-4);
+(b)-(1-6);
+(c)-(1-6);
+(d)-(1-9)
+(a)-(5-8);
+(b)-(7-9);
+(c)-(7-8);
+(d)-(10-12)
+(e)-(7-9);
+(f)-(10-12)
+(e)-(1-6);
+(f)-(1-9)
+(e)-(10-12);
+(f)-(13-15)
+Initial values-ϕ20 -1 1 0 -2 2
+Attractors
+(a)-(2,4,6,8);
+(c)-(2,4,6,8)
+(a)-(1,3,5,7);
+(c)-(1,3,5,7)
+(b)-(2,5,8);
+(d)-(2,5,8,11);
+(e)- (2,5,8,11);
+(f)-(2,5,8,11,14)
+(b)-(3,6,9);
+(d)-(3,6,9,12);
+(e)-(3,6,9,12);
+(f)-(3,6,9,12,15)
+(b)-(1,4,7);
+(d)-(1,4,7,10);
+(e)-(1,4,7,10);
+(f)-(1,4,7,10,13)
+Initial values-ϕ30 -1 1 0 -2 2
+Attractors
+(a)-(3-6);
+(b)-(4-9);
+(e)-(4-12)
+(a)-(1,2,7,8);
+(b)-(1-3);
+(e)-(1-3)
+(c)-(3-4);
+(d)-(4-6);
+(f)-(4-6)
+(c)-(5-8);
+(d)-(7-12);
+(f)-(7-15)
+(c)-(1,2);
+(d)-(1-3);
+(f)-(1-3)
+DAC
+(AN9767) FPGA
+(ZYNQ-XC7Z020)
+Oscilloscope
+(GDS-1102-AU)
+DELL T3630
+(Intel CoreTM
+i7-8700)
+Algorithm Design
+(Vivado 2017.4)
+Fig. 13: Hardware implementation devices.
+ϕ1 out, ϕ2 out, ϕ3 out) are used as the initial values of
+the next iteration of the chaotic oscillator. Meanwhile, these
+output signals are also input to the floating to fixed unit and
+are further converted into a 14-bit fixed-point number (x2 out,
+ϕ1 out, ϕ2 out, ϕ3 out). The two modules are programmed
+with Verilog HDL language as well as the IP cores of addition,
+subtraction, multiplication, and hyperbolic tangent operation
+in Vivado software. The IEEE 754-1985 high precision 32-bit
+floating point standard is used and the discretization step is
+set as 0.001.
+The proposed TM-HNN is physically realized based on
+the above digital hardware platform. As shown in Fig.13,
+the hardware devices contain a workstation (DELL T3630
+with Intel CoreTM i7-8700 CPU 3.2GHz), an FPGA devel-
+opment board (Xilinx ZYNQ-XC7Z020), a DAC converter
+(AN9767) and a digital oscilloscope (GWINSTEK GDS-
+1102-AU). The developed program is loaded into the FPGA
+development board, which is connected to the oscilloscope
+via a DAC converter. The experiment results can be observed
+from the digital oscilloscope. The experimental results of
+the space multi-structure chaotic attractors and the space
+initial-offset coexisting attractors are given in Fig.14 and
+Fig.15, respectively. It is worth noting that the experimentally
+captured results are in agreement with those of Fig.6(a1)-(a3),
+Fig.7(a1)-(a3), Fig.9(c1), and Fig.10(b2) obtained from the
+Matlab platform. This shows the correctness and feasibility
+of the FPGA hardware implementation and also provides
+experimental proof of the proposed TM-HNN.
+B. Application in Pseudorandom Number Generators
+Chaotic systems are often used to generate pseudorandom
+numbers in the industrial field [56, 57]. Because the presented
+(a1) (a2) (a3)
+x
+2
+φ1
+x
+2
+φ2
+x
+2
+φ3
+φ1
+φ
+2
+φ2
+φ
+3
+φ1
+φ
+3
+(b1) (b2) (b3)
+Fig. 14: The experimental results of the space multi-structure attractors. (a1)
+Space 6×6×6-structure attractor on ϕ1-x2 plane. (a2) Space 6×6×6-structure
+attractor on ϕ2-x2 plane. (a3) Space 6×6×6-structure attractor on ϕ3-x2 plane.
+(b1) Space 3×3×3-structure attractor on ϕ1-ϕ2 plane. (b2) Space 3×3×3-
+structure attractor on ϕ2-ϕ32 plane. (b3) Space 3×3×3-structure attractor on
+ϕ1-ϕ3 plane.
+TM-HNN can generate chaotic behaviors highly dependent
+on initial states, it can achieve good performance in this
+application. Thus, a TM-HNN-based PRNG is designed to
+investigate its application. First, a chaotic sequence S=(s1, s2,
+..., sn, ...) is produced by the TM-HNN. Second, each value
+sn in S is transformed into a 32-bit float number according
+to the IEEE 754 float-point standard. Third, the 17th-32nd
+bits from the float number are truncated as pseudorandom
+numbers. The designed pseudorandom number generator can
+be represented by
+Pi = B(sn)17:32, (10)
+where B(.) is to transform a value to be a 32-bit float number.
+Hence, sixteen binary numbers are produced for each output
+of the chaotic sequence.
+Here, the chaotic sequences generated by the membrane
+voltages (x1, x2, x3, x4) in the original HNN and the TM-
+HNN are used to generate pseudorandom numbers. Firstly, a
+set of chaotic sequence with length 107 are obtained from the
+original HNN without memristor synapse. Meanwhile, a set of
+chaotic sequence with length 107 are obtained from the space
+coexisting 3×3×3 attractors in the TM-HNN with initial
+states (0.1, 0.1, 0.1, 0.1, -2, 2, -2), as shown in Fig.16. Next,
+according to the above generation method, each set chaotic
+sequence is processed to produce 160 binary sequences with
+106 bits, where the first 10 binary sequences are discarded.
+Finally, the remaining 150 binary sequences are used for
+8
+φ2
+φ
+3
+φ2
+φ
+3
+φ2
+φ
+3
+φ2
+φ
+3
+φ2
+φ
+3
+φ2
+φ
+3
+φ2
+φ
+3
+φ2
+φ
+3
+φ2
+φ
+3
+(a)
+x
+2
+φ1
+x
+2
+φ1
+x
+2
+φ1
+x
+2
+φ1
+x
+2
+φ1
+x
+2
+φ1
+φ10=-5 φ10=-3 φ10=-1
+φ10=1 φ10=3 φ10=5
+(φ20,φ30)=(-2,2) (0,2) (2,2)
+(-2,0) (0,0) (2,0)
+(-2,-2) (0,-2) (φ20,φ30)=(2,-2)
+(b)
+Fig. 15: The experimental results of the space initial-offset coexisting
+attractors. (a) Space coexisting 6×6×6 attractors on ϕ1-x2 plane. (b) Space
+coexisting 3×3×3 attractors on ϕ2-ϕ3 plane.
+x1
+x2
+x4
+x3
+(a) (b)
+Fig. 16: Four sets of chaotic sequences generated by FPGA-based TM-
+HNN.
+testing. Here, the NIST SP800-22 is used to test the produced
+random numbers [58]. It is a convinced and all-side test
+standard that contains 15 sub-tests. In tests, both the P-value
+larger than 0.01 and the proportion (pro.) larger than 0.96 are
+considered to pass the related sub-test. Table II lists the test
+results of the chaotic sequences in the original HNN and TM-
+HNN. One can see that the results generated by the original
+HNN can not pass the test because the proportion of the
+subtests 2, 6, and 15 is less than 0.96. However, the TM-HNN
+can pass all the sub-tests of the NIST SP800-22 test suite.
+This means that the TM-HNN produces random numbers
+with higher randomness. Thus, the proposed TM-HNN has
+complex chaotic behavior and can be further applied in chaos-
+based engineering scenarios, such as security communication
+[59], signal detection [60], and so on.
+TABLE II: NIST SP800-22 TEST RESULTS FOR THE ORIGINAL HNN
+AND TM-HNN
+HNN TM-HNN
+No. Sub-tests
+P-value Pro. P-value Pro.
+1 Frequency 0.5341 0.98 0.8343 0.99
+2 Block Frequency 0.0098 0.95 0.8677 0.99
+Cum.Sums*(F) 0.4559 0.98 0.8343 0.99
+3
+Cum.Sums*(R) 0.7531 0.98 0.4195 0.99
+4 Runs 0.5207 0.98 0.6579 1.00
+5 Longest Runs 0.2075 0.99 0.5493 1.00
+6 Rank 0.8284 0.94 0.2757 0.99
+7 FFT 0.2896 0.98 0.9943 0.98
+8 Non-Ovla.Temp.* 0.3191 0.98 0.5544 0.99
+9 Ovla.Temp. 0.6717 0.98 0.9879 1.00
+10 Universal 0.2450 0.98 0.7792 0.98
+11 Appr.Entropy 0.9199 0.99 0.7598 1.00
+12 Ran.Exc.* 0.3325 0.99 0.3541 0.99
+13 Ran.Exc.Var.* 0.4071 0.99 0.5954 0.99
+Serial (1st) 0.2803 0.98 0.6579 0.99
+14
+Serial (2nd) 0.9357 0.98 0.2622 0.99
+15 Linear Complexity 0.0076 0.92 0.4373 0.99
+V. CONCLUSION
+Memristors can be used to construct memristive neural
+networks closer to biological nervous systems. In this paper,
+we first design a multistable locally active memristor, then
+present a TM-HNN by using three of the designed memristors
+to emulate three coupled neural synapses in an HNN with
+four neurons. The dynamical behaviors of the proposed TM-
+HNN are investigated by theoretical analysis and numerical
+simulation. Research results show that the TM-HNN not only
+can generate space multi-structure chaotic attractors, but also
+can exhibit space initial-offset coexisting behaviors. Particu-
+larly, the number of the space multi-structure attractors and
+the position of the space coexisting attractors can be flexibly
+controlled by switching the memristor’ control parameters and
+initial conditions, respectively. Meanwhile, the space multi-
+structure attractors and the space coexisting attractors in the
+TM-HNN are further verified by the FPGA-based hardware
+platform. In addition, a pseudorandom number generator is
+designed to explore the application of the TM-HNN, and
+the experimental results show that the chaotic sequences
+generated by the presented TM-HNN have high randomness.
+Clearly, these special dynamical behaviors in the TM-HNN
+lead to the emergence of extreme multistability, which could
+gain much attention for its potential chaos-based applications
+by providing greater flexibility. Therefore, it is of great
+importance to explore neural networks with three or more
+memristor synapses. The dynamical behaviros in the neural
+networks with more memristive synaptic weights are thus
+worth further study.
+REFERENCES
+[1] H. Korn and P. Faure, “Is there chaos in the brain? II. Experimental
+evidence and related models,” C R Biol., vol. 326, no.9, pp. 787-840,
+Sep. 2003.
+[2] M. Breakspear, “Dynamic models of large-scale brain activity,” Nat
+Neurosci., vol. 20, no. 3, pp. 340-352, 2017.
+[3] C. Yang, S. P. Adhikari, H. Kim, “On learning with nonlinear memristor-
+based neural network and its replication,” IEEE Trans Circuits Syst I
+Regul Pap., vol. 66, no. 10, pp. 3906-3916, 2019.
+[4] C. Pan, Q. Hong, X. Wang, “A novel memristive chaotic neuron circuit
+and its application in chaotic neural networks for associative memory,”
+IEEE Trans Comput-Aided Des Integr Circuits Syst., vol. 40, no. 3, pp.
+521-532, 2021.
+[5] J. J. Hopfield, “Neural network and physical system with emergent
+collective computational abilities,” Proc Nat Acad Sc., vol. 79, 2554-
+2558, 1982.
+9
+[6] Z. Aram Z, S. Jafari, J. Ma, et al, “Using chaotic artificial neural networks
+to model memory in the brain,” Commun Nonlinear Sci Numer Simul.,
+vol. 44, pp. 449-459, 2017.
+[7] D. J. Hemanth, J. Anitha, L. H. Son, et al, “ “Diabetic retinopathy
+diagnosis from retinal images using modified Hopfield neural network,”
+J Med Syst., vol. 42, Art. no. 247, 2018.
+[8] C. Li, Y. Yang, X. Yang, et al, “ “A tristable locally active memristor and
+its application in Hopfield neural network,” Nonlinear Dyn., vol. 108, no.
+2, pp. 1697-1717, 2022.
+[9] S. Duan, Z. Dong, X. Hu, et al, “Small-world Hopfield neural networks
+with weight salience priority and memristor synapses for digit recogni-
+tion,” Neural Comput Appl., vol. 27, no. 4, pp. 837-844, 2016.
+[10] D. Jiang, Z. T. Njitacke, J. D. D. Nkapkop, et al, “A new cross ring
+neural network: Dynamic investigations and application to WBAN,”
+IEEE Internet Things J., vol. 10, no. 8, pp. 7143-7152, 2023.
+[11] J. S. Wang, J. Wang, Q. L. Han, “Multivehicle task assignment
+based on collaborative neurodynamic optimization with discrete Hopfield
+networks,” IEEE Trans Neural Netw Learn Syst., vol. 32, no. 12, pp.
+5274-5286, 2021.
+[12] B. Bao, C. Chen, H. Bao, et al, “Dynamical effects of neuron activation
+gradient on Hopfield neural network: Numerical analyses and hardware
+experiments,” Int J Bifurcat Chaos., vol. 29, no. 04, Art. no. 1930010,
+2019.
+[13] Z. T. Njitacke, C. L. Matze, M. F. Tsotsop, et al, “Remerging feigen-
+baum trees, coexisting behaviors and bursting oscillations in a novel 3D
+generalized Hopfield neural network,” Neural Process Lett., vol. 52, no.
+1, pp. 267-289, 2020.
+[14] H. Lin, C. Wang, C. Chen, et al, “Neural bursting and synchronization
+emulated by neural networks and circuits,” IEEE Trans Circuits Syst I-
+Regul Pap., vol. 68, no. 8, pp. 3397-3410, 2021.
+[15] L. Chua, “Memristor-the missing circuit element,” IEEE Trans Circuits
+Theory., vol. 18, no. 5, pp. 507-519, 1971.
+[16] D. B. Strukov, G. S. Snider, D. R. Stewart, et al, “The missing memristor
+found,” Nature., vol. 453, no. 7191, pp. 80-83, 2008.
+[17] S. P. Adhikari, M. P. Sah, H. Kim, et al, “Three fingerprints of
+memristor,” IEEE Trans Circuits Syst I-Regul Pap., vol. 60, no. 11, pp.
+3008-3021, 2013.
+[18] Q. Lai, L. Yang, Y. Liu, “Design and realization of discrete memristive
+hyperchaotic map with application in image encryption,” Chaos Solitons
+Fractals., vol. 165, Art. no. 112781, 2022.
+[19] W. Yao, C. Wang, Y. Sun, et al, “Event-triggered control
+for robust exponential synchronization of inertial memristive
+neural networks under parameter disturbance,” Neural Network.,
+https://doi.org/10.1016/j.neunet.2023.04.024, 2023.
+[20] S. Ding, N. Wang, H. Bao, et al, “Memristor synapse-coupled
+piecewise-linear simplified Hopfield neural network: Dynamics analysis
+and circuit implementation,” Chaos Solitons Fractals., vol. 166, Art. no.
+112899, 2023.
+[21] Q. Lai, Z. Wan, P. D. K. Kuate, “Generating grid multi-scroll attractors
+in memristive neural networks,” IEEE Trans Circuits Syst I-Regul Pap.,
+vol. 70, no. 3, pp. 1324-1336, 2023.
+[22] H. Lin, C. Wang, F. Yu, et al, “A review of chaotic systems based on
+memristive Hopfield neural networks,” Mathematics., vol. 11, no. 6, Art.
+no. 1369, 2023.
+[23] Q. Lai, C. Lai, P. D. K. Kuate, et al., “Chaos in a simplest cyclic
+memristive neural network,” Int J Bifurcat Chaos., vol. 32, no. 03, Art.
+no. 2250042, 2022.
+[24] X. Hu, C. Liu, L. Liu, et al, “Chaotic dynamics in a neural network
+under electromagnetic radiation,” Nonlinear Dyn., vol. 91, no. 3, pp.
+1541-1554, 2018.
+[25] F. Yu, H. Shen, Z. Zhang, et al, “Dynamics analysis, hardware im-
+plementation and engineering applications of novel multi-style attractors
+in a neural network under electromagnetic radiation,” Chaos Solitons
+Fractals., vol. 152, Art. No. 111350, 2021.
+[26] C. Chen, F. Min, Y. Zhang, et al, “Memristive electromagnetic induction
+effects on Hopfield neural network,” Nonlinear Dyn., vol. 106, no. 3, pp.
+2559-2576, 2021.
+[27] Y. Leng, D. Yu, Y. Hu, et al, “Dynamic behaviors of hyperbolic-
+type memristor-based Hopfield neural network considering synaptic
+crosstalk,” Chaos., vol. 30, no. 3, Art. no. 033108, 2020.
+[28] D. Ding, H. Xiao, Z. Yang, et al, “Coexisting multi-stability of Hopfield
+neural network based on coupled fractional-order locally active memris-
+tor and its application in image encryption,” Nonlinear Dyn., vol. 108,
+no. 4, pp. 4433-4458, 2022.
+[29] T. Dong, X. Gong, T. Huang, “Zero-Hopf bifurcation of a memristive
+synaptic Hopfield neural network with time delay,” Neural Networks.,
+vol. 149, pp. 146-156, 2022.
+[30] S. Ding, N. Wang, H. Bao, et al, “Memristor synapse-coupled
+piecewise-linear simplified Hopfield neural network: Dynamics analysis
+and circuit implementation,” Chaos Solitons Fractals., vol. 166, Art.
+no.112899, 2023.
+[31] H. Lin, C. Wang, L. Cui, et al, “Hyperchaotic memristive ring neural
+network and application in medical image encryption,” Nonlinear Dyn.,
+vol. 110, no. 1, pp. 841-855, 2022.
+[32] I. S. Doubla, B. Ramakrishnan, Z. N. Tabekoueng, et al, “Infinitely
+many coexisting hidden attractors in a new hyperbolic-type memristor-
+based HNN,” Eur Phys J Spec Top., vol. 231, pp. 2371-2385, 2022.
+[33] F. Parastesh, S. Jafari, H. Azarnoush, et al, “Chimera in a network of
+memristor-based Hopfield neural network,” Eur Phys J Spec Top., vol.
+228, no. 10, pp. 2023-2033, 2019.
+[34] Q. Wan, F. Li, S. Chen et al, “Symmetric multi-scroll attractors in
+magnetized Hopfield neural network under pulse controlled memristor
+and pulse current stimulation,” Chaos, Solitons Fractals., vol. 169, Art.
+no. 113259, 2023.
+[35] C. Chen, F. Min, “ReLU-type memristor-based Hopfield neural net-
+work,” Eur Phys J Spec Top., vol. 231, no. 16, pp. 2979-2992, 2022.
+[36] N. Wang, C. Li, H. Bao, et al, “Generating multi-scroll Chua’s attractors
+via simplified piecewise-linear Chua’s diode,” IEEE Trans Circuits Syst
+I-Regul Pap., vol. 66, no. 12, pp. 4767-4779, 2019.
+[37] Q. Hong, Y. Li, X. Wang, et al, “A versatile pulse control method to
+generate arbitrary multidirection multibutterfly chaotic attractors,” IEEE
+Trans Comput-Aided Des Integr Circuits Syst., vol. 38, no. 8, pp. 1480-
+1492, 2018.
+[38] H. Lin, C. Wang, W. Yao, et al, “Chaotic dynamics in a neural network
+with different types of external stimuli,” Commun Nonlinear Sci Numer
+Simul., vol. 90, Art. no.105390, 2020.
+[39] R. Li, E. Dong, J. Tong, et al, “A novel multiscroll memristive Hopfield
+neural network,” Int J Bifurcat Chaos., vol. 32, no. 09, Att. no. 2250130,
+2022.
+[40] F. Yu F, Shen H, Yu Q, et al, “Privacy protection of medical data based
+on multi-scroll memristive Hopfield neural network,” IEEE Trans Netw
+Sci Eng., vol. 10, no. 2, pp. 845-858, 2023.
+[41] Lai Q, Wan Z, Zhang H, et al, “Design and analysis of multiscroll
+memristive hopfield neural network with adjustable memductance and
+application to image encryption,” IEEE Trans Neural Netw Learn Syst.,
+early access, Feb. 10, 2022, doi: 10.1109/TNNLS.2022.3146570.
+[42] Lin H, Wang C, Sun Y, et al, “Generating n-scroll chaotic attractors from
+a memristor-based magnetized hopfield neural network,” IEEE Trans Cir
+Sys-II: Brief Papers., vol. vol. 70, no. 1, pp. 311-315, 2023.
+[43] F. Yu, X. Kong, A. A. M. Mokbel, et al, “Complex dynamics, hardware
+implementation and image encryption application of multiscroll memeris-
+tive Hopfield neural network with a novel local active memeristor,” IEEE
+Trans Cir Sys-II: Brief Papers., vol. 70, no. 1, pp. 326-330, 2023.
+[44] H. Lin, C. Wang, C. Xu, et al, “A memristive synapse control method
+to generate diversified multi-structure chaotic attractors,” IEEE Trans
+Comput-Aided Des Integr Circuits Syst., vol. 42, no. 2, pp. 942-955,
+2023.
+[45] S. Zhang, C. Li, J. Zheng, et al, “Generating any number of initial offset-
+boosted coexisting chua’s double-scroll attractors via piecewise-nonlinear
+memristor,” IEEE Trans Ind Electron., vol. 69, no. 7, pp. 7202-7212,
+2022.
+[46] H. Bao, Z. Hua, N. Wang, et al, “Initials-boosted coexisting chaos in
+a 2-D sine map and its hardware implementation,” IEEE Trans Industr
+Inform., vol. 17, no. 2, pp. 1132-1140, 2021.
+[47] S. Zhang, J. Zheng, X. Wang, et al, “Initial offset boosting coexisting
+attractors in memristive multi-double-scroll Hopfield neural network,”
+Nonlinear Dyn., vol. 102, no. 4, pp. 2821-2841, 2020.
+[48] I. S. Doubla, B. Ramakrishnan, Z. T. Njitacke, et al, “Hidden extreme
+multistability and its control with selection of a desired attractor in a
+non-autonomous Hopfield neuron,” AEU- Int J Electron Commun., vol.
+144, Art. no. 154059, 2022.
+[49] H. Lin, C. Wang, J. Sun, et al, “Memristor-coupled asymmetric neural
+networks: Bionic modeling, chaotic dynamics analysis and encryption
+application,” Chaos, Solitons Fractals., vol. 166, Art. no. 112905, 2023.
+[50] H. Bao, M. Hua, J. Ma, et al, “Offset-control plane coexisting behav-
+iors in two-memristor-based Hopfield neural network,” IEEE Trans Ind
+Electron., vol. 70, no. 10, pp. 10526-10535, 2023.
+[51] C. Leon, “Everything you wish to know about memristors but are afraid
+to ask,” Radioengineering., vol. 24, no. 2, pp. 319, 2015.
+[52] H. Bao, A. Hu, W. Liu, et al, “Hidden bursting firings and bifurcation
+mechanisms in memristive neuron model with threshold electromagnetic
+induction,” IEEE Trans Neural Netw Learn Syst., vol. 31, no. 2, pp.
+502-511, 2020.
+[53] Z. Wen, C. Wang, Q. Deng, et al, “Regulating memristive neuronal dy-
+namical properties via excitatory or inhibitory magnetic field coupling,”
+Nonlinear Dyn., vol. 110, no. 4, pp. 3823-3835, 2022.
+[54] Y. Lu, C. Wang, Q. Deng, et al, “The dynamics of a memristor-based
+Rulkov neuron with the fractional-order difference,” Chinese Physics B.,
+vol. 31, p. 060502, 2022.
+10
+[55] S. M. Mohamed, W. S. Sayed, A. G. Radwan, et al, “FPGA implemen-
+tation of reconfigurable CORDIC algorithm and a memristive chaotic
+system with transcendental nonlinearities,” IEEE Trans Circuits Syst I-
+Regul Pap., vol. 69, no. 7, pp. 2885-2892, 2022.
+[56] L. Liu, H. Huang, S. Hu, “Lorenz chaotic system-based carbon nanotube
+physical unclonable functions,” IEEE Trans Comput-Aided Des Integr
+Circuits Syst., vol. 37, no. 7, pp. 1408-1421, 2018.
+[57] S. Kalanadhabhatta, D. Kumar, K. K. Anumandla, et al, “PUF-based
+secure chaotic random number generator design methodology,” IEEE
+Trans Very Large Scale Integr VLSI Syst., vol. 28, no. 7, pp. 1740-1744,
+2020.
+[58] A. Rukhin, J. Soto, and J. Nechvatal, A statistical test suite for random
+and pseudorandom number generators for cryptographic applications,
+National Institute of Standards and Technology (NIST), Special Publica-
+tion 800-22, Rev. 1a, Apr. 2010.
+[59] N. Lin, X. Chen, H. Lu, et al, “Chaotic weights: A novel approach
+to protect intellectual property of deep neural networks,” IEEE Trans
+Comput-Aided Des Integr Circuits Syst., vol. 40, no. 7, pp. 1327-1339,
+2020.
+[60] S. Liu, Y. Sun, Y. Kang, “A novel E-exponential stochastic resonance
+model and weak signal detection method for steel wire rope,” IEEE Trans
+Ind Electron., vol. 69, no. 7, pp. 7428-7440, 2021.
+Hairong Lin (Member, IEEE) received M.S. and
+Ph.D. degree in information and communication
+engineering and computer science and technology
+from Hunan University, China, in 2015 and 2021,
+respectively. He is currently a postdoctoral research
+fellow at the College of Computer Science and
+Electronic Engineering, Hunan University, Chang-
+sha, China. He is an associate researcher at the Ad-
+vanced Communication Technology Key Laboratory
+of Hunan University. He is a member of the Chaos
+and Nonlinear Circuit Professional Committee of
+Circuit and System Branch of China Electronic Society. He has presided over
+three national and provincial projects, and published more than 40 papers
+in related international journals, such as IEEE-TIE, IEEE-TII, IEEE-TCAD,
+IEEE-TCAS-I, IEEE-TCAS-II, Neural Networks, etc.
+Dr. Lin is a Guest Editor of the journal of Mathematics from 2022 to
+present. He is also a Guest Editor of the journal of Frontiers in Physics
+from 2022 to present. Furthermore, he is a regular reviewer for many
+international journals, such as IEEE-TII, IEEE-TCAS-I, IEEE-TCAS-II, ND,
+CSF, Chaos, etc. His research interests include memristive neural networks,
+chaotic systems and circuits, medical image encryption, and neuromorphic
+engineering.
+Chunhua Wang received the M.S. degree from
+Zhengzhou University, Zhengzhou, China, in 1994,
+and the Ph.D. degree from Beijing University of
+Technology, Beijing, China, in 2003. He is currently
+a Professor of College of Information Science and
+Engineering, Hunan University, Changsha, China.
+He is a Doctor tutor, the director of advanced
+communication technology key laboratory of Hunan
+universities, the member of academic committee
+of Hunan university, the director of chaos and
+nonlinear circuit professional committee of circuit
+and system branch of China electronic society. Now, his research interests
+include chaotic circuit, memristor circuit, chaotic encryption, neural networks
+based on memristor, complex network, current-mode circuit. He has presided
+over 8 national and provincial projects, and published more than 200 papers
+retrieved by SCI.
+Prof. Wang was a recipient of Hunan Natural Science and Technology
+second prize in 2022. He was named to the Top 2% of Global Scientists
+in 2021 and 2022, and selected as the Highly Cited Researcher 2022 in
+Mathematics-field.
+Fei Yu received the M.E. and Ph.D. degree from
+College of Information Science and Engineering,
+Hunan University, Changsha, China, in 2010 and
+2013, respectively. He is currently a distinguished
+associate professor at School of Computer and
+Communication Engineering in Changsha Univer-
+sity of Science and Technology, Changsha, China.
+He focuses on nonlinear system and circuit, com-
+plex network and their applications.
+Qinghui Hong received the B.S degree and M.S
+degree in electronic science and technology from
+Xiangtan University, Xiangtan, China, in 2012 and
+2015, respectively, and the Ph.D degree in computer
+system architecture from Huazhong University of
+Science and Technology, Wuhan, China, in 2019.
+He is currently an associate professor with college
+of computer science and electronic engineering,
+Hunan University, Changsha 410082, China. He has
+presided over published more than30 SCI papers,
+including IEEE TNNLS, IEEE TBCS, IEEE TCAD,
+IEEE TVLSI, IEEE TCAS-I, etc. His current research interests include
+memristive neural network, brain-like computing circuits and its application
+to Artifificial Intelligence.
+Cong Xu received the Bachelor’s degree in commu-
+nications engineering from Hunan City University,
+Yiyang, China, in 2016, and received the Ph. D
+degree in computer science and technology from
+Hunan University, Changsha, China, in 2022. She
+is current working at the School of Computer and
+Communication Engineering, Changsha University
+of Science and Technology, Changsha, China. Her
+main research interests include memristive neural
+network, memristor circuit and chaos secure com-
+munication.
+Yichuang Sun (M’90–SM’99) received the B.Sc.
+and M.Sc. degrees from Dalian Maritime University,
+Dalian, China, in 1982 and 1985, respectively, and
+the Ph.D. degree from the University of York,
+York, U.K., in 1996, all in communications and
+electronics engineering. Dr. Sun is currently Pro-
+fessor of Communications and Electronics, Head of
+Communications and Intelligent Systems Research
+Group, and Head of Electronic, Communication and
+Electrical Engineering Division in the School of En-
+gineering and Computer Science of the University
+of Hertfordshire, UK. He has published over 330 papers and contributed 10
+chapters in edited books. His research interests are in the areas of wireless and
+mobile communications, RF and analogue circuits, microelectronic devices
+and systems, and machine learning and deep learning.
+Professor Sun was a Series Editor of IEE Circuits, Devices and Systems
+Book Series (2003-2008). He has been Associate Editor of IEEE Transactions
+on Circuits and Systems I: Regular Papers (2010-2011, 2016-2017, 2018-
+2019). He is also Editor of ETRI Journal, Journal of Semiconductors, and
+Journal of Sensor and Actuator Networks. He was Guest Editor of eight IEEE
+and IEE/IET journal special issues: High-frequency Integrated Analogue
+Filters in IEE Proc. Circuits, Devices and Systems (2000), RF Circuits
+and Systems for Wireless Communications in IEE Proc. Circuits, Devices
+and Systems (2002), Analogue and Mixed-Signal Test for Systems on Chip
+in IEE Proc. Circuits, Devices and Systems (2004), MIMO Wireless and
+Mobile Communications in IEE Proc. Communications (2006), Advanced
+Signal Processing for Wireless and Mobile Communications in IET Signal
+Processing (2009), Cooperative Wireless and Mobile Communications in IET
+Communications (2013), Software-Defined Radio Transceivers and Circuits
+for 5G Wireless Communications in IEEE Transactions on Circuits and
+Systems-II (2016), and the 2016 IEEE International Symposium on Circuits
+and Systems in IEEE Transactions on Circuits and Systems-I (2016). He
+has also been widely involved in various IEEE technical committee and
+international conference activities.
+

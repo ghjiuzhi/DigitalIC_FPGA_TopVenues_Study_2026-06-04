@@ -1,0 +1,1168 @@
+A high-reliability, non-CRP-discard arbiter PUF based on delay
+difference quantization
+Wang, Y., Zhang, G., Mei, X., & Gu, C. (2025). A high-reliability, non-CRP-discard arbiter PUF based on delay
+difference quantization. IEEE Transactions on Circuits and Systems I: Regular Papers, 72(2), 573 - 585.
+https://doi.org/10.1109/TCSI.2024.3466972
+
+
+Published in:
+IEEE Transactions on Circuits and Systems I: Regular Papers
+
+
+
+Document Version:
+Peer reviewed version
+
+
+
+Queen's University Belfast - Research Portal:
+Link to publication record in Queen's University Belfast Research Portal
+
+
+Publisher rights
+Copyright 2024 the authors.
+This is an accepted manuscript distributed under a Creative Commons Attribution License (https://creativecommons.org/licenses/by/4.0/),
+which permits unrestricted use, distribution and reproduction in any medium, provided the author and source are cited.
+
+
+General rights
+Copyright for the publications made accessible via the Queen's University Belfast Research Portal is retained by the author(s) and / or other
+copyright owners and it is a condition of accessing these publications that users recognise and abide by the legal requirements associated
+with these rights.
+
+
+Take down policy
+The Research Portal is Queen's institutional repository that provides access to Queen's research output. Every effort has been made to
+ensure that content in the Research Portal does not infringe any person's rights, or applicable UK laws. If you discover content in the
+Research Portal that you believe breaches copyright or violates any law, please contact openaccess@qub.ac.uk.
+
+
+Open Access
+This research has been made openly available by Queen's academics and its Open Research team. We would love to hear how access to
+this research benefits you. – Share your feedback with us: http://go.qub.ac.uk/oa-feedback
+
+
+
+
+Download date:04. Jun. 2026
+                                                                                                                                                                                                                         1
+
+
+
+
+ A High-Reliability, Non-CRP-Discard Arbiter PUF
+     Based on Delay Difference Quantization
+           Yao Wang, Member, IEEE, Guangyang Zhang, Xue Mei, Chongyan Gu, Senior Member, IEEE
+
+
+
+
+   Abstract—As a lightweight hardware security primitive, phys-
+                                                                                         1 0 0
+ical unclonable functions (PUFs) can provide reliable identity
+                                                                                                           C o n v e n tio n a l A P U F [2 0 ]
+authentication for the Internet of Things (IoT) devices with                            1 0 -1                                                                                                               [1 6 ]
+limited resources. Arbiter PUF (APUF) is one of the most well-                          1 0 -2
+known PUF circuits. However, its hardware implementation has                                                                                                                                     [2 4 ]
+                                                                                        1 0 -3                                                                                          [3 2 ]                  [1 9 ]
+poor reliability on field programmable gate arrays (FPGAs).                                                T h is w o r k
+This paper proposed a highly reliable APUF that uses a delay                            1 0 -4
+
+difference quantization strategy (DDQ-APUF). By adding mul-                             1 0 -5
+
+
+
+
+                                                                               B E R
+tiple configurable delay units to the two symmetrical paths of                          1 0 -6
+the conventional APUF, the delay difference between the two                                                                   [3 1 ]
+                                                                                        1 0 -7
+symmetrical paths of APUF can be obtained by collecting the
+output of APUF under different delay configurations. Compared                           1 0 -8
+                                                                                                                                                                                                  [1 5 ]
+to conventional APUFs, DDQ-APUF does not use the arbitra-                               1 0 -9
+tion result of signal transmission in two symmetric paths as                                                                                                                                                  [1 8 ]
+                                                                                       1 0 -1 0
+its response, but rather uses the quantified delay difference
+between the two paths as its response. A tolerance threshold is                        1 0 -1 1
+                                                                                                  0 .0 0             0 .0 1            0 .1 0                       1 .0 0           1 0 .0 0              1 0 0 .0 0
+adopted in the authentication to accommodate the variations in
+delay differences due to environmental changes. Moreover, the
+                                                                                                                                       D   i s c a   r d   r a   t i o   （   %   ）
+
+
+
+
+modeling attack resistance of DDQ-APUF is evaluated, and a
+strategy for improving this resistance by incorporating pseudo-             Fig. 1. BER and CRP discard ratio of state-of-the-art strong PUFs.
+XOR technique is proposed. The circuit was implemented on
+Xilinx Artix-7 FPGAs and the experimental results show that
+the reliability achieves 99.95% with non-CRP-discard.
+                                                                            that can effectively resist physical attacks with low overhead,
+   Index Terms—DDQ-APUF, FPGA, IoTs, Security, Authentica-                  have been widely developed and applied for identification,
+tion.                                                                       authentication, and key generation [1]. PUF is a hardware
+                                                                            security primitive that utilizes the unpredictable changes that
+                         I. I NTRODUCTION                                   occur during silicon chip manufacturing to produce unique
+                                                                            challenge-response pairs (CRPs), like a chip’s digital finger-
+T     HE progress of the Internet of Things (IoTs), with
+      billions of connected devices, offers assistance to our
+regular routines. With the expansion of the scale of IoTs,
+                                                                            print. Even the same manufacturer cannot clone two chips with
+                                                                            the same CRPs. These CRPs are not stored in the non-volatile
+information security has become a major challenge for the                   memory (NVM) but are generated on each activation, avoiding
+sustainable development of IoTs. Currently, the security of                 the problem of keys stored in the NVM that can be obtained
+traditional encryption algorithms, including Advanced Encryp-               by attackers through physical attacks [2].
+tion Standard (AES), Data Encryption Algorithm (DES) and                       Up to now, researchers have proposed a variety of PUF
+Ron Rivest Adi Shamirh Len Adlema (RSA), relies on the                      circuits, including delay-based PUFs (such as arbiter PUF
+confidentiality of the secret key, which means that users can               (APUF) [3]), memory-based PUFs (such as the SRAM-PUF
+authenticate and decrypt the device in possession of the secret             [4]), oscillator-based PUFs (Ring Oscillator PUF (RO-PUF)
+key. However, the secret key is commonly stored in a non-                   [5]), etc. As a member of the strong PUFs, APUF has a large
+volatile memory (NVM). The secret key can be easily obtained                number of CRPs and is often used for secure authentication
+by attackers through physical means, such as invasive attacks               [6]. Moreover, APUF has many advantages, such as low
+and side-channel attacks. To address this, physical unclonable              hardware overhead and low power consumption. APUF is
+functions (PUFs), as a type of hardware security module                     one of the most explored PUF circuits and has been used
+                                                                            as the bottom block in many complex PUF architectures
+  This work was partially supported by the Science and Technology Project
+of Henan Province (232102211076), and partially supported by the EPSRC      such as feedforward arbiter PUF [7], XOR PUF [8], and
+New Investigator Award (EP/X009602/1) and Innovate UK SCHEME Project        lightweight PUF [9]. However, due to the metastability of
+(IUK10065634).(Corresponding author: Yao Wang, Chongyan Gu.)                the delayed flip-flop (DFF) arbiter and the routing constraints
+  Yao Wang, Guangyang Zhang and Xue Mei are with the School of Electrical
+and Information Engineering, Zhengzhou University, Zhengzhou, 450001,       of FPGA, conventional APUF has poor reliability in FPGA
+China (e-mail: ieyaowang@zzu.edu.cn)                                        implementations [10]. Furthermore, previous studies have
+  Chongyan Gu is with the Centre for Secure Information Technolo-           shown that, for some designs, more than a quarter of the
+gies (CSIT), Queen’s University Belfast, Belfast BT3 9DT, U.K. (e-mail:
+C.Gu@qub.ac.uk)                                                             responses are susceptible to environmental changes (voltage,
+  Manuscript received xx xx, xxxx; revised xx xx, xxxx.                     temperature, and aging) [11] [12]. The unreliability causes
+                                                                                                                                          2
+
+
+
+some raw responses registered during authentication cannot
+                                                                                      c0           c1                cn-1
+be accurately reproduced. Hence, improvement of APUF re-                                                  ...
+liability is an important prerequisite for PUF applications. In                        0
+
+previous studies, helper data algorithms (HDA) were proposed                           1                                              R
+                                                                                                          ...               Arbiter
+to extract reliable keys from unstable responses [13] [14].                            1
+
+HDA typically employs error-correcting codes, which require                            0
+
+significant hardware overhead and storage space. For strong
+PUFs, the storage space required for error-correcting codes
+to protect the massive amount of CRPs is astonishing, making        Fig. 2. The structure diagram of n-stage APUF.
+this approach only suitable for weak PUFs. Additionally, error-
+correcting codes may leak sensitive information about CRPs to
+attackers, posing a security threat. Strong PUFs often use CRP         The rest of this paper is organized as follows. Section II de-
+filtering to enhance reliability [15] [16]. Unfortunately, this     scribes the background of this study. Section III demonstrates
+approach will reduce the challenge-response space, which may        the details of the proposed DDQ-APUF. Section IV discusses
+be exploited to accelerate modeling attacks [17], and result in     the experimental results of DDQ-APUF. Finally, Section V
+a less secure PUF-based authentication scheme.                      summarizes this paper.
+    In this paper, we introduce a new type of APUF, the Delay
+Difference Quantization APUF (DDQ-APUF), which is not                                        II. BACKGROUND
+only highly reliable but also does not require the discarding of    A. Conventional APUF
+any CRPs. Fig. 1 shows the discard ratios of CRPs and the Bit          The basic APUF structure consists of two symmetrical
+Error Rate (BER) for various APUF structures. It is noteworthy      signal transmission paths with several delay stages and an
+that recent studies typically improve system reliability by         arbiter [3], as shown in Fig.1. Each stage consists of a
+discarding a large number of unstable CRPs. For example, [18]       pair of multiplexers configured as a crossbar switch, which
+retained only 1% of CRPs to achieve 100% reliability, [15]          is controlled by a challenge ci . It generates a response by
+and [19] discarded 33.15% and 76.43%, respectively, to reach        comparing the time it takes the same rising edge pulse to
+nearly 100% reliability. While DDQ-APUF achieved 99.95%             reach the final arbiter through two symmetric circuits. Due to
+reliability without discarding any CRPs.                            the process deviation in the fabrication of the circuit, the two
+    The main contributions of this work are summarized as           symmetrical circuits are slightly different, so the rising edge
+follows:                                                            signals in the two paths will not reach the arbiter at the same
+    1) We propose DDQ-APUF by adding multiple config-               time. Therefore APUF is classified as a delay-based PUF. The
+        urable delay units to two symmetrical signal transmis-      arbiter output R is equal to 1 when the upper path signal passes
+        sion paths of the conventional APUF. The output data of     faster, otherwise R is equal to 0. For an n-stage APUF, it can
+        DDQ-APUF under different delay configurations as its        generate 2n CRPs.
+        response, contains information on the delay difference         The 1-bit response of APUF only shows which path is faster,
+        of the two symmetric paths. Essentially, the output         but cannot indicate the quantitative delay difference between
+        response of conventional APUFs only reflects which of       the two paths. Unfortunately, the delay of the circuit will be
+        the two symmetric paths has a smaller delay, whereas        affected by environmental changes (voltage, temperature, and
+        the output response of DDQ-APUF includes specific           aging), resulting in the unreliability of some original responses
+        quantitative information on the delay difference between    with small delay difference, as shown in Fig. 3(a). When the
+        the two paths. Therefore, the output response of DDQ-       delay difference between the two paths is large enough as
+        APUF contains richer information on the unique process      shown in Fig. 3(b), the value of the delay difference may
+        variations of every single chip.                            change under environmental variations, but the polarity of the
+    2) We set a threshold for the quantitative delay differ-        delay difference does not flip, hence the response is stable.
+        ence in the authentication phase. The responses, whose         As illustrated in Fig. 3(c), the response of a conventional
+        corresponding delay differences fall within the toler-      APUF can be expressed as
+        ance range, can pass authentication. This method can                                        
+        accommodate the variation of delay difference due to                                            1 ∆D>0
+                                                                                     Response =                                   (1)
+        environmental changes and improve the reliability of                                            0 ∆D<0
+        PUF. The output response will be obfuscated by a linear     where ∆D = delaybottom - delaytop , whose polarity deter-
+        feedback shift register (LFSR), increasing the uniformity   mines the response of APUF. When ∆D is close to 0, the
+        of the response.                                            response is sensitive to environmental changes. Note that the
+    3) The DDQ-APUF is implemented on a Xilinx Artix-7              value of ∆D is changing continuously under environmental
+        FPGA board. The test results show that the proposed         variation. If we can obtain the quantitative delay difference
+        DDQ-APUF achieves very high reliability without CRP         ∆D as the response and set an appropriate threshold in the
+        filtering. The hardware resource requirement of the         authentication phase, the reliability of APUF can be improved
+        DDQ-APUF is lower than those of the state-of-the-art        dramatically.
+        mechanisms, and it is suitable for resource-constrained        One of the main challenges in implementing APUF on
+        systems.                                                    FPGAs is signal path asymmetry caused by layout and routing
+                                                                                                                                                                     3
+
+
+
+
+    Delay
+                                                                                                     Accordingly, we can express the final delay difference
+
+
+
+
+                                               Delay
+                                                                                                    ∆tn−1 as
+                                                                                                                     ∆tn−1 = Ω · Φ(C)                   (4)
+                                                                                                    where the delay vector is Ω=(ω0 ,ω1 ,...,ωn ), the parameters of
+                                                                                                    which are given by
+
+                                                                                                                             δ00 − δ01
+            (a) Unstable CRP       T/V change          (b) Stable CRP           T/V change                           ω0 =
+                                                                                                                                 2
+                                                                                                                               0        1
+                                                                                                                             δn−1  + δn−1
+    ∆D
+
+
+
+
+                                                         Delay of the APUF upper path                                 ωn =                                       (5)
+                                                         Delay of the APUF lower path
+                                                                                                                                    2
+                                                                                                                             δ 0 + δi−11
+                                                                                                                                            + δi0 − δi1
+                                                         ∆D of the stable CRP                                         ωi = i−1
+     0                                                   ∆D of the unstable CRP
+                                                                                                                                          2
+                                    T/V change                                                      where the feature vector Φ(C) represents the feature vec-
+                      response flip polarity                                                        tor extracted from the n-bit input    Qkchallenge, Φ(C)=(ϕ1 (C),
+            (c) ∆D of the CRP
+                                                                                                    ϕ2 (C),...,ϕk (C),1)T ,with ϕi (C)= j=i (1 − 2cj ).
+                                                                                                       The response of the APUF can be further expressed as
+Fig. 3. The delay varies with temperature/voltage.
+                                                                                                                             r = ε(∆tn−1 )                        (6)
+                                                                                                    where ε denotes the Heaviside step function, i.e.,ε(∆tn−1 ) =
+                     pi                                                                             0 if ∆tn−1 < 0 and ε(∆tn−1 ) = 1 if ∆tn−1 > 0.
+                                                                        ui
+  ∆ ti-1                       ∆ ti-1+  i0                ∆ ti-1                    ∆ ti-1+  i1   C. Related Work of Reliability Enhancement Techniques
+                                                                        vi
+                     qi                                                                                Two main methods are commonly applied to improve the
+                                                                                                    reliability of PUFs. The first method is postprocessing, such
+                    c i=0                                               c i=1                       as majority voting [24] and error correction codes (ECC)
+                                                                                                    [25]. The majority voting can improve reliability to a certain
+Fig. 4. Two possible path selections for a particular stage i
+                                                                                                    extent, but some unstable CRPs may still remain. ECC can
+                                                                                                    achieve extremely high reliability, but it requires storing helper
+                                                                                                    data. As the number of CRPs increases, the storage space
+limitations. Previous works have used Programmable Delay                                            required for the helper data also grows. This makes it suitable
+Lines (PDL) to improve delay element precision and address                                          only for weak PUFs with a small number of CRPs and
+this issue [20], [21], [22]. In this work, we not only employ                                       inapplicable to strong PUFs that have a large number of CRPs
+programmable delay units to mitigate the path asymmetry but                                         [26]. For example, [27] proposed a method using the Bose-
+also introduce additional delay units to quantify the delay dif-                                    Chaudhuri-Hocquenghem (BCH) code for error correction.
+ference between the two paths, expanding the output response                                        In this scheme, to obtain a 63-bit secure key, the system
+from 1-bit to 13-bit.                                                                               needs to generate 255 bits of the original data, of which
+                                                                                                    63 bits are the actual key bits and 192 bits are the parity
+                                                                                                    bits used for error correction. Moreover, the auxiliary data
+B. Mathematical Modeling of APUF
+                                                                                                    stored in NVM may potentially leak confidential information
+   In the previous section, we provided an overview of the                                          to attackers and threaten the security of PUF [28]. Compared
+basic APUF. In the following section, we will briefly introduce                                     to ECC, Maximum likelihood decoding scheme can achieve
+the mathematical model of APUF [23]. For the traditional                                            the same reliability with a lower hardware overhead [29], but
+APUF, we know that the challenge bit ci determines the                                              it has the disadvantage of requiring multiple instances of PUF
+specific propagation path in stage i. The four paths of stage                                       for key generation. Therefore, many lightweight reliability
+i are defined as q, p, u, and v. When ci = 0, the path of the                                       enhancement techniques are proposed to minimize the Bit
+i stage is parallel, and the delay difference between the two                                       Error Rate (BER) of PUF before applying ECC to reduce the
+symmetric circuits is defined as δi0 ; When ci = 1, the path of                                     hardware overhead. In [30], a multiple-arbiter scheme has been
+the i stage is cross, and the delay difference between the two                                      proposed to detect arbiter metastability by inserting either 4-
+symmetric circuits is defined as δi1 . δi0 and δi1 can be expressed                                 DFF or SR-latch arbiter after each pair of multiplexers. How-
+as                                                                                                  ever, this technique leads to response imbalance and introduces
+                          δi0 = pi − qi                                                             additional hardware overhead for detecting metastable states.
+                                                                (2)
+                          δi1 = ui − vi                                                             In [10], two trigger arbiters are used for metastability detec-
+  Let ∆ti be the sum of the delay differences up to stage i.                                        tion. This unique challenge-response quadruple classification
+Referring to Fig 4. We can obtain the following equation.                                           greatly reduces the errors generated by the PUF and decreases
+                                                                                                    the correction burden during postprocessing. However, this
+            ∆ti = (1 − 2ci ) · ∆ti−1 + (1 − ci ) · δi0 + ci · δi1                             (3)   approach still faces the problem of large hardware overhead.
+                                                                                                                                        4
+
+
+
+    The second approach to fortify the PUF reliability is CRP            Fluctuations in environmental conditions, such as changes
+filtering [31], [32]. This method involves repeatedly gener-          in temperature and operational voltage, may induce variability
+ating CRPs under different conditions (for example, varying           within a specific range in the DDQ-APUF’s delay difference.
+temperatures or operating voltages) and selecting CRPs that           During authentication, establishing a predefined tolerance mar-
+can be reliably reproduced, while discarding those that cannot        gin allows authentic PUFs to be verified under the impact
+be consistently replicated across different environments. The         of environmental variations. Given that the authentication
+method of repeated measurements generally requires consid-            protocol incorporates a substantial number of bits in the PUF
+erable time and costs [15]. Many efficient methods have been          response, encompassing delay difference from several DDQ-
+introduced to achieve high reliability. They can be classified        APUF units, an illegitimate PUF’s single unit delay difference
+into two categories. The first involves an integration of self-test   might coincidentally fall within the authentication tolerance.
+circuits within PUF circuits. Such methods often require an           However, the collective responses from multiple PUF units
+addition of extra circuits to identify unstable CRPs, increasing      are improbable to entirely conform to this tolerance window.
+both the hardware resource consumption and complexity [33],           Thus, this approach not only guarantees the authentication
+[34], [35]. Another method employs machine learning models            of legitimate PUFs amidst environmental changes but also
+to predict PUF delay differences to filter out unreliable chal-       prevents the unauthorized verification of illegitimate PUFs.
+lenges, without the need of additional hardware resources [36],       The setup of a tolerance threshold enhances the reliability of
+[37], [19]. For example, [37] uses machine learning to select         APUFs, but it may also introduce a misjudgment. Therefore,
+stable CRPs, with a training set consisting of 5000 CRPs. Each        in the authentication phase, after balancing the reliability
+CRP needs to be tested 100,000 times repeatedly, making the           and misjudgment probability, the tolerance threshold is set
+process highly time-consuming. The work in [19] proposed              at 3, with a detailed analysis provided below. Additionally,
+a more efficient online reliability evaluation (ORE) scheme           in the process of the threshold selection, the factors, such
+evaluates each CRP under three different delay configurations,        as process variations, temperature, and voltage changes, have
+requiring only three tests per CRP to achieve the same reli-          been considered in the reliability test. As a result, the threshold
+ability. However, it is still possible that potentially unreliable    we set is fixed and does not vary under different conditions.
+CRPs may not be discarded due to the imperfect preselection
+criteria. In order to reduce the likelihood that potentially
+unstable CRPs are not discarded, the discard ratio range is           B. DDQ-APUF Design
+set as wide as possible, which means that a high percentage              In this paper, 6 configurable delay units are added to the
+of CRPs are discarded. For example, the bit-self-test(BST)            upper and lower paths of APUF respectively, as shown in Fig.
+strategy is used to flag unreliable CRPs [15]. Ultimately, only       5. The delay unit has two states. The delay in the low latency
+66.85% of the CRPs are retained and the BER is reduced                state can be ignored, and the delay time in the high latency
+to 10−9 . By implementing CRP filtering, the PUF-FSM [18]             state is delayt . Note that the number of configurable delay
+selects only 1% of the total set of CRPs, resulting in a final        units on the shorter path must be sufficient to ensure that the
+reliability at 100%. This results in a significant reduction in the   arbiter’s output can flip when all elements are set to high delay.
+number of available CRPs. Moreover, during the CRP filtering          The results of testing 10 PUF instances with 10,000 CRPs
+process, the CRP reliability flag, which is the data used to mark     show that adding six extra delay units is sufficient. Therefore, 6
+reliable CRPs, is stored in NVM. This could potentially leak          configurable delay units are added to the upper and lower paths
+confidential information about the PUF to attackers, which            of APUF respectively. We configure the delay units according
+will increase the modeling attack vulnerability and reduce the        to the phases S0 ∼ S12 , as shown in Fig. 5. In phases S0 ∼S5 ,
+number of CRPs required for a successful modeling attack.             all delay units on the lower path remain in a low latency state,
+[38], [39]. Therefore, it is highly desirable to have an approach     while on the upper path, the number of delay units configured
+that simultaneously achieves low overhead, minimal discarding         for high latency gradually decreases from six to only one.
+of CRPs, and high reliability.                                        For S0 phase, all the 6 delay units at upper path are set to
+                                                                      high latency state, while all the delay units at lower path are
+                   III. P ROPOSED M ETHOD
+                                                                      configured to low latency state, and R[0] is generated. For
+A. Basic Concept                                                      S1 phase, 5 delay units at upper path are set to high latency
+   This section elucidates the fundamental principles of the          state, while all the delay units at lower path are configured
+DDQ-APUF. Initially, the objective is to ascertain the delay          to low latency state, and R[1] is generated. The rest can be
+difference between two symmetrical paths. This is achieved            done in the same manner. During phases S7 to S12 , all delay
+by analyzing the output response of a conventional APUF               units in the upper path are kept in a low latency state, while
+structure, which reveals the path with lesser delay. Into this        on the lower path, the number of delay units configured for
+path, a configurable delay is introduced and incrementally            high latency gradually increases from one to six. Note that
+increased until the output response of the APUF inverts. The          R[6] is generated during S6 phase when all the 12 delay units
+magnitude of delay introduced at this juncture represents the         are in low delay state. Ultimately, R[0]∼R[12] are generated
+delay difference between the symmetrical paths. Subsequently,         in phases S0 to S12 , respectively, and together form the 13-
+this quantified delay difference, as opposed to the traditional       bit data RO , which is taken as the output response of the
+APUF’s delay difference polarity, serves as the PUF’s re-             DDQ-APUF. The approximation of ∆D can be obtained from
+sponse.                                                               RO . Assuming RO = 0000011111111, it can be seen that the
+                                                                                                                                                                                            5
+
+
+
+
+                                                                                                                                                      64-stage C [63:0]
+                                          S0    Delay       Delay    Delay    Delay    Delay    Delay
+                                                                                                                   R[0]                                                                64-bit C
+                                                                                                                                                     DDQ-APUF
+                                          S1    Delay       Delay    Delay    Delay    Delay
+                                                                                                                   R[1]                                 core
+                                                 ...                                                               ...                               13-bit RO
+                                          S5    Delay                                                              R[5]
+                                                                                                                                                 RO1: 0000011111111
+                                                                                                                                                 RO2: 0000000011111
+                                                                                                                                                 RO3: 0011111111111
+                                                                                                        R[i]
+                               ...             S6                                          Arbiter                 R[6] = 13-bit                                                  C [3:0]
+                                                                                                                                   RO
+                                                                                                                                                                                 SL
+                                                                                                                                                                                       Control
+               C1         C2
+                               ...      Cn
+                                                                                                                                                         13-stage
+                                                                                                                                                          LFSR                          Unit
+                                          S7        Delay
+                                                                                                                   R[7]
+                                                                                                                                                     13-bit RL
+                                          S8        Delay    Delay
+                                                                                                                   R[8]
+                                                                                                                                                 RL1: 1011011101011
+                                                    ...                                                            ...                           RL2: 0111001010110
+                                          S12       Delay    Delay    Delay    Delay   Delay    Delay
+                                                                                                                   R[12]                         RL3: 1010110010100
+
+
+
+Fig. 5. Block diagram of the proposed DDQ-APUF.
+
+
+
+response bits flip at R[4] and R[5]. The value of ∆D in S4
+and S5 phases are given by
+      ∆D4 = delaybottom − delaytop − 2 ∗ delayt < 0                               (7)
+        ∆D5 = delaybottom − delaytop − delayt > 0                                 (8)
+where ∆D4 and ∆D5 represent the difference in delay be-
+tween the lower and upper paths of DDQ-APUF in phases
+S4 and S5 , respectively. delaybottom and delaytop are the                                                                         R=0                    R=1
+inherent delay times of the lower and upper paths of the APUF,
+                                                                                                                                              0                                   ∆D
+respectively, excluding any additional configurable delay units.
+Therefore, we can deduce that the inherent delay difference                                                                                  （a）
+∆D between the lower and upper paths of the APUF lies
+between delayt and 2∗delayt . In this way, the delay difference
+quantization is achieved.
+   Fig. 6 illustrates the difference in the probability distribution
+of the output responses between traditional APUF and DDQ-
+APUF, as well as during the authentication process. As shown
+                                                                                                               0    1      2   3    4    5   6       7    8   9   10   11   12   13
+by the horizontal axis in Fig. 6(b), we use the number of
+‘1’s in RO to indicate the transition point from 0 to 1. The                                                                                     0                                ∆D
+conventional APUF has a 1-bit response, while the DDQ-                                                                                       （b）
+APUF has a 13-bit response with 14 types of value. The
+conventional APUF must generate a response equal to the
+original one to pass authentication. In contrast, ∆D of the
+DDQ-APUF may vary slightly under environmental changes,                                        Fig. 6. Probability distribution of the number of ’1’ in the response of (a)
+but it can still pass authentication as long as the response                                   conventional APUF and (b) DDQ-APUF.
+variation is within a threshold. Therefore, DDQ-APUF is fault-
+tolerant and highly reliable. For example, the deep red mark
+at 7 in Fig. 6(b) indicates that there are seven bits of 1 in RO .                             red color in Fig.5(b). If the noise-induced flipped response bit
+It can be inferred that a transition occurs between R[6] and                                   falls within the fault tolerance threshold, the response can still
+R[7], thus deducing that ∆D<delayt . Due to the small path                                     be authenticated successfully.
+delay difference at this point, it is sensitive to environmental                                  However, the responses generated by DDQ-APUF are not
+noise, causing the output of the arbiter to flip, which would                                  uniform but comply with normal distribution, as shown in Fig.
+result in the failure of traditional APUF authentication. DDQ-                                 6(b). To improve the uniformity of DDQ-APUF, we obfuscate
+APUF adopts a fault tolerance threshold as shown by the light                                  the 13-bit response RO by using it as the seed of an LFSR.
+                                                                                                                                   6
+
+
+
+The number of shifts SL of the LFSR is determined by 4-bit        Algorithm 1 Authentication response.
+challenge data. The final output of the LFSR is used as the         procedure Authentication response
+final response of the DDQ-APUF. In this way, the uniformity             Define threshold=3
+                                                                                        ′
+of DDQ-APUF is improved. Fig. 5 shows an example that 3                 RO ← P(C), RO       ← P(C)
+                                                                                    ′
+responses RO1 ∼ RO3 are obfuscated by the LFSR to generate              if RO ̸= RO
+                                                                                          ′
+3 final responses RL1 ∼ RL3 . During the authentication phase,              e = RO ⊕ RO
+the response RO can be easily recovered with the same type                  ∆e = The number of 1 in e
+LFSR, RL and the same SL .                                                  if (∆e ≤ threshold)
+                                                                                printf True
+                                                                            else
+                                                                                printf False
+C. Mathematical Model of Delay Difference Quantization                  else
+Method                                                                      printf True
+  According to the mathematical model of APUF and the               end procedure
+mathematical principle of the DDQ-APUF structure, the model
+of delay difference quantization is described as
+                                                                     In Algorithm 1, we present a method to improve reliability.
+                                                                  For the number of bits that differ between the regenerated
+             R[i] = ε(∆tn−1 + (i − 6) · delayt )            (9)   response and the original response data, we have set a toler-
+                                                                                                          ′
+                                                                  ance. RO is the first measurement, RO      a second measurement,
+                                                                                     ′
+where R[i] refers to the response output at each phase from       and e = RO ⊕ RO (XOR operation) represents the difference
+S0 to S12 . The 13-bit response RO before LFSR obfuscating        between the two responses, then ∆e is the number of ‘1’s in e.
+                                                                                                        ′
+can be expressed as                                               Due to measurement noise RO ̸= RO         for the same selected C,
+                                                                  if ∆e is within the fault tolerance threshold, authentication can
+                                                                  still be passed; otherwise, it cannot pass the authentication. In
+              RO = (R[0], R[1], R[2], ..., R[12])         (10)    this way, the reliability is improved.
+                                                                     It should be noted that by establishing a fault tolerance
+Given that the delay differences for the two symmetrical          threshold, the conditions for authentication approval are broad-
+signal transmission paths are typically minimal, we suggest       ened. This expansion can enhance the system’s probability of
+that incorporating up to six delay units on one path should       correctly accepting legitimate inputs. However, it may also
+suffice to trigger an inversion in the arbiter’s output.          inadvertently increase the likelihood of erroneous acceptances,
+                                                                  which might lead to instances of misjudgment. This phe-
+                                                                  nomenon can be described as
+D. Theoretical Analysis of Delay Difference Quantization
+Method
+                                                                  pw = P r(∆e ≤ threshold, ry ← Py (C), rn ← Pn (C)) (12)
+   While the challenge-response behavior of a PUF can and
+actually often is modeled mathematically, PUFs are ultimately
+physical objects. It thus makes sense to describe our frame-      where pw is the probability of a misjudgment, which indicates
+work through formal language.                                     the likelihood that the responses ry and rn generated by a
+                                                                  legitimate device Py and an illegal device Pn are both within
+   A PUF P is a physical system that can be stimulated with
+                                                                  the authentication threshold for the same C. The nominal delay
+so-called challenges C from a challenge set Cp ⊆ (0, 1)k , upon
+                                                                  difference ∆t at the arbiter, with respect to the set of all
+which it reacts by producing corresponding responses ri from
+                                                                  challenges, is assumed to be normally distributed [41]. This
+a response set Rp ⊆ (0, 1)m [40]. We denote this process as
+                                                                  distribution has zero mean and standard deviation σ0 , as shown
+r ← P(C). Since PUF P is a physical device, it suffers from
+                                                                  in Fig.7(a). In the context of Delay Difference Quantization,
+measurement noise. This means that repeating the same input
+                                                                  the distribution of traditional APUF delay differences can be
+challenge to P can result in different response bits. we define
+                                                                  transformed into a distribution of the transition points of RO .
+the failure probability pb of PUF P with respect to a challenge
+                                                                  This distribution follows a normal √ distribution with a mean
+C ⊆ Cp as
+                                                                  of 7 and a standard deviation of 14, spanning a range from
+                                                                  1 to 13, as shown in Fig.7(b). The probability of flip point
+          pb = P r(r ̸= r′ , r ← P (C), r′ ← P (C))       (11)    x is computed by integrating the probability density function
+                                                                  (PDF).
+where r, r′ ∈ Rp and the probability is over measurement                                                     
+noise. From the legitimate user perspective, we define the                                      1       x−µ
+                                                                                P r(X ≤ x) = erf c −     √
+reliability of P with respect to C as 1-pb . Let pb be the                                      2          2σ
+probability that the response bit flips due to measurement                                           Z ∞                       (13)
+                                                                                                   2        2
+
+noise, given a selected challenge C.                                              with erf c(t) = √      e−z dz
+                                                                                                    π t
+                                                                                                                                                    7
+
+
+
+        1                                                                            logic operations into linear functions by analyzing the in-
+       2  0                                             PDF(∆D)                    ternal logic structure of PUFs, thereby approximating the
+                                                                                     mapping relationships [43]. Methods to enhance the resistance
+       (a)                                                                           of PUFs to modeling attacks can be divided into two cate-
+                                                                                     gories: challenge/response obfuscation [18], [44], [45], [46]
+          0                                                                          and strengthening the nonlinearity of PUF circuits [7], [47],
+        1 -3σ                            0                         3σ                [48]. Adopting challenge or response obfuscation techniques
+      2 7                                            PDF(flip point)                to prevent attackers from obtaining the true CRPs of a PUF
+                                                                                     can effectively defend against black-box attacks. However,
+      (b)                                                                            in white-box attacks, attackers obtain the structure of the
+                                                                                     PUF circuit through means such as reverse engineering, hence
+          0                                                                          challenge or response obfuscation techniques cannot provide
+                 1   2   3   4   5   6   7    8   9   10 11 12   13
+        1                                                                            defense. Structural nonlinearization implements nonlinear PUF
+      2 7                                            PDF(flip point)                structures to obstruct ML-based attacks. Among the nonlinear
+                                                                                     PUF structures, XOR APUF [5] is one of the most extensively
+      (c)                                                                            studied architectures. It executes the XOR operation across the
+                                                                                     response bits of multiple parallel APUFs, where theoretically,
+          0                                                                          the complexity of modeling attacks is exponentially related to
+                 1   2   3   4   5   6   7    8   9   10 11 12   13
+                                                                                     the number of parallel APUFs [49]. Inspired by XOR APUF,
+                                                                                     we propose pseudo-XOR (PXOR) DDQ-APUF to enhance its
+Fig. 7. (a) Probability density function curve of APUF response (b) Proba-           resistance against modeling attacks.
+bility distribution of the flip point at 3 (c)Probability distribution of the flip      In this study, we evaluated the machine learning resistance
+point at midpoint 7.
+                                                                                     of the structure proposed in this paper using four well-
+                                                                                     known attack algorithms, including Logistic Regression (LR),
+where µ is the mean of the normal distribution and σ is                              Support Vector Machine (SVM), Covariance Matrix Adap-
+the standard deviation. Therefore, the misjudgment probability                       tation Evolution Strategy (CMA-ES), and Artificial Neural
+formula can be expressed as                                                          Networks (ANN). In the test, 80% of the dataset was used for
+                                                                                     training the machine learning models, with the remaining 20%
+     pw = P r(x + threshold) − P r(x − threshold)                           (14)     used for testing. Fig. 9 shows the modeling attack prediction
+                                                                                     rates for the 64-stage APUF, DDQ-APUF, 3XOR APUF, and
+   It can be seen from Fig.7(b) and (c) that the pw are generally                    3PXOR DDQ-APUF with different training set size. It can
+different for different flip points. when the flip point is at                       be intuitively seen from the figure that for APUF, all four
+the midpoint 7, the probability of misjudgment is maximized,                         ML algorithms achieve high prediction rates with a small
+as shown in Fig.7(c). Consequently, setting the threshold at                         dataset. However, among the other structures, only CMA-
+7 can result in a potential maximum error rate of 58.2%.                             ES demonstrated an upward trend in prediction rates as the
+Fortunately, a single device usually contains multiple PUFs,                         size of the training set is increased. Therefore, our discussion
+generating multiple responses under one challenge. A device is                       primarily focuses on the CMA-ES algorithm, a method proven
+only validated if all responses are successfully authenticated;                      to be effective and commonly utilized in attacking XOR-
+otherwise, it’s marked as illegitimate. Thus, the likelihood of                      APUFs [50], [51], [52].
+misidentifying an illegitimate device as legitimate diminishes                          We assume that an adversary can obtain the circuit structure
+as the number of PUFs involved in authentication increases.                          through reverse engineering and acquire a portion of the orig-
+Taking the authentication of 64 PUFs embedded in single                              inal CRPs through untrusted channels. Based on the method
+device as an example, and assuming that the pw for each                              presented in [23], which utilizes the CMA-ES algorithm for
+authentication is at its maximum, the cumulative pw would                            modeling attacks on target PUFs, we have conducted attacks
+be (58.2%)64 , evidently much less than 1. Consequently, the                         on several PUF structures proposed in this paper. Firstly, a
+DDQ-APUF achieves high reliability with negligible misjudg-                          Python model is constructed based on the target PUF to gen-
+ment probability pw .                                                                erate training and testing datasets. Subsequently, an adaptive
+                                                                                     function is developed according to the mathematical model
+                                                                                     of the target PUF. We select CMA-ES for the capability of
+E. Resistance to Modeling Attack                                                     using a customized fitness function, feed the solution from the
+   Ideally, the output response of an APUF is only determined                        fitness function back to CMA-ES, and continuously optimize
+by internal variations and thus unpredictable to attackers.                          the parameter vector obtained from CMA-ES until the desired
+However, due to the absence of mechanisms to restrict access                         parameter vector is achieved. Finally, the testing set and the
+to CRPs, attackers can easily construct mathematical models                          optimal parameter vector obtained are used in the fitness
+through machine learning (ML) after collecting a significant                         function to determine the final prediction rate.
+number of CRPs, thereby accurately simulating and predicting                            DDQ-APUF is a variant of APUF, hence susceptible to
+the behavior of the target APUF [42]. Additionally, there                            ML attacks. The output response of a DDQ-APUF before
+is an approximation attack method that simplifies complex                            undergoing LFSR obfuscating is 13 bits, with 14 possible
+                                                                                                                                 8
+
+
+
+
+                                                              n-bit RO1
+                                         DDQ-APUF core1
+
+
+
+                                                              n-bit RO2         RSUM    n-1 R
+                       Challenge         DDQ-APUF core2                     ∑           ∑       SUM i
+                                                                                                        R3PXOR
+                        Vector                                                          i=0     3
+
+
+                                                              n-bit RO3
+                                        DDQ-APUF core3
+
+
+Fig. 8. Structure of 3PXOR DDQ-APUF.
+
+
+
+values. We set a tolerance threshold (d =3) at the response        DDQ-APUF cores in the system will affect the final output
+flipping points, making the probability of passing the authen-     of the system, theoretically improving the system’s resilience
+tication by random guessing is 1/2, which is equivalent to that    to modeling attacks.
+of APUF. However, when conducting mathematical modeling               We evaluate the modeling attack resistance of 3XOR APUF
+attacks on DDQ-APUF within a Python environment, without           and 3PXOR DDQ-APUF under different tolerances using
+considering the influence of environmental noise and tolerance     CMA-ES algorithm, with the results shown as solid lines in
+threshold, there are 14 possible outcomes for DDQ-APUF so          Fig. 9. The 3XOR APUF achieves a 90% prediction rate with
+that the probability of success through random guessing is         20,000 CRPs, while the 3PXOR DDQ-APUF requires 25,000
+1/14, which is lower than the probability of passing authentica-   CRPs at a tolerance threshold d = 3, and 27,000 CRPs at
+tion by random guess for APUF. Therefore, intuitively, setting     d = 2. When training with 2 million CRPs, a prediction rate
+a smaller tolerance can reduce the attacker’s success rate of      of 86% is reached at d = 1, and only 48% at d = 0. These
+prediction, making DDQ-APUF more resistant to modeling             experimental results indicate that 3PXOR DDQ-APUF has
+attacks than conventional APUF.                                    stronger resistance to ML attacks compared to 3XOR-APUF,
+   The dashed lines in Fig. 9 demonstrate the prediction rates     especially when selecting lower tolerance, which can further
+of utilizing CMA-ES to attack a conventional APUF, a DDQ-          significantly enhance its capability to resist ML attacks.
+APUF without tolerance and a DDQ-APUF with a tolerance                In addition to changing the circuit structure by increasing
+of 3. To achieve a 90% prediction rate, the traditional APUF       the number of PUF primitives as mentioned above, we can
+only requires a training set of 500 CRPs, while the DDQ-           also enhance the security of PUFs through various protocols.
+APUF with a tolerance of 3 and the DDQ-APUF without any            For instance, by utilizing the erasable PUF technique [53],
+tolerance require training sets of 10,000 and 130,000 CRPs,        access to each CRP can be controlled, making it impossible
+respectively. Therefore, this experiment verifies that DDQ-        to remeasure an erased CRP. An active deception protocol
+APUF has stronger resistance to modeling attacks compared          can also be used to prevent ML-based modeling attacks [54].
+to traditional APUF, especially when a smaller tolerance is        The protocol outputs real CRPs at certain time intervals and
+adopted.                                                           inserts a large number of fake CRPs between the correct
+   To enhance the modeling attack resistance of DDQ-APUF,          CRPs. Therefore, the adversary will have to either wait for
+we introduce pseudo-XOR operations into DDQ-APUF to                an impractically long time to collect enough real CRPs by
+increase its nonlinearity. Fig. 8 shows the structure of a         directly querying the device or the ML model derived from
+3PXOR DDQ-APUF. RO1 ∼RO3 represents the n-bit output               the collected CRPs will be poisoned. All the above-mentioned
+responses generated by three DDQ-APUF cores with the               anti-attack techniques can be utilized to enhance the ML attack
+same ChallengeV ector. First, add the corresponding bits of        resistance of DDQ-APUF.
+RO1 ∼RO3 to obtain a decimal sequence RSU M . Then, sum
+the elements of RSU M and divide by 3 to get RP XOR . RSU M                         IV. E XPERIMENTAL R ESULTS
+and RP XOR can be expressed as                                        We implemented a 64-bit DDQ-APUF on Xilinx Artix-7
+                                                                   XC7A100T FPGAs. All the configurable delay units in the
+                 RSU M = RO1 + RO2 + RO3                   (15)    DDQ-APUF core are implemented by using LUTs [20]. As
+                                                                   shown in Fig. 10, the internal structure of an LUT is composed
+                                n−1                                of some SRAMs and several MUXs. When a series of signals
+                                X   RSU Mi
+                    RP XOR =                               (16)    (A1 , A2 , A3 , A4 , A5 and A6 ) are entered, a particular SRAM
+                                i=0
+                                      3
+                                                                   cell will be selected and wired directly to the output of
+where RSU Mi represents the ith number in sequence RSU M .         the LUT. An n-input LUT can be configured to implement
+Similar to DDQ-APUF, in the authentication process for             any n-input combinational logic function. By changing the
+3PXOR DDQ-APUF, a tolerance threshold for RP XOR can be            input signals of the LUT, it is possible to alter its internal
+set to improve reliability. Although PXOR is a linear operation,   signal transmission paths, thereby achieving control over its
+it ensures that any change in the response output of any           transmission delay.
+                                                                                                                                                                                                                                                                                                       9
+
+
+
+
+                                                 1 .0                                                                                                                                   1 .0
+
+                                                                                              A P U F                                                                                                                                                 A P U F
+                                                                                               D D Q -A P U F d = 3                                                                                                                                    D D Q -A P U F d = 3
+                                                 0 .8                                           D D Q -A P U F d = 0                                                                    0 .8                                                            D D Q -A P U F d = 0
+                                                                                                 3 X O R A P U F                                                                                                                                         3 X O R A P U F
+              P r e d ic tio n a c c u r a c y
+
+
+
+
+                                                                                                                                                     P r e d ic tio n a c c u r a c y
+                                                                                                  3 P X O R D D Q -A P U F d = 3                                                                                                                          3 P X O R D D Q -A P U F d = 3
+                                                                                                   3 P X O R D D Q -A P U F d = 0                                                                                                                          3 P X O R D D Q -A P U F d = 0
+                                                 0 .6                                                                                                                                   0 .6
+
+
+
+
+                                                 0 .4                                                                                                                                   0 .4
+
+
+
+
+                                                 0 .2                                                                                                                                   0 .2
+
+
+                                                        1 0 0   1 k                         1 0 k                          1 0 0 k                                                             1 0 0              1 k                         1 0 k                              1 0 0 k
+                                                                      T r a in in g s e t s iz e                                                                                                                        T r a in in g s e t s iz e
+
+                                                                            (a)                                                                                                                                               (b)
+
+                                                 1 .0                                                                                                                                   1 .0
+                                                                                                                                                                                                                                                       A P U F
+                                                                                                                                                                                                                                                        D D Q -A P U F d = 3
+                                                                                                                                                                                                                                                         D D Q -A P U F d = 0
+                                                 0 .8                                                                                                                                   0 .8                                                              3 X O R A P U F
+                                                                                                                                                                                                                                                           3 P X O R D D Q -A P U F d = 3
+              P r e d ic tio n a c c u r a c y
+
+
+
+
+                                                                                                                                                     P r e d ic tio n a c c u r a c y
+                                                                                                                                                                                                                                                            3 P X O R D D Q -A P U F d = 0
+
+                                                 0 .6                                                                                                                                   0 .6
+
+
+
+
+                                                 0 .4                                                                                                                                   0 .4
+                                                                                                     A P U F
+                                                                                                      D D Q -A P U F d = 3
+                                                                                                       D D Q -A P U F d = 0
+                                                                                                        3 X O R A P U F
+                                                 0 .2                                                    3 P X O R D D Q -A P U F d = 3
+                                                                                                                                                                                        0 .2
+                                                                                                          3 P X O R D D Q -A P U F d = 0
+
+                                                        1 0 0   1 k                         1 0 k                          1 0 0 k                                                             1 0 0              1 k                         1 0 k                              1 0 0 k
+                                                                      T r a in in g s e t s iz e                                                                                                                        T r a in in g s e t s iz e
+
+                                                                            (c)                                                                                                                                               (d)
+
+Fig. 9. Resistance of APUF, DDQ-APUF, 3XOR APUF and 3PXOR DDQ-APUF Under four ML algorithms(i.e., LR, SVM, CMA-ES and ANN). (a)
+Resistance against LR attacks. (b) Resistance against SVM attacks. (c) Resistance against CMA-ES attacks. (d) Resistance against ANN attacks. (Note:
+The random guess probability of APUF and 3XOR APUF is 1/2, while for DDQ-APUF and 3PXOR DDQ-APUF, the probability of random guessing is
+(2d + 1)/14.
+
+
+
+   To alleviate the asymmetry issue in the implementation of                                                                                   SRAM
+APUF on FPGA, two PDLs are utilized to form a non-path-                                                                                        values                                              A1   A2   A3          A4           A5       A6
+swapping switch block, which alleviates system delay devia-                                                                                                                                                                                                       A1
+                                                                                                                                                 1
+tions between the two delay chains [20], [21]. Additionally,                                                                                                                                                                                                      A2
+                                                                                                                                                                                                                                                                                      6-input
+                                                                                                                                                 0
+                                                                                                                                                                                                                                                                  ...
+
+
+
+
+                                                                                                                                                                                                                                                                                                   O
+to make the delays of the two paths as close as possible, an                                                                                                                                                                                                                           LUT
+
+automatic fine-tuning strategy [22] is employed to eliminate                                                                                                                                                                                                      A6
+
+
+                                                                                                                                                                                                        ...
+path asymmetry and delay skew caused by system variations.
+                                                                                                                                                ...
+
+
+
+
+Specifically, the system performs multiple measurements of                                                                                                                                                                                                    O
+
+the PUF output and automatically adjusts the PDL settings
+based on the measurement results until the uniformity of the
+                                                                                                                                                                                                                                                                    A1                             O
+PUF output approaches 50%.
+                                                                                                                                                 1
+   The red and blue arrows in Fig. 10 represent the signal                                                                                                                                                                                                                  Ci
+                                                                                                                                                 0                                                                           6-input LUT                                             A2 . . . A6
+transmission paths with maximum and minimum delays. For
+example, if A2 A3 A4 A5 A6 = ’11111’, the signal propagates
+through the red-line path, whereas if A2 A3 A4 A5 A6 = ’00000’,                                                                            Fig. 10. The internal structure of a 6-input LUT.
+the signal propagates through the path marked with the blue-
+lines. The lower blue-line path is slightly longer than the
+upper red-line path which results in a large propagation delay                                                                             is increased, which is equivalent to adding a delay to the upper
+difference between these two paths. As shown in Fig. 11(a),                                                                                path. Conversely, it is equivalent to adding a delay to the lower
+when the upper path is connected to a LUT whose delay                                                                                      path.
+configuration signals A2 A3 A4 A5 A6 are ’00000’, and the                                                                                     A computer is used as the host to send challenges and
+lower path is connected to a LUT whose delay configuration                                                                                 receive responses from the FPGA. Next, we present the perfor-
+signals A2 A3 A4 A5 A6 are ’11111’, the delay of the upper path                                                                            mance of the proposed DDQ-APUF derived from experimental
+                                                                                                                                                                                                                                  10
+
+
+
+
+                                                                                                                 100                                                                                        R O
+
+                                                                                                                  90
+ APUF                       delay       APUF
+ upper path                             upper path                                                                                                                                                          R L
+
+
+                                                                                                                  80
+              0                                      1
+
+
+
+
+ APUF                                   APUF                   delay
+                                                                                                                  70
+                                                                                                                  60
+ lower path                             lower path
+
+
+
+
+                                                                                          U n ifo r m ity (% )
+              1                                      0
+
+
+                                                                                                                  50
+                   （a）                                   （b）
+                                                                                                                  40
+                                                                                                                  30
+Fig. 11. The structure of delay unit.
+                                                                                                                  20
+tests. The concept of Hamming Distance (HD) will be used
+                                                                                                                  100 1 2 3 4 5 6 7 8 91011121314
+                                                                                                                                                                       R [i]
+in this section:
+                         m−1
+                                         !
+                      1 X                                              Fig. 12. The uniformity of DDQ-APUF.
+          HD(X, Y ) =        X[i] ⊕ Y [i] ×100%     (17)
+                      m i=0
+                                                                                                                                                                                            E x p e r m e n ta l R e s u lt
+where X and Y are two m-bit streams and X[i] represents the                                                1 4 0 0 0 0                                                                       N o r m a l D is tr ib u tio n
+i-th bit of X.
+                                                                                                           1 2 0 0 0 0
+
+
+A. Uniformity                                                              N u m b e r o f r e sp o n se
+                                                                                                           1 0 0 0 0 0
+
+   The uniformity metric is used as an estimate of the fraction                                                  8 0 0 0 0
+of ’1’ in a response string. The probability of occurrence
+                                                                                                                 6 0 0 0 0
+of ’1’ in the 13-bit PUF responses is measured, the ideal
+value is 50%. Since the DDQ-APUF response is multi-bit,                                                          4 0 0 0 0
+the uniformity is defined as
+                                            !                                                                    2 0 0 0 0
+                                    n
+                                1X
+         U nif ormity(Ri ) =          Rj [i] ×100%         (18)                                                              0
+                                n j=1                                                                                            0   1 0   2 0       3 0       4 0       5 0      6 0      7 0        8 0         9 0   1 0 0
+                                                                                                                                                 I n te r -c h ip h a m m in g d is ta n c e (%   )
+where i is the i-th bit of the response and n represents the
+number of responses, Rj is the j-th response under different           Fig. 13. The uniqueness of DDQ-APUF.
+challenges. In our experiment, 10,000 challenges are randomly
+generated and input into three chips with 10 DDQ-APUF
+instances per chip. The uniformity of RO is not ideal because          We input 10,000 randomly generated challenges into three
+RO always starts with ’0’ and ends with ’1’, so the uniformity         chips with 10 DDQ-APUF instances per chip, and the average
+gradually increases with the number of bits in RO . To address         uniqueness measured is 47.28%, as shown in Fig. 13.
+this issue, RO is feeded into an LFSR and generate RL with
+an uniformity of around 50%, as shown in Fig. 12.                      C. Reliability
+                                                                          Reliability is typically used to assess the reproducibility
+B. Uniqueness                                                          of a PUF’s response to the same challenge in different en-
+  Uniqueness is defined as if the same challenge is given, the         vironments, and ideally, PUF reliability is 100%. This can
+degree of difference that should exist between the responses           be obtained by measuring the on-chip HD of the PUF. The
+generated by different PUF instances for the same PUF design.          definition of reliability is given by
+Ideally, the uniqueness should be 50%. The uniqueness of a                                                          !
+                                                                                                           k   n
+PUF can be obtained by measuring its inter-chip HD. The                                                 1 X X Sij
+                                                                                Reliability = 1 −                    ×100%      (20)
+definition of uniqueness is given by                                                                    k i=1 j=1 n
+                                                                                                                                                  
+                                 k−1   k
+                                                        !                                                                                                  1         HD(Rj , Rij )>d
+                           2     X X       HD(Rx , Ry )                                                                                Sij =                                                                                    (21)
+U niqueness =        1−                                  ×100%                                                                                             0         HD(Rj , Rij )<d
+                        k(k − 1) x=1 y=i+1    n
+                                                            (19)       where k is the number of tests, n is the number of CRPs, Rj
+where k represents the number of PUF instances tested, Rx              is the original response for the j-th challenge, Rij is the Rj
+and Ry respectively represent the responses generated by the           under the i-th test, Sij represents whether Rij is an error code,
+x-th and y-th instances under the same test conditions, and            and d is the threshold for fault tolerance in authentication.
+n represents the number of all responses of PUF instances.             Fig. 14 presents the number of ’1’ in the responses of the
+                                                                                                                                                                11
+
+
+
+
+                                                                                                    100
+                   0                               1
+
+
+
+
+                                                                                                     98
+                                  （a）
+
+
+     0    1   2    3    4   5    6   7    8    9   10   11   12   13
+
+                                  （b）
+                                                                                                     96
+                                                                                                     94
+
+
+
+
+                                                                             R e lia b ility (% )
+Fig. 14. The number of ’1’ in the responses of (a) the conventional APUF
+and (b) DDQ-APUF in the authentication phase.                                                        92      a g in g d = 1
+                                                                                                              a g in g d = 2
+
+                                                                                                     90        a g in g d = 3
+                                                                                                                d = 1
+
+
+                                                                                                     88
+conventional APUF and DDQ-APUF. Assuming the original                                                            d = 2
+responses of the conventional APUF and DDQ-APUF are                                                               d = 3
+
+’1’ and ’0000001111111’, respectively. Therefore, the original
+number in Fig. 14 (a) and (b) are ’1’ and ’7’, respectively.
+                                                                                                      -50-40-30-20-100102030405060708090
+                                                                                                                            T   e m   p e r a t u r e ( ℃   )
+
+
+Note that the latter can provide fault tolerance as highlighted
+by blue, but the former cannot.                                            Fig. 15. Reliability of DDQ-APUF with different tolerances.
+   In our experiments, 10,000 challenges were applied on 10
+PUFs and the tests were repeated 30 times. The environmental
+temperature range is from -40°C to 80°C. The reliability is                tolerance threshold d = 1, it is clear that the reliability reduces
+directly related to the threshold d. Note that the range of                significantly compared with pre-aging conditions. However,
+fault tolerance cannot exceed half of the total number of bits,            with the increase of d, the effect of aging was mitigated. There-
+because the authentication threshold of the conventional APUF              fore, the results verify that DDQ-APUF has aging resistance.
+is also half of the full range. The measured reliability is shown
+as the solid lines in Fig. 15. As can be seen, with the increase           E. Performance Comparison
+of the tolerance threshold d, the reliability of DDQ-APUF                     Table I presents a comparison between the DDQ-APUF,
+gradually improves, and when d = 3, the average reliability                traditional APUF, and other improved PUFs reported in the
+reaches 99.95%. Therefore, we set d to 3 finally.                          literature. All of these PUF architectures are implemented on
+   Notably, applying XOR to multiple PUF instances can                     FPGAs, predominantly using the Artix-7 platform. Traditional
+enhance resistance to modeling attacks, but it may also reduce             APUF [20] demonstrates challenges in achieving high relia-
+the reliability [51], [55]. This is because if the response of             bility on FPGA platforms, recording a reliability of merely
+a single PUF is affected by environmental noise and exhibits               94%. FF-APUF [56], a compact improved PUF with low
+instability, XOR operations may accumulate these instabilities,            hardware overhead, attains a reliability of 97.1% without
+thereby increasing the probability of erroneous responses in               employing additional reliability enhancement techniques. [58]
+the final output. The 3PXOR DDQ-APUF can effectively                       achieves 99.55% reliability using majority voting technique,
+resolve this issue. The DDQ-APUF outputs response data with                but at a high hardware consumption. [57], [59], and [60]
+quantified delay differences. The pseudo-XOR operation of                  implement CRP filtering to achieve reliability ranging from
+the 3PXOR DDQ-APUF averages the delay difference data                      95% to 98.31%, yet [59] and [60] incur substantial hardware
+from three DDQ-APUFs. While the environmental noise might                  consumption. [10] and [23] achieve more than 99% reliabil-
+cause an increase or decrease to the delay difference data                 ity. However, [10] involves both CRP filtering and majority
+of a single DDQ-APUF, but the average delay difference                     voting techniques, resulting in high hardware expenditure.
+of the three DDQ-APUFs is likely to remain close to the                    [15] utilizes CRP filtering to achieve a low BER of 10−9
+typical value. During the authentication phase, a tolerance                but discards 33.15% of CRPs. Notably, all improved PUFs,
+threshold similar to that of the DDQ-APUF is set. Even if a                except for [56] and [58], require NVM to store the flag bits
+single DDQ-APUF becomes unstable, it is still likely to pass               for marking unstable CRPs, potentially exposing confidential
+authentication. Therefore, the proposed 3PXOR DDQ-APUF                     PUF information and increasing vulnerability to modeling
+has a less affection by the pseudo-XOR operation compared                  attacks. In contrast, DDQ-APUF demonstrates superior reli-
+with the XOR APUF.                                                         ability on FPGA platforms without discarding any CRPs or
+                                                                           requiring NVM. Moreover, it exhibits excellent randomness
+D. Aging Experiment                                                        and uniqueness characteristics. Regarding hardware resource
+   We carried out the aging process by heating the FPGA at                 utilization, DDQ-APUF also shows efficient usage, presenting
+high temperatures. The FPGA board was operated at 80°C                     lower hardware overhead compared to other improved PUFs.
+for 3 hours. Then the board was withdrawn from the stress
+environment and was cooled down for an hour. After that, the                                      V. C ONCLUSIONS
+reliability of PUF was measured under different temperatures.                 This paper presented an APUF structure based on quantized
+We calculated the reliability using (7), and the results of the            delay differences, where the response data contains informa-
+aging test are shown as the dashed lines in Fig. 15. When the              tion on the delay differences of symmetric paths in the APUF.
+                                                                                                                                                                    12
+
+
+
+                                                                     TABLE I
+                                           P ERFORMANCE C OMPARISON WITH S TATE - OF - THE -A RT S TRONG PUFS
+
+                                                                                              Temperature                            NVM       Hardware
+                         Type       Stage Uniformity Uniqueness          Reliability                             Technology
+                                                                                                Range                             Requirement Consumption
+                                                                                                                                               156 LUTs
+    WIFS’10         Conventional      64      51.4%         51.6%          94.0%
+                                                                                             −40 ∼ 80◦ C           Artix-7            No         69 FFs
+     [20]             APUF                                                                                                                     302 LUTs
+                                     128      48.6%         51.3%          94.4%
+                                                                                                                                                132 FFs
+                                                                                                                                               419 LUTs
+  TIFS’19 [10]       MISR PUF        128         -          49.7%           100%a            −40 ∼ 90◦ C           Artix-7            Yes
+                                                                                                                                                264 FFs
+                                                                                                                                               150 LUTs
+ACCESS’20 [15]       BST-APUF         64      50.3%         49.1%      <10−9 (BER)b          −30 ∼ 80◦ C           Artix-7            Yes
+                                                                                                                                                 47 FFs
+                                                                                                                                               384 LUTs
+ TETC’21 [56]         FF-APUF         64       47%         41.53%          97.10%               0 ∼ 75◦ C          Artix-7            No
+                                                                                                                                                512 FFs
+                                                                                                                                               395 LUTs
+ TCASI’21 [57]       RSO-APUF        128         -          49.8%           95%b                    -              Artix-7            Yes       176 FFs
+                                                                                                                                              4 KB NVM
+ACCESS’22 [58]          APUF          64      51.84%       46.21%          99.55%c              0 ∼ 85◦ C          Artix-7             No          87 slicesd
+                                                                                                                                                  731 LUTs
+  IOTJ’22 [59]         CT PUF         64       50%           50%          95.87% b          −50 ∼ 125◦ C           Artix-7            Yes
+                                                                                                                                                   486 FFs
+                                                                                                                                                 1175 LUTs
+  TIFS’23 [60]         TP PUF         64       50%         49.34%          98.31%b                  -         ZYNQ-7000 SoC           Yes
+                                                                                                                                                   451 FFs
+                                                                                                                                                  537 LUTs
+  IOTJ’23 [23]      (64,4)-OIPUF      64       50%           40%           99.0%b           −20 ∼ 100◦ C           Artix-7            Yes
+                                                                                                                                                    8 FFs
+                                                                                                                                                  237 LUTs
+                                      64       50%         47.28%          99.95%
+   This work        DDQ-APUF                                                                 −40 ∼ 80◦ C           Artix-7             No          180 FFs
+                                                                                                                                                  365 LUTs
+                                     128       50%         47.65%          99.91%
+                                                                                                                                                   216 FFs
+ a With CRP filtering and majority voting.
+ b With CRP filtering.
+ c With majority voting.
+ d Each slice contains 4 LUTs, 8 FFs and other logical resources.
+
+
+
+
+By setting a tolerance for the delay difference during the                              [9] M. Majzoobi, F. Koushanfar, and M. Potkonjak, “Lightweight secure
+authentication phase, it achieves a reliability of over 99.9% at                            PUFs,” in IEEE ACM Int. Conf. Comput. Des. Dig. Tech. Pap. (ICCAD),
+                                                                                            2008, pp. 670–673.
+temperatures ranging from -40 to 80 ◦ C, without discarding                            [10] S. S. Zalivaka, A. A. Ivaniuk, and C.-H. Chang, “Reliable and modeling
+CRPs, the requirement for NVM, and with low hardware over-                                  attack resistant authentication of arbiter PUF in FPGA implementation
+head. Additionally, the DDQ-APUF has stronger resistance to                                 with trinary quadruple response,” IEEE Trans. Inf. Forensic Secur.,
+                                                                                            vol. 14, no. 4, pp. 1109–1123, 2018.
+ML attacks than traditional APUF. The introduction of pseudo-                          [11] M. Bhargava, C. Cakir, and K. Mai, “Comparison of bi-stable and delay-
+XOR in DDQ-APUF can further enhance its resistance to ML                                    based physical unclonable functions from measurements in 65nm bulk
+attacks, surpassing that of XOR-APUF. The proposed DDQ-                                     CMOS,” in Proc. Custom. Integr. Circuits Conf. (CICC), 2012, pp. 1–4.
+                                                                                       [12] R. Maes, V. Rozic, I. Verbauwhede, P. Koeberl, E. Van der Sluis, and
+APUF is suitable for security authentication in IoTs devices.                               V. van der Leest, “Experimental evaluation of physically unclonable
+                                                                                            functions in 65 nm CMOS,” in European Solid-State Circuits Conf.,
+                                                                                            2012, pp. 486–489.
+                                R EFERENCES                                            [13] J. Delvaux, D. Gu, D. Schellekens, and I. Verbauwhede, “Helper data
+ [1] B. Gassend, D. Clarke, M. Van Dijk, and S. Devadas, “Silicon physical                  algorithms for PUF-based key generation: Overview and analysis,” IEEE
+     random functions,” in Proc. ACM Conf. Computer Commun. Secur.                          Trans. Comput-Aided Des. Integr. Circuits Syst., vol. 34, no. 6, pp. 889–
+     (CCS), 2002, pp. 148–160.                                                              902, 2014.
+ [2] D. Lim, J. W. Lee, B. Gassend, G. E. Suh, M. Van Dijk, and S. Devadas,            [14] A. A. Pour, F. Afghah, D. Hély, V. Beroulle, G. Di Natale, A. R. Ko-
+     “Extracting secret keys from integrated circuits,” IEEE Trans. Very Large              renda, and B. Cambou, “Helper data masking for physically unclonable
+     Scale Integr. (VLSI) Syst., vol. 13, no. 10, pp. 1200–1205, 2005.                      function-based key generation algorithms,” IEEE Access, vol. 10, pp.
+ [3] J. W. Lee, D. Lim, B. Gassend, G. E. Suh, M. Van Dijk, and S. Devadas,                 40 150–40 164, 2022.
+     “A technique to build a secret key in integrated circuits for identification      [15] Z. He, W. Chen, L. Zhang, G. Chi, Q. Gao, and L. Harn, “A highly
+     and authentication applications,” in IEEE Symp VLSI Circuits Dig Tech                  reliable arbiter PUF with improved uniqueness in FPGA implementation
+     Pap, 2004, pp. 176–179.                                                                using bit-self-test,” IEEE Access, vol. 8, pp. 181 751–181 762, 2020.
+ [4] J. Guajardo, S. S. Kumar, G.-J. Schrijen, and P. Tuyls, “FPGA intrinsic           [16] C.-C. Lin and M.-S. Chen, “Enhancing reliability and security: A
+     PUFs and their use for IP protection,” in Proc. Int. Workshop Crypto-                  configurable poisoning PUF against modeling attacks,” IEEE Trans.
+     graph. Hardw. Embedded Syst. (CHES), 2007, pp. 63–80.                                  Comput-Aided Des. Integr. Circuits Syst., vol. 41, no. 11, pp. 4301–
+ [5] G. E. Suh and S. Devadas, “Physical unclonable functions for device                    4312, 2022.
+     authentication and secret key generation,” in Proc. Des. Autom. Conf.             [17] A. Vijayakumar, V. C. Patil, C. B. Prado, and S. Kundu, “Machine
+     (DAC), 2007, pp. 9–14.                                                                 learning resistant strong PUF: Possible or a pipe dream?” in Proc. IEEE
+ [6] S. Hemavathy and V. K. Bhaaskaran, “Arbiter PUF-a review of design,                    Int. Symp. Hardw. Oriented Secur. Trust, (HOST), 2016, pp. 19–24.
+     composition, and security aspects,” IEEE Access, 2023.                            [18] Y. Gao, H. Ma, S. F. Al-Sarawi, D. Abbott, and D. C. Ranasinghe, “PUF-
+ [7] B. Gassend, D. Lim, D. Clarke, M. Van Dijk, and S. Devadas, “Iden-                     FSM: A controlled strong PUF,” IEEE Trans. Comput-Aided Des. Integr.
+     tification and authentication of integrated circuits,” Concurrency and                 Circuits Syst., vol. 37, no. 5, pp. 1104–1108, 2018.
+     Computation: Practice and Experience, vol. 16, no. 11, pp. 1077–1098,             [19] C. Ma, J. Mu, J. Ye, S. Chen, Y. Cao, H. Li, and X. Li, “Online reliability
+     2004.                                                                                  evaluation design: Select reliable CRPs for arbiter PUF and its variants,”
+ [8] A. Maiti and P. Schaumont, “Improved ring oscillator PUF: An FPGA-                     in Proc. European Test Workshop, 2023, pp. 1–6.
+     friendly secure primitive,” J. Cryptology, vol. 24, pp. 375–397, 2011.            [20] M. Majzoobi, F. Koushanfar, and S. Devadas, “FPGA PUF using
+                                                                                                                                                           13
+
+
+
+     programmable delay lines,” in Proc. IEEE Int. Workshop Inf. Forensics       [43] J. Shi, Y. Lu, and J. Zhang, “Approximation attacks on strong PUFs,”
+     Secur. (WIFS), 2010, pp. 1–6.                                                    IEEE Trans. Comput-Aided Des. Integr. Circuits Syst., vol. 39, no. 10,
+[21] D. P. Sahoo, R. S. Chakraborty, and D. Mukhopadhyay, “Towards ideal              pp. 2138–2151, 2020.
+     arbiter PUF design on Xilinx FPGA: A practitioner’s perspective,” in        [44] Y. Wang, X. Mei, Z. Chang, W. Fan, B. Guo, Z. Quan, and D. K. Jain,
+     Proc. Euromicro Conf. Digit. Syst. Des., 2015, pp. 559–562.                      “A lightweight authentication protocol against modeling attacks based
+[22] M. Majzoobi, A. Kharaya, F. Koushanfar, and S. Devadas, “Automated               on a novel LFSR-APUF,” IEEE Internet Things J., vol. 11, no. 1, pp.
+     design, implementation, and evaluation of arbiter-based PUF on FPGA              283–295, 2024.
+     using programmable delay lines,” Cryptol. ePrint Arch., 2014. [Online].     [45] Z. Chang, S. Shi, B. Song, W. Fan, and Y. Wang, “Modeling attack
+     Available: https://eprint.iacr.org/2014/639                                      resistant arbiter PUF with time-variant obfuscation scheme,” in Proc.
+[23] C. Xu, L. Zhang, M.-K. Law, X. Zhao, P.-I. Mak, and R. P. Martins,               -Int. Conf. Field-Program. Log. Appl. (FPL), 2021, pp. 60–63.
+     “Modeling attack resistant strong PUF exploiting stagewise obfuscated       [46] S. Shi, Z. Chang, B. Guo, and Y. Wang, “Modeling attack resistant
+     interconnections with improved reliability,” IEEE Internet Things J.,            arbiter PUF based on dynamic finite field matrix multiplication scheme,”
+     vol. 10, no. 18, pp. 16 300–16 315, 2023.                                        in Proc. EEE Int. Conf. Solid-State Integr. Circuit Technol. (ICSICT),
+[24] Y. Choi, B. Karpinskyy, K.-M. Ahn, Y. Kim, S. Kwon, J. Park, Y. Lee,             2022, pp. 1–3.
+     and M. Noh, “Physically unclonable function in 28nm FDSOI technol-          [47] D. P. Sahoo, D. Mukhopadhyay, R. S. Chakraborty, and P. H. Nguyen,
+     ogy achieving high reliability for AEC-Q100 grade 1 and ISO26262                 “A multiplexer-based arbiter PUF composition with enhanced reliability
+     ASIL-B,” in IEEE Int. Solid-State Circuits Conf.(ISSCC) Dig. Tech.               and security,” IEEE Trans. Comput., vol. 67, no. 3, pp. 403–417, 2017.
+     Papers, 2020, pp. 426–428.                                                  [48] X. Xu and J. Zhang, “Rethinking FPGA security in the new era
+[25] R. Maes, A. Van Herrewege, and I. Verbauwhede, “PUFKY: A fully                   of artificial intelligence,” in Proc. - Int. Symp. Qual. Electron. Des.
+     functional PUF-based cryptographic key generator,” in Lect. Notes                (ISQED), 2020, pp. 46–51.
+     Comput. Sci., 2012, pp. 302–319.                                            [49] U. Rührmair, F. Sehnke, J. Sölter, G. Dror, S. Devadas, and J. Schmid-
+[26] Y. Gao, H. Ma, G. Li, S. Zeitouni, S. F. Al-Sarawi, D. Abbott, A.-R.             huber, “Modeling attacks on physical unclonable functions,” in Proc.
+     Sadeghi, and D. C. Ranasinghe, “Exploiting PUF models for error free             ACM Conf. Computer Commun. Secur. (CCS), 2010, pp. 237–249.
+     response generation,” arXiv preprint arXiv:1701.08241, 2017.                [50] G. T. Becker, “The gap between promise and reality: On the insecurity
+[27] G. E. Suh, C. W. O’Donnell, and S. Devadas, “Aegis: A single-chip                of XOR arbiter PUFs,” in Lect. Notes Comput. Sci., 2015, pp. 535–555.
+     secure processor,” IEEE Des. Test Comput., vol. 24, no. 6, pp. 570–580,     [51] N. Sayadi, P. H. Nguyen, M. van Dijk, and C. Jin, “Breaking
+     2007.                                                                            XOR arbiter PUFs without reliability information,” arXiv preprint
+[28] D. Jeon, J. H. Baek, Y.-D. Kim, J. Lee, D. K. Kim, and B.-D. Choi, “A            arXiv:2312.01256, 2023.
+     physical unclonable function with bit error rate < 2.3 × 10−8 based         [52] J. Zhang, C. Xu, M.-K. Law, Y. Jiang, X. Zhao, P.-I. Mak, and
+     on contact formation probability without error correction code,” IEEE            R. P. Martins, “A 4T/cell amplifier-chain-based XOR PUF with strong
+     J. Solid-State Circuit, vol. 55, no. 3, pp. 805–816, 2019.                       machine learning attack resilience,” IEEE Trans. Circuits Syst. I-Regul.
+[29] M.-D. Yu, M. Hiller, and S. Devadas, “Maximum-likelihood decoding of             Pap., vol. 69, no. 1, pp. 366–377, 2021.
+     device-specific multi-bit symbols for reliable key generation,” in Proc.    [53] C. Jin, W. Burleson, M. van Dijk, and U. Rührmair, “Programmable
+     IEEE Int. Symp. Hardw.-Oriented Secur. Trust (HOST), 2015, pp. 38–43.            access-controlled and generic erasable PUF design and its applications,”
+[30] S. S. Zalivaka, A. V. Puchkov, V. P. Klybik, A. A. Ivaniuk, and C.-H.            J. Cryptogr. Eng., vol. 12, no. 4, pp. 413–432, 2022.
+     Chang, “Multi-valued arbiters for quality enhancement of PUF responses      [54] C. Gu, C.-H. Chang, W. Liu, S. Yu, Y. Wang, and M. O’Neill, “A
+     on FPGA implementation,” in Proc. Asia South Pac. Des. Autom. Conf.              modeling attack resistant deception technique for securing lightweight-
+     (ASP-DAC), 2016, pp. 533–538.                                                    PUF-based authentication,” IEEE Trans. Comput-Aided Des. Integr.
+[31] D. Jeon, D. Lee, D. K. Kim, and B.-D. Choi, “A 325F 2 physical                   Circuits Syst., vol. 40, no. 6, pp. 1183–1196, 2021.
+     unclonable function based on contact failure probability with bit error     [55] R. Naveenkumar, N. Sivamangai, A. Napolean, and S. S. S. Priya,
+     rate < 0.43 ppm after preselection with 0.0177% discard ratio,” IEEE             “Design and evaluation of XOR arbiter physical unclonable function
+     J. Solid-State Circuit, vol. 58, no. 4, pp. 1185–1196, 2022.                     and its implementation on FPGA in hardware security applications,” J.
+[32] K. Yang, Q. Dong, D. Blaauw, and D. Sylvester, “A 553F 2 2-transistor            Electron. Test.-Theory Appl., vol. 38, no. 6, pp. 653–666, 2022.
+     amplifier-based physically unclonable function (PUF) with 1.67              [56] C. Gu, W. Liu, Y. Cui, N. Hanley, M. O’Neill, and F. Lombardi, “A
+[33] M. Bhargava and K. Mai, “An efficient reliable PUF-based cryptographic           flip-flop based arbiter physical unclonable function (APUF) design with
+     key generator in 65nm CMOS,” in Proc. Des. Autom. Test Eur. (DATE),              high entropy and uniqueness for FPGA implementation,” IEEE Trans.
+     2014, pp. 1–6.                                                                   Emerg. Top. Comput., vol. 9, no. 4, pp. 1853–1866, 2021.
+[34] Y. Shifman, A. Miller, O. Keren, Y. Weizmann, and J. Shor, “A method        [57] J. Zhang and C. Shen, “Set-based obfuscation for strong PUFs against
+     to improve reliability in a 65-nm SRAM PUF array,” IEEE Solid-State              machine learning attacks,” IEEE Trans. Circuits Syst. I-Regul. Pap.,
+     Circ. Lett., vol. 1, no. 6, pp. 138–141, 2018.                                   vol. 68, no. 1, pp. 288–300, 2021.
+[35] K. Liu, Y. Min, X. Yang, H. Sun, and H. Shinohara, “A 373F 2 2D             [58] N. N. Anandakumar, M. S. Hashmi, and M. A. Chaudhary, “Implemen-
+     power-gated EE SRAM physically unclonable function with dark-bit                 tation of efficient XOR arbiter PUF on FPGA with enhanced uniqueness
+     detection technique,” in IEEE Asian Solid-State Circuits Conf. (A-SSCC),         and security,” IEEE Access, vol. 10, pp. 129 832–129 842, 2022.
+     2018, pp. 161–164.                                                          [59] J. Zhang, C. Shen, Z. Guo, Q. Wu, and W. Chang, “CT PUF: Config-
+[36] X. Xu, W. Burleson, and D. E. Holcomb, “Using statistical models to              urable tristate PUF against machine learning attacks for IoT security,”
+     improve the reliability of delay-based PUFs,” in Proc. IEEE Comput.              IEEE Internet Things J., vol. 9, no. 16, pp. 14 452–14 462, 2022.
+     Soc. Annu. Symp. on VLSI (ISVLSI), 2016, pp. 547–552.                       [60] C. Xu, J. Zhang, M.-K. Law, X. Zhao, P.-I. Mak, and R. P. Martins,
+[37] C. Zhou, K. K. Parhi, and C. H. Kim, “Secure and reliable XOR                    “Transfer-path-based hardware-reuse strong PUF achieving modeling
+     arbiter PUF design: An experimental study based on 1 trillion challenge          attack resilience with 200 million training CRPs,” IEEE Trans. Inf.
+     response pair measurements,” in Proc. Des. Autom. Conf. (DAC), 2017,             Forensic Secur., vol. 18, pp. 2188–2203, 2023.
+     pp. 1–6.
+[38] G. T. Becker, “On the pitfalls of using arbiter-PUFs as building blocks,”
+     IEEE Trans. Comput-Aided Des. Integr. Circuits Syst., vol. 34, no. 8,
+     pp. 1295–1307, 2015.
+[39] J. Delvaux, “Machine-learning attacks on PolyPUFs, OB-PUFs, RPUFs,
+     LHS-PUFs, and PUF-FSMs,” IEEE Trans. Inf. Forensic Secur., vol. 14,                                  Yao Wang (Member, IEEE) received his M.S. de-
+     no. 8, pp. 2043–2058, 2019.                                                                          gree from Zhengzhou University, Zhengzhou, China,
+[40] C. Jin, W. Burleson, M. van Dijk, and U. Rührmair, “Programmable                                    in 2009, and the Ph.D. degree from the University
+     access-controlled and generic erasable PUF design and its applications,”                             of Electronic Science and Technology of China
+     J. Cryptogr. Eng., vol. 12, no. 4, pp. 413–432, 2022.                                                (UESTC), Chengdu, China, in 2013. From 2014 to
+[41] Y. Lao and K. K. Parhi, “Statistical analysis of MUX-based physical                                  2017, he was a Lecturer with UESTC, then he joined
+     unclonable functions,” IEEE Trans. Comput-Aided Des. Integr. Circuits                                Zhengzhou University. Since 2018, he has been an
+     Syst., vol. 33, no. 5, pp. 649–662, 2014.                                                            Associate Professor at the School of Information
+[42] J. Liu, Y. Zhu, C.-H. Chan, and R. P. Martins, “An entropy-source-                                   Engineering, Zhengzhou University. His research
+     preselection-based strong PUF with strong resilience to machine learning                             interests include low-power mixed-signal integrated
+     attacks and high energy efficiency,” IEEE Trans. Circuits Syst. I-Regul.                             circuits and hardware security for IoT applications.
+     Pap., vol. 69, no. 12, pp. 5108–5120, 2022.
+                                                                                   14
+
+
+
+                          Guangyang Zhang was born in 1999 in Henan,
+                          China. He received a Bachelor of Science degree. He
+                          graduated from Nankai University Binhai College
+                          in China in 2021. He is currently pursuing the
+                          M.S. degree at Zhengzhou University in China. His
+                          current research interests include hardware security
+                          and digital integrated circuits.
+
+
+
+
+                          Xue Mei was born in 1998 in Henan, China. She
+                          received a Bachelor of Science degree. She grad-
+                          uated from Henan Normal University in China in
+                          2020. She is currently pursuing the M.S. degree at
+                          Zhengzhou University in China. Her current research
+                          interests include hardware security and digital inte-
+                          grated circuits.
+
+
+
+
+                          Chongyan Gu (S’14–M’16–SM’21) received the
+                          Ph.D. degree from Queen’s University Belfast,
+                          Belfast, U.K., in 2016. She is currently a Senior Lec-
+                          turer (Associate Professor) in the School of EEECS
+                          at Queen’s University Belfast. She has been awarded
+                          EPSRC New Investigator Award in 2022. Her re-
+                          search into physical unclonable function (PUF) has
+                          been utilised as part of a security architecture for
+                          electronic vehicle (EV) charging systems, licensed
+                          by LG-CNS, South Korea. Her team was the overall
+                          winner of INVENT 2015, a competition to accelerate
+the commercialisation of innovative ideas. She currently serves as an Associate
+Editor of IEEE Transactions on Emerging Technologies in Computing (TETC)
+and Guest Editor of IEEE Transactions on Circuits and Systems – I (TCAS-
+I). She also serves on the Organising Committee of AsianHOST 2024 and
+Technical Programme Committees of the ISCAS, ASP-DAC, and AsianHOST
+conferences. She served on the Organising Committee of AsianHOST 2023
+and the workshop and tutorial chair of the 32nd FPL 2022 conference. She
+was invited to give keynote/tutorial talks to international conferences, such
+as, HiPEAC 2023 and IEEE ASP-DAC 2020. Her current research interests
+include PUFs, security in/for approximate computing, true random number
+generator (TRNGs), hardware Trojan detection and machine learning attacks.
+She is an IEEE Senior member.
+

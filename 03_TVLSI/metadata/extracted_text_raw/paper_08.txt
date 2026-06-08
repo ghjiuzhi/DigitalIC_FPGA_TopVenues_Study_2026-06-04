@@ -1,0 +1,601 @@
+> REPLACE THIS LINE WITH YOUR PAPER IDENTIFICATION NUMBER (DOUBLE-CLICK HERE TO EDIT) <                                                         1
+
+
+
+
+             Detect and Replace: Efficient Soft Error
+           Protection of FPGA based CNN Accelerators
+        Zhen Gao, Member, IEEE, Jinchang Shi, Shihui Gao, Qiang Liu, Senior Member, IEEE, Guangjun Ge,
+                     Yu Wang, Fellow, IEEE, and Pedro Reviriego, Senior Member, IEEE
+
+                                                                               the good reconfiguration capability of SRAM based FPGAs
+ Abstract—Convolutional Neural Networks (CNNs) are widely                      (SRAM-FPGAs), many CNN systems use SRAM-FPGAs to
+used in computer vision and natural language processing. Field                 improve the system flexibility.
+Programmable Gate Arrays (FPGAs) are a popular accelerator                        In some safety critical scenarios, such as automotive or
+for CNNs. However, FPGAs are prone to suffer soft errors, so the
+reliability of FPGA-based CNNs becomes a key problem when
+                                                                               space platform, the reliability of CNN system become a key
+used in safety critical applications. The convolution module based             requirement [5]. In particular, SRAM-FPGAs are sensitive to
+on a Processing Element (PE) array is the most complex part of                 soft errors caused by cosmic radiation, and the Single Event
+the accelerator, so it is the key for efficient protection. Coding             Upset (SEU) is the most frequent one [6]. Both the
+based schemes have been proposed for efficient protection of the               configuration memory and user memories of SRAM-FPGAs
+convolution module, where the processing of the PE array is                    can be corrupted by SEUs [7]. For SRAM-FPGA based CNN
+modeled as parallel Matrix-Vector Multiplications (MVMs), and
+every wrong output would be concurrently detected and
+                                                                               accelerators, the SRAM are divided into the user memory and
+corrected. In this paper, we show that temporary errors affecting              the configuration memory. The user memories mainly hold the
+a small fraction of data in the feature maps will not degrade the              weights and intermediate results, so SEUs on them will
+CNN performance, so a more efficient protection scheme is                      introduce errors in the feature maps. The configuration
+proposed based on faulty PE Detection and Replace (DR). The                    memories define the configuration of logic resources and the
+DR scheme is implemented on a CNN accelerator based on Xilinx                  connections between them, so SEUs them can change the
+Zynq 7000 SoC, and fault injection experiments are performed to
+evaluate the performance of the proposed DR scheme. The results
+                                                                               function of modules in the accelerator, such as convolution,
+show that it can effectively improve the system reliability when               fully connections, activation, pooling, etc. The results in [8]
+suffering soft errors with a much lower overhead than current                  and [9] reveal that errors on a small portion of weights (e.g. 10-4)
+coding-based protection schemes.                                               would not degrade the task performance, and the memories for
+   Index Terms—Convolutional Neural Networks, Soft Error                       feature maps are much more tolerant to errors. In addition, the
+tolerance, FPGA Accelerator, Error detection, Fault Injection.                 impact of errors on user memories can be further reduced by
+                                                                               normalization, nonlinear activation and network compression
+                          I. INTRODUCTION                                      techniques [10]. On the contrary, errors on the configuration
+                                                                               memory would cause more severe impacts, and can only be
+C    onvolutional Neural Networks (CNNs) are widely used in
+     computer vision or natural language processing, and
+several structures are widely adopted, e.g. VGGNet [1] and
+                                                                               recovered by reconfiguration [11]. For example, radiation
+                                                                               experiments in [12] revealed that errors on some layers of a
+ResNet [2]. CNNs become deeper and wider so that they                          CNN may cause severe performance degradation. Similarly,
+usually require the computing platform with high computation                   the authors in [13] implemented a CNN for traffic sign
+capability, huge memory storage and high energy efficiency.                    recognition based on SRAM-FPGA and showed that SEUs on
+Since general-purpose platforms (i.e., CPUs and GPUs) have                     about 20% of the configuration memory bits will cause wrong
+the limitations on energy efficiency, the CNN accelerators                     classifications. The authors in [14] studied the impact of the
+based on Field Programmable Gate Arrays (FPGAs) become                         degree of parallelism on the reliability of CNNs through
+more and more popular due to their advantages in terms of                      neutron beam experiments, and they revealed that larger
+computation and power efficiency [3],[4]. In addition, due to                  parallelism increases the radiation sensitivity of the accelerator.
+                                                                               The authors of [15] and [16] performed a systematic evaluation
+                                                                               of the FPGA-based CNN accelerators to errors on
+   Manuscript received Dec. 28, 2023. This work is supported by National
+Natural Science Foundation of China (62171313 and 61974102) and partly         configuration memory based on fault injection (FI)
+supported by the FUN4DATE (PID2022-136684OB-C22) and the                       experiments, and showed that errors on memory access logic
+6G-INTEGRATION-3 (TSI-063000-2021-127) projects funded by the                  and control unit may cause severe system exceptions, such as
+Spanish Agencia Estatal de Investigación (AEI).
+  Z. Gao, J. Shi, S. Gao and Q. Liu are with the Tianjin University, Tianjin
+                                                                               system stall and early termination. Therefore, FPGA based
+300072, China (e-mail: {zgao, shijichang, exllentgao, qiangliu}@tju.edu.cn).   CNN accelerators need to be hardened for reliable execution
+  G. Ge and Y. Wang are with the School of Electronic Engineering, Tsinghua    when used in critical applications, and the protection against
+University, Beijing 100084, China (e-mail: geguangjun@126.com;
+yu-wang@mail.tsinghua.edu.cn).
+                                                                               the errors on the configuration memory is the key priority.
+  Pedro Reviriego is with Departamento de Ingeniería de Sistemas                  Since the complexity of CNN accelerators is usually very
+Telemáticos, Universidad Politécnica de Madrid, Madrid 28040, Email:           high, the traditional triple modular redundancy (TMR) scheme
+pedro.reviriego@upm.es.
+> REPLACE THIS LINE WITH YOUR PAPER IDENTIFICATION NUMBER (DOUBLE-CLICK HERE TO EDIT) <                                              2
+
+is not applicable in most resource-limited scenarios (such as                             DDR            ARM
+automobile and onboard processing) due to more than tripling                                    Data Addr.       Instruction
+                                                                                                                 Base Addr.
+of the logic and power [17]. Algorithm-Based Fault Tolerance
+(ABFT) is an effective approach to reduce the overhead by                                  Instruction Dispatch Module
+using the algorithmic properties for error detection and
+                                                                                     Data            Compute Module
+correction [18]. Convolution based on Processing Element
+                                                                                     mover               CONV
+(PE) array is the most complex module in the CNN
+                                                                                                    Conv/FullConnect
+accelerators, so many ABFT schemes have been proposed to
+protect the PE array [8],[19]-[22]. In general, the processing of                   On-chip                  ALU
+                                                                                    Memory           Pooling/Activation
+PE array is formulated as parallel Matrix-Vector
+Multiplications (MVMs) in these schemes, so coding can be
+                                                                           Fig. 1. Structure of the ISA-based FPGA CNN accelerator
+applied to introduce redundant columns or rows for detection
+and correction of every wrong output of each PE [23], and the
+                                                                                                    Output Channel 0
+real domain coding proposed in [24] can be used to protect the
+parallel MVMs together.                                                            PE 0
+   In this paper, a more efficient scheme is proposed to protect
+the PE array against SEUs on the configuration memory of the                       PE 1
+FPGA based CNN accelerators, and the SEUs on the user
+                                                                                                     NIC MACs
+memory (weights or feature maps) is not considered due to                          PE 2
+                                                                                                    Output Channel 1
+
+
+
+
+                                                                                    …
+their weaker impact to the CNN performance [8][9]. Based on
+
+
+
+
+                                                                                                             …
+FI experiments (as will show in Section IV.C), we found that                      PE P-1           Output Channel NOC -1
+SEUs on some of the configuration bits will introduce large
+number of errors in the output feature maps, which exceeds the                      Fig. 2. Structure of the CONV module
+error correction capability of most coding based protection
+schemes; on the other hand, the severe performance                     As shown in Fig. 1, the basic structure for the ISAs-based
+degradation can be avoided if the SEU can be removed within a       FPGA CNN accelerators is composed of the instruction
+short period of time. Therefore, we do not aim to correct all       dispatch module, data mover, compute module, and on-chip
+errors in the feature maps, but to only Detect the errors and       memory [3]. The function of instruction dispatch module is to
+Replace (DR) the corrupted PE with a back-up PE. Hardware           parse, schedule and dispatch the instructions. The function of
+implementation and FI experiments prove the advantages of           Data Mover is to transfer data between DDR and on-chip
+the proposed scheme in terms of reliability and resource            memory pool. The compute module includes the CONV
+efficiency compared with existing coding-based protections.         module for convolution and fully-connection operations and
+   The rest of the paper is organized as follows. Section II        the ALU module for non-convolution operations, such as
+introduces the structure of the CNN accelerators and current        pooling and element-wise operations. In the SCE based
+ABFT protections for the PE array. In Section III, the proposed     accelerators, the CONV module performs most of the
+DR scheme is introduced in detail. Section IV evaluates the         computations and consumes most the resources and power.
+protection overhead and reliability of the DR scheme based on       The CONV module utilizes a PE array architecture to realize
+hardware implementation and FI experiments. Finally, the            high parallelism in three dimensions of the convolution
+paper is concluded in Section V.                                    operation. As shown in Fig. 2, there are P PEs to process P
+                                                                    input feature maps in parallel along the height dimension.
+      II. CNN ACCELERATORS AND ABFT PROTECTION                      Inside each PE, there are NOC independent processing channels
+A. FPGA accelerators for CNNs                                       to process NOC output channels, each with NIC multipliers and
+   In general, there are two types of FPGA-based CNN                an adder tree to process NIC multiply-accumulations (MACs) in
+accelerators, Streaming Architectures (SAs) and Single              each cycle.
+Computation Engine (SCE) [25]. The accelerator with SAs                This paper uses the optimized version of the SCE based
+map layers to the different resources of an FPGA for streaming      CNN accelerator “Angel Eye” proposed in [3] for experiment
+processing. On contrast, the SCE based accelerators reuse the       evaluation. “Angel Eye” is the prototype version of the Xilinx
+same logic for processing of different layers. In particular, the   Deep Learning Processing Unit (DPU) [26], so the results in
+instruction-set architecture (ISA) is applied to transform          this paper are applicable for all CNN accelerators based on the
+different CNN operations into instructions that can be deployed     DPU. Specifically, the Xilinx Zynq-7000 SoC (XC7Z045) is
+on the same hardware [25], so SCE based accelerators can            used in this paper for the implementation of the accelerator,
+handle different CNN architectures easily without                   where the DSP48E1 is used for MACs in the PE. In our
+reconfiguring the FPGA, and thus become more and more               implementation, the input image data and the weights are all
+popular [3], [4]. Therefore, the ISAs-based FPGA CNN                8-bit integers, so the 25x18 multiplier in DSP48E1 is used to
+accelerators are considered in this paper for the implementation    perform two multiplications of two 8-bit integers. Then the
+and evaluation of the proposed schemes.                             total parallelism of the CNN accelerator can be denoted as
+                                                                    2*P*NIC*NOC. By adjusting P, NIC and NOC, we can achieve
+> REPLACE THIS LINE WITH YOUR PAPER IDENTIFICATION NUMBER (DOUBLE-CLICK HERE TO EDIT) <                                                                                   3
+
+
+                                                         PE1                                                                              PE4
+
+
+
+
+                                                                        8 input data(NIC)
+                                                                                                 PE2             PE3
+
+
+
+
+                Original Logic
+                                  8 filters (NOC)
+                                                          W         *                             W    *          W       *                W          *
+
+
+
+                                                    8 Weights (NIC)
+                Redundant Logic
+
+                                                    R1                                      R2                     Error                  PEx
+                                                                                                                detection Enable
+                                                                *                                      *            &     Signal
+                                                                                                                faulty PE
+                                                                                                                 location
+
+                                                          Fig. 3. Model of the PE Array and the Structure of the DR-based Protection Scheme
+
+different trade-offs between the task performance and the                                                                     and
+hardware resource utilization. It should be noted that the same
+                                                                                                                        Calculation of             PE Outputs
+accelerator SCE can be used to implement different CNN                                                                 Checksum values            Accumulation
+models by changing the instruction set. This paper takes
+VGG16 on CIFAR-10 as a case study to evaluate the
+effectiveness of the proposed protection scheme for the PE                                                                Calculation of Decision Variables
+array. But since the effect of SEUs on the PE array would be                                                                             and
+similar for different CNN models, the proposed protection                                                                                             Replace the p-th
+scheme would also be effective for other CNN models.                                                                No Yes
+                                                                                                                   error            =   =0?             PE with the
+                                                                                                                                                        backup PE
+B. ABFT Schemes for PE Array Protection                                                                                          No
+   Most of the ABFT schemes for PE array protection make use                                                                        ≠0&         Yes       Error on PE
+of the parallel computation structure of the neural networks and                                                                    ≠0?                    p= /
+                                                                                                                   EDFPL        No
+introduce hardware or time redundancy for fault tolerance. For
+example in [19] the convolution operations are rearranged into                                                                   Error on             Refresh the part
+the form of matrix-matrix multiplications (MVMs), and                                                                         Redundant part            with error
+checksums of columns and rows are used for an error detection                                                      Fig. 4. Error Detection Procedures in the DR Scheme
+and correction. Similarly, in [20] the convolutions between
+weights and input feature maps are organized as matrix-vector                                                 III. EFFICIENT PROTECTION OF PE ARRAY WITH ERROR
+multiplication, and redundant weight rows are added based on                                                         DETECTION AND BACKUP REPLACEMENT
+coding schemes for error detection and correction.                                                         A. Parallel Structure of PE Array
+Furthermore, [8] combined spatial checksum (redundant                                                         As the core component of the CNN accelerator, the parallel
+convolution kernel) and temporal checksum (redundant input                                                 structure of the PE array for the parallelism of 512 is shown in
+feature maps) to protect the inputs and the convolution                                                    the upper half of Fig. 3. As we can see, 4 PEs are involved (P =
+computation. Authors in [21] compared different checksum                                                   4), and each PE loads the same 8*8 weights matrix, where each
+techniques for various convolution implementations and                                                     row includes 8 weights (NIC = 8) from one of the 8 convolution
+designed a workflow to integrate all the techniques. Finally, the                                          filters (NOC =8). The data at the same pixel for 8 input feature
+simplified implementations of the those checksum based                                                     maps is processed by each PE (NIC = 8). In general, the 4 PEs
+techniques in practical accelerators are discussed in [22].                                                run in parallel to process 4 groups of input data for 4 different
+   All above ABFT schemes aim to detect every error in the                                                 pixels, which can be modeled as 4 parallel MVMs with the
+results and correct it immediately, so that the effect of the                                              same 8*8 weight matrix for 4 different 8*1 input vectors. In
+SEUs is removed completely. Since the wrong value in the                                                   this paper, we also consider another two parallelisms for the
+outputs needs to be located and corrected, the resource, time                                              evaluation of the proposed protection scheme, including 800
+and power overhead would be much higher than that for error                                                and 1024. For the parallelism of 800, the number of PEs is still
+detection only. Furthermore, the error detection and correction                                            4 (P = 4), but both NOC and NIC become 10, so the operation of
+are performed for the intermediate MVM results (not the final                                              the PE array can be modeled as 4 parallel MVMs with the same
+layer outputs), so the related logic needs to be embedded into                                             10*10 weight matrix for 10 different 10*1 input vectors. For
+the original convolution operations, which poses difficulties                                              the parallelism of 1024, each PE is exactly the same as that for
+when applying the schemes in mature CNN accelerators.                                                      the parallelism of 512 (NOC = NIC =8), but the number of PEs
+                                                                                                           increases to 8, so the operation of the PE array can be modeled
+                                                                                                           as 8 parallel MVMs with the same 8*8 weight matrix for 8
+                                                                                                           different 8*1 input vectors.
+> REPLACE THIS LINE WITH YOUR PAPER IDENTIFICATION NUMBER (DOUBLE-CLICK HERE TO EDIT) <                                                        4
+
+   Based on our implementation on Xilinx Zynq-7000 SoC                         corrupted, and there is no error in the PE outputs.
+(XC7Z045), the cost (computation resource and power                            6) If a faulty PE is detected, it would be replaced by the backup
+consumption) for the PE array for different parallelism is listed              PE without dealing with the wrong intermediate result ( 𝑖 )′ or
+in Table I. As we can see, the number of DSPs is linearly                      copying the state of the p-th PE (e.g. value of registers in PE).
+proportional to the parallelism, but the growth rate of LUTs
+                                                                                   Since the occurrence of SEUs is rare, usually there is a
+and registers for higher parallelism is obviously lower than that
+                                                                               significant amount of time between two SEUs and it is
+of DSPs.
+                                                                               reasonable to assume only one PE is affected by an SEU during
+              Table I. Implementation Cost of Original PE Array
+                                                                               a time window. To maintain the fault tolerance capability, the
+    parallelism         LUTs       Registers        DSPs       Power/W
+        512            10367         10185           128        0.157          faulty PE needs to be reconfigured during this window, so that
+        800             11840        13397           200        0.174          it can become the new backup PE. In this way, the PE array can
+       1024            19854         20041           256         0.31          be protected with single backup PE. Since each PE just
+B. Protection of PE Array based on “Detect and Replace”                        connects to the corresponding memory bank, one more PE does
+                                                                               not introduce longer connections between PEs and memory
+   During the reliability evaluation experiments in [16], we
+                                                                               pool. Therefore, introducing a back-up PE does not affect the
+found that if the SEUs in the configuration bits for PE array are
+                                                                               operating frequency and CNN latency. Furthermore, as shown
+removed shortly after the error injection, the final CNN
+                                                                               in Fig. 3, the redundant part of the scheme can be implemented
+accuracy is in most cases unaffected. This means that a small
+                                                                               outside of the original array, so the proposed scheme can be
+portion of errors introduced in the intermediate results could be
+                                                                               easily applied in most CNN accelerators.
+tolerated by the CNN itself. Inspired by this finding, we
+                                                                                   It should be noted that although we use similar checksum
+propose to protect the PE array by only Detecting the error, and
+                                                                               scheme with other protection schemes [20],[23],[24], since we
+Replacing the faulty PE with a backup one once the error is
+                                                                               only need to detect the errors and locate the corrupted PE, the
+detected. The structure of the DR scheme is shown in the lower
+                                                                               complexity for locating the errors in the outputs and correcting
+part of Fig. 3, and the detail procedures are shown in Fig. 4.
+                                                                               them is avoided. Therefore, the complexity of the proposed
+1) The p-th PE generates its output as                                         scheme would be much lower than that of other coding based
+                           W                   ,              (1)              protection schemes. Another advantage of the proposed
+where W [𝑤     ̅ 𝑤  ̅      ̅𝑁𝑂𝐶 ]T is the weight matrix in which
+                           𝑤                                                   scheme is that the error detection works in parallel with the
+𝑤
+̅𝑖 ∈ 𝐑  𝑁𝐼𝐶 ×
+               is a vector of weights for the i-th convolution                 original PE array in an asynchronous fashion, so the error
+kernel (or filter), and the input data and output results for the p–           detection and PE replacement do not interrupt the normal
+                                                𝑁𝐼𝐶 T                          working of the PE array. Therefore, the proposed protection
+th PE are denoted as                [               ] and
+              𝑁𝑂𝐶 T                                                            will not affect the throughput of the accelerator.
+[                ] , respectively.
+2) We generate a new weight vector 𝑤   ̅      ̅𝑖𝑇 and two
+                                             ∑𝑤                                  IV. IMPLEMENTATION AND PERFORMANCE EVALUATION
+redundant input vectors       ∑    and     ∑     . Then we                        In this section, we first introduce the implementation details
+can calculate two check value as                                               of the DR scheme and evaluate the overhead. Then its
+                            ̅
+                            𝑤                                                  reliability is evaluated based on the FI experiments.
+                     {           .                      (2)
+                            ̅
+                            𝑤
+                                                                               A. Implementation of the DR scheme and reference scheme
+3) We accumulate the outputs of the P PEs as
+                                                                               1) Implementation of the DR scheme
+                                  ∑𝑁 𝑂𝐶 𝑃
+                                   𝑖= ∑ =
+                                                 𝑖
+                                                                                 As shown in the lower part of Fig. 3, the redundant logic of
+                        {                                .               (3)
+                                 ∑𝑁 𝑂𝐶 𝑃
+                                  𝑖= ∑ =
+                                                     𝑖                         the proposed scheme includes four parts: R1 for the generation
+                                                                               of 𝑤̅ and      , and the calculation of yr1; R2 for the generation
+4) We generate two detection variables as                     and
+                                                                               of 𝑤̅ and       , and the calculation of yr2; Error Detection &
+                 . As we can see, we would have E1 = E2 = 0 in                 Faulty PE Location (EDFPL) for the calculations of yc1, yc2, E1,
+the fault free case. But if a MAC operation for the i-th filter in             E2 and the final detection result; and the backup PE. The lines
+the p-th PE is corrupted by SEUs so that the corresponding                     for weights and input data for all the PEs are also routed to R1
+result is changed as ( 𝑖 )′        𝑖
+                                     + ∆ ( ∆ can be positive or                and R2, and those for the results are also branched to the
+negative), the two output accumulations will become                            EDFPL. In our design, the same generation process of 𝑤        ̅ is
+                                𝑁                                              separately implemented in R1 and R2, so that an SEU in the
+                            (∑𝑖=𝑂𝐶 ∑𝑃= 𝑖 ) + ∆
+                   {          𝑁                                (4)             redundant part would not affect the results of E 1 and E2
+                          (∑𝑖=𝑂𝐶 ∑𝑃=      𝑖
+                                            )+ ∆                               simultaneously. In the fault free case, the output of EDFPL is
+In this case, the two detection variables become                               always 0. But when an error is detected, the index of the faulty
+                                          ∆                                    PE (p = 1, 2, …, P) would be provided. In our implementation,
+                     {                                                   (5)   only the valid p can initiate a PE switch, which means that
+                                           ∆
+                                                                               values outside of the range [1:1:P] will be filtered out. Since
+5) If both E1 and E2 are both non-zero values, there must be an                the value of P can be 4 or 8 in this paper, we use 4-bits for the
+error in a PE, and the index of the faulty PE can be determined                value of p. Therefore, 3/4 or 1/2 of the incorrect value of p will
+as p = E2/E1. If only one of E1 and E2 is non-zero, we can                     be filtered out for P =4 or P = 8, respectively. In the original
+confirm that the corresponding logic for error detection is
+> REPLACE THIS LINE WITH YOUR PAPER IDENTIFICATION NUMBER (DOUBLE-CLICK HERE TO EDIT) <                                            5
+
+CNN accelerator, a bank of memory is assigned to each PE in
+the memory pool. The data mover will copy the input data from
+the DDR into the bank corresponding to each PE. Therefore,
+the PE replacement can be easily implemented by updating the
+destination address of the data mover from the bank address for
+the faulty PE to that for the backup PE. Since introducing a
+back-up PE does not affect the operation of other PEs, the
+operating frequency of the accelerator keeps to be 100 MHz.
+2) Implementation of a coding based PE protection scheme
+  An advanced coding based protection scheme Checksum of
+Checksum (CoC) proposed in [21] is implemented in this paper
+as a reference scheme for comparison. The convolution
+between input data (D) and weights (W) are represented as a
+block-based operation. As shown in Fig. 5, input feature maps
+and weight matrix are divided into data blocks Dn and weight
+blocks Wm, and the results are represented as Onm = Dn Wm (1                Fig. 5. Protection of convolution in CNN with CoC
+≤ n ≤ N, 1 ≤ m ≤ M), where  denotes the convolution between      B. Overhead Evaluation
+Dn and Wm. Then we can generate two data checksums as                The CNN accelerator with the PE protection is mapped on
+                     𝑪      ∑𝑁𝑛= 𝑫𝑛                               the Xilinx SoC XC7Z045 for the parallelisms of 512, 800 and
+                    { d                                     (6)
+                     𝑪d     ∑𝑁
+                             𝑛= 𝑛𝑫𝑛                               1024. The implementation cost of the protected PE array for
+and generate two weight checksums as                              the three parallelisms is listed in Table II, in which the ratio of
+                                                                  each type of resources over that of the unprotected PE array is
+                     𝑪      ∑𝑀
+                             𝑚= 𝑾𝑚
+                   { w             .                        (7)   also provided. In general, the overhead for both protection
+                    𝑪w     ∑𝑀
+                            𝑚= 𝑚𝑾𝑚                                schemes becomes smaller for higher parallelism. In addition,
+Then we can get three output checksums as                         three conclusions can be obtained by comparing the overheads
+                   𝑪o     𝑪d 𝑪w                                  of the two schemes: 1) the usage of LUTs and registers in DR
+                  {𝑪o     𝑪d 𝑪w                            (8)   scheme are lower than those in CoC scheme by about 5% and
+                   𝑪o     𝑪d 𝑪w                                  40%; 2) the usage of DSPs in DR scheme is higher than that in
+For error detection, we can calculate three output summations     CoC scheme by about 15% for 512 parallelism, but this
+corresponding to the three checksums as                           overhead decreases to 8.6% for 1024 parallelism; 3) the power
+                                                                  consumption of the DR scheme is lower than that of the CoC
+                  𝑺o       ∑𝑁     𝑁
+                             𝑛= ∑𝑚= 𝑶𝑛𝑚                           scheme by up to 30%. The reason for these results can be
+                           𝑁    𝑁
+                          ∑𝑛= ∑𝑚= 𝑚𝑶𝑛𝑚 .
+                {𝑺o                                         (9)   explained as follows. First, the much higher usage of registers
+                 𝑺o       ∑𝑁     𝑁
+                            𝑛= ∑𝑚= 𝑛𝑶𝑛𝑚                           in the CoC scheme is because all the outputs need to be
+  In the fault free case, we would have 𝑪o      𝑺o , 𝑪o           buffered for error detection and correction. On contrast, the DR
+𝑺o and 𝑪o       𝑺o . If a soft error on one of the block          scheme just used the outputs for error detection, so the registers
+convolutions changes the correct result 𝑶′𝑖𝑗 changed by 𝛿         for output buffering can be avoided. Second, the higher usage
+(𝑶′𝑖𝑗 𝑶𝑖𝑗 𝛿), we will have                                        of DSPs in the DR scheme comes from the backup PE. This is
+                                                                  the cost for higher reliability as we will show in following
+       𝑺o   𝑪o    ∑𝑁   𝑁     ′
+                   𝑛= ∑𝑚= (𝑶𝑛𝑚  𝑶𝑛𝑚 ) 𝛿
+                                                                  subsections. Third, in the DR scheme only the error detection
+ {𝑺o    𝑪o      𝑁   𝑁
+              ∑𝑛= ∑𝑚= 𝑚 × (𝑶′𝑛𝑚 𝑶𝑛𝑚 ) 𝑗 × 𝛿 (10)                  module works all the time, and the backup PE does not
+  𝑺o     𝑪o    ∑𝑁    𝑁        ′
+                𝑛= ∑𝑚= 𝑛 × (𝑶𝑛𝑚 𝑶𝑛𝑚 ) 𝑖 × 𝛿                       consume any dynamic power when not enabled. On contrast,
+Then the location of the wrong output can be located as           the error detection and correction logic in the CoC scheme need
+                   𝑗 (𝑺o       𝑪o )/𝛿                             to work continuously on all the outputs, so the power
+                  {                   ,                   (11)    consumption is much higher than the DR scheme.
+                    𝑖 (𝑺o      𝑪o )/𝛿
+                                                                     In addition, since all outputs need to be buffered for error
+and the wrong result can be corrected by adding 𝛿 to 𝑶𝑖𝑗 .        detection and correction, the CoC scheme introduces an
+  To implement the CoC scheme onto the PE array in the CNN        additional time of 15 cycles into the inference process based on
+accelerator, we form the data blocks as 1*NIC vectors, and form   our implementation for 512 parallelism, which will affect the
+the weight blocks as NIC*1 vectors. Then NOC data vectors are
+                                                                  throughput of the accelerator. For our scheme, the error
+grouped to be the W matrix in Fig. 3, and P weight vectors are
+                                                                  detection and PE switch operations also take some times, e.g. 5
+mapped to the input vectors , p = 1, 2, …, P. Three redundant
+                                                                  cycles for 512 parallelism. However, the error detection in the
+modules are implemented for error detection and correction:
+                                                                  DR scheme works asynchronously with the PE array. In other
+R1 for checksums based on equations (6), (7) and (8), R2 for
+                                                                  words, the error detection does not affect the normal operation
+output summations based on equation (9), and R3 for error
+detection and correction based on equations (10) and (11).        of the original PE array, so the throughput of the accelerator is
+                                                                  not affected.
+> REPLACE THIS LINE WITH YOUR PAPER IDENTIFICATION NUMBER (DOUBLE-CLICK HERE TO EDIT) <                                                                6
+
+            Table II. Implementation Cost of Protected PE Array            case, all the related results would be affected. Fig. 6 shows two
+                  (overhead vs the unprotected PE Array)
+ parallelism Scheme         LUTs       Registers        DSPs    Power/W
+                                                                           examples of the output feature map of the first layer when
+                           14792        26285            152      0.317    SEUs occur on the first PE of the CONV module for 512
+               CoC
+    512                   (1.427x)     (2.581x)       (1.188x)   (2.02x)   parallelism. The red (blue) circles represent the pixels larger
+   (P=4)                   14163        14321            176       0.22    (smaller) than the correct ones, and size of the circles
+               DR
+                          (1.366x)     (1.406x)       (1.375x)    (1.4x)   represents the amplitude of the error. Obviously, the errors
+                           16754        29624            230      0.341    appear every four lines. This is because there are 4 PEs for 512
+               CoC
+    800                   (1.415x)     (2.211x)        (1.15x)   (1.96x)   parallelism, and each PE is responsible for the calculation of
+   (P=4)                   15735        17040            270      0.255
+               DR                                                          one of the adjacent four lines of each output feature map, e.g.
+                          (1.329x)     (1.272x)        (1.35x)   (1.46x)
+                           27441        39361            280       0.43
+                                                                           the 1st PE for line 0, 4, … , 28. Fig. 6(a) shows the case that the
+               CoC                                                         SEU introduce big changes into the output feature maps, which
+    1024                  (1.382x)     (1.964x)       (1.094x)   (1.39x)
+   (P=8)                   26138        24823            304      0.375    corresponds to an accuracy 8.3%; and Fig. 6(b) shows the case
+               DR
+                          (1.317x)     (1.239x)       (1.188x)   (1.21x)   for light impact, corresponding to an accuracy of 93.8%.
+                                                                              The two examples in Fig. 6 show that a stuck-at fault will
+C. Reliability Evaluation                                                  introduce large number of errors in the outputs in multiple rows
+1) Reliability Evaluation for unprotected PE                               and multiple columns. This is the case that most of the coding
+   In this paper, VGG16 for image classification on CIFAR-10               based scheme for PE array cannot deal with, e.g. the CoC
+is deployed on the FPGA accelerator used for reliability                   scheme can only locate and correct one error in the output
+evaluation purposes. In particular, we considered the case that            matrix. This is the main motivation for the DR scheme that
+the function of the accelerator is corrupted by SEUs on the                does not aim to correct all the errors but to replace the
+configuration memory. The SEUs in the weights or input data                corrupted PE.
+is not considered because they would be                                       Table III. Number of Essential Bits and Critical Bits for a PE (VGG16)
+   The model is mapped on the XC7Z045 board together with                    Parallelism           512                 800                   1024
+the hardware FI platform described in [16]. The reliability                 Essential Bits      365349                524349                368171
+                                                                             Critical Bits 115490 (31.61%) 168501 (32.14%) 116286 (31.58%)
+evaluation procedure is as follows [16]:
+a) In the fault free case, the accuracy of VGG16 is tested as
+    93.89%, and the feature maps for all layers for a reference
+    input image are stored.
+b) Part of the accelerator (a PE or the redundant logic in
+    protection scheme) is placed in a reconfigurable Pblock as a
+    module under test (MDU). In the Pblock, only part of the
+    configuration bits are related to the function of MDU, and
+    these bits are named essential bits. The Essential Bit Data
+                                                                           Fig. 5. Accuracy with SEUs on a PE for different parallelism (VGG16) [16]
+    (EBD) file for the MDU can be generated by Vivado, which
+    includes the address of each essential bit for MDU.
+c) The FI tool flips an essential bit and compares the feature
+    maps for the reference input image with those in the fault
+    free case. If there exist differences, the essential bit is
+    recorded as a critical bit.
+d) For a critical bit, 2000 images are used to test the accuracy
+    of VGG16, which can reflect the severity of the SEU on the
+    accelerator.
+   After performing the evaluation for all essential bits of the
+unprotected PE, we get the portion of critical bits for a PE as
+shown in Table III, and the severity of the SEUs on the critical
+bits as shown in Fig. 5. As we can see, SEUs on about 1/3 of the
+configuration bits of a PE would affect the normal processing,                                          (a) severe impact
+among which about 12%-13% would cause moderate accuracy
+loss, and about 7%-8%would cause severe accuracy loss.
+   Further analysis of the FI experiment results show that over
+85% of the critical bits are those for routing connections
+between DSPs and LUTs, and other critical bits are related to
+the DSP configuration or the truth tables for adder tree in the
+PE. SEUs on the routing related critical bits will cause stuck-at
+faults on the inputs or outputs of the multipliers or adders, so
+that one of the input or output lines will always be 0 or 1. In this
+> REPLACE THIS LINE WITH YOUR PAPER IDENTIFICATION NUMBER (DOUBLE-CLICK HERE TO EDIT) <                                                                         7
+
+                                                                                replacement. This happens only when SEUs occur on the logic
+                                                                                for the calculation of p = E2/E1, and a valid value of p is
+                                                                                produced (p = 1, 2…or P). The probability of this event would
+                                                                                be very small.
+                                                                                  Further analysis of the experiment results show that although
+                                                                                SEUs on about 2.7% of the essential bits, the errors in the
+                                                                                feature maps do not affect the classification accuracy. This is
+                                                                                because the abnormal PE switch only introduces errors in at
+                                                                                most 8 channels for single pixel due to the zero initial state of
+                                                                                the backup PE. These results prove the robustness of the
+                                                                                redundant part to SEUs. It should be noted that the invalid
+                                                                                EDFPL output can be used for error detection of the redundant
+                                 (b) light impact                               part, so we can maintain the reliability of the PE array by
+Fig. 6. Examples for feature maps with errors for the first layer (red (blue)
+                                                                                incorporating the proper refresh mechanism for the redundant
+circles represent the pixels larger (smaller) than the correct ones).
+                                                                                part.
+2) Effect of SEUs on a PE in the DR protected array                                   Table IV. Number of Essential Bits and Critical Bits for Redundant Part
+   Since the CoC scheme cannot deal with the large number of                           Parallelism          512                 800                1024
+                                                                                      Essential Bits       511634             586403              1095896
+errors in the output feature maps, we only evaluated the                               Critical Bits   13865 (2.71%)       15994 (2.73%)       24487 (2.23%)
+reliability of the PE array protected by the DR scheme. In this
+part, we first evaluated the effect of SEUs on a PE in the                                                    V. CONCLUSION
+protected array. Since all PEs are equivalent in the accelerator,
+we put the first PE in the Pblock, and perform the same FI                         FPGA based CNN accelerators with the SCEs architecture
+experiments as for the unprotected PE. Experiment results                       are widely used in many applications, and their reliability is an
+show that the portion of critical bits for a PE remains the same                important problem in critical environments. The PE array
+as the unprotected case, and SEUs on those critical bits can be                 based convolution is the key model that undertakes the most
+detected with 100% probability. This is expected because                        computation in the CNN accelerator, so efficient protection of
+errors on the critical bits will introduce changes to the feature               PE array is the key for the fault tolerance design of the whole
+maps, which will definitely produce non-zero E1 and E2 based                    accelerator. In this paper, we first reported that SEUs on the
+on equation (2) ~ (5). Furthermore, the classification accuracy                 configuration memory of the PE array will introduce large
+of the accelerator with protected PE array is always 93.89%,                    number of errors in the output feature maps, which exceeds the
+which means that SEUs on the PE do not affect the accuracy of                   error correction capability of most coding based protection
+the CNN. This is further explained as follows. The time                         schemes; however, if the SEUs can be removed timely, the
+between FI and the PE switch includes 14 cycles, during which                   small portion of errors on the intermediate results can be
+the first group of wrong results are output after the first 9                   tolerated by the CNN itself. With this finding, we proposed to
+clocks, and the EDFPL uses 5 cycles for error detection. After                  not detect and correct all the errors, but protect the PE array
+the PE switch, the first group of outputs of the new PE is still                with simple error detection and backup PE switch. Hardware
+wrong due to its zero initial state. Since one group includes the               implementation and fault injection experiments have been
+elements for 8 output channels for one pixel (see Fig. 3), the                  performed to evaluate the performance of the proposed scheme,
+whole process cause errors in the 16 channels for one pixel.                    and a typical checksum-based protection scheme is
+Taking the first layer as example, the feature maps include                     implemented as a baseline for comparison. Experiment results
+32*23*64 elements, so the 16 wrong elements only accounts                       proved that the proposed scheme can totally remove the impact
+for 1/(32*32*4) of all the outputs of that layer, whose impact                  of SEUs on the CNN performance, and the overhead is much
+diminishes during the operation of following layers.                            lower than the checksum-based protection scheme.
+                                                                                Furthermore, since the error detection logic runs in parallel
+3) Effect of SEUs on redundant part in the DR protected array                   with the original PE array in an asynchronous fashion, the
+   We did the same fault injection experiments for the                          proposed scheme does not affect the throughput of the
+redundant part (R1, R2 and EDFPL in Fig. 3), and the results                    accelerators.
+are listed in Table IV. As we can see, the portion of critical bits
+is less than 3%. Such low percentage is reasonable because
+most of the complexity of the redundant part comes from                                                          REFERENCES
+equation (2) and equation (3) for the calculation of         ,    ,             [1]      K. Simonyan and A. Zisserman, “Very deep convolutional networks for
+     and     , and SEUs on these logic will only cause E1 or E2                          large-scale image recognition,” IEEE ICLR 2015.
+to be non-zero. In this case, the EDFPL will not report an error                [2]      K. He, X. Zhang, S. Ren, and J. Sun, “Deep Residual Learning for Image
+                                                                                         Recognition,” IEEE CVPR 2016.
+(see step 5) in Section III.B) and the accelerator will work as                 [3]      K. Guo, L. Sui, J. Qiu, et al., “Angel-Eye: A Complete Design Flow for
+usual. The only event that can introduce errors in the feature                           Mapping CNN Onto Embedded FPGA,” IEEE Trans. Computer-Aided
+maps is that an SEU on the EDFPL part enables a PE                                       Design of Integrated Circuits and Systems, vol. 37, no. 1, Jan. 2018.
+> REPLACE THIS LINE WITH YOUR PAPER IDENTIFICATION NUMBER (DOUBLE-CLICK HERE TO EDIT) <   8
+
+[4]    Y. Yu, C. Wu, T. Zhao, et al., “OPU: An FPGA-Based Overlay
+       Processor for Convolutional Neural Networks,” IEEE Trans. VLSI
+       Systems, vol. 28, no. 1, pp. 35-47, Jan. 2020.
+[5]    “ISO 26262: Road vehicles — Functional safety.” International
+       Standard. 2011.
+[6]    F.L. Kastensmidt, L. Carro and R. Reis, Fault-tolerance Techniques for
+       SRAM-based FPGAs, New Haven, Springer 2006.
+[7]    P.S. Ostler, M.P. Caffrey, D.S. Gibelyou, et al., “SRAM FPGA
+       Reliability Analysis for Harsh Radiation Environments,” IEEE Trans.
+       on Nuclear Science, vol. 56, no. 6, pp. 3519-3526, Dec. 2009.
+[8]    E. Ozen and A. Orailoglu, "Sanity-check: Boosting the reliability of
+       safety-critical deep neural network applications," 2019 IEEE 28th Asian
+       Test Symposium (ATS), 2019, pp. 7–75.
+[9]    B. Reagen, U. Gupta, L. Pentecost, et al., "Ares: A framework for
+       quantifying the resilience of deep neural networks," IEEE 55th
+       ACM/ESDA/IEEE Design Automation Conference (DAC), 2018.
+[10]   Z. Gao, Y. Yao, X. Wei, et al., Reliability Evaluation of FPGA based
+       Pruned Neural Networks, Microelectronics Reliability, vol. 130, March
+       2022.
+[11]   Xilinx, Vivado Design Suite User Guide - Dynamic Function eXchange
+       UG909 (v2021.2) February 25, 2022.
+[12]   F. Libano, B. Wilson, J. Anderson, et al., “Selective Hardening for
+       Neural Networks in FPGAs,” IEEE Trans. Nuclear Science, vol. 66, no.
+       1, pp. 216-222, 2019.
+[13]   C. Israel, B. Fabio, L.K. Fernanda, A.A. Susin, P. Rech, “Reliability
+       Analysis on Case-Study Traffic Sign Convolutional Neural Network on
+       APSoC,” in Proc. IEEE 19th LATS, pp. 1-6, 2018.
+[14]   F. Libano, P. Rech, B. Neuman, et al., “How Reduced Data Precision
+       and Degree of Parallelism Impact the Reliability of Convolutional
+       Neural Networks on FPGAs,” IEEE Trans. Nuclear Science, vol. 68, no.
+       5, pp. 856-872, Jan. 2021.
+[15]   D. Xu, Z. Zhu, C. Liu, et al., “Reliability Evaluation and Analysis of
+       FPGA-Based Neural Network Acceleration System,” IEEE Trans. VLSI
+       Systems, vol. 29, no. 3, Jan. 2021.
+[16]   Z. Gao, S. Gao, Y. Yao, et al., Systematic Reliability Evaluation of
+       FPGA Implemented CNN Accelerators, IEEE Trans. Device and
+       Materials Reliability, vol. 23, no. 1, March 2023.
+[17]   C. Carmichael, “Application Note: Triple Module Redundancy Design
+       Techniques for Virtex FPGAs,” XAPP197 (v1.0.1), Xilinx Inc. 2006.
+[18]   A. Reddy and P. Banarjee, “Algorithm-based fault detection for signal
+       processing applications,” IEEE Transactions on Computers, vol. 39, no.
+       10, pp. 1304-1308, Oct. 1990.
+[19]   F. F. dos Santos, L. Draghetti, L. Weigel, et al., “Evaluation and
+       mitigation of soft-errors in neural network based object detection in
+       three gpu architectures,” 47th Annual IEEE/IFIP DSN-W, 2017.
+[20]   Z. Xu and J. Abraham, “Safety design of a convolutional neural network
+       accelerator with error localization and correction,” 2019 IEEE
+       International Test Conference (ITC), pp. 1–10, 2019.
+[21]   K. Zhao, S. Di, S. Li, et al., “FT-CNN Algorithm-Based Fault Tolerance
+       for Convolutional Neural Networks,” IEEE Transactions on Parallel and
+       Distributed Systems, vol. 32, no. 7, pp. 1677-1689, July 2021.
+[22]   T. Marty, T. Yuki and S. Derrien, “Safe Overclocking for CNN
+       Accelerators Through Algorithm-Level Error Detection,” IEEE Trans.
+       Computer-Aided Design of Integrated Circuits and Systems, vol. 39, no.
+       12, pp. 4777-4790, Dec. 2020.
+[23]   Z. Gao, P. Reviriego, Z. Xu, et al., Efficient Coding Schemes for
+       Fault-Tolerant Parallel Filters, IEEE Trans. Circuit and System II,
+       vol.62, no.7, July 2015.
+[24]   Z. Gao, Q. Jing, Y. Li, et al., An Efficient Fault-Tolerance Design for
+       Integer Parallel Matrix–Vector Multiplications, IEEE Trans. VLSI
+       Systems, Vol.26, No.1, Jan. 2018.
+[25]   Y. Xing, S. Liang, L. Sui, et al., "DNNVM: End-to-End Compiler
+       Leveraging Heterogeneous Optimizations on FPGA-Based CNN
+       Accelerators," IEEE Trans. Computer-Aided Design of Integrated
+       Circuits and Systems, vol. 39, no. 10, Oct. 2020.
+[26]   Xilinx, Zynq DPU v3.2-Product Guide, PG338 (v3.2) March 23, 2020.
+[27]   Xilinx. Partial Reconfiguration User Guide, UG702 (v14.5),
+       https://docs.amd.com/v/u/en-US/ug702.
+

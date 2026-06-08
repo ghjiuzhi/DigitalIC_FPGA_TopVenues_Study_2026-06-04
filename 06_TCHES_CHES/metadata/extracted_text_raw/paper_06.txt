@@ -1,0 +1,1331 @@
+IACR Transactions on Cryptographic Hardware and Embedded Systems
+ISSN 2569-2925, Vol. 2023, No. 4, pp. 58–79. DOI:10.46586/tches.v2023.i4.58-79
+Protecting Dilithium against Leakage
+Revisited Sensitivity Analysis and Improved Implementations
+Melissa Azouaoui1
+, Olivier Bronchain1,2
+, Gaëtan Cassiers2,3,4
+, Clément
+Hoffmann2
+, Yulia Kuzovkova1
+, Joost Renes1
+, Tobias Schneider1
+, Markus
+Schönauer1
+, François-Xavier Standaert2
+and Christine van Vredendaal1
+1
+NXP Semiconductors, Eindhoven, Netherlands {firstname.lastname}@nxp.com
+2
+UCLouvain, Ottignies-Louvain-la-Neuve, Belgium, {firstname.lastname}@uclouvain.be
+3
+Graz University of Technology, Graz, Austria, {firstname.lastname}@iaik.tugraz.at
+4
+Lamarr Security Research, Graz, Austria
+Abstract. CRYSTALS-Dilithium has been selected by the NIST as the new stan-
+dard for post-quantum digital signatures. In this work, we revisit the side-channel
+countermeasures of Dilithium in three directions. First, we improve its sensitivity
+analysis by classifying intermediate computations according to their physical security
+requirements. Second, we provide improved gadgets dedicated to Dilithium, taking
+advantage of recent advances in masking conversion algorithms. Third, we combine
+these contributions and report performance for side-channel protected Dilithium
+implementations. Our benchmarking results additionally put forward that the ran-
+domized version of Dilithium can lead to significantly more efficient implementations
+(than its deterministic version) when side-channel attacks are a concern.
+Keywords: CRYSTALS-Dilithium · Lattice-Based Cryptography · Post-Quantum
+Cryptography · Signatures · Side-Channel Countermeasures · Masking
+1 Introduction
+The world’s digital security infrastructure has always relied on a range of efficient and
+secure cryptographic primitives, including both symmetric and asymmetric solutions.
+In particular for asymmetric cryptography, RSA and ECC are the ubiquitous schemes
+in practice. However, with the anticipated advent of powerful and dedicated quantum
+computers, the established asymmetric cryptographic schemes, that we mainly use for key
+exchange and digital signatures, will no longer provide the desired security.
+In 2016, the National Institute of Standards and Technology (NIST) has launched a
+standardization effort for cryptographic schemes that can withstand quantum cryptanaly-
+sis [Nat]. Recently in 2022, the NIST announced the first Post-Quantum Cryptography
+(PQC) schemes to be standardized. These include (CRYSTALS-)Kyber [ABD+
+19] for
+Key Encapsulation Mechanism (KEM), and (CRYSTALS-)Dilithium [DLL+
+17] for digital
+signatures. Both Kyber and Dilithium are lattice-based schemes, and in recent years the
+analysis of lattice-based PQC schemes and their implementations has become a prominent
+area of research. This is not only due to their widely accepted strong security but also
+because of their implementation efficiency in comparison to other PQC schemes.
+Although a PQC scheme can be secure against classic and quantum adversaries, this is
+not sufficient to provide practical security in the embedded context. The implementations
+of cryptographic schemes on constrained devices can be targeted by physical attacks,
+which include Side-Channel Analysis (SCA) and Fault Injection (FI) attacks. Over the
+last years, PQC KEM’s have attracted most of the attention when it comes to SCA.
+Licensed under Creative Commons License CC-BY 4.0.
+Received: 2023-04-15 Accepted: 2023-06-15 Published: 2023-08-31
+Azouaoui et al. 59
+Indeed, most KEM’s in the NIST competition, including Kyber, rely on the Fujisaki-
+Okamoto (FO) transformation [FO99] which is a simple and generic technique to achieve
+IND-CCA security. Unfortunately, the leakage of the re-encryption step in the FO
+transformation leads to very powerful SCA’s, demonstrated and analyzed in many recent
+works, including but not limited to [RRCB20, REB+
+22, UXT+
+22]. An adversary can
+also exploit leakage from the Number Theoretic Transformation (NTT) or from the Key
+Derivation Function (KDF) in order to extract the long term secret key or the shared
+secret key [RPBC20, HHP+
+21, KPP20, PPM17]. This variety of threats implies a large
+attack surface leading to significant overheads when protecting PQC KEM’s [ABH+
+22].
+To the best of our knowledge, digital signatures, including Dilithium, have received
+less attention than KEM’s with respect to SCA. The main results include a work by
+Ravi et al. [RJH+
+18] that shows that to achieve existential forgery an attacker only
+requires knowledge of one part of the secret key in Dilithium, namely s1. Marzougui
+et al. [MUTS22] exploit leakage of the zero coefficients in the secret signing nonce y for
+multiple signatures and recover the secret key by leveraging least squares regression and
+integer linear programming. Liu et al. [LZS+
+21] also present an SCA on Dilithium, which
+is able to recover the secret key from the leakage of a single bit of the secret signing
+nonce y for multiple signatures. The authors use this side-channel information to define a
+problem called the Fiat-Shamir Integer LWE, and show that it can be solved efficiently.
+This attack is very reminiscent of the well-known lattice reduction attacks on (EC)DSA
+(and other Schnorr-like signature schemes) with partial nonce leakage, originally due to
+Howgrave-Graham and Smart [HS01] and recently improved by Sun et al. [SETA22]. Liu
+et al. showed that their attack requires a relatively low number of signatures. This result,
+along with previous works and the fact that the side-channel analysis of Dilithium is quite
+a new research topic for the community, highlights the vital need to protect the future
+digital signature standard against these threats. The amount of published works appears
+to be even scarcer when it comes to protecting Dilithium against leakage. To the best of
+our knowledge, the main contribution comes from Migliore et al. [MGTF19] and presents
+masked gadgets for Dilithium and a power-of-two modulus masked version of it.
+Contributions. In this work, we tackle the challenge of efficiently protecting Dilithium
+implementations on embedded devices. Our contributions are the following.
+First, we revisit the sensitivity analysis of Migliore et al. [MGTF19]. Interestingly,
+we notice that the authors do not consider some intermediate computation as sensitive
+even though they can be explicitly used to recover the secret key. Conversely, others
+were unnecessarily protected since they could be computed from the signature and the
+public key. These observations lead to improved security and to more efficient signature
+generation. To the best of our knowledge, our work presents the first masked Dilithium
+design compliant with the third round submission document for all parameter sets.
+Second, and following the security requirements of our sensitivity analysis, we propose
+new and improved masked gadgets for the main operations of Dilithium (namely the bound
+check, the secret sampling and the decomposition) and for all NIST security levels.
+Finally, we provide a complete benchmark for an ARM Cortex-M4 microcontroller,
+which includes the evaluation of individual components, their comparison with the ones of
+Migliore et al., and performance results of full signature generation for deterministic and
+randomized versions of Dilithium. They highlight the advantages of randomized Dilithium
+compared to its deterministic variant in the context of physical attacks.
+Cautionary note. In an earlier presentation of our results, at the NIST’s 4th PQC
+Standardization Conference, a finer-grain sensitivity analysis distinguishing security against
+Simple Power Analysis and Differential Power Analysis was proposed [ABC+
+22]. This
+analysis was conjectured to enable strongly leveled implementations of Dilithium, where
+60 Protecting Dilithium against Leakage
+different parts of the implementation use different countermeasures (e.g., shuffling against
+SPA [VMKS12], masking against DPA [CJRR99, ISW03]). We clarify in Section 3.4 that
+the possibility to leverage a “hard physical learning problem” similar to [DMMS21] that
+would back up this conjecture does not hold. As a result, Dilithium has less potential for
+leveling and its sensitivity analysis can be simplified to a coarser-grain mix of sensitive
+operations that require DPA protections and non-sensitive ones that can leak in full. We
+discuss directions to partially restore the interest of a finer-grain leveling in conclusions.
+2 Background
+We next detail the notations used in the paper and the Dilithium signature scheme.
+2.1 Polynomial arithmetic notations
+All arithmetic operations in the paper are denoted over the polynomial ring R =
+Zq[X]/(Xn
++ 1). We denote a polynomial with small caps such as p ∈ R, a vector
+of polynomials with bold letters such as x ∈ Rk
+and a matrix of polynomials with capital
+bold letters such as X ∈ Rk×k0
+. For Dilithium, the parameters of the ring are the prime
+q = 223
+− 213
++ 1 and the degree n = 256. For z, α ∈ Z we write z mod±
+α to mean the
+unique integer z0
+in ] − α
+2 , α
+2 ] (resp., [−α−1
+2 , α−1
+2 ]) with z ≡ z0
+mod α if α is even (resp.,
+odd). The notation z mod±
+α implies that all the coefficients in z are given with mod±
+α.
+With this, we can define the following norms on Zq, R and Rk
+respectively:
+kzk∞ = |z mod±
+q|, kpk∞ = max
+i
+kpik∞, kwk∞ = max
+i
+kwik∞,
+with z ∈ Zq, p ∈ R, pi being the i-th coefficient of p, w ∈ Rk
+and wi being the i-
+th polynomial in w. Additionally, we define Sη = {w ∈ R : kwk∞ ≤ η} and S̃η =
+{w mod±
+2η : w ∈ R}. This means that the coefficients of an element in Sη or S̃η are in
+the range [−η, η] or ] − η, η], respectively. We use the notation x ← X whenever we assign
+a uniformly random element of a set X to a variable x. The symbol k is used for the
+concatenation of two bit strings, the function H is an expandable output function (XOF).
+2.2 Dilithium
+Dilithium is a digital signature scheme based on the MLWE (Module Learning With Errors)
+and the SelfTargetMSIS (Module Short Integer Solution) problems [LS15]. It is the primary
+algorithm selected by the NIST for quantum safe digital signatures. Its main features are:
+random sampling from a uniform distribution instead of a discrete Gaussian distribution, a
+focus on keeping the public key and the signature as small as possible in terms of their bit
+size, and being easy to adjust for different security levels by only changing the dimensions
+of the matrices and vectors involved. For a comprehensive description of the algorithm we
+refer to the proposal [DLL+
+17]. Note that the pseudocode presented there and in the rest
+of the paper is a variation from the reference implementation described in [DLL+
+17, p.17].
+The key differences are highlighted in Section 3.3. In this paper we refer to the implemented
+version if not stated otherwise. We describe the key generation and signature generation
+algorithms in the following paragraphs. We do not consider the verification, which does
+not involve long-term secret variables (hence, does not leak sensitive information). Table 1
+provides the Dilithium parameters for different NIST security levels.
+Key generation. The key generation is defined in [DLL+
+17, Fig 4.] and is recalled in
+Algorithm 1. Initially, a random bit string ζ is created and used to generate three seeds ρ,
+ς and K thanks to the hash function H. A public matrix A for which all coefficients are
+Azouaoui et al. 61
+Table 1: Dilithium parameters.
+NIST Security level 2 3 5
+q (modulus) 223
+− 213
++ 1 223
+− 213
++ 1 223
+− 213
++ 1
+d (number of dropped bits from t) 13 13 13
+τ (# of ± 1’s in c) 39 49 60
+γ1 (y coefficient range) 217
+219
+219
+γ2 (low order rounding range) (q-1)/88 (q-1)/32 (q-1)/32
+(k, l) (dimensions of A) (4,4) (6,5) (8,7)
+η (secret key range) 2 4 2
+β (= τ · η) 78 196 120
+ω (max. # 1’s in h) 80 55 75
+average number of signing iterations 4.25 5.1 3.85
+uniform in Zq is generated from ρ. Two secret vectors s1 ∈ Sl
+η and s2 ∈ Sk
+η are derived
+from ς. Then, the vector t = As1 + s2 is calculated. This is an instance of MLWE, where
+s1 and s2 are hard to calculate given A and t. Next, the bit representation of t is split
+up into high order bits t1 and low order bits t0. Only t1 will be part of the public key,
+to keep its size as small as possible. For the same reason the matrix seed ρ is part of the
+output, rather than the whole matrix A. Lastly, ρkt1 gets hashed to tr. The output is the
+public key pk = (ρ, t1) and the secret key sk = (ρ, K, tr, s1, s2, t0).
+Algorithm 1 KeyGen.
+1: ζ ← {0, 1}256
+2: (ρ, ς, K) = H(ζ) . (ρ, ς, K) ∈ {0, 1}256 × {0, 1}512 × {0, 1}256
+3: A = ExpandA(ρ) . A ∈ Rk×l
+4: (s1, s2) = ExpandS(ς) . (s1, s2) ∈ Sl
+η × Sk
+η
+5: t = As1 + s2
+6: (t1, t0) = Power2Round(t, d)
+7: tr = H(ρkt1) . tr ∈ {0, 1}256
+8: return pk = (ρ, t1), sk = (ρ, K, tr, s1, s2, t0)
+Signature. Similarly, we now describe the signing procedure in Algorithm 2. We refer
+to [DLL+
+17, Fig 4.] for a more detailed description. The input is the secret key sk and a
+message M. The message is preprocessed with H into a bit string µ of fixed length. For
+deterministic signing, µ is used together with K to produce a seed ρ0
+. For the randomized
+version the seed ρ0
+is generated randomly. This seed and a rejection counter κ (initially
+set to κ = 0) are used to sample the secret polynomial y ∈ S̃l
+γ1
+with ExpandMask. Then,
+the product w = Ay is decomposed via division with remainder into w1 and w0. The
+challenge c̃ is the hash of µkw1. For further calculations, c̃ is converted into a polynomial
+c that contains strictly τ coefficients set to ±1 and the others set to zero. This polynomial
+is then used to calculate z and r̃. To ensure the security and correctness of the scheme,
+two checks are performed:
+kzk∞ < γ1 − β, kr̃k∞ < γ2 − β,
+where β = η · τ. If any of the two conditions does not hold, κ is increased and the process
+starts over (beginning with the sampling of a new y). After successful checks, a hint h
+is calculated. This is needed in the verification step in order to make up for the “lost”
+information of t0. Two more checks are performed on ct0 and h. Again, if these conditions
+are not met, the signature is rejected and κ is increased. Otherwise, if all checks are
+successful, the signature σ = (c̃, z, h) can be output.
+62 Protecting Dilithium against Leakage
+Algorithm 2 Sign(sk, M).
+1: A = ExpandA(ρ)
+2: µ = H(trkM) . µ ∈ {0, 1}512
+3: κ = 0, (z, h) = ⊥
+4: ρ0
+= H(Kkµ) (or ρ0 $
+← {0, 1}512
+for randomized signing) . ρ0 ∈ {0, 1}512
+5: while (z, h) = ⊥ do
+6: y = ExpandMask(ρ0
+, κ) . y ∈ S̃l
+γ1
+7: w = Ay
+8: (w0, w1) = Decompose(w, 2γ2)
+9: c̃ = H(µkw1) . c̃ ∈ {0, 1}256
+10: c = SampleInBall(c̃) . c ∈ Bτ
+11: z = y + cs1
+12: r̃ = w0 − cs2
+13: if kzk∞ ≥ γ1 − β or kr̃k∞ ≥ γ2 − β then (z, h) = ⊥
+14: else
+15: h = MakeHint(r̃, c, t0, w1, γ2)
+16: if kct0k∞ ≥ γ2 or the # of 1’s in h is greater than ω then (z, h) = ⊥
+17: κ = κ + l
+18: return σ = (c̃, z, h)
+3 Sensitivity analysis
+In this section, we analyze Dilithium’s key generation and signature generation and
+discuss the sensitivity of all the variables and functions potentially leading to side-channel
+attacks. This sensitivity analysis indicates which operations/variables need to be protected
+against leakage. As mentioned in introduction, we use a coarse-grain taxonomy for this
+purpose, which is next reflected by color-coded diagrams: Figure 1 and Figure 2, where
+red (resp., blue) denotes sensitive variables/operations that need security against DPA
+(resp., variables/operations that do not require side-channel attack protection). Doing so
+we also compare our analysis to the one previously proposed in [MGTF19].
+Starting with generalities, we first note that the public key can be leaked to the
+adversary over the whole scheme (since it is public). The public matrix A can also be
+leaked since it is deterministically derived from ρ. A similar status holds for some parts
+of the secret key sk := (ρ, K, tr, s1, s2, t0), since similar variables are contained in the
+public key. Concretely, tr does not need to be protected either since it is a hash of pk.
+We additionally note that the vector of polynomials t0 can be leaked as well. Indeed,
+the Dilithium security proofs consider t (hence t0 and t1) to be public [DLL+
+17].1
+M
+does not need to be protected, but s1 and s2, and K, must be protected in order to avoid
+side-channel attacks leading to a signature forgery. Next, we detail which other variables
+must be protected in order to avoid the leakage of long-term sensitive secrets. We start
+with their sensitivity analysis for the key generation followed by the signing procedure.
+3.1 Key generation sensitivity
+During key generation, the variable ζ has to be protected since it is the seed for all
+subsequent values (e.g., K). Similarly, ς has to be protected since it serves as a seed to
+deterministically generate the long term secrets s1 and s2. All the other variables in the
+key generation can be leaked or are public, hence do not need side-channel protection.
+1 As a result t could be fully part of the public key. Alternatively, it can decomposed into t0 and t1 so
+that the public key only contains t1. This reduces the size of the public key by a factor close to two at the
+cost of an increased secret key size, which must then contain t0, and a slightly increased signature size.
+Azouaoui et al. 63
+ζ H
+ρ
+ς
+K
+ExpandA
+ExpandS
+A
+s1
+s2
+◦
++ t Power2Round
+t1 t0
+H tr
+Figure 1: Graphical representation of the key generation. Output: pk = (ρ, t1), sk =
+(ρ, K, tr, s1, s2, t0). Red: sensitive. Blue: non-sensitive.
+3.2 Signature generation sensitivity
+All the variables denoted in red in Figure 2 need to remain secret and hence must be
+secure against DPA. This naturally holds for both secret key components s1 and s2, in
+order to avoid trivial key recovery attacks leading to signature forgeries. Next, the vector
+of polynomials y is sensitive and must be protected. Indeed, given a valid signature
+σ = (c̃, z, h), the secret vector s1 can be recovered from z = y + cs1 for known or partial
+knowledge of y [MUTS22]. A similar analysis applies to w0 which can lead to the recovery
+of s2.2
+As a result, the vector of polynomials w must be protected: w0 is directly derived
+from w, and it is possible to solve the system of equations Ay = w for known A and w to
+recover y in most cases (see Section 3.3 for details). This equation is similar to a Learning
+With Rounding (LWR) instance, where w1 would be the public rounded value and w0
+would be the error (which cannot leak). For the same reason, ρ0
+must be protected since it
+is used as a seed to obtain y. The same holds for K in the deterministic signing case.
+tr
+M
+H µ
+K
+H ρ0
+ρ ExpandA A
+ExpandMask y
+κ
+◦ w Decompose
+w1 w0
+H c̃
+SampleInBall
+c
+c
+s1
+y
+◦
++ z
+z
+c
+s2
+w0
+◦
++
+−
+r̃
+r̃
+t0
+c
+◦
++
+w1
+MakeHint h
+Figure 2: Graphical representation of the signature generation. Input: sk, M, Output:
+σ = (c̃, z, h). Curved arrows represent rejection checks. Red: sensitive. Blue: non-sensitive.
+Next, when it comes to public or non-sensitive variables, both tr and t0, the message
+M, the seed ρ, the hash µ and the matrix A are public. The sensitivity of the vector of
+2 A recent ePrint report details an attack exploiting the leakage of w0 [BVC+23].
+64 Protecting Dilithium against Leakage
+polynomials w1 in the signing procedure is more delicate to analyze, since it depends on
+the result of the boundary checks on z and r̃. If the boundary checks pass, for example
+when a signature is accepted, then the zero-knowledge proof of security of Dilithium shows
+that w1 does not leak any information. Informally, w1 can be reconstructed from a valid
+signature, which in turn can be simulated in zero knowledge, and hence w1 contains
+no more information than the signature itself. As a result, Dilithium does not need an
+explicit LWR hardness assumption in this case, since it is at least as hard as its LWE
+assumption. When the boundary checks do not pass, the reduction from LWR to LWE
+does not apply immediately since the distribution on w1 changes slightly. Leaving w1
+unmasked therefore requires the additional explicit assumption that the corresponding LWR
+problem is hard. Since the number of rounded bits is significantly higher than the error
+that is added in the LWE problem, we conjecture that w1 does not require side-channel
+countermeasures. The same expectation was also shared by Vadim Lyubashevsky in a
+personal communication and publicly during RWPQC23. We leave its further investigation,
+e.g., in the light of the recent [DFPS23], as an interesting scope for further investigations.
+In order to be conservative, we nevertheless study the option of additionally protecting w1
+in Subsection 6.4. For the rest, the challenge c can be left unprotected since it is derived
+from a one-way hash of w1 and public inputs. And once the bound checks on z and r̃
+(discussed further in the next paragraph) have passed, the hint vector can be made public
+since it does not contain any sensitive information. Indeed, in the simplified version of
+Dilithium which does not involve the hints or the public key compression, all information
+that would be given by the hints is already contained in the returned valid signature and
+the public key. The checks on ct0 and h are needed for correctness only.
+Finally, regarding z and r̃, both must remain protected until the bound checks on both
+have passed. This implies the need for a secure bound check algorithm. After successful
+bound checks, they do not leak information about other sensitive values and can be leaked
+to the adversary.3
+For z this is trivial, as it is part of the signature. In the case of r̃, this
+can be shown by the equation:
+Az − ct = w − cs2 = αw1 + r̃.
+Indeed, for a valid signature, the values A, z, c, t, and w1 are not sensitive and α is a
+known parameter of the algorithm. Therefore, r̃ can be computed using only public values,
+so there is no need to keep it protected after a successful signing process. A public r̃ is
+quite handy, because it allows us to compute the hint h completely on public data.
+3.3 Differences with [MGTF19]
+Most of our claims made above do align with the ones made in [MGTF19]. However, our
+conclusions on w and r̃ slightly differ, which we discuss in the following.
+Protecting w. First we look at w, in particular at the system of equations that produces
+it: Ay = w. It is possible to solve this system for y, if the matrix A has one more row
+than columns. This is the case for NIST security levels 3 and 5, where A has dimensions
+6 × 5 and 8 × 7 respectively. Even a simple solver is able to compute the sensitive y in less
+than two minutes on a laptop, with original Dilithium parameters.4
+For level 2, since the
+3 This refers to the rejection checks on z and r̃. The one on h is not sensitive.
+4 First, the polynomials of the first column of A are reduced to monic form via Gaussian elimination
+on the coefficients. Then, the fact that aijXk · Xn−k = −aijX0(mod Xn + 1) is used to eliminate all but
+one polynomial in the first column. The remaining polynomial then allows us to eliminate all others in the
+first row, from column 2 onwards. The procedure is repeated on the second column, etc. The solver was
+implemented in Matlab and tested with the parameters given in [DLL+17] for security levels 3 and 5.
+Azouaoui et al. 65
+matrix A is square (of dimensions 4 × 4) and random, it is most likely invertible.5
+Hence,
+with knowledge of w, y can be computed simply as y = A−1
+· w. This shows that w must
+be protected, contrary to what was previously proposed in [MGTF19].
+Unmasking r̃. Before we look at r̃ we need to address a variation of the signing procedure
+in Dilithium. The original pseudocode for the signing algorithm described in [DLL+
+17]
+only keeps the output w1 from Decompose(w). Then, instead of r̃ = w0 − cs2 it computes
+r = w−cs2. The rejection check on r̃ is done on r0, which comes from Decompose(r). Also,
+the MakeHint function works slightly different and takes r, c, t0 as input (but produces the
+same exact output h). In [MGTF19], this r-version is used while the r̃-version is never
+mentioned. However, considering the equation:
+r = w − cs2 = αw1 + w0 − cs2 = αw1 + r̃.
+we can see that r and r̃ can be calculated from each other using the public values w1
+and α. So any consideration regarding the sensitivity classification of one of these values
+automatically applies to the other one as well. In [MGTF19], the value r is never unmasked
+which means that the calculation of the hint h must be protected against side-channel
+attacks. But as we explained above, r̃ can be recreated from public values after a valid
+signature output. So we consider r̃ as public after the checks on z and r̃.
+3.4 Differences with [ABC+
+22]
+In this previous version of our results, a finer-grain sensitivity analysis was proposed,
+suggesting that the computation of cs1 + y = z could only require security against SPA. It
+was in particular conjectured that an intermediate attack path targeting this computation
+would be hard, the investigation of which being left as an open problem. However, it
+appears that the analogy between the multiplication cs1 and a variant of “hard physical
+learning problem” similar to [DMMS21], which would back up this conjecture, does not
+hold. The problem, already glimpsed in [ABC+
+22], is that c and s1 are not uniformly
+distributed and have small norm, while the hardness of hard physical learning problems
+leverages uniform secrets so that computing the multiplication leads to modular reductions.
+Combined with the fact that when the signature is correct, the knowledge on z can be used
+to directly transfer information on y into information on the output of the multiplication,
+it implies that y and z actually need to be protected against DPA. As a result, Dilithium
+has less opportunities of levelling and its sensitivity analysis can be simplified into the mix
+of unprotected and DPA protected operations that we now use.
+4 Improved masked gadgets
+In this section, we describe the techniques used for masking Dilithium. First, we recall
+some standard notions of masking along with the notations used in this paper. Then,
+we provide a set of new gadgets dedicated to Dilithium operations. For each of them,
+we justify their correctness and discuss their probing security. Finally, we discuss their
+instantiation in the case of the different parameter sets of Dilithium.
+Concretely, these gadgets are essentially relying on standard approaches tailored to the
+Dilithium use case and most of our optimizations are obtained from carefully selecting
+the type of masking (i.e., Boolean or arithmetic) We in particular rely on the recently
+improved masking conversion proposed in [BC22] for this purpose.
+5 More precisely, since the entries of A are elements of R, and R contains qn = 8380417256 elements, it
+is highly unlikely that two rows of A are linearly dependent. Therefore, it almost always holds that the
+determinant of A is non-zero and an inverse matrix exists.
+66 Protecting Dilithium against Leakage
+4.1 Masking background
+Masking is a popular countermeasure against side-channel attacks. It consists in splitting
+any sensitive variable x into d shares [CJRR99]. Concretely, d − 1 shares are chosen
+uniformly at random. Hence, any subset of d − 1 shares remains independent of the secret
+x, forcing the adversary to exploit d shares simultaneously to extract sensitive information.
+This property must be maintained during the entire execution of the masked circuit. This
+is formalized in the probing model, ensuring that the adversary learns no information
+about the secret by having access to d − 1 intermediate variables [ISW03].
+In lattice-based cryptography, two types of masking are used. The first one is Boolean
+masking. In such a case, the sharing of a k-bit Boolean variable x is written as xB,k
+and satisfies the property that x =
+Ld−1
+i=0 xB,k
+i where xB,k
+i is the i-th share of x. The
+notation xB,k
+[j] denotes the sharing of the j-th bit of x. Boolean masking is typically
+used for protecting symmetric primitives such as hash functions. The second one is
+arithmetic masking. In such a case, the sharing of a variable x ∈ Zq is expressed as xAq
+such that x =
+Pd−1
+i=0 x
+Aq
+i mod q where x
+Aq
+i is the i-th share of x. Arithmetic masking is
+typically used to perform polynomial operations such as additions and multiplications.
+Since both arithmetic and Boolean masking are used to protect lattice-based cryptography,
+gadgets are required to convert masking from one type to another. To convert from
+arithmetic to Boolean masking, we use SecA2BModpd
+q. Similarly to converting from Boolean
+masking to arithmetic masking, we use SecB2AModpd
+q. Eventually, we also leverage the
+gadget SecAddModpd
+q that performs a modular addition operating on inputs protected with
+Boolean masking. We refer to [BC22] for the implementation of these algorithms.
+In this work, probing security is ensured thanks to the Probe Isolating Non Interference
+(PINI) security notion [CS20]. Fulfilling PINI ensures probing security and the composition
+of PINI gadgets is PINI as well. This means that PINI gadgets can be composed (without
+refresh) and the resulting circuit is probing secure. Since the new gadgets we propose
+can be expressed as a composition of PINI gadgets previously proposed by Bronchain and
+Cassiers, it directly implies that they are PINI and therefore probing secure.
+4.2 SecLeq
+We first introduce SecLeqd
+ψ xB,k
+
+described in Algorithm 4. It outputs a bit b equal to 1
+if the input Boolean sharing of the k-bit variable x is less than or equal to a bound ψ.
+Algorithm 3 SecUnMaskd
+k xB,k
+
+Input: Boolean sharing xB,k
+with 0 ≤ x < 2k
+.
+Output: Output the k-bit unmasked value x.
+1: yB,k
+← Refreshd
+k xB,k
+
+. Refresh based on the ISW multiplication [CS21, Algorithm 3].
+2: x ←
+Ld−1
+i=0
+xB,k
+i
+Algorithm 4 SecLeqd
+ψ xB,k
+
+Input: Boolean sharing xB,k
+with 0 ≤ x < 2k
+and ψ ≥ 0.
+Output: For 0 ≤ ψ < 2k
+− 1, public bit b with b = 1 if x ≤ ψ and b = 0 otherwise. If ψ ≥ 2k
+− 1,
+trivially returns b = 1.
+1: x0B,k+1
+← SecAddd
+k+1 xB,k
+, 2k+1
+− ψ − 1
+
+2: b ← SecUnMaskd
+1 x0B,k+1
+[k]
+
+Azouaoui et al. 67
+Correctness. We next detail the correctness of Algorithm 4 for the case of 0 ≤ ψ < 2k
+−1.
+The first step in SecLeq consists in doing an addition of x with the (k + 1)-bit two’s
+complement representation of −(ψ + 1) to obtain x0
+= x − ψ − 1. As a result, the output b
+must be set to 1 only if x0
+is strictly negative. Because of the input conditions 0 ≤ x < 2k
+and 0 ≤ ψ < 2k
+− 1, the resulting x0
+is included in −2k
+≤ x < 2k
+which fits in a k + 1-bit
+two complement representation, hence no overflow occurs in the subtraction. The second
+step consists in unmasking the (k + 1)-th bit of x0
+which corresponds to the sign bit of the
+two’s complement representation. Eventually, the case of ψ ≥ 2k
+− 1 is trivial. Indeed,
+x ≤ 2k
+− 1 hence x is always smaller or equal to ψ.
+Proposition 1. Algorithm 4 is PINI if b is public.
+Proof. SecUnMask is PINI as a consequence of [CGMZ23, Lemma 2].6
+. Therefore, if b is
+public, Algorithm 4 is a composition of PINI gadgets.
+Usage in Dilithium. SecLeq is not a high-level component of Dilithium but is instead
+used as a building block in Algorithm 5 and Algorithm 6. We note that the SecAddd
+k+1
+in SecLeq can be generically implemented with the full-adder based addition proposed
+in [BC22, Algorithm 6]. In the context of Dilithium, the added constant is public and fixed
+by the parameter set, enabling possible optimization of the adder taking into account the
+bits of the constant as well as the fact that only the sign bit (and so all the intermediate
+carries) must be explicitly computed. These optimizations depend on the constant and
+can lead to the saving of multiple SecAnd’s and XOR’s.
+4.3 SecBoundCheck
+Algorithm 5 describes SecBoundCheckd
+q,λ0,λ1
+xAq
+
+which returns a bit b if the input
+arithmetic sharing xAq
+satisfies the property −λ0 ≤ x ≤ λ1 mod q.
+Algorithm 5 SecBoundCheckd
+q,λ0,λ1
+xAq
+
+Input: Arithmetic sharing xAq
+, integer q < 2k
+and λ0 + λ1 < q with λ0 ≥ 0 and λ1 ≥ 0.
+Output: Bit b with b = 1 if −λ0 ≤ x ≤ λ1 mod q, b = 0 otherwise.
+1: x0Aq
+0 ← x
+Aq
+0 + λ0 mod q . b = 1 iff 0 ≤ x0 ≤ λ1 + λ0 mod q
+2: x0B,k
+← SecA2BModpd
+q x0Aq
+
+3: b ← SecLeqd
+λ0+λ1
+x0B,k
+
+Correctness The first step in Algorithm 5 is to add λ0 to the input sharing of x resulting in
+a sharing of x0
+. As a result, the output bit b will be set to one if and only if 0 ≤ x0
+≤ λ0 +λ1
+mod q. The second step is to check that condition thanks to SecLeq. To do so, the
+arithmetic sharing x0Aq
+of x0
+is converted to a Boolean sharing x0B,k
+thanks to SecA2BModp.
+The resulting sharing fulfills the input conditions of SecLeq. Indeed, (x0
+mod q) < q and
+q < 2k
+implies x0
+< 2k
+. Additionally, since λ0 and λ1 are positive integers, we ensure that
+λ0 + λ1 ≥ 0. The returned bit by SecBoundCheck is the one returned by SecLeq.
+Proposition 2. Algorithm 5 is PINI.
+Proof. The first addition is applied only on the first share hence PINI. SecA2BModpd
+q is PINI
+by [BC22, Proposition 4], and Algorithm 4 is PINI by Proposition 1. Hence, Algorithm 5
+is PINI since it is the composition of PINI gadgets.
+6 Refresh is (d − 1)-free-SNI [CS21] Therefore, all its outputs and any set of at most t probes inside
+the gadget can be simulated by knowing its output and t of its input shares.
+68 Protecting Dilithium against Leakage
+Usage in Dilithium. SecBoundCheck can be used to perform both rejection checks kzk∞ <
+γ1 − β and kr̃k∞ < γ2 − β, where γ1, γ2 and β are defined by Dilithium specifications
+(see Table 1). In the first case, SecBoundCheck is instantiated with λ0 = λ1 = γ1 − β − 1,
+where the −1 is due to the strict inequality in the norm check. Similarly, in the second
+case, SecBoundCheck is instantiated with λ0 = λ1 = γ2 − β − 1.
+4.4 SecSampleModp
+Algorithm 6 describes SecSampleModp which samples uniformly x over the range −φ0 ≤
+x ≤ φ1 mod p and outputs an arithmetic sharing when provided with a masked uniform
+randomness stream (xB,k
+0 , xB,k
+1 , . . . ).
+Algorithm 6 SecSampleModpd
+q,φ0,φ1
+
+xB,k
+0 , xB,k
+1 , . . .
+
+Input: Bounds φ0 and φ1 with φ0 ≥ 0, φ1 ≥ 0 and φ0 + φ1 < q.
+Output: Arithmetic sharing xAq
+with uniformly distributed x such that −φ0 ≤ x ≤ φ1 mod q.
+1: k ← dlog2(φ0 + φ1 + 1)e
+2: i ← 0
+3: while ¬SecLeqd
+φ0+φ1
+xB,k
+i
+
+do
+4: i ← i + 1
+5: xAq
+← SecB2AModpd
+q xB,k
+i
+
+6: xAq
+[0] ← xAq
+[0] − φ0 mod q
+Correctness. We first note that the output sharing should be uniform on a continuous
+range [−φ0, φ1] which contains φ0 + φ1 + 1 integers. This range can be represented
+with k-bits such that φ0 + φ1 + 1 ≤ 2k
+. The first step in Algorithm 6 is to convert its
+uniformly distributed input bits into shares xB,k
+i while the obtained x is strictly larger
+than φ0 + φ1. This inequality is checked by leveraging SecLeq described in Algorithm 4.
+Once the inequality is not satisfied, the obtained x is uniformly distributed on the range
+0 ≤ x ≤ φ0 +φ1. The Boolean sharing of x is then converted into an arithmetic sharing xAq
+.
+Finally, −φ0 mod q is added to this arithmetic sharing, resulting in x being uniformly
+distributed over −φ0 ≤ x ≤ φ1 mod q.
+Proposition 3. Algorithm 6 is PINI assuming that whether each xi satisfies xi > φ0 + φ1
+is public information and that xi∗ ≤ φ0 + φ1 for some integer i∗
+.
+Proof. The assumptions imply that the output value of the SecLeq gadget calls are public
+and that the gadget terminates with the number of iterations being public. Therefore,
+the gadget SecSampleModp can be viewed as a circuit composed of PINI gadgets, hence
+Algorithm 6 is itself PINI.
+Usage in Dilithium. SecSampleModp is used during both for key generation and signing.
+First, during ExpandS in key generation, a secret key coefficient x in s1 or s2 is sampled such
+that −η ≤ x ≤ η where η ∈ {2, 4} depending on the Dilithium parameter set. This sampling
+can be masked with SecSampleModpd
+q,η,η (·). For these parameters, rejections can occur and
+a fresh x passes the SecLeq check with probability 5
+8 and 9
+16 , respectively. Second, during
+ExpandMask signature generation, a coefficient x of y is sampled such that −γ1 < x ≤ γ1
+where γ1 is a power of two such that γ1 ∈ {217
+, 219
+} depending on the parameter set. As
+a result, this sampling can be masked thanks to SecSampleModpd
+q,γ1−1,γ1
+(·). For these
+parameters, no resampling of x is required. Indeed, SecLeqd
+2γ1−1 (·) is used which satisfies
+the trivial condition φ ≥ 2k
+− 1 since φ = 2γ1 − 1. The k must not be evaluated at run
+Azouaoui et al. 69
+time since it is directly derived from the Dilithium parameter set. As an example for the
+ExpandMask execution during signature generation, k ∈ {18, 20} depends on the parameter
+set. We note that in both ExpandS and ExpandMask, the x is sampled from the output of
+a hash function, which is most efficiently protected using Boolean masking. This explains
+why we consider only sampling in Boolean domain.7
+Moreover, whether the samples have
+to be rejected is public information in the original security proof of Dilithium.
+4.5 SecDecompose
+The SecDecompose gadget presented in Algorithm 7 enables to compute the decomposition
+(w1, w0) of a coefficient w such that w = αw1+w0 mod q with w0 = w mod±
+α. Concretely,
+we leverage the fact that w1 can be leaked to the adversary since it is computed during
+signature verification, and hence must not be protected against side-channel attacks. The
+first step of our gadget is to derive w1 from wAq
+. Then, w0
+Aq
+is obtained by computing
+w0
+Aq
+= wAq
+− α · w1 mod q. To the best of our knowledge, there is no generic and
+efficient method for a masked division to compute w0
+Aq
+divided by α to get w1. Hence,
+we next specialize the extraction of w1 to the different parameter sets of Dilithium.
+Algorithm 7 SecDecomposed
+q,α wAq
+
+Input: Arithmetic sharing wAq
+, prime integer q with q < 2k
+integer α with 0 < α < q and
+α = 2γ2.
+Output: Arithmetic sharing w0
+Aq
+and integer w1 such that w = αw1 + w0 mod q.
+1: if NIST Level 3 or Level 5 then
+2: bAq
+← wAq
++ γ2 mod q
+3: b0Aq
+← α−1
+· bAq
+− 1 mod q
+4: b0B,k
+← SecA2BModpd
+q b0Aq
+
+5: w1
+B,k0
+← b0B,k
+[[0, k0
+[]
+6: else . NIST Level 2
+7: w1
+B,k0
+← SecCompressd
+q,−α−1 wAq
+
+8: w1 ← SecUnMaskd
+k0
+
+w1
+B,k0
+
+9: w0
+Aq
+← wAp
+− α · w1 mod q
+Correctness Level 2. For the NIST level 2 parameters of Dilithium, we have α = (q−1)/44.
+Hence, α−1
+= −44 mod q. For these parameters, w1 can be extracted by performing a
+division with its reminder such that:
+b
+αw1 + w0
+α
+e = b(αw1 + w0) ·
+−α−1
+q − 1
+e, (1)
+≈ b(αw1 + w0)
+−α−1
+q
+e, (2)
+which in turn can be performed by using the Compress function defined as:
+Compress(x, δ, q) = b
+x · δ
+q
+e mod δ, (3)
+7 An alternative solution is to leverage arithmetic to arithmetic conversion. It would require to first
+generate a random sharing xAφ0+φ1 resulting in a uniform x modulus φ0 + φ1. Then, that sharing of x
+must be converted to arithmetic sharing with modulus q such as xAq . Yet to our knowledge, there exists
+no arithmetic-to-arithmetic conversion more efficient than the combination of SecLeq and SecB2AModp.
+70 Protecting Dilithium against Leakage
+for which a masked version at any order is presented in [CGMZ23]. The Compress function
+can be used since −α−1
+ q. Hence, the error does not have an impact on the results.
+This fact has been checked exhaustively for all possible values of w mod q.8
+Correctness Level 3 & Level 5. Next, we check the correctness of SecDecompose for
+NIST level 3 and level 5 parameters. In such cases, α = (q − 1)/16. Hence, α−1
+= −16
+mod q. The first steps in Algorithm 7 execute the following processing to w in order to
+derive b0
+such that;
+b0
+= α−1
+· ((αw1 + w0) +
+α
+2
+) − 1 mod q, (4)
+which can be alternatively expressed as:
+b = w1 + α−1
+· (w0 −
+α
+2
+) mod q, (5)
+= w1 + 16 · (
+α
+2
+− w0) mod q. (6)
+There, we note that α
+2 − w0 is strictly positive thanks to the definition of Decompose.
+Indeed, it follows from −α/2 ≤ w0 ≤ α/2. As a result, w1 can simply be contained in
+the 4 LSBs of the binary representation of b0
+. This is done thanks to the combination of
+SecA2BModpd
+q and just keeping the 4 LSBs of the output.9
+Proposition 4. Algorithm 7 is PINI if w1 is public.
+Proof. If w1 is public, Algorithm 7 is the composition of PINI gadgets hence it is PINI.
+5 Implementation
+We now discuss the different designs we compare later in Section 6. We describe the
+implementations for both the deterministic and the randomized versions of Dilithium. All
+our results are based on modified versions of the Dilithium implementations provided
+by the PQM4 project [KRSS]. These are C implementations with optimized assembly
+for polynomial arithmetic and hash functions. In order to prevent side-channel attacks,
+we follow our previous sensitivity analysis that distinguishes sensitive and non-sensitive
+operations, and we make use of masking with the gadgets presented in Section 4 and
+the underlying masked additions and conversion gadgets such as SecA2BModp, SecAdd,
+SecAddModp or SecB2AModp for all sensitive ones. We rely on their state-of-the-art bitsliced
+implementations introduced by Bronchain and Cassiers, which offer (to the best of our
+knowledge) the best performances on Cortex-M4 [BC22]. Eventually, we use the same
+masked Keccak as the one provided in [BC22]. We additionally leverage arithmetic masking
+with q modulus for all the polynomial operations and then apply share-wise the optimized
+polynomial arithmetic from the PQM4 implementations. Interestingly, the smaller modulus
+q0
+approach for the NTT in s1 ◦ c proposed in [AHKS22] could also be used. However, it
+requires arithmetic to arithmetic masking conversion from q0
+to q to perform the addition
+with masked y. We leave the study of such a trade-off for future works.
+5.1 Deterministic Dilithium
+We use a masked Keccak for H(K||µ) and within ExpandMask. In ExpandMask, the random-
+ness generation in SecSampleModp (see Algorithm 6 Line-3) is performed with a call to the
+8 [CGMZ23] only considers δ equals a power of two. We take δ as an arbitrary positive number.
+9 We note that only the LSBs of the SecA2BModpd
+q have to be explicitly computed. As a result, this can
+save several SecAnd when the SecA2BModpd
+q from [BC22] is used.
+Azouaoui et al. 71
+masked XOF. The multiplication Ay is performed on each of the shares of y independently
+by leveraging the optimized arithmetic operations in [KRSS]. For the w decomposition, we
+leverage the new gadget SecDecompose from Algorithm 7 with the appropriate parameters
+given in Subsection 4.5. The protected rejections kzk∞ < γ1 − β and kr̃k∞ < γ2 − β are
+implemented thanks to SecBoundCheck presented in Algorithm 5. Eventually, similarly
+to SecLeq in Algorithm 5, we unmask the public signature z and r̃ using the SecUnMask
+gadget once all the bound checks are passed, to maintain probing security.
+5.2 Randomized Dilithium
+The implementation we consider of the randomized version is similar to the deterministic
+one previously described. The main difference lies in the sampling of the randomness y
+within ExpandMask. The randomized version of Dilithium enables more freedom in the
+generation of the uniform polynomial vector y compared to the deterministic one. For
+the deterministic version, the randomness sampling in Algorithm 6 is based on secured
+XOF (Keccak) which can be a performance bottleneck (as detailed in Table 2). For the
+randomized version, a first option (which follows the specifications but does not bring
+performance improvements) is to generate ρ0
+with a TRNG and to use the masked XOF to
+derive y. Alternatively, one can directly generate the shares of y with the TRNG. This
+does not follow the specifications of Dilithium but saves the cost of a masked XOF and does
+not weaken the security of Dilithium as y remains uniform. We next evaluate this option.10
+6 Benchmarks
+In this section, we report the performances of the Dilithium implementations described
+in Section 5. We first detail the benchmarking setup used for this purpose. Second, we
+report the performance improvements provided by the new gadgets of Section 4 compared
+to the ones of [MGTF19]. Then, we evaluate the cost of each individual operation in
+Dilithium’s signature generation (without considering the rejections). Based on this,
+we compare the performance of both deterministic and randomized versions when side-
+channel countermeasures are required. Performances are given for Dilithium with Level-3
+parameters (see Table 1), but the general conclusions apply to all security levels.
+6.1 Benchmarking setup
+In order to evaluate the execution time of our implementations, we use a similar benchmark-
+ing setup as the one provided in [BC22], which itself is based on the PQM4 benchmarking
+initiative for PQC signatures and KEMs [KRSS]. More precisely, the benchmarks are per-
+formed with the NUCLEO-L4R5ZI demonstration board. The cycle counts are measured
+thanks to the cycle-accurate counter DWT_CCYCNT. With the considered clock configura-
+tion, the TRNG of the microcontroller provides 32 fresh random bits every 53 Cycles.
+This TRNG is used as for the generation of the randomness masking as well as for the
+ExpandMask in the randomized version of Dilithium that we evaluate.
+6.2 Gadgets improvements
+We first compare the gadgets presented in Section 4 and the ones proposed by Migliore et
+al. in [MGTF19], and we report the results in Figure 3. To enable a fair comparison, we
+implemented the gadgets as described in [MGTF19] by leveraging the PINI property and
+the bitslice gadgets from [BC22] for SecAdd, SecAddModp, SecA2BModp and SecB2AModp.
+10 Yet another alternative, in case of weak TRNG, is to generate shares of y by applying the unmasked
+XOF to TRNG outputs. This option saves the cost of masking the XOF.
+72 Protecting Dilithium against Leakage
+As a result, the implementation of [MGTF19] we consider does not contain extra refresh
+gadgets (as it is PINI). We note that [MGTF19] uses a parameter w reflecting the bus
+width of the target CPU, which implies that operations might be performed on more
+bits than necessary. In our implementation, we do not use that parameter w as the
+operations are performed on the exact necessary number of bits as allowed by bitslicing.
+Similarly, [MGTF19] performed masked SecAnd with public values to isolate bits on secret
+variables. Individual bits are isolated in our implementations thanks to bitslicing.
+SecSampleModp. Both versions of SecSampleModp as used in the signature generation
+are similar. The only difference is that the subtraction with φ0 is performed with Boolean
+masking in [MGTF19] and with arithmetic masking in Algorithm 6. As a result, our new
+gadget saves the cost of one SecAdd by replacing it by a share-wise addition. This results
+in a speedup of an approximate factor 1.2, as highlighted in Figure 3b.
+SecBoundCheck. Our SecBoundCheck also simplifies the one proposed in [MGTF19]
+where a SecA2BModp is performed followed by two SecAdd’s.11
+Our construction replaces
+one of these additions by one arithmetically masked addition, which is almost free. This
+leads to a performance improvement by a factor ≈ 1.1, as reported in Figure 3d.
+SecDecompose. Finally, we compare the two implementations of SecDecompose. Inter-
+estingly, the main improvement comes from the fact that we first extract w1 efficiently
+and then unmask it to compute w0. This improvement relies on the fact that the higher
+order bits (e.g., w1) of the SecDecompose gadget is considered as sensitive by Migliore
+et al. while it is not necessary as detailed in the revisited sensitivity analysis detailed in
+Section 3.3. In short, the implementation based on [MGTF19] starts with a SecA2BModp,
+continues with several (≈ 10) additions and finally performs a SecB2AModp to obtain the
+arithmetic sharing of w0. The new gadget only requires a single SecA2BModp and some
+share-wise operations with arithmetic masking, and runs ≈ 3.8 times faster.
+We note that for Level-2 parameters, the α changes and the gadget from Migliore et al.
+does not apply. Our implementation of SecDecompose for Level-2 parameters is slightly
+slower than for Level-3 and Level-5. Indeed, in the SecCompress, the SecA2BModp must
+be performed on a slightly larger modulus increasing the cost by a factor ≈ 1.2.
+6.3 Deterministic vs. randomized performances
+The performances of each operation within both versions of Dilithium are reported in
+Table 2. We observe that the randomized signature generation is more efficient than
+the deterministic one. For two shares, 24 005 kCycles are needed for the deterministic
+version vs. only 14 282 kCycles for the randomized one. Hence, randomization offers an
+improvement by a factor ≈ 1.68. Similarly, for 8 shares, the randomized version is ≈ 1.77×
+faster than the deterministic one. The run time of unprotected Dilithium3 signature
+generation is 3224 kCycles [KRSS]. Hence, the two-share version is 4.3× slower than the
+unprotected implementation in the randomized case and 7.32× in the deterministic case.
+Most of the difference between the two Dilithium versions is due to ExpandMask, which is
+composed of two parts as detailed in Algorithm 6. The first one is sampling the uniform y
+in Boolean masking. This operation is performed with a masked XOF in the deterministic
+case, and with the on-board TRNG in the randomized case. The second part is to perform
+a SecB2AModp in order to produce an arithmetic sharing. This operation is similar for
+both cases. In the deterministic case, the ExpandMask represents 56 % of the total run
+11 Only SecBoundCheck is described for Boolean sharing in [MGTF19]. Here we assume that a SecA2BModp
+is performed before the end to match Algorithm 5 specifications.
+Azouaoui et al. 73
+2 4 6 8 10 12 14 16
+10
+5
+10
+6
+10
+7
+Number of shares
+Cycles
+new
+[MGTF19]
+(a) SecSampleModp comparison.
+2 4 6 8 10 12 14 16
+1
+1.2
+1.4
+Number of shares
+Gain
+new
+(b) SecSampleModp gains.
+2 4 6 8 10 12 14 16
+10
+5
+10
+6
+10
+7
+Number of shares
+Cycles
+new
+[MGTF19]
+(c) SecBoundCheck comparison.
+2 4 6 8 10 12 14 16
+1
+1.2
+1.4
+Number of shares
+Gain
+new
+(d) SecBoundCheck gains.
+2 4 6 8 10 12 14 16
+10
+5
+10
+6
+10
+7
+Number of shares
+Cycles
+new
+new∗
+[MGTF19]
+(e) SecDecompose comparison.
+2 4 6 8 10 12 14 16
+2
+4
+6
+Number of shares
+Gain
+new
+new∗
+(f) SecDecompose gains.
+Figure 3: Comparison between our new gadgets and [MGTF19] for NIST Level-3 parame-
+ters. The label new∗
+corresponds to the version where w1 remains masked.
+74 Protecting Dilithium against Leakage
+Table 2: Performances of the masked Dilithium Level-3 components for randomized and
+deterministic versions: number of clock cycles are given when running on a STM32L4R5
+and using the TRNG for generating the masking randomness (32-bit randomness every 53
+Cycles). Reported numbers are in kCycles. The numbers are for a single execution of
+the component (and do not consider repetitions due to rejections). Rand. ∗
+: The vector
+polynomial y is sampled from the TRNG and not from a XOF.
+d 2 4 6 8
+Deter. Rand.∗ Deter. Rand.∗ Deter. Rand.∗ Deter. Rand.∗
+Sign 23,613.8 13,891.4 68,557.9 39,064.5 128,280.9 73,905.4 199,567.4 111,515.4
+NTT(s) 185.4 185.4 370.7 370.7 556.3 556.2 741.7 741.7
+ExpandA 2,160.7 2,160.7 2,160.7 2,160.7 2,160.7 2,160.7 2,160.7 2,160.7
+H(K||µ) 370.1 0.0 1,126.7 0.0 2,082.8 0.0 3,377.8 0.0
+ExpandMask 12,551.1 3,198.6 38,068.8 9,702.2 70,788.2 18,514.6 113,185.0 28,498.6
+SecB2AModp 3,350.2 3,104.8 9,993.8 9,516.7 18,967.1 18,235.5 29,081.0 28,128.4
+Sampling 9,193.9 79.7 28,062.1 165.9 51,802.5 253.7 84,079.6 339.0
+Ay 382.2 382.3 764.4 764.4 1,146.7 1,146.6 1,528.8 1,528.8
+Decompose 2,369.0 2,369.1 8,142.3 8,142.3 16,382.8 16,376.8 25,076.9 25,080.8
+H(µ||w1) 94.9 94.9 94.9 94.9 94.9 94.9 94.9 94.9
+y + s1c 174.9 174.9 349.7 349.7 524.6 524.6 699.5 699.5
+w0 − s2c 209.9 210.0 419.6 419.7 629.4 629.5 839.3 839.4
+SecBoundCheck 4,354.6 4,354.6 15,472.8 15,472.8 31,234.4 31,221.3 48,376.4 48,386.4
+UnMask 378.3 378.4 1,185.7 1,185.7 2,260.7 2,260.6 3,046.8 3,047.0
+time from which 74 % are due to the masked XOF. As the randomized Dilithium does not
+require this masked XOF, only 25 % are imputable to ExpandMask.
+The cost of the other operations are similar for both versions. Concretely, the overall cost
+is dominated by the operations that have quadratic overheads in the number of shares (even
+for d = 2). These operations are H(K||µ), ExpandMask, SecDecompose, SecBoundCheck
+and UnMask. We note that for the deterministic version, the most expensive operation
+is ExpandMask, while it is SecBoundCheck for the randomized version. Additionally, the
+cost of polynomial arithmetic (NTT(s), y + s1c and w0 − s2c ) is limited. As expected, the
+cost of the public matrix expansion ExpandA remains constant with the number of shares.
+Eventually, we note that the SecB2AModp is slightly more expensive in the deterministic
+case, as it includes the linear overheads needed in order to map the output of the masked
+XOF into the correct bitslice representation. This operation is not needed in the randomized
+case as the output of the TRNG already has the appropriate layout.
+More generally, we also stress that the randomized version does not allow the adversary
+to average traces for the same inputs, which is beneficial for security. The combination of
+these observations and performance gains naturally calls for considering the randomized
+Dilithium in application contexts where side-channel attacks are a concern.
+6.4 Protecting w1 with masking
+We finally discuss the cost of a more conservative implementation keeping w1 masked
+before the bound checks on z and r̃ are passed. The resulting block diagram for signature
+generation is given in Figure 4, where the only difference with Figure 2 is that both w1 and
+H(µ||w1) are in red (i.e., sensitive). This change implies that w1 must remain masked in
+SecDecompose (see Algorithm 7). Hence, SecDecompose is adapted to keep w1 masked by
+performing a SecB2AModp on its Boolean sharing (instead of unmasking). The computation
+of w0 can then be applied share-wise similarly as in Algorithm 7, Line-9. The resulting
+increase in the run time of SecDecompose is detailed in Figure 3.
+The impact of protecting w1 on the full signature is detailed in Table 3. The main
+difference with Table 2 is that the cost of SecDecompose increases as discussed above. A
+second difference is that the hash function H(µ||w1) now also needs to be masked. As a
+result, this hashing represents a total of 9 % of the run time for deterministic signatures,
+Azouaoui et al. 75
+tr
+M
+H µ
+K
+H ρ0
+ρ ExpandA A
+ExpandMask y
+κ
+◦ w Decompose
+w1 w0
+H c̃
+SampleInBall
+c
+c
+s1
+y
+◦
++ z
+z
+c
+s2
+w0
+◦
++
+−
+r̃
+r̃
+t0
+c
+◦
++
+w1
+MakeHint h
+Figure 4: Graphical representation of the signing procedure with masked w1, taking
+as input sk, M and outputting σ = (c̃, z, h). Curved arrows represent rejection checks.
+Red filled circles: sensitive variables. Blue: no side-channel protection required.
+and 13.7 % for randomized ones. Hence, protecting w1 decreases the benefit of randomized
+signatures, from 66 % of the run time when w1 does not need to be protected to 56 %
+when it has. Overall, the run time of deterministic (resp., randomized) signatures increases
+by a factor 1.3 (resp., 1.53) when we need to protect w1 with masking.
+Table 3: Performance of the masked Dilithium Level-3 components for randomized
+and deterministic versions with masked w1: number of clock cycles when running on a
+STM32L4R5 and using the TRNG for generating the masking randomness (32-bit randomness
+every 53 Cycles). Reported numbers are in kCycles. The numbers are for a single execution
+of the component (does not consider repetitions due to rejections). Rand. ∗
+: The vector
+polynomial y is sampled from the TRNG and not from a XOF.
+d 2 4 6 8
+Deter. Rand.∗ Deter. Rand.∗ Deter. Rand.∗ Deter. Rand.∗
+Sign 30,254.8 20,532.1 88,912.9 59,512.8 166,748.8 112,397.1 259,743.1 171,692.1
+NTT(s) 185.4 185.4 370.7 370.8 556.2 556.2 741.6 741.7
+ExpandA 2,160.7 2,160.7 2,160.7 2,160.7 2,160.7 2,160.7 2,160.7 2,160.7
+H(K||µ) 370.1 0.0 1,126.7 0.0 2,082.8 0.0 3,377.8 0.0
+ExpandMask 12,551.3 3,198.6 38,057.4 9,712.6 70,783.2 18,514.4 113,185.7 28,495.5
+SecB2AModp 3,350.3 3,104.8 9,982.3 9,528.9 18,962.0 18,235.4 29,081.7 28,126.1
+Sampling 9,193.9 79.9 28,062.1 164.1 51,802.5 253.7 84,079.6 338.4
+Ay 382.3 382.2 764.4 764.4 1,146.6 1,146.6 1,528.7 1,528.8
+Decompose 6,527.5 6,527.4 20,767.0 20,813.1 40,448.2 40,447.9 61,779.3 61,790.4
+H(µ||w1) 2,576.9 2,576.9 7,860.8 7,860.8 14,514.4 14,514.5 23,560.8 23,560.8
+y + s1c 174.9 174.9 349.7 349.7 524.5 524.6 699.5 699.4
+w0 − s2c 209.9 209.9 419.7 419.8 629.5 629.5 839.3 839.3
+SecBoundCheck 4,354.7 4,354.7 15,447.0 15,471.9 31,221.1 31,221.1 48,380.3 48,389.1
+UnMask 584.8 584.7 1,832.4 1,832.6 3,493.6 3,493.6 4,708.8 4,708.9
+76 Protecting Dilithium against Leakage
+7 Conclusion and open problems
+In this work, we analyzed side-channel protected implementations of Dilithium by mixing
+different contributions. First, we presented an updated sensitivity analysis for its key
+generation and signing algorithms. Our results show that a previous work in this direction
+was slightly flawed, with some parts leading to insecurities and other parts leading to
+inefficiencies. Second, our new masking gadgets improve over the state-of-the-art, leading
+to performance gains of factors up to of 3.8. They also fill gaps for which it was previously
+unknown how to efficiently apply masking and we propose the first masking gadgets that
+are compatible with all the Dilithium parameter sets. Overall, our analysis and benchmark
+highlight that the randomized variant of Dilithium evaluated in this paper provides notably
+better performances, thanks to additional flexibility in the sampling of random values.
+In addition, it also offers a smaller side-channel attack surface as signatures cannot be
+repeated. We therefore believe that it should be the default variant for embedded devices
+when side-channel leakage needs to be taken into account.
+These results lead to a number of natural open problems. First, they highlight that for
+now, the leveling concept (i.e., the idea of protecting different parts of an implementations
+with different countermeasures, in order to limit the overheads) cannot be fully exploited
+for Dilithium, as initially thought (see the cautionary note in Section 1). For example,
+most of the signature operations in our implementations need to be secure against DPA,
+which requires (expensive) masked gadgets. Hence it is a natural open question to find out
+whether more leveled implementations could be obtained, which could be considered in
+different fashions. A light leveling option, directly applicable to Dilithium, would be to
+try exploiting that even when masking, all operations may not leak in a similar manner.
+For example, one could try leveraging the recent observation that prime masking is more
+resilient to low-noise leakages than Boolean masking, and study whether the number
+of shares in the Boolean and arithmetic masking used for protecting Dilithium against
+leakage could be leveled [MMMS23]. A more ambitious direction would be to study how
+to enable a stronger leveling again (i.e., mixing operations that require security against
+SPA and operations that require security against DPA). One potential direction could be
+to rely on hard physical learning problems like introduced in [DMMS21], possibly at the
+cost of some design tweaks in Dilithium (e.g., in order to deal with the challenges raised
+by the manipulation of non-uniform and low-norm secrets). In general, designing a PQ
+signature scheme with a better performance vs. side-channel security tradeoff appears as
+an interesting long-term goal. Besides, our work only focuses on side-channel attacks and
+therefore raises the question of how to additionally protect Dilithium against fault attacks,
+and whether its randomized version also provides (security or performance) benefits in
+this context, which is yet another interesting direction for further research.
+The source codes of the implementations described in this work are available from the
+following link: https://github.com/uclcrypto/pqm4_masked/tree/master.
+Acknowledgments.
+François-Xavier Standaert is a senior research associate of the Belgian Fund for Scientific
+Research (FNRS-F.R.S.). This work and its presentation have been funded in parts by
+the ERC Consolidator Grant number 724725 (acronym SWORD) and the ERC Advanced
+Grant number 101096871 (acronym BRIDGE).
+Azouaoui et al. 77
+References
+[ABC+
+22] Melissa Azouaoui, Olivier Bronchain, Gaëtan Cassiers, Clément Hoffmann,
+Yulia Kuzovkova, Joost Renes, Markus Schönauer, Tobias Schneider, François-
+Xavier Standaert, and Christine van Vredendaal. Leveling dilithium against
+leakage: Revisited sensitivity analysis and improved implementations. Fourth
+PQC Standardization Conference, 2022.
+[ABD+
+19] Roberto Avanzi, Joppe Bos, Léo Ducas, Eike Kiltz, Tancrède Lepoint, Vadim
+Lyubashevsky, John M Schanck, Peter Schwabe, Gregor Seiler, and Damien
+Stehlé. Crystals-kyber algorithm specifications and supporting documentation.
+NIST PQC Round, 3:4, 2019.
+[ABH+
+22] Melissa Azouaoui, Olivier Bronchain, Clément Hoffmann, Yulia Kuzovkova,
+Tobias Schneider, and François-Xavier Standaert. Systematic study of decryp-
+tion and re-encryption leakage: The case of kyber. In COSADE, volume 13211
+of Lecture Notes in Computer Science, pages 236–256. Springer, 2022.
+[AHKS22] Amin Abdulrahman, Vincent Hwang, Matthias J. Kannwischer, and Daan
+Sprenkels. Faster kyber and dilithium on the cortex-m4. In ACNS, volume
+13269 of Lecture Notes in Computer Science, pages 853–871. Springer, 2022.
+[BC22] Olivier Bronchain and Gaëtan Cassiers. Bitslicing arithmetic/boolean masking
+conversions for fun and profit with application to lattice-based kems. IACR
+Trans. Cryptogr. Hardw. Embed. Syst., 2022(4):553–588, 2022.
+[BVC+
+23] Alexandre Berzati, Andersson Calle Viera, Maya Chartouni, Steven Madec,
+Damien Vergnaud, and David Vigilant. A practical template attack on crystals-
+dilithium. IACR Cryptol. ePrint Arch., page 50, 2023.
+[CGMZ23] Jean-Sébastien Coron, François Gérard, Simon Montoya, and Rina Zeitoun.
+High-order polynomial comparison and masking lattice-based encryption.
+IACR Trans. Cryptogr. Hardw. Embed. Syst., 2023(1):153–192, 2023.
+[CJRR99] Suresh Chari, Charanjit S. Jutla, Josyula R. Rao, and Pankaj Rohatgi. Towards
+sound approaches to counteract power-analysis attacks. In CRYPTO, volume
+1666 of Lecture Notes in Computer Science, pages 398–412. Springer, 1999.
+[CS20] Gaëtan Cassiers and François-Xavier Standaert. Trivially and efficiently
+composing masked gadgets with probe isolating non-interference. IEEE Trans.
+Inf. Forensics Secur., 15:2542–2555, 2020.
+[CS21] Jean-Sébastien Coron and Lorenzo Spignoli. Secure wire shuffling in the
+probing model. In CRYPTO (3), volume 12827 of Lecture Notes in Computer
+Science, pages 215–244. Springer, 2021.
+[DFPS23] Julien Devevey, Pouria Fallahpour, Alain Passelègue, and Damien Stehlé. A
+detailed analysis of fiat-shamir with aborts. IACR Cryptol. ePrint Arch., page
+245, 2023.
+[DLL+
+17] Léo Ducas, Tancrède Lepoint, Vadim Lyubashevsky, Peter Schwabe, Gregor
+Seiler, and Damien Stehlé. CRYSTALS - dilithium: Digital signatures from
+module lattices. IACR Cryptol. ePrint Arch., page 633, 2017.
+[DMMS21] Sébastien Duval, Pierrick Méaux, Charles Momin, and François-Xavier Stan-
+daert. Exploring crypto-physical dark matter and learning with physical
+rounding towards secure and efficient fresh re-keying. IACR Trans. Cryptogr.
+Hardw. Embed. Syst., 2021(1):373–401, 2021.
+78 Protecting Dilithium against Leakage
+[FO99] Eiichiro Fujisaki and Tatsuaki Okamoto. Secure integration of asymmetric
+and symmetric encryption schemes. In CRYPTO, volume 1666 of Lecture
+Notes in Computer Science, pages 537–554. Springer, 1999.
+[HHP+
+21] Mike Hamburg, Julius Hermelink, Robert Primas, Simona Samardjiska,
+Thomas Schamberger, Silvan Streit, Emanuele Strieder, and Christine van
+Vredendaal. Chosen ciphertext k-trace attacks on masked CCA2 secure kyber.
+IACR Trans. Cryptogr. Hardw. Embed. Syst., 2021(4):88–113, 2021.
+[HS01] Nick Howgrave-Graham and Nigel P. Smart. Lattice attacks on digital signature
+schemes. Des. Codes Cryptogr., 23(3):283–290, 2001.
+[ISW03] Yuval Ishai, Amit Sahai, and David A. Wagner. Private circuits: Securing
+hardware against probing attacks. In CRYPTO, volume 2729 of Lecture Notes
+in Computer Science, pages 463–481. Springer, 2003.
+[KPP20] Matthias J. Kannwischer, Peter Pessl, and Robert Primas. Single-trace attacks
+on keccak. IACR Trans. Cryptogr. Hardw. Embed. Syst., 2020(3):243–268,
+2020.
+[KRSS] Matthias J. Kannwischer, Joost Rijneveld, Peter Schwabe, and Ko Stoffelen.
+PQM4: Post-quantum crypto library for the ARM Cortex-M4. https://
+github.com/mupq/pqm4.
+[LS15] Adeline Langlois and Damien Stehlé. Worst-case to average-case reductions
+for module lattices. Des. Codes Cryptogr., 75(3):565–599, 2015.
+[LZS+
+21] Yuejun Liu, Yongbin Zhou, Shuo Sun, Tianyu Wang, Rui Zhang, and Jingdian
+Ming. On the security of lattice-based fiat-shamir signatures in the presence of
+randomness leakage. IEEE Trans. Inf. Forensics Secur., 16:1868–1879, 2021.
+[MGTF19] Vincent Migliore, Benoît Gérard, Mehdi Tibouchi, and Pierre-Alain Fouque.
+Masking dilithium - efficient implementation and side-channel evaluation. In
+ACNS, volume 11464 of Lecture Notes in Computer Science, pages 344–362.
+Springer, 2019.
+[MMMS23] Loïc Masure, Pierrick Méaux, Thorben Moos, and François-Xavier Standaert.
+Effective and efficient masking with low noise using small-mersenne-prime
+ciphers. In EUROCRYPT (4), volume 14007 of Lecture Notes in Computer
+Science, pages 596–627. Springer, 2023.
+[MUTS22] Soundes Marzougui, Vincent Ulitzsch, Mehdi Tibouchi, and Jean-Pierre Seifert.
+Profiling side-channel attacks on dilithium: A small bit-fiddling leak breaks it
+all. IACR Cryptol. ePrint Arch., page 106, 2022.
+[Nat] National Institute of Standards and Technology. Post-
+quantum cryptography standardization. https://
+csrc.nist.gov/Projects/Post-Quantum-Cryptography/
+Post-Quantum-Cryptography-Standardization.
+[PPM17] Robert Primas, Peter Pessl, and Stefan Mangard. Single-trace side-channel
+attacks on masked lattice-based encryption. In CHES, volume 10529 of Lecture
+Notes in Computer Science, pages 513–533. Springer, 2017.
+[REB+
+22] Prasanna Ravi, Martianus Frederic Ezerman, Shivam Bhasin, Anupam Chat-
+topadhyay, and Sujoy Sinha Roy. Will you cross the threshold for me? generic
+side-channel assisted chosen-ciphertext attacks on ntru-based kems. IACR
+Trans. Cryptogr. Hardw. Embed. Syst., 2022(1):722–761, 2022.
+Azouaoui et al. 79
+[RJH+
+18] Prasanna Ravi, Mahabir Prasad Jhanwar, James Howe, Anupam Chattopad-
+hyay, and Shivam Bhasin. Side-channel assisted existential forgery attack on
+dilithium - A NIST PQC candidate. IACR Cryptol. ePrint Arch., page 821,
+2018.
+[RPBC20] Prasanna Ravi, Romain Poussier, Shivam Bhasin, and Anupam Chattopadhyay.
+On configurable SCA countermeasures against single trace attacks for the
+NTT - A performance evaluation study over kyber and dilithium on the ARM
+cortex-m4. In SPACE, volume 12586 of Lecture Notes in Computer Science,
+pages 123–146. Springer, 2020.
+[RRCB20] Prasanna Ravi, Sujoy Sinha Roy, Anupam Chattopadhyay, and Shivam Bhasin.
+Generic side-channel attacks on cca-secure lattice-based PKE and kems. IACR
+Trans. Cryptogr. Hardw. Embed. Syst., 2020(3):307–335, 2020.
+[SETA22] Chao Sun, Thomas Espitau, Mehdi Tibouchi, and Masayuki Abe. Guessing
+bits: Improved lattice attacks on (EC)DSA with nonce leakage. IACR Trans.
+Cryptogr. Hardw. Embed. Syst., 2022(1):391–413, 2022.
+[UXT+
+22] Rei Ueno, Keita Xagawa, Yutaro Tanaka, Akira Ito, Junko Takahashi, and
+Naofumi Homma. Curse of re-encryption: A generic power/em analysis on post-
+quantum kems. IACR Trans. Cryptogr. Hardw. Embed. Syst., 2022(1):296–322,
+2022.
+[VMKS12] Nicolas Veyrat-Charvillon, Marcel Medwed, Stéphanie Kerckhof, and François-
+Xavier Standaert. Shuffling against side-channel attacks: A comprehensive
+study with cautionary note. In ASIACRYPT, volume 7658 of Lecture Notes
+in Computer Science, pages 740–757. Springer, 2012.
+

@@ -1,0 +1,460 @@
+A 380 fW Leakage Data Retention Flip-Flop for Short Sleep
+Periods
+Citation for published version (APA):
+Sedighiani, S., Singh, K., Jordans, R., Harpe, P., & de Gyvez, J. P. (2023). A 380 fW Leakage Data Retention
+Flip-Flop for Short Sleep Periods. IEEE Transactions on Circuits and Systems II: Express Briefs, 70(7), 26502654. Article 10024364. https://doi.org/10.1109/TCSII.2023.3238961
+
+Document license:
+TAVERNE
+DOI:
+10.1109/TCSII.2023.3238961
+Document status and date:
+Published: 01/07/2023
+Document Version:
+Publisher’s PDF, also known as Version of Record (includes final page, issue and volume numbers)
+Please check the document version of this publication:
+• A submitted manuscript is the version of the article upon submission and before peer-review. There can be
+important differences between the submitted version and the official published version of record. People
+interested in the research are advised to contact the author for the final version of the publication, or visit the
+DOI to the publisher's website.
+• The final author version and the galley proof are versions of the publication after peer review.
+• The final published version features the final layout of the paper including the volume, issue and page
+numbers.
+Link to publication
+
+General rights
+Copyright and moral rights for the publications made accessible in the public portal are retained by the authors and/or other copyright owners
+and it is a condition of accessing publications that users recognise and abide by the legal requirements associated with these rights.
+• Users may download and print one copy of any publication from the public portal for the purpose of private study or research.
+• You may not further distribute the material or use it for any profit-making activity or commercial gain
+• You may freely distribute the URL identifying the publication in the public portal.
+If the publication is distributed under the terms of Article 25fa of the Dutch Copyright Act, indicated by the “Taverne” license above, please
+follow below link for the End User Agreement:
+www.tue.nl/taverne
+
+Take down policy
+If you believe that this document breaches copyright please contact us at:
+openaccess@tue.nl
+providing details and we will investigate your claim.
+
+Download date: 04. Jun. 2026
+
+2650
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. 70, NO. 7, JULY 2023
+
+A 380 fW Leakage Data Retention Flip-Flop
+for Short Sleep Periods
+Shima Sedighiani , Kamlesh Singh, Roel Jordans, Pieter Harpe , Senior Member, IEEE,
+and José Pineda de Gyvez , Fellow, IEEE
+
+Abstract—Data-retention flip-flops (DR-FF) provide an efficient state retention capability for any processor with frequent
+active-to-sleep mode transitions. This brief proposes new ultralow-power balloon-based DR-FFs operating over a wide supply
+voltage range achieving a sleep mode power consumption as
+low as 380 fW, an improvement of 185× over the previously
+reported CMOS DR-FFs. The proposed DR-FFs have significantly lower transition mode energy consumption compared
+to prior-art non-volatile DR-FFs (> 18×). The proposed DRFFs consume the lowest total energy (sleep, store and restore
+modes) for sleep mode times less than 520 ms. Additionally, the
+designed DR-FFs are comparable with most of the NV-FFs in
+literature for sleep times of up to 100 s, while eliminating the
+drawbacks of Non-volatile data retention FFs (higher/multiple
+supplies, integration/endurance issues).
+Index Terms—Flip-flop, dynamic
+data/state retention, ultra-low power.
+
+leakage
+
+suppression,
+Fig. 1. Sleep mode leakage power consumption vs state-transition energy
+consumption for DR-FFs and NV-FFs.
+
+I. I NTRODUCTION
+OT DEVICES operating using a small battery and/or an
+energy harvesting source often require an ultra-low-power
+sleep mode with data/state retention capability to achieve 1) a
+long operational lifetime and 2) consistent task execution.
+Traditionally, power gating a processor along with a data
+retention capability is the most efficient way to minimize sleep
+power [1], [2], [3]. In this technique, critical data is maintained
+in an ultra-low power circuitry during sleep mode to guarantee
+continuous operation when the system is reactivated.
+In the prior art there are two approaches to achieve a low
+leakage flip-flop (FF) with data retention capability 1) nonvolatile data retention FF (NV-FF) [1], [2], [3], [4], [5], [6],
+[7], [8], [9], [10] and 2) CMOS FF with a balloon latch (DRFF). The NV-FF allows zero power consumption to maintain
+the data during the sleep mode, whereas the DR-FF requires an
+always-on circuity to preserve the data [11], [12], [13], [14],
+[15], [16]. Nevertheless, NV-FFs have several disadvantages
+over CMOS DR-FFs, particularly for duty-cycled systems with
+short and frequent sleep modes. These are: 1) NV-FFs require
+higher state-transition energy than DR-FFs (Fig. 1). 2) NV-FFs
+
+I
+
+Manuscript received 24 December 2022; accepted 7 January 2023. Date
+of publication 23 January 2023; date of current version 30 June 2023. This
+work was supported in part by the Dutch NWO under Grant 10024474 P15-06
+P4-Zero Project. This brief was recommended by Associate Editor W. Zhao.
+(Corresponding author: Shima Sedighiani.)
+The authors are with the Department of Electrical Engineering, Eindhoven
+University of Technology, 5612 AZ Eindhoven, The Netherlands (e-mail:
+s.sedighiani@tue.nl; k.k.singh@tue.nl; r.jordans@tue.nl; p.j.a.harpe@tue.nl;
+j.pineda.de.gyvez@tue.nl).
+Color versions of one or more figures in this article are available at
+https://doi.org/10.1109/TCSII.2023.3238961.
+Digital Object Identifier 10.1109/TCSII.2023.3238961
+
+have limited endurance. For example, RRAM and MTJ NVFFs have a maximum write endurance of 109 and 1012 cycles,
+respectively [8]. 3) NV-FFs require a high transition mode
+supply voltage as well (> 1 V), which makes them difficult
+to integrate in systems [17]. 4) Additionally, NV-FFs generally come with relatively higher active mode power, delay and
+area overheads. 5) Finally, NV-FFs require special technology
+support and additional manufacturing costs.
+CMOS DR-FFs prevent the aforementioned disadvantages
+associated with NV-FFs. However, even prior-art CMOS DRFFs have a relatively high sleep mode power consumption,
+typically in the order of hundreds of pico-watt, leading
+to a considerable leakage power consumption for a design
+consisting of numerous flip-flops. This brief presents an
+ultra-low-leakage balloon-based DR-FF leveraging dynamic
+leakage suppression (DLS) and dual-mode (DM) logic techniques introduced in [18] and [19], respectively. The main
+contributions of this brief are as follows:
+• Use of hybrid cell (DLS and DM) to enable the efficient
+design of the balloon in the DR-FF, which operates over
+a wide voltage range (down to sub-threshold 0.4 V-0.9 V).
+The achieved leakage power consumption is 380 fW,
+185× lower than the previously reported DR-FFs.
+• Extensive design analysis of three different possible combinations of inverters for the design of the balloon
+(DLS-DLS, DLS-DM and DM-DM) over process, voltage
+and temperature ranges.
+• Dynamic control of the transistors in the DM inverter to
+switch between high-performance store/restore mode and
+low leakage sleep mode.
+
+c 2023 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.
+1549-7747 
+See https://www.ieee.org/publications/rights/index.html for more information.
+Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 28,2023 at 07:19:12 UTC from IEEE Xplore. Restrictions apply.
+
+SEDIGHIANI et al.: 380 fW LEAKAGE DR-FF FOR SHORT SLEEP PERIODS
+
+2651
+
+Fig. 3. (a) DLS inverter structure and operation. (b) Leakage comparison
+with standard and 2-stacked inverters in 28-nm FD-SOI (for comparison all
+transistors are minimum sized (W/L = 80nm/30nm)).
+
+Fig. 2. A typical balloon DR-FF. (a) Circuit diagram. (b) Operation waveform
+of the control signals.
+
+Our solution is an attractive alternative to NV-FFs that
+enables IoT devices with ultra-low-leakage power and ultralow state-transition energy consumption avoiding the aforementioned disadvantages of NV-FFs.
+II. BACKGROUND
+In prior work, various DR-FFs have been proposed to reduce
+the sleep mode leakage power consumption. In [11], a DRFF is proposed which can be configured as a Schmitt-trigger
+inverter and as a regular inverter during sleep and active
+mode, respectively. This design enables data retention down
+to 0.2 V with 220 pW sleep mode power consumption. In [12],
+a balloon-based DR-FF was introduced with 11% area overhead and 5.5 nW sleep mode power consumption. A DR-FF
+with ∼70 pW was proposed in [13] to enable data retention
+without any additional circuitry. The DR-FFs in [11] and [13]
+come at the cost of considerable active mode power and delay
+overhead due to the use of high-Vth transistors in the critical path of the flip-flop. Among the prior art, balloon-based
+DR-FFs have the least impact on the degradation of the active
+mode specifications as the critical path remains untouched. In
+this section, the preliminaries of a balloon-based DR-FF are
+discussed.
+A. Balloon-Based Data Retention Flip-Flop Structure
+A typical balloon DR-FF scheme is shown in Fig. 2(a).
+It consists of an always-powered latch (balloon) connected
+through a transmission-gate (TG2) to the slave stage of a flipflop. Transmission-gates TG1 and TG3 enable store/restore
+operation to/from the balloon. The TGs in the balloon DR-FF
+are turned on/off by signals B1 and B2. A power management
+unit (PMU) generates B1 and B2 signals according to the transition between store-sleep-restore modes. Usually, high-Vth
+transistors are used for the inverters in the balloon to minimize
+the leakage power consumption during sleep mode.
+
+B. Balloon-Based Data Retention Flip-Flop Operation
+The balloon DR-FF operation and the control signals during different modes (active, gated clock (CLKG), store, sleep,
+and restore) are shown in Fig. 2(b) During the store mode
+(B1=VDD , B2=0), TG2 is turned-on. Hence, the data at node
+N2 is stored into the balloon. The store mode delay is the
+time required for the data at node N4 to reach a stable voltage. The data is recovered during the restore mode. In restore
+mode (B1=VDD , B2=VDD ), TG2 is turned on so that the data
+is transmitted from N3 to node N2 in the FF. The restore mode
+delay is the time required for the data at the output of the flipflop to stabilize. Once the data is stored or restored, the balloon
+is detached (sleep-mode (B1=0, B2=VDD )) from the FF by
+turning off the TG2. The switches TG1 and TG3 in the FF
+prevent nodes N2 and N3 to be overwritten, respectively.
+In this brief, we propose new balloon-based DR-FFs, which
+have a significantly lower sleep mode power consumption as
+compared to the DR-FFs using standard inverters.
+III. P ROPOSED DATA R ETENTION F LIP -F LOPS
+The proposed balloon DR-FFs leverage two types of inverters based on the dynamic leakage suppression (DLS) and
+dual-mode (DM) design techniques. In this section, these
+two inverters are first introduced and then the structure and
+operation of the proposed DR-FFs are presented.
+A. DLS and DM Inverter Operation
+A DLS inverter (Fig. 3(b)) consists of a standard inverter
+whose output node is connected to a header NMOS transistor
+and a footer PMOS transistor. These additional transistors act
+as power-gating transistors to the standard inverter through
+which the leakage current consumption is reduced significantly [20]. The leakage current consumption of the designed
+regular-Vth based DLS, standard, and 2-stacked inverters in
+28nm FD-SOI are shown in Fig. 3. According to the simulation results, the DLS inverter is 74× and 25× less leaky at
+0.4 V, and 31× and 8× less leaky at 0.9 V as compared to
+the standard and 2-stacked inverter, respectively. Conversely,
+the DLS inverter acts considerably slower than the standard
+inverter. Thus, it is inefficient in the active mode (store/restore
+mode). Therefore, dual-mode logic was introduced in [19] to
+address the active mode delay issue of DLS design.
+A dual-mode (DM) inverter structure and its operation are
+shown in Fig. 4(a). A DM inverter includes two extra transistors in parallel with the header and footer of the DLS
+
+Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 28,2023 at 07:19:12 UTC from IEEE Xplore. Restrictions apply.
+
+2652
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. 70, NO. 7, JULY 2023
+
+Fig. 4. (a) Dual-mode inverter structure and operation. (b) Delay comparison with DLS inverter in 28-nm FD-SOI (for comparison all transistors are
+minimum sized (W/L=80nm/30nm)).
+
+Fig. 5.
+
+3-alternative designs of the balloon in the DR-FF.
+
+inverter. These additional transistors are driven by an input signal (mode) according to which the inverter operates as either
+a DLS inverter or a standard inverter. This flexibility of the
+DM inverter allows switching between low-power idle mode
+and fast operation mode. Fig. 4(b) shows the simulated delays
+of the DM and DLS inverters for a voltage range of 0.4 V to
+0.9 V. As shown in Fig. 4(b), the DM inverter is 400× and
+10k× faster at 0.4 V and 0.9 V, respectively, than the DLS
+inverter.
+B. Design of the Proposed DR-FFs
+The three proposed balloon DR-FFs are shown in Fig. 5.
+The balloons comprise different combinations of DLS and
+DM inverters. These balloons are designed based on 1) two
+DLS inverters connected in series (DLS-DLS), 2) a DLS
+inverter connected to a DM inverter (DLS-DM), and 3) two
+DM inverters connected in series (DM-DM). In the DLS-DM
+balloon, the DM inverter is used as the driver of node N2
+(Fig. 2) to improve the restore operation as it has to drive the
+higher capacitive load. The transmission-gates operation for
+store-sleep-restore mode transition are the same as in Fig. 2.
+Furthermore, the mode control signal for the DM inverter to
+switch between standard and DLS operation is dynamically
+controlled using the B1 signal, eliminating the requirement
+for an additional control signal. In this way, the DM inverters
+in DM-DM and DLS-DM balloons are dynamically configured
+according to the operation modes.
+Fig. 6(a) shows in a simplified way how the proposed DRFFs from Fig. 5 are configured in each mode of operation.
+As shown in Fig. 6(b), during sleep mode (B1=0, B2=VDD ),
+all inverters in the balloon are structured as DLS inverters to enable low leakage power consumption. During store
+(B1=VDD , B2=0) and restore modes (B1=VDD , B2=VDD ),
+the DM inverters in the DLS-DM and DM-DM balloons are
+configured as a standard inverter to perform faster data transition as shown in Fig. 6(a). The inverters in the proposed
+balloons are sized and optimized for two aspects: Pull-up and
+pull-down parts are sized to achieve balanced rise and fall
+delays. Then, the transistors are resized to verify the store
+and restore operations for data (0/VDD ) at all the process corners (TT, SS, FF, SNFP, and FNSP), temperature ranges from
+0◦ C to 80◦ C, and over a supply voltage range from 0.4 V
+to 0.9 V. The sizing of the transistors in the DLS-DLS balloon is challenging. During the restore operation, the DLS
+inverter has to charge/discharge node N2. Since the DLS
+inverter has a low drive/pull strength and node N2 is connected
+
+Fig. 6.
+An overview of DLS-DM and DM-DM DR-FFs operations.
+(a) Overview of the possible modes of operations. (b) Timing diagram.
+
+to multiple switches, the leakage of the switches creates a
+problem. Therefore, the DLS inverter driving N2 must be
+sized relatively big (4×) compared to the other DLS inverters to enable operation at all the aforementioned operating
+conditions.
+IV. R ESULTS AND E VALUATION
+In this section, the sleep mode power consumption and transition modes (store/restore) energy consumption are evaluated.
+In order to provide a reference comparison for leakage power
+consumption and store/restore delay, the smallest size latches
+from the commercial 28-nm FDSOI libraries (PB0 and PB16)
+are chosen for comparison against the designed balloons. Note
+that the FF for all the DR-FFs is the same to make the comparison fair. To verify the functionality, all the DR-FFs are
+simulated for a supply voltage range from 0.4 V to 0.9 V, process variation corners (TT, SS, FF, SNFP, and FNSP), and for
+a temperature range of 0◦ C to 80◦ C.
+A. Sleep Mode Comparison
+1) Sleep Mode Leakage: Fig. 7 illustrates the average leakage power consumption for data (0/ VDD ) of the proposed
+DR-FFs and the latch from the library for a voltage range
+from 0.4 V to 0.9 V. The results show that the proposed DRFFs have considerably lower sleep mode power consumption
+compared to the least leaky latch from the library by up to 13×
+
+Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 28,2023 at 07:19:12 UTC from IEEE Xplore. Restrictions apply.
+
+SEDIGHIANI et al.: 380 fW LEAKAGE DR-FF FOR SHORT SLEEP PERIODS
+
+Fig. 7.
+Leakage power consumption of the DR-FFs at different supply
+voltages at typical corner 25◦ C.
+
+2653
+
+Fig. 10.
+
+Store mode energy consumption and delay of DR-FFs.
+
+TABLE I
+ACTIVE -M ODE S PECIFICATION OF THE DR-FF S O PERATING AT 0.4 V, TT,
+25◦ C, AND 1MH Z C LOCK F REQUENCY
+
+Fig. 8. Impact of temperature variation on the leakage power consumption
+of the DR-FFs at the typical corner, 0.4 V.
+
+Fig. 9. Impact of process corner variation on the leakage power consumption
+of the DR-FFs at 25◦ C, 0.4 V.
+
+and 15× at 0.4 V and 0.9 V, respectively. Among the proposed
+DR-FFs, the DLS-DM DR-FF has the lowest leakage power
+consumption of 380 fW at 0.4 V and 2.6 pW at 0.9 V. This is
+because it has fewer transistors than the DM-DM DR-FF and
+smaller transistors (4×) than the DLS-DLS DR-FF. Note that
+the DLS-DLS transistors are sized relatively bigger to enable
+operation at all PVT conditions.
+2) Temperature Variations Impact: To investigate the
+impact of temperature variations, the DR-FFs and the latch
+from the library are simulated over a temperature range of 0◦ C
+to 80◦ C at 0.4 V and the typical corner. The leakage power
+consumption savings is greater than 6× above 0◦ C compared
+to the latch (BP16) from the library.
+3) Process Variations Impact: Fig. 9 shows the leakage
+power consumption of the DR-FFs and the latch from the
+library for process variations. The results show that the
+proposed DR-FFs have considerably less leakage power consumption and less sensitivity to process variations than the
+
+latch from the library. The DLS-DM DR-FF has the least
+leakage power consumption in all corners.
+B. Store and Restore Comparison
+It is essential to consider the store/restore-mode energy
+overhead, as the mode transition energy consumption must not
+degrade the energy saved during the sleep mode. To evaluate
+this, the worst-case mode-transition delays for data (0/VDD )
+and the corresponding energy consumption are considered.
+1) Store Operation: Fig. 10 shows the energy consumption
+of DR-FFs during store mode. The DM-DM DR-FF is superior to the other proposed DR-FFs and comparable with the
+latches from the library connected to the same flip-flop as in
+the proposed DR-FFs. The DM-DM DR-FF is 85% and 63%
+more energy efficient than the DLS-DLS and DLS-DM DRFFs, respectively, at 0.4 V. The total energy consumption of the
+DM-DM remains below 10 fJ over the voltage range of 0.4 V
+to 0.9 V. The store mode energy consumption of DLS-DLS
+and DLS-DM DR-FFs increases as the DLS inverter delay is
+relatively constant with supply voltage change. While the DMDM DR-FF and the latches from the library (PB0 and PP16)
+are structured as standard inverters during store mode and they
+have a minimum energy at 0.6 V, 0.8 V and 0.5 V, respectively.
+2) Restore Operation: As shown in Fig. 11, the restore
+mode energy consumption of the DR-FFs is relatively similar.
+In this mode, the balloons are static and they are not toggling.
+Thus, the energy consumption is dominated by the flip-flop.
+Nevertheless, DM-DM and DLS-DM are slightly more energyefficient, as they have lower balloon leakage compared to the
+other designs.
+C. Active-Mode Overhead
+In Table I, the DR-FFs active-mode power consumption
+with 1 MHz clock frequency, delay (CLK-to-Q), set-up time
+
+Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 28,2023 at 07:19:12 UTC from IEEE Xplore. Restrictions apply.
+
+2654
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. 70, NO. 7, JULY 2023
+
+VI. C ONCLUSION
+This brief proposes the design of ultra-low-power balloonbased DR-FFs using dynamically controlled hybrid DLS and
+DM cells operating over a wide supply voltage range down to
+sub-threshold with the lowest leakage power consumption of
+380 fW as compared to the previously reported CMOS DRFFs. Also, the proposed DR-FFs are more energy-efficient
+than the prior art NV-FFs with short and frequent sleep-mode
+transitions, avoiding the disadvantages of non-volatile FFs.
+Fig. 11.
+
+Fig. 12.
+
+Restore mode energy consumption and delay of DR-FFs.
+
+DR-FFs vs. NV-FFs with sleep mode duration.
+
+TABLE II
+C OMPARISON OF THE P ROPOSED DLS-DM FF W ITH P RIOR A RT
+
+and hold time and area are compared with the flip-flop without the balloon. The parasitic capacitance of TG2 at node N3
+(Fig. 2) adds a small overhead in active mode properties.
+V. C OMPARISON W ITH THE S TATE - OF - THE -A RT
+Table II summarizes the key parameters and compares
+proposed DLS-DM FF, as it has the lowest sleep power, with
+the recent prior arts. Unlike NV-based designs, data retention FFs are able to store/restore data at a supply voltage
+down to the near/sub-threshold. In addition, DR-FFs have
+less store/restore energy overhead. Additionally, we achieve a
+state-of-the-art leakage power consumption of 380 fW. Fig. 12
+presents a comparison of the total energy consumption during
+sleep mode including transition and sleep modes energy. The
+total energy of DR-FFs increases with time due to the constant
+leakage power during sleep mode. The proposed DR-FFs are
+more efficient for sleep mode duration below 520 ms. Thus,
+the proposed DR-FFs are an attractive alternative to the NVFFs for applications with short sleep durations, furthermore
+prohibiting NVM DR-FF drawbacks.
+
+R EFERENCES
+[1] S.-S. Sheu et al., “A ReRAM integrated 7T2R non-volatile SRAM for
+normally-off computing application,” in Proc. IEEE Asian Solid-State
+Circuits Conf., 2013, pp. 245–248.
+[2] S. C. Bartling, S. Khanna, M. P. Clinton, S. R. Summerfelt,
+J. A. Rodriguez, and H. P. McAdams, “An 8MHz 75µA/MHz zeroleakage non-volatile logic-based Cortex-M0 MCU SoC exhibiting 100%
+digital state retention at VDD =0V with <400ns wakeup and sleep transitions,” in Proc. IEEE Int. Solid-State Circuits Conf., 2013, pp. 432–433.
+[3] I. Kazi et al., “Energy/reliability trade-offs in low-voltage ReRAM-based
+non-volatile flip-flop design,” IEEE Trans. Circuits Syst. I, Reg. Papers,
+vol. 61, no. 11, pp. 3155–3164, Nov. 2014.
+[4] A. Lee et al., “ReRAM-based 7T1R nonvolatile SRAM with 2x reduction in store energy and 94x reduction in restore energy for frequent-off
+instant-on applications,” in Proc. IEEE Symp. VLSI Circuits, 2015, pp.
+C76–C77.
+[5] T.-K. Chien et al., “A low store energy and robust ReRAM based flipflop for normally off microprocessors,” in Proc. IEEE Int. Symp. Circuits
+Syst., 2016, pp. 2803–2806.
+[6] A. Lee et al., “A ReRAM-based nonvolatile flip-flop with self-writetermination scheme for frequent-off fast-wake-up nonvolatile processors,” J. Solid-State Circuits, vol. 52, no. 8, pp. 2194–2207, Aug. 2017.
+[7] T. Ohsawa et al., “A 1 Mb nonvolatile embedded memory using 4T2MTJ
+cell with 32 b fine-grained power gating scheme,” J. Solid-State Circuits,
+vol. 48, no. 6, pp. 1511–1520, Jun. 2013.
+[8] K. Monga, N. Chaturvedi, and S. Gurunarayanan, “Energy-efficient data
+retention in D flip-flops using STT-MTJ,” Circuit World, vol. 46, no. 4,
+pp. 229–241, 2020.
+[9] Y. Wang et al., “A 3µs wake-up time nonvolatile processor based on
+ferroelectric flip-flops,” in Proc. IEEE ESSCIRC, 2012, pp. 149–152.
+[10] C.-F. Liao, M.-Y. Hsu, Y.-D. Chih, J. Chang, Y.-C. King, and C. J. Lin,
+“Zero static-power 4T SRAM with self-inhibit resistive switching load
+by pure CMOS logic process,” in Proc. IEEE Int. Electron Devices
+Meeting Tech. Dig., 2016, pp. 16.5.1–16.5.4.
+[11] D. Kitagata, S. Yamamoto, and S. Sugahara, “Design and performance
+of virtually nonvolatile retention flip-flop using dual-mode inverters,” in
+Proc. IEEE New Gener. CAS, 2018, pp. 186–189.
+[12] N. Kobayashi and T. Enomoto, “Low standby power CMOS delay flipflop with data retention capability,” in Proc. Asia–South Pacific Design
+Autom. Conf., 2019, pp. 21–22.
+[13] H. Jiao and Z. Zhang, “A compact low-power data retention flip-flop
+with easy-sleep mode,” in Proc. IEEE Int. Symp. Circuits Syst., 2020,
+pp. 1–5.
+[14] H. You, J. Yuan, Z. Yu, and S. Qiao, “Low-power retentive true
+single-phase-clocked flip-flop with redundant-precharge-free operation,”
+IEEE Trans. Very Large Scale Integr. (VLSI) Syst., vol. 29, no. 5,
+pp. 1022–1032, May 2021.
+[15] X. Cao, H. Jiao, and E. J. Marinissen, “A bypassable scan flip-flop for
+low power testing with data retention capability,” IEEE Trans. Circuits
+Syst. II, Exp. Briefs, vol. 69, no. 2, pp. 554–558, Feb. 2022.
+[16] X. Fan, Y. Wu, H. Dong, and J. Hu, “A low leakage autonomous data
+retention flip-flop with power gating technique,” J. Electr. Comput. Eng.,
+vol. 2014, Nov. 2014, Art. no. 695832.
+[17] K. Singh and J. P. de Gyvez, “Twenty years of near/sub-threshold design
+trends and enablement,” IEEE Trans. Circuits Syst. II, Exp. Briefs,
+vol. 68, no. 1, pp. 5–11, Jan. 2021.
+[18] D. Bol, R. Ambroise, D. Flandre, and J.-D. Legat, “Building ultra-lowpower low-frequency digital circuits with high-speed devices,” in Proc.
+14th IEEE Int. Conf. Electron. Circuits Syst., 2007, pp. 1404–1407.
+[19] L. Lin, S. Jain, and M. Alioto, “A 595pW 14pJ/cycle microcontroller
+with dual-mode standard cells and self-startup for battery-indifferent distributed sensing,” in Proc. IEEE Int. Solid-State Circuits Conf., 2018,
+pp. 44–46.
+[20] W. Lim, I. Lee, D. Sylvester, and D. Blaauw, “Batteryless sub-nW
+Cortex-M0+ processor with dynamic leakage-suppression logic,” in
+IEEE Int. Solid-State Circuits Conf. Dig. Tech. Papers, 2015, pp. 1–3.
+
+Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on June 28,2023 at 07:19:12 UTC from IEEE Xplore. Restrictions apply.
+
+

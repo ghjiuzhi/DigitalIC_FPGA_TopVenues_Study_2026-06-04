@@ -1,0 +1,1857 @@
+Aalborg Universitet
+When Random is Bad
+Selective CRPs for Protecting PUFs against Modeling Attacks
+Ferens, Mieszko; Dushku, Edlira; Kosta, Sokol
+Published in:
+IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems
+DOI (link to publication from Publisher):
+10.1109/TCAD.2024.3506217
+Publication date:
+2025
+Document Version
+Accepted author manuscript, peer reviewed version
+Link to publication from Aalborg University
+Citation for published version (APA):
+Ferens, M., Dushku, E., & Kosta, S. (2025). When Random is Bad: Selective CRPs for Protecting PUFs against
+Modeling Attacks. IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems, 44(5),
+1648-1661. https://doi.org/10.1109/TCAD.2024.3506217
+General rights
+Copyright and moral rights for the publications made accessible in the public portal are retained by the authors and/or other copyright owners
+and it is a condition of accessing publications that users recognise and abide by the legal requirements associated with these rights.
+- Users may download and print one copy of any publication from the public portal for the purpose of private study or research.
+- You may not further distribute the material or use it for any profit-making activity or commercial gain
+- You may freely distribute the URL identifying the publication in the public portal -
+Take down policy
+If you believe that this document breaches copyright please contact us at vbn@aub.aau.dk providing details, and we will remove access to
+the work immediately and investigate your claim.
+Downloaded from vbn.aau.dk on: June 04, 2026
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 1
+When Random is Bad: Selective CRPs for
+Protecting PUFs against Modeling Attacks
+Mieszko Ferens, Edlira Dushku, Sokol Kosta
+Abstract—Resource-constrains are a significant challenge when
+designing secure IoT devices. To address this problem, the
+Physical Unclonable Function (PUF) has been proposed as a
+lightweight security primitive capable of hardware fingerprinting.
+PUFs can provide device identification capabilities by exploiting
+random manufacturing variations, which can be used for authen-
+tication with a verifier that identifies a device through challenge-
+response interactions with its PUF. However, extensive research
+has shown that PUFs are inherently vulnerable to Machine
+Learning (ML) modeling attacks. Such attacks use challenge-
+response samples to train ML algorithms to learn the underlying
+parameters that define the physical PUF. In this paper, we present
+a defensive technique to be used by the verifier called Selective
+CRPs. We propose generating challenges selectively, instead of
+randomly, to negatively affect the parameters of ML models
+trained by attackers. Specifically, we provide three methods:
+Binary-coded with Padding (BP), Random Shifted Pattern (RSP),
+and Binary Shifted Pattern (BSP). We characterize them based
+on Hamming Distance patterns, and evaluate their applicability
+based on their effect on the uniqueness, uniformity, and reliability
+of the underlying PUF implementation. Furthermore, we analyze
+and compare their resilience to ML modeling with the traditional
+random challenges on the well-studied XOR PUF, Feed-Forward
+PUF, and Lightweight Secure PUF, showing improved resilience
+of up to 2 times the number of CRPs. Finally, we suggest using
+our method on the Interpose PUF to counter reliability-based
+attacks which can overcome Selective CRPs and show that up to
+4 times the number of CRPs can be exchanged securely.
+Index Terms—Physical Unclonable Function, PUF, selective
+CRP, modeling attack, hardware security, IoT.
+I. INTRODUCTION
+THE ubiquitous and pervasive deployment of IoT devices
+can be seen in almost any type of industry (e.g., aircrafts,
+power plants, healthcare), with current estimates predicting
+almost 30 billion devices deployed in 2030 [1]. However,
+the wide expansion of IoT devices creates a growing concern
+about their security capabilities, as they handle sensitive data
+and security-critical systems while possessing a resource-
+constrained nature. To provide low-cost and high-security,
+several lightweight security solutions have been proposed,
+one of which is the Physical Unclonable Function (PUF) [2].
+PUFs are physical circuits with low hardware overhead that
+are sensitive to random manufacturing variations, providing a
+unique and physically unclonable hardware fingerprint.
+A PUF generates specific outputs in response to specific
+inputs, known as Challenge-Response Pairs (CRPs), which
+Mieszko Ferens, Edlira Dushku and Sokol Kosta are with the Department
+of Electronic Systems, Aalborg University, Denmark (email: mjfm@es.aau.dk,
+edu@es.aau.dk, sok@es.aau.dk)
+This work is supported by the IoTalentum project, funded by the European
+Union Horizon 2020 research and innovation program within the framework
+of Marie Skłodowska-Curie Actions ITN-ETN with grant number 953442.
+can be used for different applications [3], [4]. Depending on
+the application requirements, two main types of PUFs can be
+used: Weak PUFs or Strong PUFs [5], [6]. Weak PUFs have
+a limited number of unique inputs (challenges) that can be
+applied to them, which makes them an interesting solution for
+on-device applications (e.g., tamper-proof storage [4], proof-
+of-execution [2], code that only runs on specific devices [2]).
+On the other hand, Strong PUFs have a large number of unique
+CRPs that increases exponentially with the size of the PUF.
+This property makes it infeasible to exhaustively collect all
+CRPs and clone the PUF even if they are exposed to an
+attacker. Thus, Strong PUFs enable other applications like
+device authentication [7], which is the focus of this paper.
+Specifically for lightweight IoT devices, implementation of
+authentication using Strong PUFs attempts to exclude other
+costly hardware security features. As such, it is commonly
+assumed that an attacker will be able to obtain a subset
+of CRPs of the PUF, either directly from the device or its
+communication channel, with active or passive techniques.
+This assumption combined with the extensively researched
+Machine Learning (ML)-based modeling attacks [8], [9] is a
+fundamental impersonation vulnerability of PUFs.
+To prevent attacks on PUFs, two main defensive strategies
+have emerged. The first strategy involves adding non-linearity
+and complexity to the PUF’s model [5] by increasing its size
+(i.e., the number of basic components) but without changing
+its fundamentals. The second approach is to create a so-
+called Controlled PUF [6] by adding additional modules to
+the PUF that can support more complex modes of operation
+and communication protocols with the verifier. However, both
+strategies deviate from the original lightweight proposal of
+PUFs by adding more hardware overhead. Moreover, many
+attacks have been successfully conducted on the improved
+PUF proposals [6], [8], [9].
+In this paper, we present a defense mechanism against
+passive ML modeling attacks based on Selective CRPs ex-
+panding our previous work [16]. Our approach is agnostic
+to most Strong delay-based PUFs and does not require any
+additional hardware or a Controlled PUF. In particular, we
+use selectively chosen challenges by the verifier, instead of
+the traditional random ones. Specifically, we use three main
+methods [16], each with unique advantages that can adapt to
+different use cases: Binary-coded with Padding (BP), Random
+Shifted Pattern (RSP), and Binary Shifted Pattern (BSP).
+In our previous work [16], we compared these methods with
+the traditional random challenges by attacking known PUFs
+with well-researched state-of-the-art ML attacks, namely, Lo-
+gistic Regression (LR) and Multi-Layer Perceptron (MLP) [9].
+In this paper, we extend the security analysis to large numbers
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 2
+TABLE I
+MOST RELEVANT RELATED WORK ON PUFS FOR BOTH ML MODELING ATTACKS AND DEFENSIVE TECHNIQUES FOR THIS PAPER.
+Paper Year Perspective Method Result
+Gassend et al. [3] 2004 Defense FF PUF Added non-linearity with feed-forward loops
+Lim et al. [7] 2005 Defense XOR PUF Increased complexity and non-linearity with XORed APUFs
+Majzoobi et al. [10] 2008 Defense LSPUF Increased complexity of XOR PUF
+Rühmair et al. [11], [12] 2013 Attack LR and ES Up to 64-bit 6-XOR PUF broken
+Becker et al. [13] 2015 Attack Reliability CMA-ES Up to 128-bit 16-XOR PUF broken
+Nguyen et al. [14] 2019 Defense Interpose PUF Prevents reliability CMA-ES attack
+Mursi et al. [15] 2020 Attack Improved MLP Up to 64-bit 9-XOR PUF broken
+Wisiol et al. [8] 2020 Attack Splitting attack Up to 64-bit (1,9)-IPUF broken
+Wisiol et al. [9] 2022 Attack Improved LR and MLP Optimized LR attack
+This work 2024 Defense Selective CRPs Lowers ML modeling attacks accuracy
+of CRPs and consider the Feed-Forward PUF (FF PUF) [3],
+Lightweight Secure PUF (LSPUF) [10], and Interpose PUF
+(IPUF) [14] which have potentially conflicting internal chal-
+lenge manipulation but may improve resilience or counter
+reliability-based attacks [13] that bypass our method. Addi-
+tionally, we characterize Selective CRP types and evaluate
+their performance in terms of uniqueness, uniformity, and reli-
+ability, as well as the CRP space reduction and computational
+and memory complexity. To this end, the contributions of this
+paper can be summarized as follows:
+• We provide three Selective CRP subsets, namely, BP,
+RSP, and BSP CRPs.
+• We characterize these Selective CRP methods by con-
+sidering Hamming Distance patterns in the subset and
+identify three types of subsets.
+• We evaluate the effect of 106
+Selective CRPs on unique-
+ness, uniformity, and reliability of 20 XOR PUF instances
+of varying sizes.
+• We model the CRP space reduction and the computational
+and memory complexity of Selective CRPs.
+• We demonstrate the effectiveness of the approach by
+analyzing the resilience of XOR PUF, FF PUF, and
+LSPUF against ML modeling attacks when Selective
+CRPs are used and propose using the IPUF (specifically
+(1,1)-IPUF) to overcome the vulnerability to reliability-
+based attacks.
+The rest of this paper is organized as follows. Section II
+gives an overview of the related work and the current state-
+of-the-art in the field of Strong PUFs. Following, we define
+our problem statement and methodology in Section III. In
+Section IV we provide the necessary background on the
+Strong PUFs used in this paper and the ML algorithms used
+for the attacks. The three implementations of our defensive
+technique, namely Selective CRPs, are presented in Section V.
+In Section VI we evaluate the characteristics of our tech-
+nique. Section VII models the complexities and overhead. The
+security enhancement provided on XOR PUFs is shown in
+Section VIII, on FF PUF and LSPUF in Section IX, and on
+IPUF in Section X. We discuss the applicability of Selective
+CRPs in Section XI. Finally, Section XII concludes the paper.
+II. RELATED WORK
+This section discusses the related works on the topics of: (i)
+modeling attacks on Strong PUFs and (ii) defensive techniques
+against them. The goal is to select the most relevant attacks
+on which our security analysis will be based and identify the
+defensive technique trends that motivate our approach. Table I
+provides a summary of the most relevant papers.
+A. Modeling attacks
+Strong PUFs are required for authentication purposes, and
+the most prominent type is the Arbiter PUF (APUF) [3].
+The first impactful work on ML-based modeling attacks was
+presented by Rühmair et al. [11], which was also extended to
+FPGA implementations of PUFs [12]. This work uses Sup-
+port Vector Machine (SVM), LR, and Evolutionary Strategies
+(ES) to successfully attack APUF, FF PUF, XOR PUFs, and
+LSPUF. A follow-up to the work by Tobisch et al. [17]
+improved the LR attack and showed that it can break the
+noise bifurcation countermeasure [18]. In a similar study by
+Hospodar et al. [19], SVM and MLP are used to attack APUFs
+and 2-XOR PUFs implemented in CMOS technology. A dif-
+ferent but very relevant vulnerability of APUF-based designs
+is their reliability. This was exploited by Becker [13] using the
+Covariance Matrix Adaptation Evolutionary Strategies (CMA-
+ES) algorithm.
+In [20], Alkatheiri et al. proposed an MLP model to
+model FF PUFs. Similarly, Aseeri et al. [21] followed by
+Mursi et al. [15] create a Neural Network (NN) configuration
+that greatly improves the modeling of large XOR PUFs using
+the MLP algorithm. Following a different approach, Santikel-
+lur et al. [22] employ the Efficient CANDECOMP/PARAFAC
+Tensor Regression Network (ECP-TRN) to also break large
+XOR PUFs, and even some smaller ones which use a Linear-
+Feedback Shift Register (LFSR) or Pseudo-Random Number
+Generator (PRNG) to obfuscate their challenge-response map-
+ping. In recent years, Wisiol et al. [9] have compared the
+performance between the improved LR, MLP, and ECP-TRN
+attacks, showing that all have the capability of cloning large
+XOR PUFs.
+Some variants of the APUF and XOR PUF, namely Multi-
+plexer PUF (MPUF) and IPUF, that limit the effectiveness of
+previous attacks were also found vulnerable. Firstly, Santikel-
+lur et al. [23] show that Deep Feed-Forward NNs are capable
+of modeling these PUFs up to a certain size. Shi et al. [24]
+use Artificial Neural Networks (ANNs) to approximate either
+the logical gates or the challenge-response relationship of
+MPUFs. Alamro et al. [25] replicate these attacks on MPUF
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 3
+implemented in FPGA. In [8], Wisiol proposes the splitting
+attack designed to break the unique design of the IPUF, which
+Thapaliya et al. [26] improve to require less training data.
+Finally, Aghaie et al. [27] show that these attacks are affected
+by the slight bias of realistic PUFs, but propose a biased LR
+algorithm to solve it.
+Discussion. Previous works on modeling attacks mainly
+focus on delay-based PUF based on the APUF. Many modeling
+attacks are viable, requiring the creation of large and complex
+variants, of which the XOR PUF is a prominent benchmark.
+Solutions that involve using Controlled PUFs present a way to
+reduce overhead, but smaller Controlled PUFs have been found
+vulnerable to tailor-made attacks that exploit the increased
+attack surface. This motivates us to avoid Controlled PUF
+while reducing the size of bare (uncontrolled) PUF, for which
+we find that LR and MLP attacks are the most efficient.
+B. Defensive techniques
+Initially, attempts to make PUFs more secure consisted
+of increasing their size and complexity at the cost of more
+hardware resources. Starting from the APUF [3], Gassend et al.
+introduced non-linearity by adding Feed-Forward loops cre-
+ating an FF PUF in [3]. A different approach was seen in
+Lim et al. [7], where multiple APUF were put in parallel and
+their outputs XORed, creating an XOR PUF.
+Instead of increasing the size of PUFs, some authors choose
+to build more elaborate designs. Majzoobi et al. [10] proposed
+the LSPUF by including input and output networks to the XOR
+PUF. Sahoo et al. [28] use multiplexers to select different
+independent APUFs creating the MPUF. Nguyen et al. [14]
+create a two layered PUF called the IPUF where the upper
+layer inserts an additional interpose bit into the challenge
+of the lower layer. Wang et al. [29] propose the Dual-Mode
+PUF which can unpredictably switch between two modes of
+operation. Expanding the same idea, the Configurable Tristate
+PUF (CT PUF) [30] by Zhang et al. adds a third mode.
+The problem with the previous approaches is that, ulti-
+mately, CRPs can be used as training data for ML algo-
+rithms. In response, the concept of Controlled PUF was in-
+troduced [31]. An example is the PUF with Randomized chal-
+lenge (RPUF) by Ye et al. [32] which randomizes the challenge
+that stimulates a Strong PUF by means of a PRNG followed
+by an LFSR. Another option is the Cyclic Redundancy Check
+PUF (CRC-PUF) by Dubrova et al. [33] which randomizes
+each input challenge with a CRC generator with a changing
+polynomial. Hou et al. [34] use an LFSR to desynchronize
+the input challenge from the response bits, creating the Shift
+Register PUF (SRPUF). Similarly, the Dynamically Config-
+urable Hybrid PUF (DCH PUF) by Wang et al. [35] changes
+its state via an LFSR to generate different outputs. Finally, the
+response-Feedback-based Lightweight Anti-Machine-learning-
+attack (FLAM) PUF was proposed by Wu et al. [36] and also
+uses an LFSR to generate responses which look independent
+from the input challenges to an attacker.
+Based on the use of Controlled PUFs, different authenti-
+cation protocols have been proposed. Paral et al. present a
+Pattern Matching Key Generation (PMKG) scheme in [37]
+1 0 0
+1 0 1 0
+Random CRPs
+PUF stages
+0 1 1
+1 0 1
+C r
+0
+1
+1
+0 0 1
+Selective CRPs
+0 1 0
+0 1 1
+C r
+0
+1
+0
+All wires have
+been used
+Wire for c1 = 1
+is not exposed
+c1
+New challenge
+r = 1 r = ?
+ML model
+Fig. 1. Comparison of a set of random and selective (binary table) challenges.
+When challenges are random, the probability of having data showing each bit
+in both possible states is high. This leads to the exposure of the delays of the
+corresponding wires. If selective challenges are used, some bit values may be
+hidden, and the trained ML model cannot accurately predict the response to
+all challenges.
+using an on-device secret key. Majzoobi et al. [38] propose
+the Slender PUF protocol, which replaces transmission with
+generation of challenges on the end-points by using a TRNG.
+Based on reverse fuzzy extractors, Herrewege et al. [39] enable
+mutual authentication of device and verifier. Yu et al. [18]
+create a noise bifurcation scheme, where error that can only be
+compensated by the verifier is introduced into the responses of
+a PUF. Finally, the same authors also presented the Lockdown
+protocol [40] where the server must send a response to a
+challenge from the PUF so it can verify its authenticity.
+Discussion. The state-of-the-art works show that attempts to
+secure PUFs have been made by compromising more hardware
+resources or creating Controlled PUFs. However, both solu-
+tions inherently go against the original lightweight proposal of
+PUFs. We identify that the most lightweight security approach
+would be improving the security of bare (uncontrolled) PUF.
+For this reason, we consider an alternative approach based on
+Selective CRPs from our previous work [16], which we extend
+in this paper. We also note that, to the best of our knowledge,
+random choice of challenges is the only approach used for
+bare PUFs and is our sole target for comparison.
+III. PROBLEM STATEMENT AND METHODOLOGY
+The typical authentication use case using PUFs consists of
+a server verifying the identity of a PUF by using prerecorded
+CRPs. Acting as a verifier, the server challenges the PUF to
+check if its response is the expected one, without reusing CRPs
+to prevent replay attacks. Since physically probing a PUF will
+likely modify its characteristics and affect the measurements,
+the PUF is physically tamper-proof or tamper-evident. Thus, as
+long as a software clone cannot be created, the system remains
+secure. However, as reported in Section II, many research
+works have shown that ML modeling attacks can effectively
+create clones of PUFs. For this reason, we propose a different
+approach: instead of modifying the PUFs themselves, we only
+change the training data that is exposed to the attacker.
+Fig. 1 visualizes the intuition behind our idea, which is
+based on the observation that ML models are heavily reliant
+on training data. Challenge bits for each CRP determine what
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 4
+wires (i.e., delay parameters) of the PUF are used to generate
+the response. Obviously, to learn all of these parameters,
+an ML model requires a training set of CRPs that includes
+challenges with each bit of the challenge at both values
+0 and 1.
+Hypothesis. Given a random subset of CRPs C of size N
+from a delay-based PUF that results in a trained ML model
+with prediction accuracy α, there exists a different subset of
+CRPs C′
+also of size N that results in a trained ML model of
+accuracy α′
+, such that α′
+< α.
+Objective. Find one or more non-random subsets of
+CRPs C′
+(Selective CRP subsets) that comply with the pre-
+vious hypothesis.
+Methodology. We develop our Selective CRPs using the
+following methodology:
+1) Identify trends from related works regarding defense
+mechanisms for Strong PUFs (Section II) to come up
+with our own approach, i.e., Selective CRPs.
+2) Create a hypothesis for ML modeling adversarial attack
+using Selective CRPs (Section III).
+3) Design the three Selective CRP subsets (C′
+), namely
+BP, RSP, and BSP (Section V), and characterize them
+(Section VI-C).
+4) Evaluate the change in uniqueness, uniformity, and reli-
+ability that PUFs exhibit when Selective CRPs are used
+compared to traditional random CRPs (Section VI-D).
+Also model the CRP space reduction (Section VI-E)
+and the computational and memory complexity overhead
+(Section VII).
+5) Test the performance of state-of-the-art ML modeling
+attack algorithms on well-studied PUFs. Namely, 4-XOR
+and 5-XOR PUFs when facing LR and MLP, respec-
+tively (Section VIII). We also include 4-FF PUF and
+2-LSPUF to consider conflicts with integrated challenge
+manipulation (Section IX).
+6) Once our approach has been proven to have an effect
+on the security of PUFs, we solve the reliability-based
+attack vulnerability which may completely overcome
+any additional security provided by Selective CRPs
+(Section X).
+IV. BACKGROUND
+This section describes the Arbiter-based Strong PUFs that
+we use in our experiments, as well as the fundamentals for the
+implemented ML algorithms. For a deeper overview, interested
+readers are referred to [41], [5] and Section II.
+A. Arbiter-based Strong PUFs
+As the name suggests, Arbiter-based PUFs are delay-based
+PUF which use an Arbiter (e.g., a D-latch) to compare the
+delays of two paths of wires. The two paths are generated by
+using a chain of switch elements (e.g., multiplexers) controlled
+by the challenge. Thus, up to 2n
+unique CRPs are available,
+with n being the length of the challenge. Fig. 2 shows a
+composition of APUFs.
+The delay parameters of each stage of an APUF have been
+shown to approximate a Gaussian distribution and an APUF
+c0
+...
+1 2 n
+n - 1
+c1 cn-2 cn-1
+C
+ci
+Arbiter
+ω1 ω2 ωn-1 ωn+1
+ωn
+...
+1 2 i n + 1
+n
+r
+Arbiter
+ω1 ω2 ωi ωn ωn+2
+...
+c0 c1 cn-2 cn-1
+ci
+Upper layer
+Arbiter PUF
+Lower layer
+Arbiter PUF
+ωn+1
+Fig. 2. Schematic view of an Interpose PUF. This example defines a (1,1)-
+IPUF, where both layers only have a single Arbiter PUF and the interpose
+bit is the i-th stage of the lower layer. However, any of these layers can be
+replaced by an XOR PUF making an (x,y)-IPUF.
+can be modeled with the additive linear delay model [3],
+where the outputs are remapped from (0, 1) to (1, −1) for
+convenience. As such the output is defined by
+r = sign(∆) = sign(⃗
+wT ⃗
+Φ) (1)
+where ∆ is the difference between the delays of the two
+generated paths.
+The delay parameters of the APUF are defined by ⃗
+w, while
+the vector ⃗
+Φ is a function of the challenge ⃗
+C that is applied to
+the APUF. Each element of the vector accounts for the delay
+of the paths after each stage is passed. However, for n stages
+it has n + 1 elements since the initial wires before the first
+stage are also considered.
+wi
+=
+
+
+
+
+
+δ0
+1 −δ1
+1
+2 , i = 1
+δ0
+i−1+δ1
+i−1+δ0
+i −δ1
+i
+2 , ∀i ∈ [2, n]
+δ0
+n+δ1
+n
+2 , i = n + 1
+(2)
+Each δ0,1
+i denotes the sum of delays of both the straight (0)
+and crossed (1) paths up to and including stage i.
+The additive linear delay model can be extended to the k-
+XOR PUF by modifying (1) to include k vectors ⃗
+w1, ..., ⃗
+wk
+and ⃗
+Φ1, ..., ⃗
+Φk and calculating the product of all separate ∆k.
+Similarly, FF PUF and LSPUF are also non-linear extensions
+of the model.
+As we will describe in the following Section IV-B, the
+previous PUF designs, while good benchmarks, can easily
+fall victims to the reliability-based attack proposed in [13].
+To solve this, one must prevent the reliability information of
+CRPs to be available to an attacker. A good way of doing this
+without additional modules is to use the IPUF’s double-layer
+structure first introduced in [14] and shown in Fig. 2.
+B. ML-based modeling attacks
+To model an APUF (or its variants) the separating hyper-
+plane ⃗
+wT ⃗
+Φ = 0 in (1) must be approximated. ML algorithms
+can define a decision boundary f = ⃗
+w′T ⃗
+Φ, aiming to make
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 5
+10000000 … 00000000
+00001000 … 00000000
+10001000 … 10001000
+…
+𝐶𝑅𝑃1
+𝐶𝑅𝑃2
+𝐶𝑅𝑃65535
+…
+01000000 … 00000000
+00000100 … 00000000
+00010001 … 00010001
+…
+𝐶𝑅𝑃65536
+𝐶𝑅𝑃65537
+𝐶𝑅𝑃262533
+…
+00000000 … 00000000
+𝐶𝑅𝑃0
+First
+shift
+(a) BP
+10110000 … 00000000
+01011000 … 00000000
+00000000 … 00001011
+…
+𝐶𝑅𝑃1
+𝐶𝑅𝑃2
+𝐶𝑅𝑃61
+…
+01010000 … 00000000
+00101000 … 00000000
+00000000 … 00001001
+…
+𝐶𝑅𝑃62
+𝐶𝑅𝑃63
+𝐶𝑅𝑃976
+…
+00000000 … 00000000
+𝐶𝑅𝑃0
+Pattern
+1
+Pattern
+2
+(b) RSP (p = 4)
+10000000 … 00000000
+01000000 … 00000000
+00000000 … 00001000
+…
+𝐶𝑅𝑃1
+𝐶𝑅𝑃2
+𝐶𝑅𝑃61
+…
+01000000 … 00000000
+00100000 … 00000000
+00000000 … 00001111
+…
+𝐶𝑅𝑃62
+𝐶𝑅𝑃63
+𝐶𝑅𝑃976
+…
+00000000 … 00000000
+𝐶𝑅𝑃0
+Pattern
+1
+Pattern
+2
+(c) BSP (p = 4)
+Fig. 3. Challenges of CRP subsets without elimination of repeats. (a) Binary-coded with Padding (BP) CRPs, (b) Random Shifted Pattern (RSP) CRPs, and
+(c) Binary Shifted Pattern (BSP) CRPs.
+⃗
+w′
+close to ⃗
+w. Success is defined as an accuracy in predicting
+the response over a certain threshold (e.g., 95%). It is obvious
+that the training data in the form of the CRP subset provided
+to the ML algorithm affects its final value of ⃗
+w′
+, therefore,
+we expect Selective CRPs to have an impact on the modeling
+accuracy and success rate of attacks. Next, we describe the
+algorithms considered in this paper.
+a) Improved Logistic Regression: LR has repeatably
+proven to be an efficient way of modeling APUFs or small
+XOR PUFs [9], [11]. It assigns a probability p(⃗
+C, r | ⃗
+w′
+) of
+generating both responses to each challenge, defined as
+p(⃗
+C, r | ⃗
+w′
+) = σ(rf) = (1 + e−rf
+)−1
+(3)
+A decision boundary of equal output probabilities is deter-
+mined at f(⃗
+w′
+) = 0, based on the given CRP training set,
+which allows Selective CRPs to manipulate the attacker
+model. The implementation used in this paper is the recently
+improved version from [9], to which we refer the reader for a
+more detailed explanation.
+b) Improved Multi-Layer Perceptron: MLP has been
+applied to increasingly large PUFs over the years [15], [20],
+[21]. This algorithm is based on the use of a set of layers with
+a set number of neurons in each. At each neuron (except for
+the ones in the input layer), each output from neurons from
+the previous layer is processed. Since in an MLP the neural
+network is densely connected, i.e., the output of a neuron in
+one layer is passed to all neurons in the next, the n-th neuron’s
+output is determined by the sum of all its inputs Xn
+:
+on
+=
+Xn
+X
+i=1
+g(an
+i xn
+i + bn
+) (4)
+where a is a weight factor (determined by the CRP training
+set), b a bias, and g(·) an activation function. The final decision
+is made by all operations of the neural network, where ai will
+decide the responses and can be manipulated by Selective
+CRPs. The implementation used in this paper is the recent
+version presented in [15].
+c) Reliability-based attack: In [13], Becker noted that
+since a real PUF has a random noise term (∆noise) added to
+the final delay difference (∆), the final response, calculated
+through (1), can be updated to
+r = sign(∆ + ∆noise) (5)
+If ∆ is close to zero, the probability of the response randomly
+flipping from its correct value is high, and vice-versa. By
+evaluating the same challenge multiple times one can detect
+whether the response for that given challenge is stable or
+unstable. Further evaluating different sets of ⃗
+w′
+and checking
+whether the estimated ∆′
+is close to the observed one in the
+training set leads to a PUF clone. Note that Selective CRPs
+cannot manipulate the estimated ∆′
+. However, as discussed
+in Section IV-A, in [14] the proposed IPUF is an effective
+countermeasure.
+d) Splitting attack: To attack an IPUF, in [8] a splitting
+attack was proposed. The approach is simply to create two ML
+models (e.g., LR and MLP), one for each layer. First, the lower
+layer model is approximated by creating a CRP training set
+where the interpose bits were generated at random. Given that
+the IPUF has enough complexity, this model will only reach an
+accuracy of 75%, since the interpose bits will be wrong 50%
+of the time. However, by taking the CRPs where the lower
+layer response changes based on the value of the interpose
+bit, a training set for the upper layer can be generated. By
+repeating these steps iteratively, one can increase the accuracy
+of the whole model well over 75%.
+V. PROPOSED SELECTIVE CRP SUBSETS
+For our proposal, we craft different CRP subsets in which
+challenges limit the number of examples where bits are flipped.
+This way, many of the delay parameters of the underlying
+PUF model, as described in (2), are not exposed. There are
+multiple ways to accomplish this obfuscation, and we identify
+three main types of possible Selective CRP subsets and give
+an example for each. Fig. 3 shows these three examples, with
+all actively used bits in each challenge marked.
+a) Binary-coded with Padding CRPs (BP): The first
+method we propose, called BP, is based on using a binary table
+for generating challenges, where the challenges are taken from
+the table in order. This introduces new values for previously
+unused bits at a rate of 2c
+challenges, where c is the most
+significant bit in the challenge that has been flipped once.
+Since this becomes too slow for large values of c, we only
+use 16 out of the 64 bits of the challenge, filling between
+them with 0s (as shown in Fig. 3(a)). After that, a circular
+shift is applied three times to generate more CRPs and use all
+bits, allowing for a soft-reset of the PUF. The main problem
+is the low number of generated unique CRPs available to the
+server to operate the PUF for its whole lifespan.
+b) Random Shifted Pattern CRPs (RSP): For our second
+method, called RSP, we propose a Selective CRP subset
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 6
+based on a random sequence of bits similar to the traditional
+challenges. The idea is to generate random patterns of p-bits
+that are then shifted through all bits of the full challenge,
+leaving all unused bits at a value of 0 (as shown in Fig. 3(b)).
+As a final step, all repeated challenges must be removed. The
+main advantage of this method is that as long as p is large
+enough, we can generate an exponentially large number of
+unique CRPs for the server to use. However, randomly selected
+bits can lead to higher-quality data for ML model training.
+c) Binary-coded Shifted Pattern CRPs (BSP): Our final
+proposed method, called BSP, combines the previous two
+methods to address their shortcomings. This method is very
+similar to RSP but uses a binary table instead of generating
+random patterns. Fig. 3(c) depicts an example of the generated
+CRP subset. Once again, the final step is to remove all repeated
+challenges. Similarly to RSP, if p is large enough, we can
+guarantee that the server will be provided with enough unique
+CRPs, but since we are not using random patterns, we stipulate
+that training data quality will be decreased. However, an
+attacker with knowledge of the pattern that the server follows
+and direct access to the PUF can collect responses beforehand.
+VI. EVALUATION OF SELECTIVE CRP SUBSETS
+Before evaluating the security improvements that Selective
+CRPs have on delay-based Strong PUFs we must first evaluate
+and characterize the Selective CRP subsets that were defined
+in the previous Section V. We do this with three experiments
+and one mathematical analysis, specifically, (i) RSP and BSP
+require a fixed value for the pattern length p so we optimize
+it, (ii) we look for differences in the patterns created by
+measuring some distance metrics like Hamming Distance of all
+subsets, (iii) we test the uniqueness, uniformity and reliability
+of PUFs using Selective CRP to ensure that they are still
+practical, and (iv) we formulate the maximum number of
+unique (non-duplicate) CRPs for each method based on the
+configuration parameters.
+A. Experimental setup
+We run all our simulated experiments on a server with
+AMD EPYC 7352 24-Core processor (2.3 GHz) and 514 TB
+of RAM memory. All simulation were run as single thread
+processes, and no GPUs were used. We use Python with
+the pypuf library for simulating the PUFs and LR or MLP
+attacks [9] described in Section IV-B. The implementations for
+these attacks use Keras over Tensorflow and were reviewed in
+the source code. All our code is open-source and available on
+GitHub1
+. In all experiments we generate 20 different simulated
+PUF instances (i.e., their delay parameters are randomized
+following a Gaussian distribution). These PUFs are consistent
+across all our experiments, although different sets of 20
+PUFs are generated for different types of PUFs (namely, 4-
+XOR, 5-XOR, 4-FF, 2-LS, and (1,1)-IPUF). For uniqueness,
+uniformity, and reliability evaluation we generate one million
+CRPs for each PUF instance. The noisiness required for PUF
+reliability testing is explained in more detail in Section VI-D.
+1https://github.com/ecn-aau/PUF-Selective-CRPs
+13151719212325272931333537394143454749515355575961
+Pattern length (p)
+0.6
+0.7
+0.8
+0.9
+1.0
+Modeling
+accuracy
+RSP
+BSP
+(a) LR on 4-XOR PUF
+13151719212325272931333537394143454749515355575961
+Pattern length (p)
+0.7
+0.8
+0.9
+1.0
+Modeling
+accuracy
+RSP
+BSP
+(b) MLP on 5-XOR PUF
+Fig. 4. Effect of pattern length (p) on modeling accuracies of improved (a)
+LR attack on 4-XOR PUFs and (b) MLP attack on 5-XOR PUFs with 8∗104
+and 1.6 ∗ 105 RSP and BSP CRPs, respectively. For RSP a common value
+of p = 16 is the highest that significantly improves security, while for BSP
+a higher value is possible.
+B. Pattern length optimization for RSP and BSP
+Our RSP and BSP methods require us to pick a value of the
+pattern length p for both. Fig. 4 shows how different values
+affect the modeling accuracies of the improved LR and MLP
+attacks when enough CRPs are available for these attacks to
+yield accurate models if traditional CRPs are used. When
+traditional CRPs are used, our results differ from the ones
+reported in [9] as can be seen in Fig. 8. We find that the
+CRPs required for a 100% success rate of the improved LR
+attack on a 4-XOR PUF is 8 ∗ 104
+, as opposed to 3 ∗ 104
+.
+Similarly, the improved MLP attack requires 1.6 ∗ 105
+CRPs,
+not 2∗105
+, to consistently model a 5-XOR PUF. Note that this
+does not change the fact that the LR attack is better than the
+MLP attack for k ≤ 4, and vice versa. As depicted in Fig. 4,
+lower values for p are better for modeling complexity, but they
+come at the cost of total number of unique CRPs that can be
+generated. Therefore, for RSP we pick the highest possible
+value (p = 16) that retains a median modeling accuracy for
+attacks under 90% in both scenarios. For BSP, however, we
+can choose a higher value of p = 25.
+C. Characterization of Selective CRP subsets
+From our previous proposed methods, we can identify three
+main types of CRP subsets. As will be shown in Section VIII,
+these three types lead to different trends in the learning
+of ML models. For this reason and to ease the possible
+future development of alternative Selective CRP subsets, we
+characterize these types by using distance metrics. We tested
+Hamming Distance (HD) as defined by (6), as well as Eu-
+clidean Distance, Correlation Distance, and Shannon Entropy.
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 7
+0 50000 100000 150000 200000 250000 300000
+# of CRPs
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+Hamming
+Distance
+Traditional BP RSP (p=16) BSP (p=25)
+Fig. 5. Selective CRP subset characterization through a distance metric
+(Hamming Distance).
+However, the results for all metrics are directly proportional,
+therefore, we only analyze HD.
+HD(Ci, Cj) =
+N
+X
+n=1
+Ci[n] ⊕ Cj[n] (6)
+To characterize the CRP subsets, we calculate the mean
+of the previous metrics when all challenges in the subsets are
+considered. For the BP subset we note that, since it essentially
+treats the PUF as four separate ones, we have to calculate the
+mean of only the corresponding part of the subset. The results
+can be seen in Fig. 5.
+We identify three types of Selective CRP subsets:
+• PUF division CRP subsets: This is the case for BP. The
+clear characteristic is that we see drops in the similarity
+of the subset as it grows. This can be used to practically
+convert a single PUF into multiple separate ones through
+a soft-reset.
+• Semi-random CRP subsets: This is the case for RSP.
+The curve is horizontal like in the fully random chal-
+lenges, but the value is lower than 0.5. This type of subset
+works essentially like the traditional, but compromises in
+the number of unique CRPs to gain some ML modeling
+resilience.
+• Regularization CRP subsets: This is the case for BSP.
+For this type, the curve grows as the subset does. It makes
+ML modeling more difficult the lower the similarity of
+the subset is. However, replay attacks can become viable
+if the attacker is aware of future CRPs.
+D. Uniqueness, uniformity, and reliability
+We now analyze the three key metrics that measure the
+quality of a PUF when Selective CRPs are applied to ensure
+that they are not affected negatively. We apply the same
+experimental setup where we collect 106
+CRPs (for each
+CRP subset) from 20 XOR PUF instances of varying sizes.
+A summary can be found in Table II.
+1) Uniqueness: Uniqueness measures the ability to differ-
+entiate two PUFs based on their responses. It can be measured
+as the average HD between a string of m response bits col-
+lected from d different PUFs where the same challenges were
+applied to all and is defined as described by (7). This metric
+is especially important for identification and authentication
+purposes, and it has an ideal value of 0.5. The results are
+shown in Fig. 6(a).
+Uniqueness =
+1
+d
+d−1
+X
+i=1
+d
+X
+j=i+1
+HD(ri, rj)
+m
+(7)
+We observe that all three Selective CRP subsets have a
+negligible effect on the uniqueness of responses of the PUFs
+(except for a single APUF), providing good identification and
+authentication capabilities. Any degradation can be fixed by
+using slightly longer authentication strings.
+2) Uniformity: Uniformity is a crucial metric of PUFs
+defined as the ratio of 1s to 0s in the responses to some
+number of challenges. Given m response bits for a single
+PUF instance, uniformity can be calculated as (8). To prevent
+random guessing of the response, PUFs should be unbiased,
+and their uniformity should approximate the ideal value of 0.5.
+Uniformity =
+1
+l
+m
+X
+i=1
+ri (8)
+As shown in Fig. 6(b), all Selective CRPs maintain a
+median uniformity approximately equal to traditional CRPs.
+However, a difference is that the spread of uniformity across
+different PUF instances is increased when using Selective
+CRPs. Specifically, BP CRPs have a slight increase, while RSP
+and BSP CRPs have a more significant effect. That said, we
+draw attention to the fact that in the majority of instances the
+uniformity is sufficiently close to the ideal value (∼ 40−60%).
+The only problematic scenario is when a single APUF is used,
+as some outliers exhibit poor values. Thus, it is recommended
+to at least include two APUFs in Selective CRP designs.
+We further tested the uniformity value when different num-
+bers of CRPs are used, since BP and BSP CRPs start their
+respective subsets with challenges that use only a few bits,
+leaving the rest at 0. Our experiments demonstrate that BSP
+CRPs tend to have poorer uniformity values if less than 216
+CRPs of the subset have been exchanged. Thus, it is important
+to prevent this problem by simply skipping the initial 216
+CRPs
+of the subset.
+3) Reliability: Another crucial metric for PUFs is their
+reliability. This metric measures the ability of PUFs to provide
+consistent responses to the same challenge under varying
+environmental conditions (e.g., temperature or supply voltage).
+Given m correct response bits r to a set of challenges, the
+average HD with other t evaluations of the PUF for that
+set of challenges r′
+i can determine the reliability as shown
+in (9). Since the time a CRP is registered on the verifier
+is different from when it is used for authentication, ensuring
+reliable responses is necessary.
+Reliability = (1 −
+1
+t
+t
+X
+i=1
+HD(r, r′
+i)
+m
+) (9)
+The pypuf simulation tool allows to include a ”noisiness”
+factor into a PUF instance. This factor, which we define as σ,
+determines the standard deviation of a Gaussian distribution
+for each delay parameter of the simulated PUF, with the
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 8
+Arbiter 2-XOR 3-XOR 4-XOR 5-XOR
+PUF size
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Uniqueness
+Traditional BP RSP (p=16) BSP (p=25)
+(a) Uniqueness
+Arbiter 2-XOR 3-XOR 4-XOR 5-XOR
+PUF size
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Uniformity
+(b) Uniformity
+Arbiter 2-XOR 3-XOR 4-XOR 5-XOR
+PUF size
+0.800
+0.825
+0.850
+0.875
+0.900
+0.925
+0.950
+0.975
+1.000
+Reliability
+(c) Reliability (noisiness factor σ of 0.1)
+Fig. 6. Uniqueness, uniformity, and reliability of different size XOR PUFs
+with different CRP subsets. The boxplots represent the spread of the distri-
+butions, not the standard deviation. Note that (c) has a different Y-axis range
+compared to (a) and (b).
+mean being the randomly generated delay value. This approach
+allows us to model generic noise in the PUF that affects
+reliability. While not entirely realistic, we draw attention to
+how that reliability of the PUFs considered in this paper has
+been extensively studied in other works [13], [14]. We only
+focus on testing whether Selective CRPs produce a noticeable
+difference in reliability given a noisy PUF instance, for which
+we choose a realistic value of σ = 0.1 [9]. The reliability
+results are shown in Fig. 6(c), where responses were evaluated
+10 times each.
+The results show that there is no significant impact on
+reliability when using Selective CRPs (notice the difference
+TABLE II
+SUMMARY OF UNIQUENESS, UNIFORMITY AND RELIABILITY FOR
+SELECTIVE CRPS (MEAN, STANDARD DEVIATION). ONLY RSP AND BSP
+INDUCE A NOTICEABLE INCREASE IN STANDARD DEVIATION WHICH
+IMPROVES WITH THE SIZE OF THE PUF.
+Metric APUF 2-XOR 3-XOR 4-XOR 5-XOR
+Uniqueness
+Random (.50, .04) (.50, .01) (.50, .00) (.50, .00) (.50, .00)
+BP (.50, .07) (.50, .02) (.50, .01) (.50, .00) (.50, .00)
+RSP (.50, .14) (.50, .04) (.50, .03) (.50, .02) (.50, .01)
+BSP (.50, .13) (.50, .04) (.50, .02) (.50, .02) (.50, .01)
+Uniformity
+Random (.50, .02) (.50, .04) (.50, .00) (.50, .01) (.50, .00)
+BP (.49, .05) (.50, .06) (.50, .01) (.50, .02) (.50, .00)
+RSP (.54, .20) (.53, .11) (.47, .06) (.50, .08) (.50, .03)
+BSP (.53, .17) (.51, .11) (.48, .05) (.50, .08) (.51, .03)
+Reliability
+Random (.97, .00) (.94, .00) (.91, .00) (.88, .00) (.86, .00)
+BP (.97, .00) (.94, .01) (.91, .01) (.87, .01) (.86, .01)
+RSP (.97, .01) (.93, .01) (.90, .02) (.88, .02) (.86, .02)
+BSP (.97, .01) (.93, .01) (.90, .01) (.88, .02) (.86, .02)
+in range of the Y-axis compared to Fig. 6(a) and Fig. 6(b)).
+Once again, the median of the reliability is very close for all
+subsets, with the only difference being an increase in spread
+of the distribution, especially for RSP and BSP. However,
+unlike uniformity, the spread for reliability is not significant
+enough to affect the practical implementation of the system
+since the values are close enough to the traditional. If very
+strict conditions must be met, reliability-enhancing methods
+like fuzzy extractors [39] should be implemented. However,
+this would apply to traditional CRPs as well and is not a
+disadvantage for Selective CRPs. We also tested other values
+for the noisiness factor σ, namely 0.2 and 0.3, and reached
+the same conclusions.
+E. CRP space size
+To strictly formulate the number of unique (non-duplicate)
+CRPs we consider two cases. The first is the case of the BP
+method. It is obvious that the size of the CRP space will be
+determined by the size of the bit-strings b of the binary table
+that is used to insert bits into the full n-bit challenge. Note
+that n must be divisible by b so we impose n % b = 0. Thus,
+we can define the CRP space in terms of n and b as shown
+in (10). The negative term in the expression is to account for
+the duplicates created by the bit-strings of all 0s.
+2b
+∗
+n
+b
+− (
+n
+b
+− 1) = (2b
+− 1) ∗
+n
+b
++ 1 (10)
+As mentioned in Section V, new bits are introduced into the
+challenge at a rate of 2c
+< 2b
+. In practice, an attacker is likely
+to perform a successful modeling attack before 2b
+CRPs are
+used, so a large value is useless. Similarly, an excessively low
+value would lead to an excessive reduction in complexity. For
+these reasons, we consider b = 16 to be the only reasonable
+value, and for our n = 64 implementation the number of CRPs
+for BP is 262141 ≈ 2.6 ∗ 105
+.
+The second case we consider is for both the RSP and BSP
+methods. Both RSP and BSP use patterns of length p bits and
+shift them through the full challenge. It is obvious that a binary
+table of bit-strings of length p includes all possible patterns
+(in random order for RSP). However, we need to account for
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 9
+duplicates because multiple patterns can have a common sub-
+pattern, e.g., 10100 and 01010 have the same sub-pattern 101.
+To see the effect, consider the following example. Take n = 4
+and p = 2, and consider the two patterns 10 and 01. For the
+first, there are three results: 1000, 0100, and 0010. For the
+second, there are also three results: 0100, 0010, and 0001.
+Notice how in the second case only the last shift creates a
+new challenge, because the sub-pattern is already shifted in
+the pattern itself. It is trivial to show that this holds for other
+values of n and p, and it can also be seen that in a binary table
+a repeated sub-pattern appears every other entry, i.e., half of
+the binary table. Thus, we define the CRP space in terms of
+n and p as (11).
+2p
+∗ (n − p + 1)
+2
++
+2p
+2
+= 2p−1
+∗ (n − p + 2) (11)
+Based on the optimized values for p from Section VI-B
+(p = 16 for RSP and p = 25 for BSP) and assuming n = 64,
+we can calculate that the number of unique CRPs for RSP is
+1638400 ≈ 1.6 ∗ 106
+and for BSP 687865856 ≈ 6.8 ∗ 108
+.
+VII. IMPLEMENTATION AND OVERHEAD EVALUATION
+Selective CRPs are designed as a lightweight solution
+for authentication compatible with resource-constrained IoT
+devices that does not modify the traditional implementation
+of PUF schemes.
+A. Real-time authentication and computational complexity
+In a traditional PUF authentication scheme the resource-
+constrained prover possesses a PUF and the non-resource-
+constrained verifier has knowledge of its secret CRPs typically
+obtained through a one-time enrollment during manufactur-
+ing [30], [40]. Thus, we focus on the computational complexity
+of the modified real-time authentication protocol for Selective
+CRPs shown in Fig. 7.
+The protocol has four main steps. First, the prover sends its
+ID to the verifier. Second, the verifier searches its database
+of devices (we can assume an ordered table D) to find the
+corresponding ID. Only if the device ID is registered will
+the verifier extract N challenges and responses for the PUF
+of that specific device. The parameter N determines the size of
+the authentication string. Note that the verifier uses a counter
+i to avoid reusing challenges and responses from the tables
+CID and RID. Third, the prover sequentially generates the
+responses to all N challenges and sends them back. Finally, the
+verifier tests the HD of the registered and received responses,
+typically with a threshold of t = 0.05 or 95% of correct
+responses.
+From the protocol of Fig. 7 it is clear that the prover
+only needs to evaluate its PUF N times, a process which is
+challenge independent. Thus, the computational complexity is
+linear with O(N). Meanwhile, the verifier must perform some
+operations of constant complexity in a loop of size N and a
+binary search for ID among M devices. Thus, the computa-
+tional complexity is logarithmic-linear with O(N ∗ log(M)).
+In practical terms, the overhead for the verifier compared
+to the traditional PUF scheme due to the inclusion of the
+Verifier Prover
+auth(ID)
+Search D for ID
+if ID /
+∈ D : abort
+i ← DID
+for N :
+⃗
+Ci ← CID(i)
+rV
+i ← RID(i)
+C, RV
+← ⃗
+Ci, rV
+i
+i ← i + 1
+DID ← i
+C
+j ← 0
+for N :
+rP
+j ← PUF(⃗
+Cj)
+RP
+← rP
+j
+j ← j + 1
+RP
+if HD(RV
+, RP
+) > t : abort
+accept
+Fig. 7. Modified PUF authentication protocol for Selective CRPs.
+counter i is negligible. Meanwhile, there is no additional
+overhead for the prover. More specifically, previous work has
+shown that a single n = 64 APUF can generate responses
+at a frequency of 100 MHz with a power consumption of
+152.93 µW [42]. For a pessimistic example of N = 400 [2],
+[3], [7], the prover completes its authentication steps in
+roughly 4µs.
+B. Memory complexity
+Memory requirements can be important for Selective CRPs
+because unlike in traditional PUF authentication schemes, the
+verifier cannot generate challenges randomly in real-time. Note
+that the memory requirements only apply to the verifier.
+Starting with BP CRPs, we have already calculated the
+number of unique CRPs in (10). Removing constants and
+considering M devices and n bits per challenge, it is clear
+that the complexity is exponential in the size b of the binary
+table, linear in the size of the PUF and its challenge n, and
+linear in the the number of devices M. Note that we have
+to consider that n/b is equal to some constant. Thus, we can
+conclude that the memory complexity is O(M ∗ n ∗ 2b
+).
+Following, the memory complexity analysis for both RSP
+and BSP is the same and we can easily obtain it from the
+number of unique CRPs in (11) by considering M devices
+and n bits per challenge leading to O(M ∗ n ∗ 2p−1
+). The
+difference is that we had to consider that n − p is equal to
+some constant, which is a higher gradient compared to BP
+(n/b) assuming that b = p. Thus, RSP and BSP have a higher
+complexity despite p − 1 < b.
+We can calculate the exact memory requirement for the
+implementations in this paper (n = 64 and b = p = 16 for
+BP and RSP, and p = 25 for BSP) by using (10) and (11)
+and adding a single response bit per challenge. Other sources
+of overhead are considered too small (IDs and counters). The
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 10
+10000 20000 30000 40000 50000 60000 70000 80000 90000100000
+# of CRPs
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+Modeling
+accuracy
+Traditional BP RSP (p=16) BSP (p=25)
+(a) LR on 4-XOR PUF
+100000 120000 140000 160000 180000 200000 220000 240000
+# of CRPs
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+Modeling
+accuracy
+(b) MLP on 5-XOR PUF
+Fig. 8. Modeling accuracy of the improved (a) LR attack on 4-XOR PUFs
+and (b) MLP attack on 5-XOR PUFs using traditional and Selective CRPs.
+BP creates drops in the modeling accuracy when the circular shifts occur (one
+in (a) and two in (b)), while RSP and BSP provide lower modeling accuracies
+consistently.
+values are ∼ 2.13, ∼ 13.31, and ∼ 5588.91 MB2
+, for BP, RSP,
+and BSP, respectively. Note that these values are per device.
+It is clear that both BP and RSP are lightweight, but one
+could argue that BSP is too expensive with many devices.
+To solve this, we point out that optimizations to the memory
+utilization are possible by generating fully or partially the
+challenges in real-time. Most notably, BP and BSP challenges
+are fully predictable by using the counter i, allowing the
+verifier to store only the responses for a reduced memory
+cost of ∼ 32.77 KB and ∼ 85.98 MB per device, respec-
+tively. Meanwhile, RSP challenges can be reduced in memory
+by storing only the p-bit patterns, giving a final memory
+requirement of ∼ 335.87 KB. All the additional operations
+added during the real-time authentication would be O(1), thus
+keeping the previous computational complexity.
+VIII. SECURITY IMPROVEMENT EVALUATION ON XOR
+PUF
+In this section, we analyze the effectiveness of ML modeling
+attacks on PUF with and without using Selective CRPs. Specif-
+ically, we consider 4- and 5-XOR PUFs when attacked by
+LR and MLP, respectively, since this is a good benchmark for
+these state-of-the-art attacks. We note that our technique can be
+applied to other PUFs to achieve lower modeling accuracies,
+but here we focus on analyzing the security enhancement on
+2We use decimal notation: 1 MB = 103 KB = 106 B = 8 ∗ 106 bits
+TABLE III
+SUCCESS RATE OF IMPROVED LR AND MLP ATTACKS ON 4-XOR AND
+5-XOR PUFS WHEN A MILLION TRAINING CRPS ARE AVAILABLE.
+Traditional CRPs RSP CRPs BSP CRPs
+Threshold 90% 95% 90% 95% 90% 95%
+4-XOR LR 100% 100% 50% 25% 55% 45%
+4-XOR MLP 100% 100% 100% 80% 100% 100%
+5-XOR MLP 100% 100% 100% 100% 100% 100%
+a well-studied scenario. We use the same experimental setup
+as described in Section VI-A.
+Fig. 8 illustrate the results of using our proposed methods
+compared to the traditional CRPs considered in previous works
+when 4-XOR and 5-XOR PUFs are attacked. Regarding our
+proposed methods, we observe a significant change in the
+modeling accuracies across all our experiments. Starting with
+BP, it is clear that since 16 out of the 64 bits of the challenge
+are used at a time, the CRPs required to model the PUFs
+are lower than normal. However, when the shifts (soft-resets)
+occur, the modeling accuracy drops severely (30−40% lower),
+making attacks unsuccessful until more training data is added.
+Essentially, a PUF that uses BP CRPs needs to be modeled as a
+separate PUF for every soft-reset. For RSP, a pattern length of
+p = 16 consistently increases the training data that is required
+to successfully attack the PUFs. However, BSP gives us better
+results with p = 25. It makes attacks require considerably
+more training data, but without limiting the available unique
+CRPs as much. It is important to note that replay attacks can
+become a threat if the attacker has access to the patterns used
+by BSP as mentioned in Section V. Thus, there is a clear
+reason to use RSP in certain scenarios despite BSP’s superior
+performance.
+Looking at the modeling accuracy patterns from Fig. 8
+we notice that they resemble the HD distance patterns of
+the Selective CRP subsets from Fig. 5. This is due to the
+fact that, as previously stated, these subsets determine the
+algorithm parameters that define the decision boundary for
+classifying responses. Given this understanding, a correlation
+is not surprising, and it allows us to provide an expectation
+of the effect of any given subset based on the HD distance
+analysis.
+To complement the previous results, we also perform attacks
+when a significantly larger number of CRPs is exposed to an
+attacker, specifically one million CRPs. Note that this does
+not apply to the BP method since it will never be used in
+applications which exchange such a number of CRPs for
+n = 64 (see Section VI-E). In Table III, we provide the
+success rate of the improved LR and MLP attacks on 4-XOR
+and 5-XOR PUFs. We define a successful attack as one that
+models the corresponding PUF with at least a certain accuracy
+and consider two cases: 90% and 95%. Since the MLP attack
+performs better than LR, we also apply it to 4-XOR PUF.
+From the results, we can conclude that the MLP attack is
+better for modeling XOR PUFs when Selective CRPs are used,
+since it outperforms LR even on the traditionally disadvanta-
+geous 4-XOR PUF. Moreover, we see that the modeling com-
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 11
+10000 50000 90000 130000 170000 210000 250000 290000
+# of CRPs
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+Modeling
+accuracy
+Traditional BP RSP (p=16) BSP (p=25)
+(a) 4-FF PUF
+10000 50000 90000 130000 170000 210000 250000 290000
+# of CRPs
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+Modeling
+accuracy
+(b) 2-LSPUF
+Fig. 9. Modeling accuracy of the improved MLP on (a) 4-FF PUFs and (b)
+2-LSPUFs using traditional and Selective CRPs. It can be seen as RSP and
+BSP are negatively affected by the challenge manipulation of the PUFs, while
+BP retains its functionality and is enhanced for FF PUF. However, BP fails
+to reduce modeling accuracies after its first circular shift for LSPUF.
+plexity of XOR PUFs is heavily dependent on each instance.
+This is observable in Fig. 8 since the distribution of modeling
+accuracies for any given number of training CRPs has some
+spread. Cases where this distribution is tight and over the target
+modeling accuracy are those which show 100% success rate.
+That said, we can significantly reduce the effectiveness of LR
+by using RSP and BSP. Meanwhile, MLP is more resilient
+to Selective CRPs, however, notice that we are still able to
+protect some PUF instances when RSP is used, even with one
+million CRPs. Again, note that, the goal of this analysis is
+not to provide a fully secure PUF implementation but rather
+to evaluate the security enhancement. Ultimately, Selective
+CRPs provide a provable increase in security, which allows
+designers to reduce the size of bare PUFs when searching for
+low modeling accuracies within a given CRP limit.
+IX. SECURITY EVALUATION ON FEED-FORWARD AND
+LIGHTWEIGHT SECURE PUFS
+Many research papers have proposed variant designs based
+on the well-known Arbiter and XOR PUFs. While Selective
+CRPs can affect the ML models of attackers for Arbiter-
+based PUFs and are thus agnostic to these designs, certain
+variants add logic that modifies the challenges that are feed
+to the PUF. In these cases, we cannot guarantee that Selective
+CRPs remain effective and agnostic, as their mechanism might
+conflict with the PUF’s challenge generation. For the purpose
+of testing the effect that Selective CRPs have on PUFs which
+modify the challenge, in this section we experiment with two
+popular APUF variants, namely, FF PUF [3] and LSPUF [10].
+The experimental setup remains the same as in the XOR
+PUF experiments, but we note that we only test the improved
+MLP attack because LR is not an effective technique for these
+PUFs as studied previously [9], [23]. We decided the size
+of these PUFs by testing the traditional attack and choosing
+parameters that lead to a successful modeling attack when
+between 2 ∗ 105
+and 3 ∗ 105
+CRPs are used. This choice is
+done to clearly observe the effect of Selective CRPs on the
+same parameters and leads to using 4-FF PUF (4 feed-forward
+loops distributed uniformly on the PUF stages) and 2-LSPUF
+(2-XOR PUF with the input-output networks of the LSPUF
+design). The results can be seen in Fig. 9.
+The manipulation of the challenge in both FF PUF and
+LSPUF heavily affects the RSP and BSP methods. The result
+is that both these methods become worse than traditional
+random CRPs. Meanwhile, the BP method remains effective.
+For FF PUF, BP CRPs become more effective than in the XOR
+PUF case, preventing modeling attacks for nearly all of the
+available CRP space. However, in the LSPUF case, while the
+last two circular shifts have the expected drops in the modeling
+accuracies, the first shift (between 5 ∗ 104
+and 9 ∗ 104
+) does
+not. This observation indicates that BP CRPs could not ensure
+a secure soft-reset for LSPUF.
+In conclusion, PUF designs that manipulate challenges are
+not an adequate use case for Selective CRPs. This is a logical
+conclusion, as Selective CRPs are based on specially chosen
+challenges, which conflicts with challenge manipulation tech-
+niques. However, it is worth noting that BP CRPs can still
+provide security in these cases, but they must be tested on each
+design. Specifically, we show that FF PUF with BP CRPs is
+a highly effective PUF design that can nearly secure the PUF
+for its limited BP CRP space.
+X. SECURITY EVALUATION ON INTERPOSE PUF
+In recent years, more secure PUFs based on the APUF
+have been proposed. Specifically, the FLAM PUF [36] and
+the CT PUF [30] are lightweight Controlled PUFs which, to
+the best of our knowledge, are yet to be found vulnerable
+to some modeling attack. Both have an APUF at their core,
+but it is accompanied by other components. From a design
+perspective, a Controlled PUF has more overhead. Even when
+this overhead is not excessive for a specific application, it may
+still be more appealing to use a bare PUF since the added
+attack surface may enable other attacks, as has been exposed
+in previous cases [6], which motivates the use of Selective
+CRPs. However, as previously discussed, a reliability-based
+attack [13] (see Section IV-B) is unaffected by Selective CRPs.
+For that reason, in this section, we propose using a bare
+PUF called the IPUF [14] with Selective CRPs and evaluate
+its performance. As previously mentioned, an IPUF is an effec-
+tive countermeasure to reliability-based attacks. Additionally,
+given the lower efficacy of the LR and MLP attacks, the
+so-called splitting attack [8] is used. We implement and use
+the attack with two improved LR models (for the upper and
+lower layers of the IPUF) against a (1,1)-IPUF. We choose to
+evaluate a small IPUF, keeping the rest of the experimental
+setup the same as before (Section VI-A). Our reasoning is
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 12
+10000 30000 50000 70000 90000 110000 130000 150000 170000 190000 210000 230000 250000
+# of CRPs
+0.6
+0.7
+0.8
+0.9
+1.0
+Modeling
+accuracy
+Traditional BP RSP (p=16) BSP (p=25)
+Fig. 10. Modeling accuracy of the splitting attack with improved LR on a (1,1)-IPUF using traditional and Selective CRPs.
+TABLE IV
+MINIMUM NUMBER OF CRPS OBSERVED TO BE SUFFICIENT TO MODEL AT
+LEAST ONE OF THE 20 (1,1)-IPUF INSTANCES. FOR BP CRPS WE
+ASSUME THAT ALL FOUR RESETS (CIRCULAR SHIFTS IN THE SUBSET OF
+BP CRPS) ARE USED, EACH AFTER MODELING BECOMES SUCCESSFUL.
+FOR SUCCESS RATE OF 90% THE GRANULARITY OF OUR EXPERIMENTS
+DOES NOT ALLOW TO ACCURATELY ESTIMATE THE VALUE FOR BP CRPS.
+Threshold 90% 95%
+Traditional CRPs < 104
+104
+BP CRPs - 4 ∗ 104
+RSP CRPs < 104
+3 ∗ 104
+BSP CRPs < 104
+4 ∗ 104
+that the results can corroborate the fact that the security
+enhancement is maintained on an IPUF implementation and
+not just on XOR PUFs. Similar to before, we could choose to
+increase the size of the IPUF until a desired security level is
+achieved, but that is not the objective of this experiment. The
+results can be seen in Fig. 10.
+From the results, we can observe similar patterns to the ones
+already explained for the XOR PUF scenario (Fig. 8) and the
+HD distance test (Fig. 5), showing that the effect of Selective
+CRPs is maintained on IPUF as expected. Once again, BP
+allows the IPUF to be soft-reset once it becomes insecure,
+while RSP and BSP lower modeling accuracies. If no more
+than a certain number of CRPs are exposed to the attacker, we
+can consider the system secure against this attack. Since this is
+the currently best-known method for modeling IPUFs, the PUF
+could be considered secure enough for certain applications. In
+Table IV we summarize the maximum number of CRPs for
+which none of the 20 IPUF instances were modeled with an
+accuracy over 90% or 95% (success rate of 0%).
+With this strict requirement we can see that it is strongly
+recommended to use an authentication threshold of over 90%,
+since all methods fail to secure all IPUF instances when
+104
+CRPs are exposed to an attacker3
+. However, when this
+threshold is 95% we see significant improvement as long as
+some Selective CRP method is used. If traditional CRPs are
+used, we can only ensure that no PUFs are modellable until
+104
+CRPs. In comparison, RSP and BSP allow for up to 3∗104
+and 4∗104
+CRPs to be exchanged securely, respectively. While
+BSP seems to be a better option, we remind that in some
+3For BP less than 104 CRPs are required for modeling if no resets are
+applied. Thus, BP might hold for a value larger than 104, but regardless, this
+increase would not be very significant.
+scenarios an attacker might be able to exploit knowledge on
+the patterns making RSP preferable. As for BP, it does not
+provide an improvement in number of CRPs, however we need
+to consider that this method allows to shift the challenges up
+to three times. This means that the IPUF could be used with
+up to 4 ∗ 104
+BP CRPs.
+XI. DISCUSSION
+Based on XOR, FF, LS, and IPUF experiments we conclude
+that Selective CRPs can enhance the security of bare PUFs
+by affecting the attacker ML models. The proposed approach
+does not prevent modeling attacks. Instead, it expands the
+applicability of bare PUFs giving more options to designs of
+resource-constrained systems, by avoiding other vulnerabilities
+of Controlled PUFs.
+The highlights of our analysis are an almost fully resilient
+4-FF PUF implementation with BP CRPs and achieving 3
+or 4 times longer secure lifespan for a bare (1,1)-IPUF with
+reliability side-channel protection. There are several authen-
+tication applications for which our proposal can be used,
+with the main limitation being the number of authentications.
+Previous research has estimated that a pessimistic number
+of unique CRPs required per authentication is 400 [2], [3],
+[7]. This number means that depending on the Selective CRP
+subset, we can have over 600 authentications (for 4-FF PUF)
+or 75−100 authentications (for (1,1)-IPUF) with the side-
+channel protection. For example, access cards at limited-time
+events are a good use case since the number of needed
+authentications is limited. Similarly, RFID-tag-based guest
+access cards are also a possibility. An interesting idea is to use
+the BP CRP subset to ”reset” such a guest card, avoiding a one-
+time use scenario. It is important to mention that increasing
+the implementation parameters of the PUFs can increase the
+number of authentications at the cost of hardware resources.
+Regarding the hardware resource consumption, we compare
+the FLAM PUF, the CT PUF, and the IPUF based on the Gate
+Equivalent (GE) when considering the 65nm CMOS manufac-
+turing technology for ICs. The GE defines the complexity of
+digital circuits independent of their manufacturing technology.
+Table V shows a comparison with the reported GEs of different
+gates in the 65nm CMOS manufacturing technology [33], [36].
+We can see that due to the lack of additional components (e.g.,
+PRNG and LFSR) the hardware consumption is kept lower.
+Finally, it is imperative to discuss the security scenarios to
+which our technique applies. Since the security of Selective
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 13
+TABLE V
+HARDWARE RESOURCE CONSUMPTION IN GATE EQUIVALENT (GE) OF
+65NM CMOS TECHNOLOGY OF FLAM PUF, CT PUF, IPUF, AND FF
+PUF (ASSUMING 64-STAGE IMPLEMENTATIONS).
+NAND AND XOR MUX FF GE
+GE count 1 1.5 2.5 2.5 6.25
+FLAM PUF [36] 2 62 63 128 65 979
+CT PUF [30] 0 0 0 0 486 3037.5*
+(1,1)-IPUF [14] 0 0 1 258 2 660
+4-FF PUF [20] 0 0 0 132 5 361.25
+*Additionally requires 731 LUTs.
+CRPs is tied to the management of the challenges that are
+sent to the PUF by the verifier, this imposes some limitations.
+While passive attackers are affected by Selective CRPs, active
+attackers are not, since they can directly query the PUF with
+random challenges. Similarly, PUF schemes considered in
+existing state-of-the-art papers tend to ignore the existence
+of man-in-the-middle attacks [30], [36]. Both active attackers
+on the communication channel and man-in-the-middle attacks
+can be prevented by implementing mutual authentication pro-
+tocols [38], [39]. The discussion is similar when considering
+attackers that have physical access to the PUF-enabled device.
+In these cases, active collection of CRPs is the same as on the
+communication channel, unless invasive attacks are performed.
+Given that PUFs have inherent characteristics which make
+them resilient to tampering, previous works have tackled the
+problem [43], [44]. Note that such considerations are not a
+specific disadvantage of Selective CRPs since they affect all
+PUF schemes that have no such protections.
+For these reasons, Selective CRPs should only be used in
+real applications in combination with some mutual authen-
+tication scheme and, if the threat model allows for tempo-
+rary physical access, anti-tampering measures. Alternatively,
+to avoid additional modules, applications with a controlled
+communication channel and replacement of devices in case of
+theft or loss (e.g., access cards or RFID-tags) are arguably
+a better target. Moreover, the soft-reset of BP CRPs also
+provides a solution for some of these threats.
+XII. CONCLUSION
+In this paper, we propose the use of Selective CRPs
+with bare PUFs, specifically Arbiter-based PUFs, when the
+Challenge-Response Pairs (CRPs) used for authentication are
+not random. For years, these PUFs have been considered
+insecure against Machine Learning (ML) modeling attacks,
+and newer PUF proposals focus on creating a Controlled PUF.
+However, Controlled PUFs introduce a larger attack surface
+and go against the lightweight principle of PUFs.
+Traditionally, the used challenges for authenticating with the
+verifier are selected randomly to prevent attackers from col-
+lecting the responses beforehand. Nevertheless, we argue that
+random challenges have very low similarity among them and
+thus provide a lot of information about the PUF’s underlying
+model. By creating Selective CRP subsets, namely, Binary-
+coded with Padding (BP), Random Shifted Pattern (RSP), and
+Binary Shifted Pattern (BSP), we can increase the similarity
+of the training data samples (CRPs) used by attackers to train
+an ML model. We show that this leads to lower accuracy
+models for the attackers, allowing PUFs to exchange more
+CRPs before they can be successfully cloned. By using a (1,1)-
+IPUF with Selective CRPs, up to 4 times the number of CRPs
+can be exchanged with reliability side-channel protection.
+Otherwise, 4-FF PUF with specifically BP double the number
+of CRPs, enabling certain application scenarios without the use
+of traditionally heavy security primitives or Controlled PUFs.
+Given results that show the prevention of successful model-
+ing attacks on 4-XOR PUF using Logistic Regression (LR) and
+Multi-Layer Perceptron (MLP) even with one million CRPs,
+for our future works, we envision similar methods with better
+consistency among multiple PUF instances and plan to develop
+an automatic system hosted on the verifier for predicting what
+CRPs should be exchanged for each specific PUF.
+REFERENCES
+[1] Transforma Insights, “Number of internet of things (iot) connected
+devices worldwide from 2019 to 2023, with forecasts from 2022 to
+2030 (in billions) [graph],” Sep. 2023. [Online]. Available: https://
+www.statista.com/statistics/1183457/iot-connected-devices-worldwide/
+[2] B. Gassend, D. Clarke, M. van Dijk, and S. Devadas, “Silicon physical
+random functions,” in Proceedings of the 9th ACM Conference on
+Computer and Communications Security, ser. CCS ’02. New York,
+NY, USA: Association for Computing Machinery, 2002, p. 148–160.
+[3] B. Gassend, D. Lim, D. Clarke, M. van Dijk, and S. Devadas, “Iden-
+tification and authentication of integrated circuits,” Concurrency and
+Computation: Practice and Experience, vol. 16, no. 11, pp. 1077–1098,
+2004.
+[4] G. E. Suh and S. Devadas, “Physical unclonable functions for device
+authentication and secret key generation,” in 2007 44th ACM/IEEE
+Design Automation Conference, 2007, pp. 9–14.
+[5] U. Rührmair and J. Sölter, “Puf modeling attacks: An introduction and
+overview,” in 2014 Design, Automation & Test in Europe Conference &
+Exhibition (DATE), 2014, pp. 1–6.
+[6] J. Delvaux, D. Gu, D. Schellekens, and I. Verbauwhede, “Secure
+lightweight entity authentication with strong pufs: Mission impossible?”
+in Cryptographic Hardware and Embedded Systems (CHES), L. Batina
+and M. Robshaw, Eds. Berlin, Heidelberg: Springer Berlin Heidelberg,
+2014, pp. 451–475.
+[7] D. Lim, J. Lee, B. Gassend, G. Suh, M. van Dijk, and S. Devadas,
+“Extracting secret keys from integrated circuits,” IEEE Transactions on
+Very Large Scale Integration (VLSI) Systems, vol. 13, no. 10, pp. 1200–
+1205, 2005.
+[8] N. Wisiol, C. Mühl, N. Pirnay, P. H. Nguyen, M. Margraf, J.-P.
+Seifert, M. van Dijk, and U. Rührmair, “Splitting the interpose puf: A
+novel modeling attack strategy,” IACR Transactions on Cryptographic
+Hardware and Embedded Systems, vol. 2020, no. 3, p. 97–120, Jun.
+2020.
+[9] N. Wisiol, B. Thapaliya, K. T. Mursi, J.-P. Seifert, and Y. Zhuang,
+“Neural network modeling attacks on arbiter-puf-based designs,” IEEE
+Transactions on Information Forensics and Security, vol. 17, pp. 2719–
+2731, 2022.
+[10] M. Majzoobi, F. Koushanfar, and M. Potkonjak, “Lightweight secure
+pufs,” in 2008 IEEE/ACM International Conference on Computer-Aided
+Design, 2008, pp. 670–673.
+[11] U. Rührmair, F. Sehnke, J. Sölter, G. Dror, S. Devadas, and J. Schmidhu-
+ber, “Modeling attacks on physical unclonable functions,” in Proceed-
+ings of the 17th ACM Conference on Computer and Communications
+Security, ser. CCS ’10. New York, NY, USA: Association for
+Computing Machinery, 2010, p. 237–249.
+[12] U. Rührmair, J. Sölter, F. Sehnke, X. Xu, A. Mahmoud, V. Stoyanova,
+G. Dror, J. Schmidhuber, W. Burleson, and S. Devadas, “Puf modeling
+attacks on simulated and silicon data,” IEEE Transactions on Informa-
+tion Forensics and Security, vol. 8, no. 11, pp. 1876–1891, 2013.
+[13] G. T. Becker, “The gap between promise and reality: On the insecurity
+of xor arbiter pufs,” in Cryptographic Hardware and Embedded Systems
+(CHES), T. Güneysu and H. Handschuh, Eds. Berlin, Heidelberg:
+Springer Berlin Heidelberg, 2015, pp. 535–555.
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS & SYSTEMS 14
+[14] P. H. Nguyen, D. P. Sahoo, C. Jin, K. Mahmood, U. Rührmair, and
+M. van Dijk, “The interpose puf: Secure puf design against state-of-
+the-art machine learning attacks,” IACR Transactions on Cryptographic
+Hardware and Embedded Systems, vol. 2019, no. 4, p. 243–290, Aug.
+2019.
+[15] K. T. Mursi, B. Thapaliya, Y. Zhuang, A. O. Aseeri, and M. S. Alkatheiri,
+“A fast deep learning method for security vulnerability study of xor
+pufs,” Electronics, vol. 9, no. 10, 2020.
+[16] M. Ferens, E. Dushku, and S. Kosta, “Securing pufs against ml mod-
+eling attacks via an efficient challenge-response approach,” in IEEE
+INFOCOM 2023 - IEEE Conference on Computer Communications
+Workshops (INFOCOM WKSHPS), 2023, pp. 1–6.
+[17] J. Tobisch and G. T. Becker, “On the scaling of machine learning attacks
+on pufs with application to noise bifurcation,” in Radio Frequency
+Identification, S. Mangard and P. Schaumont, Eds. Cham: Springer
+International Publishing, 2015, pp. 17–31.
+[18] M.-D. Yu, D. M’Raı̈hi, I. Verbauwhede, and S. Devadas, “A noise
+bifurcation architecture for linear additive physical functions,” in 2014
+IEEE International Symposium on Hardware-Oriented Security and
+Trust (HOST), 2014, pp. 124–129.
+[19] G. Hospodar, R. Maes, and I. Verbauwhede, “Machine learning attacks
+on 65nm arbiter pufs: Accurate modeling poses strict bounds on us-
+ability,” in 2012 IEEE International Workshop on Information Forensics
+and Security (WIFS), 2012, pp. 37–42.
+[20] M. S. Alkatheiri and Y. Zhuang, “Towards fast and accurate machine
+learning attacks of feed-forward arbiter pufs,” in 2017 IEEE Conference
+on Dependable and Secure Computing, 2017, pp. 181–187.
+[21] A. O. Aseeri, Y. Zhuang, and M. S. Alkatheiri, “A machine learning-
+based security vulnerability study on xor pufs for resource-constraint
+internet of things,” in 2018 IEEE International Congress on Internet of
+Things (ICIOT), 2018, pp. 49–56.
+[22] P. Santikellur and R. S. Chakraborty, “A computationally efficient tensor
+regression network-based modeling attack on xor arbiter puf and its
+variants,” IEEE Transactions on Computer-Aided Design of Integrated
+Circuits and Systems, vol. 40, no. 6, pp. 1197–1206, 2021.
+[23] P. Santikellur, A. Bhattacharyay, and R. S. Chakraborty, “Deep learning
+based model building attacks on arbiter puf compositions,” Cryptology
+ePrint Archive, Paper 2019/566, 2019.
+[24] J. Shi, Y. Lu, and J. Zhang, “Approximation attacks on strong pufs,”
+IEEE Transactions on Computer-Aided Design of Integrated Circuits
+and Systems, vol. 39, no. 10, pp. 2138–2151, 2020.
+[25] M. A. Alamro and K. T. Mursi, “Machine learning attack on a multi-
+plexer puf variant using silicon data: a case study on rmpufs,” in 2021
+IEEE 6th International Conference on Computer and Communication
+Systems (ICCCS), 2021, pp. 1017–1022.
+[26] B. Thapaliya, K. T. Mursi, and Y. Zhuang, “Machine learning-based
+vulnerability study of interpose pufs as security primitives for iot
+networks,” in 2021 IEEE International Conference on Networking,
+Architecture and Storage (NAS), 2021, pp. 1–7.
+[27] A. Aghaie and A. Moradi, “Inconsistency of simulation and practice in
+delay-based strong pufs,” IACR Transactions on Cryptographic Hard-
+ware and Embedded Systems, vol. 2021, no. 3, p. 520–551, Jul. 2021.
+[28] D. P. Sahoo, D. Mukhopadhyay, R. S. Chakraborty, and P. H. Nguyen,
+“A multiplexer-based arbiter puf composition with enhanced reliability
+and security,” IEEE Transactions on Computers, vol. 67, no. 3, pp. 403–
+417, 2018.
+[29] Q. Wang, M. Gao, and G. Qu, “A machine learning attack resistant
+dual-mode puf,” in Proceedings of the 2018 on Great Lakes Symposium
+on VLSI, ser. GLSVLSI ’18. New York, NY, USA: Association for
+Computing Machinery, 2018, p. 177–182.
+[30] J. Zhang, C. Shen, Z. Guo, Q. Wu, and W. Chang, “Ct puf: Configurable
+tristate puf against machine learning attacks for iot security,” IEEE
+Internet of Things Journal, vol. 9, no. 16, pp. 14 452–14 462, 2022.
+[31] B. Gassend, D. Clarke, M. van Dijk, and S. Devadas, “Controlled phys-
+ical random functions,” in 18th Annual Computer Security Applications
+Conference, 2002. Proceedings., 2002, pp. 149–160.
+[32] J. Ye, Y. Hu, and X. Li, “Rpuf: Physical unclonable function with
+randomized challenge to resist modeling attack,” in 2016 IEEE Asian
+Hardware-Oriented Security and Trust (AsianHOST), 2016, pp. 1–6.
+[33] E. Dubrova, O. Näslund, B. Degen, A. Gawell, and Y. Yu, “Crc-puf:
+A machine learning attack resistant lightweight puf construction,” in
+2019 IEEE European Symposium on Security and Privacy Workshops
+(EuroS&PW), 2019, pp. 264–271.
+[34] S. Hou, D. Deng, Z. Wang, J. Shi, S. Li, and Y. Guo, “A dynamically
+configurable lfsr-based puf design against machine learning attacks,”
+CCF Transactions on High Performance Computing, vol. 3, no. 1, pp.
+31–56, Mar 2021.
+[35] Y. Wang, C. Wang, C. Gu, Y. Cui, M. O’Neill, and W. Liu, “A
+dynamically configurable puf and dynamic matching authentication
+protocol,” IEEE Transactions on Emerging Topics in Computing, vol. 10,
+no. 2, pp. 1091–1104, 2022.
+[36] L. Wu, Y. Hu, K. Zhang, W. Li, X. Xu, and W. Chang, “Flam-puf: A
+response–feedback-based lightweight anti-machine-learning-attack puf,”
+IEEE Transactions on Computer-Aided Design of Integrated Circuits
+and Systems, vol. 41, no. 11, pp. 4433–4444, 2022.
+[37] Z. Paral and S. Devadas, “Reliable and efficient puf-based key generation
+using pattern matching,” in 2011 IEEE International Symposium on
+Hardware-Oriented Security and Trust, 2011, pp. 128–133.
+[38] M. Majzoobi, M. Rostami, F. Koushanfar, D. S. Wallach, and S. Devadas,
+“Slender puf protocol: A lightweight, robust, and secure authentication
+by substring matching,” in 2012 IEEE Symposium on Security and
+Privacy Workshops, 2012, pp. 33–44.
+[39] A. Van Herrewege, S. Katzenbeisser, R. Maes, R. Peeters, A.-R.
+Sadeghi, I. Verbauwhede, and C. Wachsmann, “Reverse fuzzy extractors:
+Enabling lightweight mutual authentication for puf-enabled rfids,” in
+Financial Cryptography and Data Security, A. D. Keromytis, Ed.
+Berlin, Heidelberg: Springer Berlin Heidelberg, 2012, pp. 374–389.
+[40] M.-D. Yu, M. Hiller, J. Delvaux, R. Sowell, S. Devadas, and I. Ver-
+bauwhede, “A lockdown technique to prevent machine learning on
+pufs for lightweight authentication,” IEEE Transactions on Multi-Scale
+Computing Systems, vol. 2, no. 3, pp. 146–159, 2016.
+[41] R. Maes and I. Verbauwhede, Physically Unclonable Functions: A Study
+on the State of the Art and Future Research Directions. Berlin,
+Heidelberg: Springer Berlin Heidelberg, 2010, pp. 3–37.
+[42] E. Ozturk, G. Hammouri, and B. Sunar, “Physical unclonable function
+with tristate buffers,” in 2008 IEEE International Symposium on Circuits
+and Systems (ISCAS), 2008, pp. 3194–3197.
+[43] Z. He, M. Wan, J. Deng, C. Bai, and K. Dai, “A reliable strong puf
+based on switched-capacitor circuit,” IEEE Transactions on Very Large
+Scale Integration (VLSI) Systems, vol. 26, no. 6, pp. 1073–1083, 2018.
+[44] S. Duan and G. Sai, “Bti aging-based physical cloning attack on sram
+puf and the countermeasure,” Analog Integrated Circuits and Signal
+Processing, vol. 117, no. 1, pp. 45–55, Dec 2023.
+Mieszko Ferens is a PhD fellow at the Dept. of Elec-
+tronic Systems, Aalborg University. He researches
+Machine Learning and Quantum Applications in
+resource-constrained hardware security. He has par-
+ticipated in Vulcanus in Japan 2021/22 working on
+Urban Digital Twins with NTT Data. MSc (2022)
+and BSc (2020) in Telecommunication Engineering
+at the University of Valladolid, he has a background
+in Electrical Engineering where he applied Rein-
+forcement Learning to Computation Offloading.
+Edlira Dushku received the BSc and MSc degrees
+in Computer Science from University of Tirana, in
+2010 and 2013, respectively, and the PhD degree
+in Computer Science from Sapienza University of
+Rome, in 2020. She was a postdoctoral researcher
+with the Technical University of Denmark. She is
+currently assistant professor at the Dept. of Elec-
+tronic Systems at Aalborg University. Her research
+interests include the Internet of Things Security,
+Remote Attestation, and Fog Computing.
+Sokol Kosta is associate professor at the Dept. of
+Electronic Systems, Aalborg University. His research
+includes Networking, Distributed Systems, Security,
+and Edge Computing. BSc, MSc, PhD, and PostDoc
+in Computer Science from Sapienza University of
+Rome and a visiting researcher with HKUST in
+2015. He has won the Best PhD Student Paper
+award by the Computer Science Dept. of Sapienza
+University (2012), the IEEE INFOCOM and IEEE
+SECON Best Demo awards (2013), and the IEEE
+INFOCOM Test of Time paper award (2024).
+This article has been accepted for publication in IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems. This is the author's version which has not been fully edit
+content may change prior to final publication. Citation information: DOI 10.1109/TCAD.2024.3506217
+© 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+

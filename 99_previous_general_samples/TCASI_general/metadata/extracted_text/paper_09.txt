@@ -1,0 +1,1175 @@
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-I: REGULAR PAPERS                                                                                                                     1
+
+
+
+
+ FREYA: A 0.023-mm2/Channel, 20.8-μW/Channel,
+    Event-Driven 8-Channel SoC for Spiking
+  End-to-End Sensing of Time-Sparse Biosignals
+   Jonah Van Assche, Member, IEEE, Charlotte Frenkel, Member, IEEE, Ali Safa, Member, IEEE and Georges
+                                           Gielen, Fellow, IEEE
+
+
+
+   Abstract—Biomedical systems-on-chip (SoCs) for real-time                                                                  D1
+                                                                                                                                        Classical Sensing System
+monitoring of vital signs need to read out multiple recording                                               1 0 1 0
+                                                                                                                             D2
+
+                                                                                                                                                1) Inefficient Sampling
+channels in parallel and process them locally with low latency,                              M
+                                                                                                                             D3
+                                                                                                                                                2) Processes redundant data
+at a low per-channel area and power consumption. To achieve                                  U        ADC
+                                                                                                                                                3) Large latency due to
+                                                                                     4)          1)          3) Digital 2)
+                                                                                             X
+                                                                                                                                                   frame-based processing
+this, event-driven SoCs that exploit the time-sparse nature of
+biosignals such as the electrocardiogram (ECG) have been
+                                                                                a)          Multiplexed
+                                                                                          Analog Front-End      Windowing
+                                                                                                                                  Frame-Based
+                                                                                                                                  NN (e.g. CNN)
+                                                                                                                                                4) Area efficient ADC
+
+proposed; they only process the signal when it shows activity.                                                                         Sensing System with Software
+Such SoCs convert time-sparse biosignals into spike trains,                                                 1 0 1 0
+                                                                                                                                          Based Spike Encoding
+                                                                                                                                             1) Inefficient Sampling
+on which spiking neural networks (SNNs) can perform event-                                   M
+                                                                                             U        ADC                                    2) Power-Efficient Processing
+                                                                                     4)          1)          3) Spike             2)
+                                                                                             X
+driven signal classiﬁcation. State-of-the-art event-driven SoCs,                                                                             3) Large latency due to
+however, still suffer from poor area and power efﬁciency and                    b)          Multiplexed
+                                                                                          Analog Front-End        Encoding
+                                                                                                                                     Event-     Spike Encoding
+                                                                                                                                   Based SNN 4) Area efficient ADC
+use inﬂexible, hard-coded spike-encoding schemes. To improve
+on these challenges, this paper presents FREYA, an 8-channel                                 ASC
+                                                                                                                                         Sensing System with Direct
+                                                                                                                                         Analog-to-Spike Encoding
+event-driven SoC for end-to-end sensing of time-sparse biosignals.                                                                              1) High ASC Power
+The proposed SoC consists of the following key contributions:                   1)/3)/4) ASC          2)                                        2) Power-Efficient Processing
+1) an 8-channel time-division-multiplexed level-crossing sampling                                                                               3) Hard-Coded Spike Encoding
+
+(LCS) analog-to-spike converter (ASC) that encodes analog input                 c)          Analog-To-
+                                                                                          Spike Encoders
+                                                                                                                 Event-
+                                                                                                               Based SNN
+                                                                                                                                                4) Area inefficient ASC
+
+signals into input spikes for an on-chip SNN; 2) an ASC spike-                                                                                   This Work
+encoding algorithm that is fully programmable in resolution (4 to                            M
+                                                                                             U        AR-ASC                                    1) Efficient Sampling
+8 bits) and conversion algorithm (offset and decay parameters);                1)/2)/3)      X                                                  2) Power-Efficient Processing
+3) an on-chip integrated, ﬂexible SNN processor based on a                                  Multiplexed Adaptive-                               3) Flexible Spike Encoding
+programmable crossbar architecture, that allows for efﬁcient                   d)           Resolution Analog-To-      4)           Event-      4) Area efficient ASC
+                                                                                               Spike Encoders                     Based SNN
+event-driven processing, and that can be reconﬁgured towards
+multiple sensing applications; 4) a custom ofﬂine end-to-end
+training framework for the fast retraining of the spike-encoding              Fig. 1. Overview of the alternative architectures for biomedical SoCs and their
+algorithm and SNN architecture towards new applications or                    challenges: a) classical SoC with ﬁxed-rate multi-channel ADC; b) event-
+patient-dependent signal variations. A prototype IC has been                  driven SoC with ﬁxed-rate multi-channel ADC and software based spike
+                                                                              encoding; c) event-driven SoC with asynchronous, ﬁxed-threshold ASCs; and
+fabricated in a 40nm CMOS technology. It has a per-channel                    d) the proposed event-driven SoC with a multi-channel, synchronous ASC
+active area of 0.023 mm2 (0.184 mm2 in total), a 7× improvement               with adaptive thresholds. Note that the analog front-end (instrumentation
+over the state of the art. For the use case of ECG-based QRS-                 ampliﬁer and ﬁlters) is omitted from this overview.
+labeling, a detection accuracy of 98.67% is achieved, while the
+system consumes 20.8 μW per channel and achieves a latency of                 enables a higher-ﬁdelity classiﬁcation of the signals, a high
+only 80 ms, thus paving the way for multi-channel, high-ﬁdelity,              channel count is required, from 3 channels for wearable ECG
+event-driven SoCs in biomedical applications.
+                                                                              [1] to 16 channels or more for an electroencephalogram (EEG)
+  Index Terms—Biomedical SoC, Event-driven sensing, Spiking                   array [2].
+Neural Networks, Level-Crossing Sampling                                      Conventional biomedical systems-on-chip (SoCs) multiplex
+                                                                              multiple readout channels and perform classiﬁcation in a
+                         I. I NTRODUCTION                                     frame-based manner (see Fig. 1a) [2]–[4]. This results in
+                                                                              an area-efﬁcient analog-to-digital converter (ADC), since the
+R     EAL-TIME monitoring applications for time-sparse
+      biosignals such as electrocardiogram (ECG), require
+power- and area-efﬁcient sensing systems that can read out
+                                                                              same hardware can be reused for multiple channels. However,
+                                                                              frame-based approaches suffer from a large processing latency
+multiple recording channels in parallel and process them                      (> 1 s) [2], [4]. Moreover, the digital classieﬁers used in
+locally with low latency. To facilitate sensor fusion, which                  the frame-based approach, such as support vector machines
+                                                                              (SVMs) [2], decission trees [3] or convolutional neural net-
+  Jonah Van Assche was with the MICAS research group of KU Leuven,            works (CNNs) [4], [9], occupy a large chip area due to the
+Belgium. Currently he is with the University of Stuttgart, Germany. Georges
+Gielen is with the MICAS research group of KU Leuven, Belgium. Charlotte      required on-chip memory. Besides the large chip area, large
+Frenkel is with the department of Micro-electronics, Delft University of      computational models also consume a signiﬁcant amount of
+Technology, The Netherlands. Ali Safa was with IMEC, Leuven, Belgium          energy while continuously processing the incoming sensor
+and with the MICAS research group of KU Leuven, Belgium. Currently he is
+with the College of Science and Engineering, Hamad Bin Khalifa University,    data. Such systems do not exploit the time-sparse nature of
+Doha, Qatar.                                                                  signals like the ECG, and likely waste power in processing
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-I: REGULAR PAPERS                                                                         2
+
+
+
+redundant data.                                                     to an undesirable trade-off between the amount of threshold
+Event-based processing SoCs with on-chip spiking neural net-        levels (which determine the information that is generated) and
+works (SNNs) that perform inference on a spike train, on the        the sparsity of the spike train (which determines the system
+other hand, promise a low latency and a power consumption           power consumption).
+proportional to the signal activity, and are therefore an attrac-   To address these issues, this paper introduces FREYA, an area-
+tive alternative to traditional systems [6]–[8], [16]. Moreover,    and power-efﬁcient 8-channel event-driven SoC for spiking
+area-efﬁcient SNN implementations with dense synapses and           end-to-end sensing of time-sparse biosignals (see Fig. 1d).
+neurons have been proposed recently [16]; they can offer a          FREYA offers the following key contributions:
+smaller on-chip area for the classiﬁer. Event-based SoCs can           1) An 8-channel time-division-multiplexed LCS ASC that
+therefore be an attractive alternative to traditional systems.            encodes analog input signals into spikes as input
+Several possible architectures for event-based SoCs exist; each           for an on-chip SNN, which results in an area of
+approach, however, still faces several limitations.                       0.023 mm2 /channel and a power consumption of
+One approach is to ﬁrst digitize the signal, followed by                  20.8 μW/channel.
+software-based spike encoding, as shown in Fig. 1b [5]. In             2) The ASC spike-encoding algorithm is fully pro-
+[5], the effect of several encoding techniques such as rate               grammable in resolution (4 to 8 bits) and conversion
+coding, time-to-ﬁrst-spike coding, etc. on the accuracy of                algorithm (offset and decay parameters), and can ﬂexibly
+the SNN classiﬁcation task was examined for two datasets.                 be adjusted to various signals, to achieve an optimal
+This approach, however, still wastes power by ﬁrst sam-                   classiﬁcation accuracy.
+pling all sensor data before converting them to spikes. The            3) An on-chip integrated, ﬂexible SNN processor based on
+digital spike conversion also introduces a latency overhead.              a programmable all-to-all crossbar architecture allows
+Directly converting the analog signals to spikes by means                 for efﬁcient event processing, and can be reconﬁg-
+of a level-crossing sampling (LCS) analog-to-spike converter              ured towards multiple sensing applications. For a QRS-
+(ASC) therefore is a promising alternative [7]–[10], [14], [33],          labeling task from ECG, a detection accuracy of 98.67%
+[34]. A conventional ADC converts analog signals into digital             is achieved.
+codes at a ﬁxed sample rate (hence, not exploiting the signal          4) Based on our previous work, in which the relation
+sparsity). In contrast, an LCS ASC compares analog signals                between SNN accuracy and the spike encoding scheme
+to two thresholds, and only takes a sample (hence, generates              of LCS ASCs was explored [18], we introduce a custom
+a spike) whenever the analog signal crosses one of those                  ofﬂine end-to-end training framework for the SoC. We
+thresholds. This automatically results in an event-driven spike           have shown before [18] that information-theoretic crite-
+train that scales with the signal sparsity [14]. To generate an           ria such as the Corrected Akaike information criterion
+even sparser spike train, instead of using ﬁxed thresholds,               can predict for which setting of an LCS ASC, an SNN
+alternating thresholds can be used, in which the threshold                will likely reach the maximum detection accuracy. This
+switches over time from initial coarse to more ﬁne afterwards             technique is used in the proposed framework to only
+[14], [33], [38].                                                         train an SNN model for a speciﬁc subset of ASC set-
+Several systems with on-chip ASC and SNNs have been                       tings. This allows for a fast retraining (69% less training
+presented in recent years. [7] uses two ASCs with a ﬁxed                  epochs are required compared to a conventional grid-
+threshold to convert action potential signals from the nerves             search approach) of the spike-encoding algorithm and
+into a spike train as input for an on-chip SNN. In [8] an                 SNN architecture towards new applications or patient-
+8-channel EEG recording systems is presented, consisting of               dependent signal variations.
+instrumentation ampliﬁers, ﬁlters, an LCS ASC and on-chip              The paper is organized as follows. Section II gives an
+SNN. The analog signals from the instrumentation ampliﬁers          overview of the proposed SoC, consisting of a multi-channel
+are ﬁltered by bandpass ﬁlters, and these ﬁltered signals are       adaptive-resolution ASC and an SNN processor. Section III
+then converted into spike trains by the ASC. The output spike       discusses in detail the design of the ASC. Section IV intro-
+trains are then fed to four on-chip SNN cores. A similar system     duces the end-to-end training framework for the SoC, Section
+was presented in [34], which introduces a full 16-channel           V gives the measurement results of the event-driven SoC.
+sensor system that can encode analog signals either with an         Section VI concludes the paper.
+LCS ASC, or by using an on-chip pulse-frequency modulation
+sampling scheme that converts the analog signal amplitude into
+a spike rate.                                                                          II. S YSTEM OVERVIEW
+While systems with LCS ASCs and on-chip SNNs show great                The block diagram of the proposed event-driven SoC is
+promise, the solutions presented till now still have several        depicted in Fig. 2. It consists of two main parts: an adaptive-
+limitations. Most LCS ASC systems cannot be multiplexed,            resolution differential LCS ASC, that converts an incoming
+and hence, a full ASC is required per channel, which limits         analog signal into a spike train, and an SNN that performs
+the channel count [7], [8], [34]. Moreover, conventional ASCs       inference on this spike train. Each channel has a bandwidth
+have power efﬁciencies that are up to 10× worse than a con-         of 1000 Hz, targeting biomedical applications such as ECG
+ventional ADC [7], [8]. Finally, the works that combined LCS        readout, and a full-scale input of 0.7 Vpp. The analog part
+ASC with SNN [6]–[8] use hard-coded, ﬁxed-threshold spike-          of the ASC consists of multiplexer switches that select the
+encoding schemes that are not ﬂexible (see Fig. 1c). This leads     input channels in a round-robin fashion, sampling switches that
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-I: REGULAR PAPERS                                                                                                                                                                 3
+
+
+
+
+                                                                                                                                                                     MISO
+                                                                                                                                                              MOSI
+                                                                                                                                                        SCK
+         Master Clock ASC
+            (8 MHz)
+
+                               CHANNEL SELECT
+                                                                      AR Analog-to-Spike                                                                      SPI
+                                                                                                                                                                            FREYA
+                                   LOGIC
+                                                             CHANNEL_SELECT Converter SPI_REG
+               ASC_Reset                                                                                                                                Controller and global
+                                                  SPI_REG     OFFSET       Reset                           SPI_REG                                        parameters bank
+                                                                                      COUNTERS
+                                                             CONTROL
+                                                                                                                                                          Neuron Synapse
+                                                                                                  Update
+                                                                                                                                                          Memory Memory                          8b
+
+
+
+
+                                                                                                                                                                                    AER Output
+                                                   Reset                                    Event?                                                                                                    AER ADDR OUT
+                                 SPI_REG   EVENT            OUTPUT CODE                                                                                         12-bit LIF                            REQ OUT
+                                           LOGIC             GENERATOR                            Programmable                                   AER           Update Logic
+                                                                  8b                                                                                                                                  ACK OUT
+                                   sample comp
+                                                             DEM LOGIC
+                                                                                SPI_REG              AR Logic                                   Input
+                  ECG             8b
+                                                                                                                                         10b            Event Controller
+                                                                  28b                             Vcm
+                                                                                                                                                                                                 Select Internal/External
+
+
+
+
+                                                                                                                                ASC Interface
+                                                                                                                     comp
+                                                                                                                                                   MUX                                                    Signals
+                                                                                                                                                                                                 10b
+                  EEG                               C         C       2C            32C                                                                                                              External AER ADDR
+
+
+
+
+                                                                                                                                                                                   AER Input
+                                                                                                           Vth        Output                       Internal
+                                     sample        a b c     a b c     a b c             a b c                                                                                                       ACK IN
+                                                                                                                       Spike                      AER ADDR
+                                                                                                                                                   MAPPER                                             REQ IN
+                                           Vref                                                                                                                             SNN
+                  EMG                      GND
+                                                                                                                               SNN
+
+                                      Bootstrap
+                                                                                                                                                 Spiking Neural                                   External Clock SNN
+                                                                                          Analog Front-End                                                                                         (Up to 50 MHz)
+                                       Switch
+                                                                                                                                                    Network                                        SNN Reset
+
+
+Fig. 2. Overview of the proposed event-driven SoC with adaptive-resolution ASC (drawn single-ended for simplicity) and integrated SNN processor.
+
+sample the analog input of the selected channel, a capacitive                                                    III. M ULTI -C HANNEL A NALOG - TO -S PIKE C ONVERTER
+DAC (CDAC) array and a single dynamic comparator. The                                                          We now describe in more detail the ASC design, the ASC
+CDAC is split in 4 sub-arrays to enable dynamic element                                                     timing, and the detailed circuit block implementations.
+matching (DEM), which will be explained in Section III. The
+digital part of the ASC includes the programmable logic that
+controls the multiplexer (Channel Select Logic), the adaptive-                                              A. Level-Crossing Sampling ASC
+resolution logic (Offset Control, Output Code Generator), the                                                  To exploit the time-sparse nature of biosignals such as ECG
+logic that slows down the sampling frequency for signals with                                               with event-driven hardware, LCS ASCs have been proposed
+low input frequency (Event Logic), the counters that keep                                                   [7]–[11], [34]. Such event-driven ASCs only take samples
+track of the current channel value (Counters), and the DEM                                                  whenever the input signal changes beyond a threshold (see
+Logic that implements the DEM algorithm of the CDAC. The                                                    Fig. 3), which then generates a spike event. These spike events
+back-end SNN is a lightweight version of the SNN processor1                                                 can then be processed directly by SNNs [6]–[8], [34].
+ﬁrst described in [16], ideally suited for low-power edge                                                   While interfacing an LCS ASC directly with an SNN allows
+systems. The SNN consists of a time-division-multiplexed                                                    reducing the latency and the power overhead thanks to the
+fully programmable crossbar with 256 neurons and 64k 4-bit-                                                 direct analog-to-spike conversion, it still faces circuit chal-
+weight synapses. The accelerator supports integrate-and-ﬁre                                                 lenges compared to traditional ﬁxed-rate sampling systems or
+neurons with optional leakage, and can interface both with the                                              software-based spike conversion (see Fig. 1a and Fig. 1b).
+ASC via an internal ASC interface, as well as directly with                                                 Indeed, since conventional LCS ASCs are asynchronous data
+external sensors via an address-event representation (AER)                                                  converters that are always on, it is difﬁcult to reuse the same
+interface [16]. This makes the SoC ideal to fuse data from                                                  hardware in a time-multiplexed fashion, which results in a poor
+different sensor signals.                                                                                   area efﬁciency for the ASC, as a full ASC would be required
+The digital circuits of both the ASC and the SNN consist                                                    per readout channel [7], [8], [34]. Moreover, most LCS ASCs
+of synthesizable logic and are programmable via a shared SPI                                                have a high DC power consumption due to the continuous-time
+interface. The digital core of the SNN runs at a clock frequency                                            comparators used to detect a level crossing [7], [8], [14], [34].
+up to 50 MHz, while the digital circuits of the ASC work at                                                 Finally, for a given classiﬁcation task, traditional ASCs face
+a clock frequency of 8 MHz, both generated externally. To                                                   a trade-off between task accuracy and power consumption.
+enable clock domain crossing and not miss any events from                                                   If a coarse crossing threshold is used, the ASC generates few
+the ASC to the SNN, the ASC interface oversamples the output                                                spikes, which leads to a low SNN dynamic power consumption
+of the ASC. Using a mixed-mode simulation in which spikes                                                   (Fig. 3), but also to a low quantization resolution, and hence a
+from the ASC were fed to the SNN, it was found that the                                                     low dynamic range (DR), thereby reducing the SNN accuracy
+SNN clock frequency must be > 7× faster than the ASC                                                        [6]. On the other hand, using a ﬁner crossing threshold yields
+clock. Note that the SNN clock frequency does not inﬂuence                                                  a higher SNN accuracy, but results in higher spike rates and
+the spike rate, which is fully determined by the ASC.                                                       SNN power consumption [6]. This makes ASCs with a ﬁxed
+                                                                                                            threshold a rather inﬂexible spike-encoding scheme, with only
+  1 This processor is available at: https://github.com/ChFrenkel/tinyODIN                                   a single degree of freedom based on the threshold selection.
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-I: REGULAR PAPERS                                                                                                               4
+
+
+                                                                     a)     Low Quanzer Resoluon                                High Quanzer Resoluon
+The ASC used in the proposed FREYA SoC solves these chal-
+lenges. Firstly, a time-multiplexing technique is used where
+the ASC circuitry is shared among all readout channels (see
+Fig. 2), thereby signiﬁcantly reducing the area per channel.
+This is made possible by introducing a system clock for the                        Coarse Threshold = Low DR                                Fine Threshold = High DR
+                                                                                                      ASC Output                                             ASC Output
+ASC, which allows to time-division multiplex the readout            Low Spike Rate = Low SNN Acvity               High Spike Rate = High SNN Acvity
+channels. Since the input signal of each channel is converted        b)
+to spikes in different clock cycles, the same hardware can                                           Adapve-Resoluon Algorithm
+
+be reused for each channel. The proposed SoC consists of                                    TDecay
+                                                                                                                   LSBASC
+                                                                                                                                         Input Signal
+                                                                                                                                         Posive Threshold
+                                                                                                                                         Negave Threshold
+8 differential input channels - single-ended operation is also                    Oset                                                  Counter Output
+
+possible - across which the ASC cycles at a programmable rate                                                               Fine Threshold Over Time
+Tscan . Secondly, to fully exploit the time-sparse nature of the                                                            = Capture Detailed Signal Features
+                                                                                                                            = High DR
+biosignals, and hence to reduce the ASC power consumption,
+the ASC uses event-driven adaptive-rate clocking (see the                                                                   ASC Output
+                                                                                          Inial Coarse Threshold = Low SNN Acvity
+Event Logic in Fig. 2) with dynamic comparators, which
+results in a signal-activity-dependent, dynamic power con-         Fig. 3. a) Trade-off between spike activity and DR in a conventional LCS
+sumption [11]. If no spike is generated in a conversion cycle,     ASC, and b) the proposed programmable adaptive-resolution level-crossing
+independently for each channel, the event logic gradually          spike encoding scheme. The programmable parameters of the ASC are: the
+                                                                   offset, the decay time (TDecay ) and the ASC resolution (indicated by the LSB
+slows down the sampling speed, adjusting the ASC power             of the ASC, LSBASC ).
+consumption to the activity of the input signal. Moreover,
+the adaptive clock allows for a synchronized ASC output,           updated, and the offset value for that channel is reset to the
+which would be easy to integrate with any subsequent pro-          maximum value, which is programmable via the SPI. Each
+cessing/transmitter circuit. Thirdly, each channel of the ASC      channel operates independently, and after 4 cycles, the next
+encodes the input signal by using an adaptive-resolution level-    channel is selected. Once a channel’s offset value is reset,
+crossing algorithm [14], [33], in which the threshold initially    the adaptive-resolution algorithm switches to a ﬁner threshold
+is coarse (e.g., multiple LSBs), before gradually switching        after TDecay cycles, if no new level crossing occurs. Once the
+to a ﬁner resolution after a programmable amount of cycles         offset value has reached the LSB value for the ASC, which
+TDecay (see Fig. 3). If a threshold is crossed, the output of      is also programmable via the SPI, the input signal of the
+the ASC updates to the value of this threshold and resets          readout channel is assumed to be quasi-static. Hence, the ASC
+the thresholds to the maximum programmable offset value.           enters the event mode (see Fig. 4), and the ASC starts to
+By employing this adaptive-resolution algorithm for the spike      skip sampling cycles to save power, until a new level crossing
+encoding, the usual trade-off between the DR and the ASC           occurs, and the adaptive-resolution algorithm is reset and the
+spiking activity is improved. By switching from coarse to          ASC enters again the regular mode. In the event mode, the
+ﬁne adaptive thresholds, a ﬁne resolution can be achieved          channel select logic keeps cycling over the different channels
+that can capture detailed signal features, while at the same       in the same order. However, if a sample cycle is skipped,
+time the average spike rate of the ASC, and therefore the          the control signals will remain low. The amount of sampling
+SNN dynamic power, is reduced signiﬁcantly. The adaptive-          cycles that need to be skipped is tracked by the Event Logic
+resolution algorithm and the ASC’s programmable resolution         block. As depicted in Fig. 4, the amount of cycles that are
+thus provide three degrees of freedom (decay time TDecay ,         skipped is gradually incremented until a new level crossing
+offset, and ASC resolution), offering much more ﬂexibility         occurs. Compared to our previous work in [11], the event logic
+for the spike encoding compared to conventional LCS ASCs.          skips sample cycles, rather than adjusting the clock frequency
+                                                                   in real time by means of an on-chip clock generator [11],
+                                                                   which leads to a simpler and more robust design by using
+B. ASC Timing                                                      only a single clock domain.
+   The detailed ASC timing is shown in Fig. 4. At ﬁrst, the
+ASC operates in the regular mode, and, at a programmable
+                                                                   C. Detailed Circuit Implementation
+rate Tscan , the ASC cycles over the different readout channels,
+which is done by the Channel Select Logic block. When a               This section will describe the detailed circuit implementa-
+channel is selected, the ASC samples the input signal and          tion of the different building blocks of the proposed ASC.
+compares it in 4 clock cycles (P1 to P4) to two thresholds that       1) Multiplexer and Sample Switches: The multiplexer im-
+change adaptively. The digital code for these thresholds levels    plements the time-division-multiplexing technique of the ASC.
+is generated by the Offset Control block, which generates the      It consists of twice 8 bootstrapped switches (one for each
+current offset value, and the Output Code Generator block,         differential channel), that are connected to the input of the
+which takes the offset value and the current value from the        sample switches of the ASC. Fig. 5 shows in more detail
+Counters block and generates a positive threshold during           the multiplexer circuit, the device sizes for the multiplexer,
+cycles P1 and P2, and a negative threshold during cycles P3        as well as the sample switches. The bootstrap switches are
+and P4 for the CDACs. If the sampled input signal crosses one      implemented as described in [26]. Also shown is the logic to
+of the thresholds, the counter value for the selected channel is   control the multiplexer and the sample switches.
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-I: REGULAR PAPERS                                                                                                            5
+
+
+
+   2) Comparator: To improve the ASC’s power efﬁciency,                                 device parameters are given in Fig. 7a. Typically, an LCS
+the power consumption of the comparators needs to be re-                                ASC uses two comparators to determine if the input signal
+duced. Recent work on LCS ASCs has proposed continuous-                                 crosses a threshold above or below the previous level [7],
+time comparators with an adaptive bias current [36], that                               [8], [11], [14], [34]. The difference in input-referred offset
+switch to a low bias current when the signal is not near one of                         of both comparators degrades the ASC linearity. Instead of
+the ASC’s thresholds. Another option to reduce the comparator                           using power-hungry calibration to compensate the offset [7],
+power has been introduced in our previous work [11]. We                                 [14], the proposed ASC only uses a single comparator for
+showed how using an adaptively clocked dynamic comparator                               both comparisons, making the comparator offset the same for
+can relax the power consumption of the comparator, since it                             both decisions. In this way, the offset introduces only a DC
+scales with the signal activity. Using such adaptive clock does                         shift in the quantization levels, which does not degrade the
+                                                   2 simulated
+not cause a degradation of the signal.In Fig. 6, the                                   linearity. The comparator offset however does reduce the ASC
+                               1
+                                 ∞
+mean squared error (MSE = n n=1 x(t)−x(t) , with x(t)                                   dynamic range. Hence, the comparator devices are sized such
+the output signal of the ASC and x(t) the original input signal)                        that the 3σ offset value is below 0.5 LSB. From post-layout
+of the LCS ASC is shown for different LCS ASC resolutions,                              simulations the σ offset value is found to be 746 μVrms (TT
+using an ECG input. Clearly, no increase in MSE is noted                                corner). The input-referred comparator noise is found to be
+when using the adaptive clock in the event mode. Compared                               28.1 μVrms (TT corner). The simulated values for the offset
+to [11], the comparators in the current work can be clocked                             and noise in the other corners are given in Fig. 7b and 7c,
+at a lower speed, thanks to the adaptive-resolution algorithm,                          respectively.
+which relaxes the required bandwidth constraints. To track a
+signal sufﬁciently fast (e.g. to not miss level crossings), an                             3) CDAC and DEM Logic: For the CDAC design, a custom
+LCS ASC should have a sampling frequency equal to [11]:                                 300-aF MOMCAP (M3 and M4 metal layers) is used, similar
+                                                                                        to [28] and depicted in Fig. 8. The equivalent capacitor model
+                                     ( ∂V
+                                        ∂t )max
+                                          in
+                                                                                        used for circuit simulations is also given, which was obtained
+                   fsample = NChannels ·                    (1)
+                                        LSB                                             via a parasitic extraction simulation. Cbp and Ctp are 86 and
+where NChannels is the number of recording channels and                                 15 aF, respectively. For the layout of the CDAC, a symmetric
+( ∂V
+   ∂t )max is the maximum input slope of the input signals.
+     in
+                                                                                        layout along the x-axis has been chosen for each single sub-
+Since the adaptive-resolution algorithm allows to initially use                         array [28], with double symmetry such that each unit cell
+a coarser LSB, the sampling frequency (and thus the clocking                            consists of two unit capacitors that are placed symmetrically
+frequency of the comparators) can be relaxed greatly. In                                along the axis, averaging out gradients along the x-axis. This
+our design, the comparator is clocked at maximum 4 MHz,                                 layout scheme is kept simple to reduce the fringe capacitance
+half the ASC master clock, which is fast enough to track 8                              between the routing and the small unit capacitors [28]. For
+channels with an input bandwidth of 1000 Hz. For comparison,                            every CDAC, each sub-array is then placed along the y-axis.
+without the adaptive-resolution algorithm, this clock should be                         LCS ASCs suffer, at low input frequencies, from harmonics
+16× higher. For the comparator architecture, a StrongARM                                that fall into the signal band [12]. These harmonics are caused
+latch topology [27] has been chosen. The design and its                                 by both the reconstruction scheme used to interpolate the
+                      P1 P2 P3 P4
+
+
+
+  Master
+Clock ASC
+
+
+ CHANNEL
+                      Channel 1 Channel 2              Channel 1 Channel 2              Channel 1 Channel 2            Channel 1 Channel 2
+  SELECT
+
+
+                                                Regular Mode                                                   Event Mode                            Event Mode
+                 P1     P2      P3   P4        => No Cycles are skipped                                       => Skip 1 cycle                       => Skip 2 cycles
+  sample
+
+
+ comp
+
+
+ COUNTER               01000000                  00111101                    00111101                            00111101               00111101
+
+
+ OFFSET                    0011                    0100                       0011                                  0001                     0001
+
+ OUTPUT
+  CODE          01000011       00111101     01000001    00111001 01000000 00111010                               00000000        00111110 00111100
+
+ OUTPUT
+  Spike
+                            @threshold crossing =>      If Tdecay cycles have passed              If Offset Control == 0001
+                             update Counters +          without a level-crossing                    => ASC enters Event-Mode
+                             reset Offset Control       => switch to a smaller offset
+Fig. 4. Timing diagram of the proposed adaptive-resolution ASC. The operation of a single channel is given in detail; all channels operate independently.
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-I: REGULAR PAPERS                                                                                                                                          6
+
+
+                                     Multiplexer Switches
+                                                                                                                            Vdd
+     VDD                                 VDD
+                                                                     Transistor Sizing                                                                                                       Corner Offset(   )
+                                                                                                                                                                                               TT      746
+                   CLK                         CLK      Device MUX Switch Sample Switch              M10        M8 M6               M7 M9         M11
+                                                                                                                                                                                              SS       741
+                                                          M1       2000/40         120/185                 CLK                              CLK                                               SF       747
+           M7            M6              M5      M4                                                                                                                                           FS       746
+                       CBootstrap                         M2       2000/40         120/185                                                                                                    FF       753
+                                                          M3       210/300         210/300                  Vout- M4                M5 Vout+
+           CLK                                                     210/300         210/300
+                                                          M4
+             M3        M2                                 M5        140/40         140/40
+                                                                                                           Vin+       M1           M2     Vin-
+                 Vin                M1                    M6
+                                                          M7
+                                                                    440/40
+                                                                    440/40
+                                                                                   440/40
+                                                                                   440/40                                                         b)
+                                Clk 1                   CBootstrap   33.3 fF        22.5 fF
+                                                                                                                   CLK        M3
+      Bond pad
+                                                Clk Sample
+                                                                                                               Transistor Sizing                                                        Corner Noise( )
+                                Clk 8                        CDAC                                                                                                                                28.1
+                                                                                                                  M1-M2         44000/600                                                 TT
+                                                                                                                                                                                                 28.7
+                                                                                                                                                                                         SS
+ a)                                                                                                                M3            280/40
+                                                                                                                                10080/160
+                                                                                                                                                                                         SF
+                                                                                                                                                                                         FS
+                                                                                                                                                                                                 29.0
+                                                                                                                                                                                                 29.5
+                                                                                                                  M4-M5                                                                  FF      28.6
+                                                                                                                  M6-M7         10080/160
+                       Mux Switch                Sample Switch                                    a)              M8-M11          280/40          c)
+                                                 Sample Logic
+                                             Level
+                                                             Sample Enable D   Q
+                                                                                    Clk Sample   Fig. 7. a) StrongARM comparator design and device sizes used. Plotted are
+           Synthesized
+           Digital Logic                    Shifters      Master Clk ADC                         b) a 1000-sample Monte-Carlo simulation to determine the offset (TT corner),
+                                          (0.56 =>1V)                          QN
+                                                                                                 and c) a post-layout transient noise simulation (TT corner). The values in the
+                                                                                                 other process corners are also indicated.
+                                                              Clk Sample
+                                                                                       Clk 8
+                                                 Channel Select [8]
+                                                        Clk Sample
+                                                                                                           a) Unit Cell Routing                                    b) Capacitor Model
+ b)                                                                                Clk 1
+                                                                                                                  Unit Capacitor (M3/M4)
+                                                                                                                                                                              Cu
+                                          Channel Select [1]
+                                                                                                                          ~300 aF
+                                                                                                                                                                     Cbp               Ctp
+
+Fig. 5. a) Single-ended view of the proposed multiplexer circuit and sample
+switch, consisting of two rows of bootstrap switches. The device sizes are                                                                                         c) CDAC Layout
+
+
+                                                                                                                  s
+                                                                                                                 he
+                                                                                                                                            Via M1-M4
+                                                                                                           Sw AC
+given in the table. b) Multiplexer and sample switch control logic.
+                                                                                                             itc
+                                                                                                             D                                              X X’              X’ X’’
+                                                                                                                                                        x2... C5 ... C2 C2 C1 C0 C0 C1 C2 C2 ... C5
+                                                                                                                           Roung (M1)                                 Double Symmetry
+
+
+
+                                                                                                 Fig. 8. a) Routing of a unit cell of the CDAC, b) the corresponding capacitor
+                                                                                                 model used for circuit simulations and c) the layout ﬂoorplan for a single
+                                                                                                 DAC sub-array.
+
+                                                                                                    IV. E ND - TO -E ND O PERATION OF THE E VENT-D RIVEN
+                                                                                                                              SOC
+                                                                                                    FREYA is conﬁgurable towards a wide range of time-sparse
+                                                                                                 signal applications, such as ECG and EEG. The adaptive-
+                                                                                                 resolution algorithm and the programmable resolution of the
+                                                                                                 ASC allow tailoring the spike encoding to a particular signal
+                                                                                                 of interest. To achieve the highest classiﬁcation accuracy, a
+                                                                                                 custom end-to-end training framework is introduced in this
+                                                                                                 section, based on our previous work [18], where we showed
+
+Fig. 6. Simulation of the MSE of an LCS ASC with the event mode off
+(working at a ﬁxed clock rate) and the event mode on (working with an                                                                   Without DEM                 With DEM
+adaptive clock), for an ECG input signal.                                                                               Mag.                             Mag.
+                                                                                                             MSB
+                                                                                                             MSB -1
+                                                                                                             MSB -2:LSB                  Signal Band                Signal Band
+                                                                                                                                                                                       Noise oor
+                                                                                                           Low freq. input signal
+output signal of the non-uniformly sampling ASC, as well as
+by mismatches in the ASC DAC that generates the threshold                                                  ASC takes new
+                                                                                                                                   Harmonics due to
+                                                                                                                                                   Freq.                      Freq.
+                                                                                                              sample                                                    Reducon harmonics =>
+values [11], [13]. To avoid increasing the sizing of the CDAC                                                                       CDAC mismatch                      beer in band performance
+to achieve a higher linearity, which would increase the power                                           Sample 1 Sample 2       Sample 3    Sample 4
+consumption, a DEM technique is used (Fig 9). The 8-bit                                                Sub-Array 1 Sub-Array 1 Sub-Array 1 Sub-Array 1
+CDAC is split up in four sub-arrays. In each sample cycle,                                             Sub-Array 2 Sub-Array 2 Sub-Array 2 Sub-Array 2
+two sub-arrays are conﬁgured as MSB, one sub-array as MSB-
+1, and the other sub-array acts as a regular binary-weighted                                           Sub-Array 3 Sub-Array 3 Sub-Array 3 Sub-Array 3
+DAC. In each new sample cycle, these sub-arrays are shifted                                            Sub-Array 4 Sub-Array 4 Sub-Array 4 Sub-Array 4
+in a barrel-shifting fashion, mitigating the harmonics caused
+by the CDAC mismatch. Another advantage of using DEM                                             Fig. 9. Visual overview of the proposed DEM algorithm for the CDAC sub-
+is that possible gradient effects, which are not modeled in a                                    arrays and its impact on the ASC distortion.
+standard PDK, are also averaged out along the y-axis.
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-I: REGULAR PAPERS                                                                                                7
+
+
+
+       Dataset        ASC Tuning                                                              signal from the ASC output, si the original input signal, and
+e.g. MIT Arrhythmia                    Optimal
+                                                                             Neurons+ Synapsesκ the model complexity, which is the number of non-zero
+      Database    Spike
+                                         Spike                                    {ni,si}     model parameters. Applied to the ASC, it is equal to the
+                       Encoded
+                       Datasets        Encoding                                               spike density of the generated dataset [18]. This criterion
+         High-Level               Calculate                        Neural
+                                                                                        SNN   determines a subset of settings of the ASC for which the
+        LCADC Model             Information                       Network
+          (MATLAB)               Criterium                        Training          Processor ideal trade-off between high DR and overﬁtting of a model
+                                                                                              can be reached. Hence, the criterion can be used prior to
+                              Find optimal                                    SPI             training the SNN model, to predict if the encoding scheme
+                             trade-off SNR
+                                                            Hardware Constraints              under test leads to a high or a low SNN accuracy [18]. By
+      ASC parameters         vs overfitting
+ (Resolution, Offset, Decay)                                                                  calculating this criterion for each ASC setting, the region
+                                                         (4b Synapses, 256 Neurons)
+                                                                                              with minimum information criteria leads to a reduced search
+                                                                                              space (dashed region in Fig. 11b), where the optimal SNN
+Fig. 10. Proposed end-to-end operation ﬂow for the event-driven SoC. The performance is expected to be found. Following this step, for
+relation between the information criterion and the SNN accuracy has been
+explored in previous work [18]; the ﬂow presented here applies this insight                   each spike encoding corresponding to an ASC setting in this
+to train an application end-to-end.                                                           reduced search space, an SNN model is trained in Pytorch.
+                                                                                              This training takes into account the hardware constraints of
+ a)            R                                                 c)                           the SNN processor embedded in FREYA, mainly the limited
+                                  b) QRS-Labelling
+                                             (ECG)         98.6%       100
+                                                                                              amount of neurons (256) and the quantized weights (4 bits
+                                    1                                             Grid-Search
+                                    2
+                                                                                  Proposed    signed) [16], [18]. Once the SNN model is trained, the weights
+                                                   Training Episodes
+
+
+
+
+                                                                        80
+                                    3
+                                    4                                             Framework   and synapses are programmed via the SPI interface of FREYA.
+           Q        S                                                   60  - 69%
+                          TDecay
+
+
+
+
+                                    5
+Input                               6                                   40                    As a use case, we have selected the QRS-complex labeling
+                                    7
+    Q                               8
+                                    9
+                                                                        20
+                                                                                              task for ECG (Fig. 11a). The detection of the QRS-complex
+    R                              10
+
+    S
+                                      1 2 3 4 5 6 7 8 9 10 54.9%
+                                             Offset
+                                                                         0
+                                                                         ECG                  is often implemented for wearable ECG applications and can
+                                                                                              be used for e.g. heart rhythm estimation, arrhythmia detection,
+Fig. 11. a) Illustrative classiﬁcation task for the SNN: event-driven QRS- etc. [35]. The MIT-BIH Arrhythmia dataset [31] (retrieved
+labeling from an ECG input signal. b) The achieved SNN accuracy is plotted via [32]) is used to train the SNN. This dataset contains 48
+as a function of the ASC parameters (the ASC resolution is programmed
+to be 6 bits). Indicated in the dashed area is the region of optimal ASC                      two-channel ambulatory ECG recordings of 30 minutes each,
+performance predicted by the Corrected Akaike information criterion. c) The which were obtained from 47 subjects. Recording 101 is used
+graph indicates the improvement in training time by using the information                     as training sequence and recording 201 as the independent test
+criterion for training, compared to a full grid search of all ASC parameters.
+                                                                                              sequence acquired from a different patient. The full 30 minutes
+                                                                                              of the recording are used for training. The SNN architecture is
+that information-theoretic criteria can predict the settings of an a recurrent neural network with a single hidden layer of 250
+LCS ASC for which an SNN will likely reach the maximum neurons, an input layer of three neurons and an output layer
+detection accuracy. The framework proposed here uses these of three neurons, one for each feature of the QRS-complex,
+insights to deploy FREYA in an end-to-end application, based thus three classes. The SNN architecture is trained via back-
+on the ﬂow depicted in Fig. 10. First, a high-level MATLAB propagation through time (BPTT) [20] using the SLAYER
+model of the ASC generates realistic spike-encoding signals surrogate gradient technique [21] and the cross-entropy loss
+for each ASC setting under test, which can be used as input function, as conventionally used for classiﬁcation problems
+for the SNN training. Doing a brute-force search over all ASC [22]. The Adam optimizer [23] is utilized with learning rate
+                                                                                                           −4
+parameters (i.e. the ASC resolution, offset, Tdecay ) for a given η = 3 × 10 and decay parameters β1 = 0.9, β2 = 0.999,
+application would, however, yield a long optimization time for a total of 100 training epochs with batch size 128. All
+for the SNN model, as a full hyper-parameter tuning would weights are initialized using the uniform Xavier method [24],
+be required per ASC setting. For example, for a 10 × 10 grid following prior SNN training studies such as [22]. During
+search for the offset and Tdecay parameters, as shown in Fig. 11, training, the SNN weights are quantized to a 4-bit precision
+approximately 10 hours of quantization-aware training would via quantization-aware training [25]. Doing so, a simulated
+be required per point in the grid on a computer equipped peak classiﬁcation accuracy of 98.6% is reached in our QRS
+with an NVIDIA V100 GPU. Moreover, simulations show example. By using the proposed training framework, a reduc-
+that, depending on the signal (features) of interest, there is tion in NN training epochs of 69% (31 epochs) compared to
+a different optimal setting for the ASC, which might even be the full grid search (100 epochs) is obtained for the selected
+patient-speciﬁc. To avoid a lengthy grid search over all ASC use case (Fig 11c).
+parameters, our training framework calculates, for each spike
+encoding corresponding to each ASC setting under test, the                                                     V. M EASUREMENT R ESULTS
+Corrected Akaike information criterion [19]:
+                            Ns                     2
+                                                                                                 The proposed FREYA SoC has been implemented in a 40nm
+                                n=1 (s̃i − si )                       2κ2 + 2κ
+    AICc = Ns log(                                    ) + 2κ +                         , (2)  CMOS     technology (see Fig. 12), and has a record-low active
+                                      Ns                             Ns − κ − 1               chip area of 0.023 mm2 /channel (0.184 mm2 in total, of which
+where Ns is the number of input samples over which the the on-chip SRAM takes 70%). The ASC has an area of
+criterion is evaluated (the training dataset), s̃i the reconstructed 0.0067 mm2 /channel. The chip can sample up to 8 differential
+    IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-I: REGULAR PAPERS                                                                                          8
+
+
+
+    inputs with a maximum bandwidth of 1000 Hz, and works at                            calibration. Fig. 15 shows the measured signal spectrum of
+    a clock frequency of 8 MHz. The embedded SNN processor                              a single readout channel for a 600-Hz sine input. The ASC
+    can work at a clock frequency up to 50 MHz.                                         achieves 71.1 dB of SNDR and 77.9 dB of SFDR in the 1-
+                                                                                        kHz signal band. The SNDR for different input frequencies
+                                                                                        is plotted in Fig. 16: the ASC achieves a peak SNDR of 74
+                                                                                        dB. The in-band SNDR decreases at low frequencies, which
+                                                                                        is typical for an ASC, as harmonics fall into the signal band
+                                                                                        [12]. In Fig. 17, the measured SFDR of the ASC is shown
+                                                                                        for different input frequencies, with the DEM enabled and
+                                                                                        disabled. The DEM technique improves the linearity of the
+                                                                                        ASC by 7 dB. By applying both calibration and the DEM,
+                                                                                        the ASC can achieve an even higher linearity of up to 68 dB
+                                                                                        at low frequencies, which is the theoretical maximum SFDR
+                                                                                        for ZOH reconstruction for an 8-bit resolution [12]. For higher
+    Fig. 12. Die photo of the fabricated prototype FREYA IC in 40nm CMOS.               input frequencies, an SFDR degradation is noted, which is has
+                                                                                        been traced back to a non-optimally designed bootstrap switch,
+    A. Measurement Setup                                                                which introduces distortion at higher input frequencies. For
+       A fully automated measurement setup has been developed                           the application discussed in the sections below, however, this
+    (see Fig. 13). It consists of a Zynq 7020 SoC FPGA, which                           does not matter, as the achieved linearity with DEM (and thus
+    takes care of the communication with the chip (SPI and AER                          without extra calibration) sufﬁces for the classiﬁcation task
+    interfaces), records the data coming from FREYA, and controls                       (which requires only a 6-bit linearity).
+    the on-PCB components. These consist of a 16-channel DAC                            The ASC has a programmable resolution and conversion
+    (ADI - AD5766) that can provide a multi-channel input to                            algorithm, which inﬂuence the ADC output data rate. Fig. 18.
+    the ASC, an optional tunable 3th-order anti-aliasing ﬁlter,                         shows the output data rate for an ECG signal input for various
+    on-PCB LDOs (ADI - LT3045) that provide clean reference                             settings of the ASC; the data rate of a classical Nyquist-rate
+    voltages for FREYA and the board components, instrumen-                             ADC is plotted as reference. The ASC achieves a data rate
+    tation ampliﬁers (ADI - AD8237) to amplify small voltages                           that is much lower (e.g., 6× at 6-bit resolution) than that of a
+    over the current shunt resistors, and an 8-channel ADC (TI                          classical, ﬁxed-sample-rate conversion. Thanks to the dynamic
+    - ADS8344) that measures the output of the instrumentation                          encoding, the power consumption of the processing and/or
+    ampliﬁers to measure the currents of the chip supplies. The                         transmitter blocks that follow the ASC are also relaxed greatly.
+    clock signals for the ASC and the SNN processor are provided                        To highlight this, Fig. 19 shows the I/O power of the SoC
+    via an external pulse generator (HP 8131A) and an arbitrary                         as a function of the input tone frequency. The I/O power
+    waveform generator (Rigol DG5101).                                                  varies from 50 to 190 μW/channel, clearly indicating how
+    B. Analog-to-Spike Converter Measurement Results                                    the event-driven ASC output can provide a beneﬁt at system
+                                                                                        level. Fig. 19 also plots the power consumption as a function
+       This section discusses the measurement results of the stan-
+                                                                                        of the input frequency. Note that, with adaptive clocking on,
+    dalone multi-channel ASC. Fig. 14 plots an 8-channel ECG
+                                                                                        the ASC power consumption scales with the input activity.
+    recording, where the ASC resolution was set to 6 bits. The
+                                                                                        The ASC consumes between 1.27 and 1.63 μW/channel, and
+    ﬁgure shows both the reconstructed ECG waveform (Fig. 14a)
+                                                                                        achieves a minimum Walden FOM of 199 fJ/conv.step. In Fig.
+    and the spiking output of the ASC (Fig. 14b). For all results,
+                                                                                        20, the ASC’s area/channel is plotted for multiple designs
+    the non-uniform ASC output has been interpolated via zero-
+                                                                                        from literature as a function of the DR of the ASCs. It clearly
+    order-hold (ZOH) interpolation. The DAC mismatch coefﬁ-
+                                                                                        shows that the proposed ASC can signiﬁcantly reduce the per-
+    cients were corrected by a one-time ramp-based foreground
+                                                                                        channel area. For this work a conservative estimation for the
+                                                                                        per-channel area is made; the digital circuits for the ASC and
+                      Keysight E36311A/E36312A                                          SNN are synthesized as one block, and hence, the logic circuits
+                                                                                        from the ASC and SNN are not separable (only the SRAM
+         HP 8131A Pulse Generator     Rohde & Schwarz NGL201
+                                                                                        can be distinguished). Therefore, for this result, the area of all
+                                          16-Channel DAC (ADI - AD5766)                 digital logic (excluding the SRAM) is taken, which is clearly
+                                                           Tunable Filter Bank          an overestimation. Moreover, since the proposed ASC has
+                                                                                        differential inputs, it uses 2 CDACs; thus, the CDAC array
+                                                                                        is twice as large compared to a single-ended design. Most
+ Rigol
+DG5101                                                                 FREYA            designs in literature have a single-ended input. From the other
+ AWG                                                                        ADC
+                                                                       (TI - ADS8344)   designs in literature, the only reference that uses multiplexing
+                                                                                        is [37]. It uses a digital LCS technique, which can also be
+                                                               LDOs (ADI - LT3045)
+                                        Zynq 7020
+                                                     FMC
+                                                               + INAs (ADI - AD8237)    multiplexed, leading to a compact design that achieves an area
+Keysight 33600A AWG    Measurement      (Zedboard)             + Shunt Resistor         of 0.000326 mm2 /channel and a total of 128 channels. Finally,
+                          PCB
+                                                                                        the crosstalk between the recording channels is plotted in Fig.
+    Fig. 13. Photo of the measurement setup for FREYA.                                  21. For this experiment all ASC channels have been connected
+ IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-I: REGULAR PAPERS                                                                                                                                                       9
+
+
+
+                                                         a) Counter Output                                    b) Spike Output
+                                                                                                                                                            70
+                         0.6
+                         0.4                                                                                                                                                          DEM OFF
+                                                                                                                                                                                      DEM ON
+                           0.6                                                                                                                              65                        DEM ON + Calibration
+                           0.4
+
+
+
+
+                                                                                                                                                SFDR (dB)
+Amplitude (V)
+
+
+
+
+                           0.6
+                           0.4
+                                                                                                                                                            60
+                              0
+                           0.6
+                           0.4                                                                                                                              55
+
+                           0.6
+                           0.4
+                                                                                                                                                            50
+                           0.6
+                           0.4
+                                                                                                                                                            45
+                           0.6
+                                                                                                                                                              0   200   400        600        800        1000
+                           0.4                                                                                                                                          Frequency (Hz)
+                           0.6
+                           0.4
+                                                                                                                                         Fig. 17. SFDR of the ASC (of the full signal spectrum) as a function of the
+                                       0                     0.2      0.4 0.6      0.8    1            0      0.2      0.4 0.6   0.8   1 input signal frequency.
+                                                                     Time (s)                                         Time (s)
+
+ Fig. 14. 8-channel ECG recording from the ASC: a) the reconstructed output
+ of each ASC channel, and b) the spiking output of each channel. The ASC
+ settings used are: offset = 1 LSB, Tdecay = 0 and ASC resolution = 6 bits.
+
+
+                                                        0
+                                                                                              SNDR: 44.8 dB
+                                                                                              SNDR (1 kHz): 71.1 dB
+                                             -20                                              SFDR: 57.4 dB
+                                                                                              SFDR (1 kHz): 77.9 dB
+                                             -40
+                Signal Power (dB)
+
+
+
+
+                                             -60
+
+                                             -80
+
+                                    -100
+
+                                    -120                                                                                                 Fig. 18. Data rate of the ASC for an ECG input, plotted as a function of the
+                                                                   Signal Band (1 kHz)                                                   ASC resolution.
+                                    -140
+                                                         10 0                    10 2                  10 4               10 6           discuss the measurement results for the SNN processor, for
+                                                                                  Frequency (Hz)
+                                                                                                                                         the QRS-labeling task discussed in Section IV. Fig. 22 shows
+ Fig. 15. Measured ASC spectrum of a single channel, for a 700-mVpp 600-                                                                 the SNN power consumption (at 0.56V and 1V supplies)
+ Hz sine input.                                                                                                                          as a function of the input spike (or event) rate. While a
+ to the ground, except channel 1 that has a full-scale 100-Hz                                                                            sparser event rate signiﬁcantly reduces the system power, the
+ input tone. The signal amplitude in the channel adjacent to the                                                                         leakage and idle power set a lower bound on the beneﬁts
+ non-grounded channel has been veriﬁed, showing a crosstalk                                                                              of the sparse signal input. Fig. 23 plots the SNN power
+ of -53.7 dB (Fig. 21).                                                                                                                  consumption as a function of the supply voltage, the amount
+                                                        75                                                                               of input events (shown for 200 events/s and an accelerated
+                                                                                                                                         input of 10000 events/s) and the clock frequency, where the
+                                                        70
+                               SNDR in bandwidth (dB)
+
+
+
+
+                                                        65
+
+                                                        60
+
+                                                        55
+                                                                                              With Calibration
+                                                        50                                    No Calibration
+
+                                                        45
+                                                             0           200        400          600          800        1000
+                                                                                Frequency (Hz)
+ Fig. 16. Measured SNDR of the ASC output in the 1-kHz band as a function
+                                                                                                                                           S
+
+
+
+
+ of the input signal frequency.
+
+
+ C. SNN Measurement Results
+   The previous measurement results have shown how the
+ multi-channel ASC provides a spike train for the back-end                                                                               Fig. 19. I/O power of the SoC and the ASC power per channel as a function
+ SNN in a power- and area-efﬁcient manner. This section will                                                                             of the input frequency, with and without adaptive clocking.
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-I: REGULAR PAPERS                                                                                                                                          10
+
+
+
+                                                                                                           idle power (clock on), 0.28 μW/channel is due to the dynamic
+                       100                   Wang, JSSC 2021                    Trakimas, TCASI 2011
+                                                                                Weltin-Wu, JSSC 2013
+                                                                                                           power consumption of the SNN, and 1.27 μW/channel is from
+                                            Zhang, TBioCAS 2014
+                                 Wu, JSSC 2017                                                             the ASC. A more detailed power breakdown for the ASC is
+                                                                                Maslik, TBioCAS 2018
+  Area/Channel (mm2)
+
+
+
+
+                       10-1               Tang, TCASI 2013                                                 provided as well (Fig. 24c): at low event rates, the power is
+                                                                                   Schell, JSSC 2008
+                                 Li, TBioCAS24
+                                    Hou, TCASII 2019
+                                                           Li, TBioCAS 2013               He, JSSC 2022    mainly consumed by the always-on digital logic of the ASC,
+                                                        Guo, TBioCAS 2020          Marissa,TBioCAS17
+                                             Rovere, JETCAS 2018 Wang, JSSC20
+                                                                                                           as the DAC and the comparator power scale with the signal
+                                             Hou, TCAS II 2018
+                       10   -2
+                                                   Timmermans,VLSI23
+                                                                           Van Assche, JSSC24              activity. For the SoC, it is clear that the static power caused by
+                                                                                   This Work               leakage is the dominant contributor to the power consumption.
+                                                  Timmermans, JSSC24
+                                                                                                           It is important to note that standard SRAM cells provided by
+                       10-3                                                                                the foundry have been used, which are not optimized for low-
+                                                                       He, TBioCAS24                       power applications. By using custom low-power SRAMs [29],
+                                                                                                           [30], or a technology with better leakage performance such as
+                       10-4
+                           4             5             6           7           8            9         10   FDSOI, the power efﬁciency could be improved further.
+                                                  Dynamic Range (Bits)                                        The proposed SoC can greatly reduce the raw data band-
+                                                                                                           width that is required from a medical device. Assuming that
+Fig. 20. Overview of area/channel of published LCS ASC designs, as a
+function of DR.                                                                                            an ECG has 60 beats/s, the on-chip QRS-labeling SNN can re-
+                                                                                                           duce the data rate from an initial 128000 bits/s (the data rate of
+                                                                                                           an 8-channel, 8-bit ADC with a sample rate of 2000 samples/s)
+                            0
+                                                             0 dB (= input amplitude Channel 1)            to 6 bits/s, which corresponds to a compression of 21333×.
+                        -20
+                                                           Crosstalk = - 53.7 dB
+ Signal Power (dB)
+
+
+
+
+                        -40
+
+
+                                                                                                             SNN Power Consumption (mW)
+                        -60
+                                                                                                                                          1.5
+
+                        -80
+                                                                                                                                                           Pleakage+Pidle@50MHz, VDD = 1V
+                       -100                                                                                                                1
+
+                       -120
+
+                       -140                                                                                                               0.5
+                             0
+                           10SS                     102                       104                    106
+                                                            Frequency (Hz)
+
+                                                                                                                                                           Pleakage+Pidle@50MHz, VDD = 0.56V
+Fig. 21. Measured crosstalk in channel 2, when a full-scale, 100-Hz input                                                                  0
+signal is applied in the adjacent channel (channel 1). The crosstalk is measured                                                              0        1              2            3             4
+                                                                                                                                           10     10             10           10            10
+by applying an input to channel 1 and grounding all other inputs.                                                                                  Event Rate (events/s)
+
+                                                                                                           Fig. 22. Measured SNN power consumption as a function of the input signal
+programmed network architecture is the one described in                                                    event rate.
+Section IV. For a rate of 200 events/s, which is representative
+of the ECG use case, the SNN consumes a minimum total
+power of 155.7 μW. The SNN core can work down to a
+digital supply of 0.56 V and a clock frequency of 50 MHz
+without losing functionality. For the SNN clock, the ASC
+provides a maximum spike rate of 2 MHz. It has been found
+experimentally that an oversampling ratio between the ASC
+spike rate and the SNN clock of at least 7× is required.
+Practically, an SNN clock of 15 MHz has been used.
+
+D. System Results
+   Fig. 24 shows the system-level results for the QRS-labeling
+task. To validate the SNN accuracy obtained by software
+simulations in Section IV, 50 samples of each class were                                                   Fig. 23. Meaured SNN power consumption as a function of the supply
+                                                                                                           voltage, for various input signal event rates and SNN clock frequencies.
+applied to the FREYA chip via the AER interface. For each
+sample, the class corresponding to the output neuron that
+spiked the most was taken as the classiﬁcation result. These
+results are summarized in the confusion matrix in Fig. 24b.                                                E. Comparison with the State of the Art
+The ﬁgure also shows the system power breakdown of the SoC                                                    Table I lists recent SoCs for biosignal processing. Compared
+(Fig. 24a). For the classiﬁcation task at hand, the total system                                           to these other systems, the FREYA SoC achieves at least
+power is 20.8 μW/channel, of which 17.4 μW/channel is static                                               a 7× reduction in per-channel area, thanks to the proposed
+power consumption caused by leakage in the digital part,                                                   time-multiplexed ASC, which is the smallest reported in the
+which is mostly due to the SRAM macros; 1.82 μW/channel is                                                 literature, and the low-footprint digital SNN processor [16].
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-I: REGULAR PAPERS                                                                                                                           11
+
+
+          Reference                         TBioCAS23 [4]                                    JSSC21 [9]            JSSC22 [7]       Nat.Comm 21 [8]      ESSCIRC23 [6]     This Work
+       Technology (nm)                           65                                             180                    40                 180                 40               40
+      Supply Voltage (V)                        0.75                                            0.6                 0.9/1/1.1             1.8               0.6/1.1        0.56/1/0.7
+      Readout Channels                           1                                               1                      2                  8                   1                8
+         Area (mm2 )
+                        Total                      1.74                             13.86                   0.32        1.42+77.2 (AFE+SNN)***            1.12                0.184
+                 Per Channel                       1.74                             13.86                   0.16        0.18+9.65 (AFE+SNN)***            1.12                0.023
+            Signal                   ECG           EEG          EMG          ECG            Audio          ENG                     EEG                    ECG                 ECG
+      Classiﬁcation Task         Abnormality      Seizure      Gesture    Abnormality     Keyword   De- Re- and Hyper        High Frequency           Abnormality             QRS
+                                  Detection      Detection   Recognition Detection        Spotting Polarization Labeling Oscillation Detection          Detection           Labeling
+             Dataset            MIT-BIH. Arr.Bonn UniversityNinaPro DB1MIT-BIH. Arr.Google Speech         Custom              Clinical iEEG          MIT-BIH. Arr.       MIT-BIH. Arr.
+         Accuracy (%)             99.3/99.16       99.84        85.13         99.7           99.4             /                     78          95.31-97.81 (5b-7b ASC) 98.67**
+             Classes                  2/5            2             8           2              2               3                      2                      5                   3
+           Latency (s)                1.1            1            0.2               0.348                     /                   0.015                     /                 0.08*
+     Power/Channel (μW)            46.8/86.7       32.1           30          1.68          0.378           25.3                  76.75                     /                 20.8
+Energy/Classiﬁcation (μJ/class.) 2.25/4.36         2.06          5.25      0.58****       0.13****            /                 9.21****         0.48-2.25 (5b-7b ASC)        13.29
+        Including AFE?                              No                               Yes                    Yes                    Yes          No (Off-Chip ASC used)         Yes
+   AFE Suited for Sensing?                           /                             No (5b)               Yes (10b)                 Yes                      /                  Yes
+       Type of Processing                    Frame Based NN                  Event-Based AFE +         Event-Based             Event-Based            Event-Based         Event-Based
+                                                                               Frame Based NN
+         Multipurpose?                             Yes                               Yes                     No                     No                     Yes                 Yes
+    Flexible Spike Encoding                          /                               No                      No                     No                     No                  Yes
+ ∗ Latency measured via applying spikes via the external AER interface, SNN clock running at 15 MHz. Latency = amount of cycles between ﬁrst input spike and last output spike/f
+                                                                                                                                                                                 clk,SNN
+ ∗∗ Software accuracy, hardware accuracy veriﬁed with 150 samples.
+ ∗∗∗ AFE includes LNA, Filters and ASC.
+ ∗∗∗∗ Value calculated from data in publication.
+
+                                                                      TABLE I
+                                    C OMPARISON WITH RECENTLY PUBLISHED S O C S FOR REAL - TIME BIOSIGNAL PROCESSING .
+a)                                                  b)                R   50
+                                                         True Class
+
+
+
+
+                                                                                                          algorithm makes it possible to tune the spike encoding to
+                                                                      Q         50                        any signal of interest. Signal-activity-dependent power con-
+                                                                      S
+                                                                                                          sumption is achieved due to the adaptive clocking of the
+                                                                                2       48
+                                                                                                          ASC. To efﬁciently and rapidly tune the ASC and SNN
+                                                                          R     Q        S
+                                                                          Predicted Class                 towards a target application, a custom training framework
+                                                      c) ASC Power Breakdown                              for the SoC has been developed, which reduces the amount
+                                                       2%                      P Event Logic +
+                                                                               P
+                                                                                   AR Algorithm           of required training epochs by 69% compared to a full grid
+                                                           19%                     Multiplexer
+                                                                      7%
+                                                                        <1%
+                                                                               PComparator                search. The framework has been demonstrated for the QRS-
+                                                   72%                         P                          labeling task based on ECG, for which a maximum accuracy
+                                                                                   DAC Driver
+                                                                               PAnalog                    of 98.67% has been reached. Finally, full measurement results
+                                                                                                          of a prototype IC fabricated in a 40nm CMOS technology
+Fig. 24. a) The SoC power breakdown per channel for the QRS-labeling                                      have been presented. The chip has a per-channel active area
+application, b) confusion matrix for the QRS-labeling task, and c) the detailed
+ASC power breakdown for the same application.                                                             of 0.023 mm2 /channel (0.184 mm2 in total), which is a 7×
+                                                                                                          improvement over other similar works. For the QRS-labeling
+                                                                                                          task, the system consumes 20.8 μW/channel, with an SNN
+The SoC thus provides an area-efﬁcient way to process the                                                 clock running at 15 MHz (VDD at 0.56 V), with 80 ms of
+data from multiple recording channels, which is typically a                                               latency. This SoC therefore paves the way for multi-channel,
+bottleneck for event-driven SoCs. Compared to frame-based                                                 signal-scalable, low-power event-driven SoCs for applications
+processing [4], [9], the proposed SNN achieves a much                                                     that require the high-ﬁdelity processing of multiple sensor
+smaller latency (80 ms) and area footprint. The SoC con-                                                  signals.
+sumes 20.8 μW/channel, the lowest power consumption for                                                                       ACKNOWLEDGMENTS
+all published systems; only [9] consumes less. However, as                                                  The authors would like to thank the many MICAS re-
+that system only uses a 5-bit LCS ASC, the DR of this LCS                                                 searchers who helped during the tape-out of the chip. This
+ASC is not sufﬁcient, since biomedical systems usually require                                            work has been funded in part by the FWO SCATMAN project
+a DR higher than 7 bit. Note that for always-on systems,                                                  (S000221N).
+which need to continuously perform inference (such as the
+target ECG QRS-labeling application), the per-channel power                                                                            R EFERENCES
+needs to be minimized. The proposed SoC can thus provide
+                                                                                                          [1] N. Van Helleputte et al., ”A 345 μW Multi-Sensor Biomedical SoC
+an power-efﬁcient LCS ASC and SNN processor, at a much                                                        With Bio-Impedance, 3-Channel ECG, Motion Artifact Reduction, and
+smaller area footprint than other published works.                                                            Integrated DSP,” in IEEE Journal of Solid-State Circuits, vol. 50, no. 1,
+                                                                                                              pp. 230-244, Jan. 2015.
+                                                                                                          [2] M. A. Bin Altaf, C. Zhang and J. Yoo, ”A 16-Channel Patient-Speciﬁc
+                                VI. C ONCLUSION                                                               Seizure Onset and Termination Detection SoC With Impedance-Adaptive
+                                                                                                              Transcranial Electrical Stimulator,” in IEEE Journal of Solid-State Cir-
+   This paper has presented FREYA, an 8-channel event-driven                                                  cuits, vol. 50, no. 11, pp. 2728-2740, Nov. 2015.
+SoC for time-sparse biosignals, consisting of two main parts:                                             [3] U. Shin et al., ”NeuralTree: A 256-Channel 0.227-μJ/Class Versatile
+                                                                                                              Neural Activity Classiﬁcation and Closed-Loop Neuromodulation SoC,”
+a multi-channel, time-division-multiplexed LCS ASC and an                                                     in IEEE Journal of Solid-State Circuits, vol. 57, no. 11, pp. 3243-3257,
+integrated SNN processor. Thanks to the adaptive system                                                       Nov. 2022.
+clocking and the multiplexing, the proposed ASC can reuse                                                 [4] J. Liu et al., ”An Ultra-low Power Reconﬁgurable Biomedical AI Pro-
+                                                                                                              cessor with Adaptive Learning for Versatile Wearable Intelligent Health
+the same hardware for each channel, resulting in an ultra-                                                    Monitoring,” in IEEE Transactions on Biomedical Circuits and Systems
+low per-channel area. The programmable adaptive-resolution                                                    (Early Access).
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-I: REGULAR PAPERS                                                                                                  12
+
+
+
+[5] E. Forno, V. Fra, R. Pignari, E. Macii and G. Urgese,”Spike encoding          [26] B. Razavi, ”The Bootstrapped Switch [A Circuit for All Seasons],” in
+    techniques for IoT time-varying signals benchmarked on a neuromorphic             Solid-State Circuits Magazine, vol. 7, no. 3, pp. 12-15, Summer 2015.
+    classiﬁcation task.”, in Front. Neurosci., vol 16, Dec. 2022.                 [27] B. Razavi, ”The StrongARM Latch [A Circuit for All Seasons],” in
+[6] F. Tian et al., ”BIOS: A 40nm Bionic Sensor-deﬁned 0.47pJ/SOP,                    Solid-State Circuits Magazine, vol. 7, no. 2, pp. 12-17, Spring 2015.
+    268.7TSOPs/W Conﬁgurable Spiking Neuron-in-Memory Processor for               [28] P. J. A. Harpe et al., ”A 26 μW 8 bit 10 MS/s Asynchronous SAR ADC
+    Wearable Healthcare,” ESSCIRC 2023- IEEE 49th European Solid State                for Low Energy Radios,” in IEEE Journal of Solid-State Circuits, vol. 46,
+    Circuits Conference (ESSCIRC), Lisbon, Portugal, 2023, pp. 225-228.               no. 7, pp. 1585-1595, July 2011.
+[7] Y. He et al., ”An Implantable Neuromorphic Sensing System Featuring           [29] B. Vanhoof and W. Dehaene, ”SRAM With Stability Monitoring and
+    Near-Sensor Computation and Send-on-Delta Transmission for Wireless               Body Bias Tuning for Biomedical Applications,” in IEEE Solid-State
+    Neural Sensing of Peripheral Nerves,” in IEEE Journal of Solid-State              Circuits Letters, vol. 5, pp. 29-32, 2022.
+    Circuits, vol. 57, no. 10, pp. 3058-3070, Oct. 2022.                          [30] Y. -C. Chien and J. -S. Wang, ”A 0.2 V 32-Kb 10T SRAM With 41 nW
+[8] M. Sharifshazileh, et al., ”An electronic neuromorphic system for real-           Standby Power for IoT Applications,” in IEEE Transactions on Circuits
+    time detection of high frequency oscillations (HFO) in intracranial EEG.”         and Systems I: Regular Papers, vol. 65, no. 8, pp. 2443-2454, Aug. 2018.
+    Nat Commun 12, 3095 (2021).                                                   [31] Moody GB, Mark RG. The impact of the MIT-BIH Arrhythmia
+[9] Z. Wang et al., ”A 148-nW Reconﬁgurable Event-Driven Intelligent                  Database. IEEE Eng in Med and Biol 20(3):45-50 (May-June 2001).
+    Wake-Up System for AIoT Nodes Using an Asynchronous Pulse-Based                   (PMID: 11446209)
+    Feature Extractor and a Convolutional Neural Network,” in IEEE Journal        [32] Goldberger, A., L. Amaral, L. Glass, J. Hausdorff, P. C. Ivanov, R. Mark,
+    of Solid-State Circuits, vol. 56, no. 11, pp. 3274-3288, Nov. 2021.               J. E. Mietus, G. B. Moody, C. K. Peng, and H. E. Stanley. ”PhysioBank,
+[10] Z. Wang et al., ”A Software-Deﬁned Always-On System With 57-75-                  PhysioToolkit, and PhysioNet: Components of a new research resource
+    nW Wake-Up Function Using Asynchronous Clock-Free Pipelined Event-                for complex physiologic signals. Circulation [Online]. 101 (23), pp. e215-
+    Driven Architecture and Time-Shielding Level-Crossing ADC,” in IEEE               e220.” (2000).
+    Journal of Solid-State Circuits, vol. 56, no. 9, pp. 2804-2816, Sept. 2021.   [33] M. Sharifshazileh and G. Indiveri, ”An Adaptive Event-based Data Con-
+[11] J. Van Assche and G. Gielen, ”Analysis and Design of a 10.4-ENOB                 verter for Always-on Biomedical Applications at the Edge,” 2023 IEEE
+    0.92-5.38 μW Event-Driven Level-Crossing ADC With Adaptive Clock-                 International Symposium on Circuits and Systems (ISCAS), Monterey,
+    ing for Time-Sparse Edge Applications,” in IEEE Journal of Solid-State            CA, USA, 2023, pp. 1-5.
+    Circuits.                                                                     [34] S. Narayanan, M. Cartiglia, A. Rubino, C. Lego, C. Frenkel and
+[12] T. -F. Wu, S. Dey and M. S. -W. Chen, ”A Nonuniform Sampling ADC                 G. Indiveri, ”SPAIC: A sub-μW/Channel, 16-Channel General-Purpose
+    Architecture With Reconﬁgurable Digital Anti-Aliasing Filter,” in IEEE            Event-Based Analog Front-End with Dual-Mode Encoders,” 2023 IEEE
+    Transactions on Circuits and Systems I: Regular Papers, vol. 63, no. 10,          Biomedical Circuits and Systems Conference (BioCAS), Toronto, ON,
+    pp. 1639-1651, Oct. 2016.                                                         Canada, 2023, pp. 1-5.
+[13] T. -F. Wu, C. -R. Ho and M. S. -W. Chen, ”A Flash-Based Non-Uniform          [35] X. Zhang and Y. Lian, ”A 300-mV 220-nW Event-Driven ADC With
+    Sampling ADC With Hybrid Quantization Enabling Digital Anti-Aliasing              Real-Time QRS Detection for Wearable ECG Sensors,” in IEEE Trans-
+    Filter,” in IEEE Journal of Solid-State Circuits, vol. 52, no. 9, pp. 2335-       actions on Biomedical Circuits and Systems, vol. 8, no. 6, pp. 834-843,
+    2349, Sept. 2017.                                                                 Dec. 2014.
+                                                                                  [36] M. Timmermans, K. van Oosterhout, M. Fattori, P. Harpe, Y. -H. Liu and
+[14] C. Weltin-Wu and Y. Tsividis, ”An Event-driven Clockless Level-
+                                                                                      E. Cantatore, ”A 1.8–65 fJ/Conv.-Step 64-dB SNDR Continuous- Time
+    Crossing ADC With Signal-Dependent Adaptive Resolution,” in IEEE
+                                                                                      Level Crossing ADC Exploiting Dynamic Self-Biasing Comparators,” in
+    Journal of Solid-State Circuits, vol. 48, no. 9, pp. 2180-2190, Sept. 2013.
+                                                                                      IEEE Journal of Solid-State Circuits, vol. 59, no. 4, pp. 1194-1203, April
+[15] H. Wang, F. Schembari and R. B. Staszewski, ”An Event-Driven Quasi-
+                                                                                      2024.
+    Level-Crossing Delta Modulator Based on Residue Quantization,” in
+                                                                                  [37] Y. He et al., ”An Event-based Neural Compressive Telemetry with >
+    IEEE Journal of Solid-State Circuits, vol. 55, no. 2, pp. 298-311, Feb.
+                                                                                      11× Loss-less Data Reduction for High-bandwidth Intracortical Brain
+    2020.
+                                                                                      Computer Interfaces,” in IEEE Transactions on Biomedical Circuits and
+[16] C. Frenkel et al., ”A 0.086-mm2 12.7-pJ/SOP 64k-Synapse 256-Neuron
+                                                                                      Systems.
+    Online-Learning Digital Spiking Neuromorphic Processor in 28-nm
+                                                                                  [38] M. D. Alea et al., ”A Fingertip-Mimicking 12×16 200μm-Resolution e-
+    CMOS,” in IEEE Transactions on Biomedical Circuits and Systems, vol.
+                                                                                      skin Taxel Readout Chip with per-Taxel Spiking Readout and Embedded
+    13, no. 1, pp. 145-158, Feb. 2019.
+                                                                                      Receptive Field Processing,” in IEEE Transactions on Biomedical Circuits
+[17] T. Marisa et al., ”Pseudo Asynchronous Level Crossing adc for ecg                and Systems.
+    Signal Acquisition,” in IEEE Transactions on Biomedical Circuits and
+    Systems, vol. 11, no. 2, pp. 267-278, April 2017.
+[18] A. Safa et al., ”Exploring Information-Theoretic Criteria to Accelerate
+    the Tuning of Neuromorphic Level-Crossing ADCs”, NICE ’23: Pro-
+    ceedings of the 2023 Annual Neuro-Inspired Computational Elements
+    Conference, April 2023, pp. 63-70.
+[19] Joseph E. Cavanaugh, ”Unifying the derivations for the Akaike and
+    corrected Akaike information criteria”, Statistics & Probability Letters,
+    Volume 33, Issue 2,1997, pp. 201-208.
+[20] P. J. Werbos, ”Backpropagation through time: what it does and how to
+    do it,” in Proceedings of the IEEE, vol. 78, no. 10, pp. 1550-1560, Oct.
+    1990.
+[21] S.B. Shrestha and G. Orchard, ”SLAYER: spike layer error reassignment
+    in time”, In Proceedings of the 32nd International Conference on Neural
+    Information Processing Systems (NIPS’18). Curran Associates Inc., Red
+    Hook, NY, USA, 1419–1428, 2018.
+[22] A. Safa et al., ”Improving the Accuracy of Spiking Neural Networks for
+    Radar Gesture Recognition Through Preprocessing,” in IEEE Transactions
+    on Neural Networks and Learning Systems, vol. 34, no. 6, pp. 2869-2881,
+    June 2023.
+[23] D. Kingma and J. Ba, ”Adam: A Method for Stochastic Optimization”,
+    International Conference on Learning Representations, 2014.
+[24] X. Glorot and Y. Bengio, ”Understanding the difﬁculty of training
+    deep feedforward neural networks”, In Proceedings of the Thirteenth
+    International Conference on Artiﬁcial Intelligence and Statistics, pp.
+    249–256, 2010.
+[25] B. Jacob et al., ”Quantization and Training of Neural Networks for Ef-
+    ﬁcient Integer-Arithmetic-Only Inference,” 2018 IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition, Salt Lake City, UT, USA,
+    2018, pp. 2704-2713.
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS-I: REGULAR PAPERS                       13
+
+
+
+                        Jonah Van Assche (Member, IEEE) received the
+                        M.Sc. degrees in Nanotechnology from Katholieke
+                        Universiteit Leuven (KU Leuven), Leuven, Belgium
+                        and from the Kungliga Tekniska högskolan Stock-
+                        holm (KTH), Stockholm, Sweden in 2018. He re-
+                        ceived the Phd in Electrical Engineering from KU
+                        Leuven in 2024. He is currently a post-doctoral re-
+                        searcher at the University of Stuttgart, Germany. His
+                        research interests include mixed-signal circuits for
+                        adaptive sensor readout and event-based processing
+                        circuits.
+                        Charlotte Frenkel (Member, IEEE) received the
+                        M.Sc. and Ph.D. degrees in Electrical Engineering
+                        from Université Catholique de Louvain (UCLou-
+                        vain), Louvain-la-Neuve, Belgium, in 2015 and
+                        2020, respectively. In February 2020, she joined
+                        the Institute of Neuroinformatics, UZH and ETH
+                        Zurich, Switzerland, as a postdoctoral researcher.
+                        Since July 2022, she is an Assistant Professor at
+                        Delft University of Technology, The Netherlands.
+                        Her current research targets neuromorphic edge in-
+                        telligence, with a focus on spiking neural network
+processor design, embedded machine learning (tinyML), and on-chip training
+algorithms.
+                        Ali Safa (Member, IEEE) received an M.Sc. degree
+                        in electrical engineering from the Université Libre de
+                        Bruxelles, Brussels, Belgium. He then joined imec
+                        and the Katholieke Universiteit Leuven (KU Leuven)
+                        in 2020, where he earned a Ph.D. degree in AI-
+                        driven processing for extreme edge applications. He
+                        has been a visiting researcher at UC San Diego,
+                        La Jolla, USA during Spring 2023. He is currently
+                        an Assistant Professor in the College of Science
+                        and Engineering at Hamad Bin Khalifa University
+                        (HBKU), Doha, Qatar. His research interests include
+neuromorphic AI, continual learning and sensor fusion for robot perception.
+
+                         Georges Gielen (Fellow, IEEE) received the M.Sc.
+                         and Ph.D. degrees in Electrical Engineering from
+                         Katholieke Universiteit Leuven (KU Leuven), Leu-
+                         ven, Belgium, in 1986 and 1990, respectively. After
+                         a postdoc at UC Berkeley, since 1991 he is with
+                         the MICAS research group at the Department of
+                         Electrical Engineering (ESAT), KU Leuven, where
+                         he is Full Professor. His research interests include
+                         the design of analog and mixed-signal integrated cir-
+                         cuits, such as sensor interfaces and data converters,
+                         as well as analog and mixed-signal CAD tools and
+EDA.
+

@@ -1,0 +1,1041 @@
+1
+Circular Wireless RF Systems with Recyclable and
+Degradable Components Based on Additively-
+Manufactured Liquid Metal Interconnects
+Xiaochuan Fang, and Mahmoud Wagih
+Abstract— Fabricating sustainable circuits with low-waste end-
+of-life is crucial for enabling an electronics circular economy.
+Here, we present the first circularity-driven fabrication flow for
+sustainable wireless circuits based on recyclable liquid metals
+and degradable dielectrics. The proposed recyclable radio
+frequency (RF) circuits consist of 3D-printed substrates with
+fluidic channels, e.g. using polylactic acid (PLA), filled with
+Galinstan interconnects. At their end-of-life, the ICs and liquid
+metal interconnects are recovered and re-used in functional
+circuits, over multiple iterations. The printed dielectrics are
+degraded, with under 2% by weight waste produced. Various RF
+circuits are demonstrated, up to 4 GHz, including transmission
+lines based on Coplanar Waveguides (CPWs), with high-
+performance DC/RF control and filtering, and broadband high-
+efficiency radiation in a CPW antenna. Active microwave
+systems are then demonstrated including a voltage-controlled
+oscillator (VCO), and a multi-layered design for a broadband
+power amplifier (PA). The circuits maintain a stable
+performance across over 9 metal and 3 IC re-use cycles. The
+reliability of the circuits is verified by continuously operating
+months-old circuits for over 30 hours as well as under-water
+storage, demonstrating their reliability. Our results pave the way
+for multi-function, green wireless circuits, reducing waste
+electrical and electronic equipment (WEEE) and allowing
+component circularity.
+Index Terms—3D printing, biodegradable electronics, electronic
+waste, green electronics, liquid metal, radio frequency, recyclable
+electronics, sustainable electronics.
+I. INTRODUCTION
+ITH the rapid development of pervasive wireless
+applications, namely for internet of things (IoT)
+networks, an enormous number of electronic
+devices are manufactured. Consequently, a significant amount
+of waste electrical and electronic equipment (WEEE) is
+generated at the end of these devices' life cycles [1]-[2].
+Currently, the recycling rate of WEEE is very low. Instead,
+much of this WEEE is typically discarded, for grinding and
+This work was supported by the engineering and physical research council
+(EPSRC) [grant number: EP/Y002008/1], the Royal Society Grant “STEMS”
+[grant number: RGS/R1/231028], and in part by UK Research and Innovation
+Building a Green Future strategic theme under “REACT” [Grant number:
+UKRI240]. (Corresponding author: Mahmoud Wagih)
+The authors are with the Green RF-Enabled Electronics Lab, James Watt
+School of Engineering, University of Glasgow, Glasgow, G12 8QQ, U.K.
+(email: xiaochuan.fang@glasgow.ac.uk; mahmoud.wagih@glasgow.ac.uk)
+incineration, leading to substantial metal pollution in soil and
+water [3].
+Various precious and scarce metals are used in electronics
+manufacturing, which are rarely recycled at end-of-life [4]-[9].
+The highest carbon footprint and materials consumption is
+attributed to Integrated circuits (ICs), essential in any radio
+frequency (RF) circuit. In order to minimize the emissions and
+critical rare metals (CRMs) consumption of these ICs, simple,
+low-temperature, and hazardous chemicals-free recycling is
+fundamental to enabling a circular economy in electronics
+[10]-[11].
+Sustainable, recyclable or biodegradable attracted significant
+interest [12]-[22]. Although some recyclable circuits have
+been reported recently, they face several limitations. The
+practicality of fabricating these devices remains a critical
+challenge. Many recyclable circuits require complex
+fabrication processes that consume significant amounts of
+energy or water. Additionally, these processes often rely on
+highly specialized instruments or specifically prepared
+materials [12]-[18]. Furthermore, approaches involving
+chemical molding or thermal decomposition can damage
+materials or devices, presenting substantial challenges. As a
+result, the reliability and practicality of RF circuits produced
+using these methods are often questioned. Currently, most
+biodegradable circuits are based on biodegradable conductors
+such as zinc (Zn) or magnesium (Mg). However, integrating
+these metals onto a printed circuit board (PCB) for circuit
+fabrication can be difficult [19]-[22]. Additionally,
+biodegradable circuits have yet to be reported for RF
+applications.
+Galinstan-based liquid metal has been widely adopted in the
+construction of electronic circuits and devices due to its
+outstanding characteristics, including non-toxicity, flexibility,
+stretchability, and deformability [23]-[29]. Its flexibility
+allows it to be shaped into specific circuits or components as
+needed and fully removed when no longer required, making
+liquid metal recyclable in room temperature. Additionally, the
+conductivity of Galinstan (EGaIN) is 3.4×10⁶ S/m, which is
+close to the conventional raw metals, ensuring the
+performance of the circuits [30]. Nevertheless, liquid metal
+has yet to be applied in recyclable RF electronics or devices.
+To explain, existing RF circuits and devices based on liquid
+metal are composed of conventional metals and non-
+recyclable dielectrics, making them difficult to recycle [31]-
+[33]. On the other hand, while some recyclable devices have
+been reported, they are designed for digital current (DC) or
+terminal applications, where only simple line resistances were
+considered, implying that further design and characterization
+W
+2
+is needed prior to supporting RF and wireless applications
+[34]-[36].
+In this paper, we propose the first set of low-waste,
+recyclable and biodegradable, RF circuits based on recyclable
+Galinstan-based liquid metal and degradable 3D-printed
+dielectrics. The design we proposed is the only liquid metal
+circuit system used for RF applications that consists entirely of
+recyclable and biodegradable components. The fabrication and
+recycling process was verified across up to 9 cycles, for
+passive RF interconnects. Four circuit demonstrators are then
+shown over 3 recycling runs, including, RF/DC-filtering lines,
+an active voltage-controlled oscillator (VCO), a broadband
+CPW antenna, and a broadband multi-layered power amplifier.
+All circuits achieving stable and consistent performance.
+II. CIRCUIT FABRICATION AND RECYCLING PROCESS
+Fig. 1 shows the proposed full life cycle-driven low-waste
+fabrication flow, and how it enables an electronics circular
+economy. It should be noted that the liquid metal and the ICs
+are recycled, while the substrate and fluidic channels are
+biodegraded. The first step in the fabrication process is the
+additive manufacturing of the substrates and fluidic channels,
+i.e. analogous to the PCB’s substrate. This can be achieved
+using either fused deposition modeling (FDM) or
+stereolithography (SLA) printing. The material used for 3D-
+printing the substrates or channels is polylactic acid (PLA),
+which is biodegradable. The circuits are then assembled by
+placing the ICs in their designated positions. Subsequently,
+liquid metal is injected using a syringe to interconnect the ICs,
+as seen in Fig. 1(a). For the circuit requires large-in-fill liquid
+metal, i.e. monopole antenna, we adopt an approach based on
+an overfill-and-draw-out method. This involves injecting
+excess liquid metal into the channel until it is completely
+filled, then draw out the liquid metal inside the channel and
+make it flat. This prevents the liquid metal from leakage after
+the circuit is sealed.
+Once the circuits are fabricated, they are sealed, making
+them operational. As seen in our 3D-printed prototypes, gaps
+have been intentionally left around the edges of the substrates
+and fluidic channels. Simultaneously, ridges have been
+incorporated around the lid of the prototypes in corresponding
+positions. This design allows the lid to initially fit securely
+onto the prototype. Additionally, we applied super glue around
+the corners of the prototypes, specifically in areas relatively
+far from the channels containing the liquid metal, ensuring a
+proper seal. The sealed and functional circuit is illustrated in
+Fig.1(b), and throughout the paper for the different
+Fig. 1. The proposed circular fabrication flow for 3D wireless circuits: (a) Fabrication stage, combining additive
+manufacturing and liquid metal filling; (b) utilization stage, achieving similar performance to FR4 PCBs; (c) end-of-life and
+circuit disposal; (d) room temperature IC and liquid metal retrieval process; (e) zero-waste end-of-life, showing the
+degradation of the substrate and full components and metal recovery for re-use in new circuits.
+3
+components. This process could be applied to more complex
+multi-layered designs, where overlapping traces are needed.
+At the end of their first life, the disposed circuits undergo
+recycling and degradation. For this process, a 10% sodium
+hydroxide (NaOH) solution is prepared, as in Fig. 1(c). The
+first step is de-attaching the circuits. The disposal circuits will
+be manually fractured at the edges where the super glue was
+applied. We use this approach particularly when the circuits
+contain ICs that are vulnerable and could be damaged or
+contaminated by NaOH. This method allows us to recover the
+ICs or other components before immersing the circuits in the
+NaOH solution.
+Once the model is de-attached, they could be recycled and
+degraded by putting into the NaOH solution. The NaOH
+breaks down the oxidized surface of the liquid metal, causing
+it to detach from the circuits and shrink into small droplets that
+are easily separated from the substrate and fluidic channels
+[37]. To accelerate the speed of the recycling, a small amount
+of solution that contains both liquid metal and NaOH is then
+extracted from the beaker. While the extracted liquid metal is
+mixed with the NaOH solution initially, the significant
+difference in density between the two allows the NaOH to
+float on top of the liquid metal. Once the NaOH evaporates,
+low-contamination liquid metal is left behind, which can then
+be used to fabricate new circuits. As for the degradable
+polymers used in the 3D-printed substrates, those can be left to
+degrade. In our process, the PLA is directly degraded in the
+NaOH solution. The recovered ICs and metals can then be re-
+introduced into new 3D-printed molds, allowing the precious
+and high-value metals to be re-used over multiple iterations.
+The waste from the sample primarily comes from the non-
+recyclable NaOH. To calculate the waste weight of the
+proposed sample, we measured the weight of the sample
+before and after the recycling process. Fig. 2 illustrates the
+weighing process used to assess waste. First, the emptied 3D-
+printed channel was weighed. Then, pristine liquid metal was
+added to the channel, allowing us to measure and calculate its
+weight. After recycling, the liquid metal was transferred into a
+pre-weighed beaker, and the weight of the recycled liquid
+metal was recorded. The difference in weight between the
+pristine and recycled liquid metal represents the waste
+produced by NaOH. Fig. 2(d) presents the weight of the
+pristine and recycled liquid metal, as well as the waste weight
+after nine recycling cycles. The waste weight was calculated
+to be less than 1.6%. Additionally, the sealing and detachment
+processes may contribute to waste due to the use of super glue.
+The waste weight from these processes was also measured and
+is shown in Fig. 2 (e), with a calculated value of less than
+0.4%. Therefore, the overall waste rate is less than 2%.
+The overall cost of the proposed circuit is primary arise from
+contamination and unrecyclable consumables, which is under
+£1.1 per each circuit.
+To verify the recyclability of the proposed process, a liquid
+metal transmission line was fabricated and recycled nine times.
+Fig. 2. Circuit waste rate weighting: (a)weighting empty
+channel, (b) weighting pristine liquid metal; (c) weighting
+recycled liquid metal (d) waste weight produced by NaOH;
+(e) waste weight produced by glue.
+Fig. 3. Repeatability (n=9) of the measured liquid metal
+based lossy transmission line representing by attenuation.
+TABLE I
+SPECIFICATIONS OF THE PROPOSED CIRCUIT PROCESS
+Specifications Performance
+Maximum Dimensions 330×240x330 mm
+Minimum Dimensions
+(tolerance)
+1×1 mm (±10%)
+Height 1.5 mm
+Hole diameter 0.6 mm
+Minimum trace/spacing 1 mm
+Trace thickness 1 mm
+Waste weight <2%
+4
+The attenuation of the transmission line is shown in Fig. 3,
+over all 9 cycles. The frequency range in Fig. 3 up to 2.4 GHz,
+as the SMA connector introduces an inductive mismatch
+above 2.5 GHz. The differences in attenuation among the
+recycled transmission lines are less than 0.1 dB/cm. Fig. 3 thus
+demonstrates the effectiveness of the proposed circuit
+fabrication and recycling process.
+Table I provides the key specifications of the proposed
+fabrication process. The proposed fabrication process secures
+the circuit with low-profile and large area to be fabricated.
+Nevertheless, the main limitation of the proposed process
+arises from the resolution of the 3D printer. This means that a
+design with a complex structure can still be realized if it meets
+the current resolution limitations or if the 3D layout is
+strategically arranged, as demonstrated in our power amplifier
+circuit. On the other hand, numerous studies have
+demonstrated that liquid metal can be injected into
+microfluidic channels with extremely small dimensions [38],
+i.e. only 5 µm, which is smaller than the resolution achievable
+using conventional PCB manufacturing methods. This means
+that the injection of liquid metal should not influence the
+capability of the proposed circuit.
+III. CIRCULAR AND LOW-WASTE CIRCUIT DEMONSTRATORS
+In this section, we demonstrate four circular RF circuits,
+showcasing the scalability and performance of the proposed
+circuit fabrication flow. The performance of all four circuits
+has been verified to remain almost intact after undergoing one
+or more recycling passes, validating the circularity promise of
+the proposed flow.
+A. Passive RF and DC Lines
+The first structures considered are RF-decoupled DC
+interconnects. Fig. 4 (a) shows the schematic of a line with 3
+decoupling capacitors. In this circuit, the ground planes and
+the transmission line are fully connected between the two
+ports. Three gaps are introduced between the transmission line
+and the ground planes, where three surface-mounted 1206
+capacitors can be placed. The use of three different capacitors
+allows for better differentiation in the transmission coefficient
+among various capacitance values. Additionally, using three
+shunt capacitors improves the quality factor, enabling a wider
+stopband to be achieved. The impedance of a capacitor is
+given by 𝑍 = 1/𝑗𝜔𝐶, where the ω is the frequency of the
+signal; he cut-off frequency of the decoupled supply line is
+therefore dependent on the capacitance value of the surface-
+mounted capacitor [39].
+Fig. 4 (b) and (c) presents the assembled and sealed
+prototype of the proposed DC feed line. This design features
+two liquid metal ground planes and a middle-gapped
+transmission line. The gap size between the transmission line
+and the ground, as well as the width of the transmission line,
+has been calculated to achieve a characteristic impedance of
+approximately 50 Ω. The calculated line width is 1.5 mm, and
+the gap width is 2.7m. The key feature of a DC supply line is
+rejecting high frequency signals, acting as a low-pass filter
+(LPF), especially for kHz to MHz noise from nearby
+electromagnetic interference (EMI) sources.
+The circularity of the proposed RF coupled DC feed line is
+achieved by recycling the liquid metal interconnects and
+refilling them into newly printed PLA fluidic channels. It is
+worth noting that the surface-mounted capacitor has high
+resilience and is minimally affected even after resoldering. As
+a result, the recycling of the capacitor is not considered in the
+proposed DC feed line. However, one of the capacitors used in
+this line will also serve as the blocking capacitor in the DC-
+blocking transmission line, which will be discussed later.
+The transmission coefficient of the DC feed line is shown in
+Fig. 5, for varying decoupling capacitor values. The
+Fig. 4. RF-coupled DC line: (a) schematic of passive DC
+line; (b) assembled passive DC-line with liquid metal
+interconnects; (c) sealed passive DC-line.
+Fig. 5. Transmission Coefficient of RF-decoupled DC feed
+line with different capacitor.
+Fig. 6. IR pictures showing the current handling of a
+power line fabricated using the proposed process.
+5
+performance closely matches the rigid FR4 reference, showing
+the suitability of the proposed fabrication for filtered DC lines.
+The power handling of the proposed circuits was then
+investigating for high currents. A DC power supply was used
+to drive the liquid metal/PLA line with input current ranging
+from 0 A to 4 A. The temperature was measured at different
+current levels using an infrared camera. Fig. 6 shows the
+measured temperature profile at different current levels. For
+inputs under 2 A, the temperature increase is within the
+operation range of PLA. At an input current of 2.5 A, the
+circuit’s temperature rises to 82 °C, exceeding the glass
+transition temperature of PLA. Beyond 3 A, the temperature
+increase causes the solvents in the PLA filament to evaporate.
+Fig. 7 (a) presents the schematic of the DC-blocking
+transmission line. In this line the blocking capacitor is placed
+at the middle gap to connect the transmission lines on both
+sides. The capacitor used in the DC-blocking transmission line
+is recycled from aforementioned DC feed line. Fig. 7 (b) and
+(c) presents the assembled and sealed DC-blocking RF line
+with liquid metal interconnects. The circular fabrication
+process for the DC-blocking RF transmission line is similar to
+that of the DC feed line.
+Fig. 8 compares the transmission coefficient of the DC-
+blocking line using surface-mounted capacitors with different
+capacitances. It is evident that larger capacitance values result
+in lower cutoff frequencies. The results also demonstrate that
+the circular process introduced in the previous section ensures
+the proposed DC-blocking transmission line maintains its
+desired performance.
+The performance of the liquid metal-based DC-blocking
+transmission line is also compared with that of a hardwired
+transmission line made from FR4. Notably, the gap and line
+width of the FR4 transmission line are adjusted to achieve a 50
+Ω characteristic impedance. The comparison shows that when
+the same capacitance is used, the DC-blocking curves of the
+liquid metal and FR4 transmission lines perfectly overlap.
+This indicates that the conductivity of the liquid metal
+supports acceptable performance for the proposed DC-
+blocking circuit. The inset figure in Fig. 8 shows the S21 of the
+proposed circuit across the RF frequency range. This figure
+indicates that the liquid metal-based DC-blocking line is more
+lossy compared to the FR4-based DC-blocking line. This is
+because the thickness of the liquid metal line in the proposed
+circuit makes it more difficult to achieve impedance matching
+compared to the FR4-based transmission line.
+Fig. 7. DC-blocking RF transmission line implementation
+with liquid metal interconnect: (a)schematic; (b)
+assembled DC-blocking line; (c)Sealed DC-blocking line.
+Fig.8. DC-blocking transmission line with different
+capacitors: broadband S21 measured from DC to 3 GHz.
+Fig. 10. Measured VCO results for pristine and recycled
+liquid metal and ICs, closely matching the performance of
+a pristine FR4: (a) measured power output of the VCO in
+the liquid metal process; (b) measured RF power output of
+the VCO across and its tuning range.
+Fig. 9. VCO circuit with liquid metal interconnects: (a)
+schematic; (b) assembled unpackaged circuit; (c) sealed
+VCO circuit;(d) measurement setup.
+6
+B. RF voltage-controlled oscillator (VCO)
+To demonstrate an active RF system, a VCO circuit is
+implemented based on an off-the-shelf component. The VCO
+used in this circuit is the CVCO55BE-0400-0800, chosen for
+being available for different frequencies in the same package,
+simplifying testing across frequencies, and for its wide tuning
+range.
+The RF output of the VCO was measured using a spectrum
+analyzer, before the voltage is varied, across its tuning range.
+A reference circuit was also fabricated on FR4 and measured
+under the same conditions; the datasheet indicates an output
+power of 5 dBm. Fig. 9 (a) shows the schematic of the VCO
+circuit. It includes two DC ports: the DC supply voltage (VCC)
+and the DC tuning voltage (Vtune). The RF port of the VCO
+circuit is connected to an SMA connector using liquid metal
+interconnects, enabling RF power output. Fig. 9 (b) shows the
+assembled unpacked VCO circuit with liquid metal
+interconnects.
+Following recycling, the stability and reliability of the VCO
+is evaluated based on the power output over the VCO’s tuning
+range, measured using a spectrum analyzer. After measuring
+the pristine sample, the VCO circuit was disposed of through
+the propose recycling process, shown in Fig. 1(d). The
+recovered IC, SMD passives, and liquid metal were used to
+fabricate a new sample, in a freshly 3D-printed package.
+As shown in Fig. 10 (a), the recycling process was repeated
+four times demonstrating the repeatability of the fabrication
+process, and feasibility of recycling RF components using the
+proposed flow. The output power differences across these
+configurations are less than 0.4 dB. The variations observed in
+the frequency are due to the device’s free-running nature,
+where the oscillation is sensitive to e.g. temperature changes.
+However, the power stability indicates that neither the metal
+nor ICs have degraded through the recycling process.
+The repeatability of the VCO circuit’s performance after
+recycling is further demonstrated by comparing the power
+levels of the VCO across its full operating band, as shown in
+Fig. 10 (b). As seen in Fig. 10 (b), the operating band of the
+proposed VCO circuit extends from 400 MHz to 1000 MHz,
+the specified tuning range. Fig. 10 (b) also shows that the
+broadband power output generated by a fresh VCO with
+pristine liquid metal interconnects closely matches that of
+recycled liquid metal interconnects and a VCO with copper
+interconnects on an FR4 PCB, even after 2 recycling
+procedures. Thus, indicating that the brief NaOH exposure
+does not degrade the IC’s performance. The maximum
+variation in output power is 0.2 dB. The results in Figs.
+indicate that the proposed VCO circuit achieves circularity
+with performance comparable to that of a conventional PCB-
+mounted VCO circuit.
+The stability of the sealed VCO circuit was investigated,
+demonstrating that the liquid metal cannot leak from the
+sealed interconnects, and that high-moisture environments will
+not change the electrical performance. To this end, the VCO
+Fig. 12. Broadband CPW liquid metal antenna
+implementation: (a) layout and dimensions of the
+monopole (unit: mm); (b) assembled monopole antenna;
+the sealed antenna during measurements on (c) VNA and
+in (d) anechoic chamber.
+Fig. 11. VCO reliability measurement: (a) weighting the
+sealed VCO circuit; (b) submerge the VCO circuit in the
+water; (c)weight of the VCO circuit after it was submerged
+in the water and dried five times in 30 hours after sealed
+for 7 days; (d) measured power output of VCO over a
+week of immersion in water (dried before measurement).
+7
+circuit was submerged in a beaker of tap water, emulating
+extreme-humidity environments. Fig. 11 (a) and (b) show the
+measurement procedure, and the circuit as it is immersed and
+stored under water. After weighing, the VCO circuit was
+submerged in water, as shown in Fig. 11(b). Prior to the RF
+measurements, the circuit was dried and weighed, observing
+under 1% change in its weight. This process was repeated after
+0.5 hour, 8 hours, 16 hours, 21 hours, and 30 hours, after 7
+days of sealing. Fig. 11 (c) shows the weight of the VCO
+circuit has a minor variation for less than 0.01g after repeating
+submerging and drying for five time, indicating no liquid
+metal leakage during this process.
+The output power of the VCO circuits was measured over a
+week of being submerged in water, demonstrating no leakage
+in or out of the circuit, and no change in performance. Fig. 11
+(b) shows output power level of the VCO circuit after 7 days it
+was submerged in the water and dried. The output power level
+of the VCO remained consistent throughout.
+From a safety perspective, Galinstan liquid metal used in
+the proposed circuits is biosafe [40], meaning that any
+potential contamination caused by the liquid metal is harmless
+to biological systems. Galinstan has been widely adopted in
+various biomedical applications, such as wearable antennas
+[41] and body sensors [42]–[43]. Moreover, several effective
+methods exist for cleaning up liquid metal contamination.
+Among them, alcoholic solutions offer a safe and efficient
+option, as they are non-corrosive and self-evaporating [44].
+C. Broadband CPW Antenna; A Large-In-Fill Design
+To demonstrate the feasibility of fabricated components
+with large metal areas with a non-uniform geometry, a
+broadband monopole antenna is investigated. Unlike the
+previously introduced circular circuits, this antenna comprises
+2D shapes rather than 1D wire-like interconnects. Filling a 2D
+shape with liquid metal poses challenges because Galinstan-
+based liquid metal is a non-Newtonian fluid [45], meaning its
+surface tension is nonlinear and decreases significantly during
+surface oxidation. As a result, liquid metal cannot easily fill a
+bulky 2D-shaped fluidic channel. Various methods exist to
+address this issue, though many require expensive instruments
+or stringent procedures [46]. On the other hand, the overfill-
+and-draw-out process we invented in this paper allows liquid
+metal to be formed in 2D shape within 10 minutes. The large-
+in-fill monopole antenna we proposed also capable of
+measured in an anechoic chamber where it is vertically
+positioned, and liquid metal inside is not leaked or cross to
+adjacent channels.
+Fig. 12 (a) shows the layout and dimensions of the proposed
+monopole antenna. The radiator is an asymmetric monopole,
+which excites metallic slits in different locations, thereby
+extending the antenna's bandwidth. The asymmetric monopole
+consists of five rectangular strips of varying sizes. Given the
+nonlinear surface tension of liquid metal, rectangular fluidic
+channels are easier to fill than channels with other shapes
+(e.g., Y-shaped, meander), which are typical for ultra-
+wideband (UWB)-inspired antennas [47]-[48]. To further
+reduce the reflection coefficient within the antenna's operating
+bandwidth, an arm radiator is placed opposite the monopole.
+Fig. 12 (b) shows the assembled antenna with liquid metal
+interconnects. The antenna is simulated using CST Microwave
+Studio. After sealing, the reflection coefficient is measured
+using a vector network analyzer (VNA), and the boresight
+gain is measured in an anechoic chamber, as shown in Fig. 12
+Fig. 13. Antenna performance: (a) Simulated/Measured
+reflection coefficient for the proposed antenna; (b)
+boresight peak gain and polarization purity of the
+proposed antenna.
+Fig. 14. Recyclable RF power amplifier design: (a)
+schematic of PA circuit; (b) assembled PA from front
+view; (c) assembled PA from side view; (d) sealed PA; (e)
+IR picture showing the hotspots in the circuit.
+8
+(c) and (d). Since the antenna does not include any ICs or
+surface-mounted components, the recycling process involves
+only the recycling of the liquid metal and the degradation of
+the PLA substrate.
+Fig. 13 (a) presents the simulated and measured reflection
+coefficients of the antenna. The simulated reflection
+coefficient suggests an impedance bandwidth of 1.7 GHz to
+3.43 GHz (67%). The first measurement, taken after filling the
+fluidic channel with pristine liquid metal, shows an impedance
+bandwidth of 1.9 GHz to 3.2 GHz (54%). After the circular
+process, the reused metal antenna’s reflection coefficient
+measurement shows an impedance bandwidth of 1.7 GHz to
+2.9 GHz (52%), while a second circular antenna demonstrates
+an impedance bandwidth of 1.8 GHz to 3.2 GHz (54%). The
+differences between these results are less than 3%, indicating
+good repeatability.
+Fig. 13 (b) shows the boresight gain of the proposed
+antenna. The gain is calculated using the free-space path loss
+method, with a TBMA4 dual-ridge horn as the reference
+antenna. The difference in boresight gain between pristine and
+recycled liquid metal antennas is less than 0.5 dB, primarily
+attributed to fabrication and measurement tolerances. The
+simulated boresight gain also suggests a reduction of 0.3 dB
+due to the combined loss of liquid metal and substrate. The
+cross-polarization of the proposed antenna is more than -8 dB
+across the 1.7 GHz to 3 GHz range. The measured cross-
+polarization closely matches the simulated values and remains
+within the expected range. The differences between the
+pristine and recycled antennas fall within the ±1 dB
+uncertainty of such path loss-based two-antenna
+measurements and demonstrate that the recycled liquid metal
+mostly retains its RF conductivity.
+D. Active Broadband RF System: Power Amplifier
+The final circuit considered is a broadband RF power
+amplifier (PA), which combines both DC and RF design
+elements, mandating the use of a complex double-layer
+structure. The PA used in the proposed circuit is the Mini-
+Circuits ERA-5+, usable from low frequencies up 4 GHz.
+Fig. 14 (a) shows the schematic of the proposed PA circuit.
+The RF input port is connected to the RF power source
+through a DC-blocking surface-mounted 1206 capacitor (100
+µF), as with the RF output. A bias tee is connected to the RF
+output branch of the PA circuit to supply DC power. The bias
+tee comprises a 0603-bias inductor (16 nH), a 1206 bias
+resistor (33.2 Ω), and a 1206 decoupling capacitor (0.1 µF).
+Per the datasheet, a 7 V DC power supply is used for the PA.
+Fig. 14 (b) and (c) shows the assembled model of the
+proposed PA circuit from front view and side view,
+respectively. Fig. 14 (d) shows the sealed PA circuit. The PA
+is interconnected via a CPW with a characteristic impedance
+of 50 Ω. The circuit includes two grounded pins, and RF input
+and output ports. It is worth noting that the PA is connected to
+a single-layer CPW-fed transmission line. This design creates
+a challenge: if the bias tee is placed on the same layer as the
+RF branch, the ground plane will be interrupted, leading to
+discontinuity. The stability of the PA relies heavily on the
+stability of the RF input and output, meaning the reflection
+coefficients at both must remain low. Discontinuities in the
+ground plane can cause abrupt changes in the transmission
+line’s impedance. To address this issue, a portion of the biased
+tee fluidic channel was printed on a different layer and bridged
+over the ground plane, enabling the separation of the DC and
+RF branches. Two liquid metal pins are placed at both ends of
+the bias tee bridge, allowing the DC supply to connect to the
+RF output. The IR distribution of the PA is shown in Fig. 16
+(e), the heat distribution showing the DC current flows from
+the PA to the bias tee.
+Fig. 16. DC feed line reliability verification: (a) schematic
+of the verification circuit; (b) DC feed line potential
+differences with the DC power source that randomly
+switching on/off, data collecting in 0 mins and 30 hours.
+Fig. 15. Measured (a) gain and (b) isolation of the
+proposed PA circuit compared to the datasheet.
+9
+Fig. 15 shows the measured gain and isolation of the liquid
+metal-assembled PA circuit, with an input RF power of 0 dBm,
+before and after recycled. The gain measured from the PA
+circuit with pristine liquid metal interconnects closely overlaps
+with that measured from the circuit using recycled liquid metal
+interconnects, confirming the circularity of the proposed PA
+circuit. The measured gain reaches a maximum of 18 dB at 0.5
+GHz and decreases to 13 dB around 3 GHz. The gain drop
+below 0.5 GHz is due to the used inductance, where a higher-
+inductance RF block could be used to extend the operation
+range. When compared with the PA datasheet, the measured
+gain of the circuit exhibits under 1.5 dB of additional insertion
+losses. This discrepancy is primarily attributed to impedance
+mismatches from uneven heights of the ground planes,
+transmission lines, and the connections between the SMA
+connectors and the liquid metal interconnects. This
+explanation is supported by the significantly increased gain
+loss observed beyond 2 GHz, which aligns with the
+attenuation trend shown in Fig. 5, for a passive transmission
+line. The isolation of the PA, in Fig. 15 (b) closely matches the
+manufacturer-measured performance, indicating that the liquid
+metal assembly does not cause additional undesired coupling.
+IV. CIRCUITS RELIABILITY VERIFICATION AND
+COMPARISON
+A: Circuit Reliability Investigation
+To explore the reliability of the proposed circuits, we
+conducted long-term measurements on the DC feed line and
+PA circuit. Fig. 16 (a) shows the schematic of the
+measurement setup for the DC feed line. The DC feed line is
+considered low-loss and has inherent resistance. The VCC of
+the DC feed line is supplied by a DC power source. Potential
+differences were measured at the half-length and full length of
+the DC feed line using two probes connected to an
+oscilloscope. These potential differences are denoted as V1
+and V2, respectively.
+Fig. 16 (b) shows the measured potential differences of V1
+and V2 when the DC power supply provides a 2.5 A current.
+The overall resistance of the DC feed line circuit was
+calculated to be 0.28 Ω. During this measurement, the DC
+feed line operated for two consecutive 500 s periods. The
+potential differences recorded after the circuit has operated for
+0 min and 30 hours. Theoretically, V2 should be half of V1
+since it measures the half-length of the transmission line.
+However, as seen in Figure 7, in the proposed circuit, the
+jumper exhibits a more significant IR drop compared to the
+DC feed line. Since the proposed DC feed line is highly low
+loss, when the jumper connected to the negative end of the DC
+feed line is more lossy than the one connected to the positive
+end, V2 will be slightly greater than half of V1. During the
+measurement, the power supply was randomly switched on
+and off. The amplitude variations indicate that the proposed
+DC feed circuit is reliable for long-term operation and
+multiple test cycles.
+The reliability of the PA circuit has been verified by
+operating it for over 30 hours. Fig. 17 (a) shows amplifier
+circuit, with the IR image showing the external heating
+applied to demonstrate its stability. Prior to conducting this
+verification, the liquid metal, ICs, and surface-mounted
+devices (SMDs) were recycled from a previous PA circuit that
+last for more than 100 days and used to fabricate a new PA
+circuit on a newly printed substrate. Fig. 17 (b) shows that the
+performance of the newly fabricated circuit closely matches
+that of the previous circuit.
+Firstly, we examined the influence of temperature changes
+on the proposed PA circuit at a fixed frequency (700 MHz)
+where the PA circuit exhibits a stable S21 of 18 dB during
+Fig. 17. PA circuit reliability verification: (a) Schematic of verification circuit and IR picture showing external thermal
+stressing ; (b) S21 comparison of a pristine sample, and a sample after three months of storage and movement; (c) S21, S11 and
+S21 phase of the PA circuit over time with the external heating, at the start of a 32-hour period; (d) S21 and S11 of the PA
+circuit over the time with the DC power source that randomly switching on/off, data collecting in 0 mins, 2 hours and 30
+hours with inset figures of maximum gain S21 of the PA circuit.
+10
+operation. To this end, a hot air gun was used to heat the PA
+IC and its surrounding interconnects and package, as shown in
+Fig. 17 (a). While temperature variations do affect the S21, S11,
+as shown in Fig. 17 (c), this is attributed to the variations
+expected based on the PA’s datasheet, and do not accelerate
+any degradation in the circuit’s performance.
+The stability of the circuit was demonstrated over a stress
+test of over 30 hours, shown in in Fig. 17 (d). First, the PA
+circuit was operated with the s-parameters recorded
+continuously. At the start of each recording interval, the DC
+power supply was cycled between the on and off states,
+showing a repeatable response and peak gain, as seen in the
+inset of the graph. The data collecting in o min, 2 hours and 30
+hours showing the maximum gain of the PA remains. The
+inset figure showing the PA has a consistent maximum gain of
+18 dB. These results indicate that the proposed PA circuit
+demonstrates strong reliability. The testing and reliability
+methodology exceeds that reported in the previous works
+compared in Table II, in duration and depth (e.g. under-water
+testing, and >30-hour operation tests). Beyond the presented
+tests, the reliability of the proposed circuit could also be
+evaluated using established reliability testing methods, such as
+thermal or power cycling [49]–[51].
+B: Comparison with Prior Recyclable/Biodegradable Circuits
+Table II compares the proposed recyclable circuits with some
+typical recyclable and biodegradable circuits based on PCBs.
+As shown in Table 1, many recyclable circuits utilize polymer
+conductors, which have relatively low conductivities.
+Additionally, some of these circuits contain dielectrics that are
+neither recyclable nor biodegradable or require strict
+conditions for degradation (which demands significant
+amounts of energy and water). Moreover, most of these
+circuits need to be fabricated using approaches that involving
+chemical molding or thermal decomposition, e.g. evaporation,
+heating and condensate, electrolytic, etc.. These approaches
+could potentially damage the circuit, SMDs, or ICs. This may
+explain why these circuits do not demonstrate the capability
+for IC recycling. On the other hand, some biodegradable
+circuits are based on high-conductivity conductors. However,
+their operating frequencies are limited, and they are not
+suitable for RF circuits. Works such as [34] and [36] have
+investigated recycling circuits implemented using Galinstan
+liquid metal, or printed silver traces. However, these works
+either do not report IC/SMD recycling or use non-
+biodegradable substrates. They also require a complicated
+fabrication process. Most importantly, none of them have been
+applied to circuits or systems for RF applications (i.e., >1
+GHz).
+The circular circuit manufacturing approach proposed in
+this paper is the first to explore IC reuse with a focus on high-
+performance sub-3 GHz RF applications. The process does not
+involve chemical molding or thermal decomposition. thus, the
+TABLE II
+COMPARISON OF RECYCLABLE/BIODEGRADABLE CIRCUITS AND SYSTEMS
+Ref. Recyclable and/or
+degradable conductor
+used for circuit
+Conductivity
+(S/m)
+Dielectric
+(Degradable)
+IC and
+metal
+reuse
+Fabrication
+process
+Maximum
+Frequency
+tested
+RF systems
+(>1 GHz)
+[15] EG/ChCl, EG/NH4
+Ac/C3H8O/ChCl
+Less than 120 Woven
+silicone (No)
+No Filling 10 KHz No
+[16] HEC/PEDOT:PSS 1×104
+N/A No Evaporation DC No
+[17] PEDOT:PSS 1×104
+PVA (Yes) No Heating and
+condensate
+DC No
+[18] PEDOT:PSS 6.2×104
+P3HT (No) No Patterning
+and
+electrolytic
+10 KHz No
+[19] Zn/Mg 1.69×107
+/6.3×
+105
+Na-
+CMC/PEO
+(Yes,
+conditional)
+No Printing 150 MHz No
+[20] Ti/Cr/Au 167 POMaC
+(Yes)
+No Laser cutting 10MHz No
+[21] Mo 1.69×107
+PHBv (Yes) No Sputter
+coated
+N/A, DC No
+[34] Galinstan 3.4×10⁶ Paraffin
+Wax (Yes)
+IC (No)
+Metal
+(Yes)
+Heating,
+Melting and
+molding
+350 MHz No
+[36] Printed Silver (non-
+recyclable)
+6.3×107
+Glass (no) IC (Yes),
+Metal
+(No)
+Dispenser
+printing
+N/A, DC No
+This
+work
+Galinstan 3.4×10⁶ PLA (Yes) Yes, 3+
+(ICs), 9+
+(metals)
+3D printing
+and filling
+3 GHz Yes
+11
+liquid metal and ICs used in the proposed circuit can be almost
+fully recycled while maintaining their performance, at room
+temperature.
+V. CONCLUSION
+We presented the first end-to-end flow for fabricating fully
+recyclable and low-waste RF circuits based on liquid metal
+interconnects and 3D-printed dielectrics, enabling a circular
+economy for wireless circuits and systems. The ICs/surface
+mount components and the liquid metal interconnects can be
+fully recycled, whilst the resin/PLA substrate can be degraded,
+in a low-temperature and low-waste process.
+The capabilities and limitations of the process have been
+defined across medium and high-power RF and DC
+applications, with stress tests for over 30 hours. Four different
+circuits, including DC-blocking RF transmission lines, AC-
+decoupled DC supply lines, an RF VCO circuit, a monopole
+antenna and a PA based on SMD ICs have been explored. The
+potential for a circular economy of electronic ICs and
+interconnects was demonstrated across a number of recycling
+runs, showing a mostly unchanged electrical response for
+more than 9 re-use cycles. The proposed flow will enable
+further work in recyclable, additive, and low-waste electronics
+manufacturing across wireless and IoT applications and serves
+as a direct route to reducing emissions and materials
+consumption in the electronics industry.
+ACKNOWLEDGMENT
+The authors would like to thank Andrew Phillips and
+Ruairidh MacDonald for preparing the FR4 reference circuits
+and Thomas O'Hara for supporting the antenna testing.
+Datasets for this article are available at DOI:
+10.5525/gla.researchdata.1958
+REFERENCES
+[1] Zhang, Z., Biswal, A.K., Nandi, A et al., “Recyclable vitrimer-based
+printed circuit boards for sustainable electronics,” Nat Sustain vol. 7, pp.
+616–627, 2024. https://doi.org/10.1038/s41893-024-01333-7.
+[2] Dias PR, Cenci MP, Bernardes AM, Huda N, “What drives WEEE
+recycling? A comparative study concerning legislation, collection and
+recycling,” Waste Management & Research, vol. 40, no. 10, pp. 1527-
+1538, 2022. doi:10.1177/0734242X221081660.
+[3] H. Rahmani et al., "Next-Generation IoT Devices: Sustainable Eco-
+Friendly Manufacturing, Energy Harvesting, and Wireless
+Connectivity," in IEEE Journal of Microwaves, vol. 3, no. 1, pp. 237-
+255, Jan. 2023, doi: 10.1109/JMW.2022.3228683.
+[4] X. Dai et al., "A 0.22–26.5-GHz Ultra-Wideband Directional Coupler
+Based on Copper Additive Manufacturing," IEEE Trans. Circuits Syst.
+II: Exp. Briefs2, vol. 70, no. 8, pp. 2869-2873, Aug. 2023, doi:
+10.1109/TCSII.2023.3255890.
+[5] R. Saligram, S. Datta and A. Raychowdhury, "Design Space Exploration
+of Interconnect Materials for Cryogenic Operation: Electrical and
+Thermal Analyses," IEEE Trans. Circuits Syst. I, Reg. Papers 1, vol. 69,
+no. 11, pp. 4610-4618, Nov. 2022, doi: 10.1109/TCSI.2022.3195636.
+[6] W. Yuan and J. S. Walling, "Package-Level Reconfiguration of RF
+Matching Networks Using SMD Components," IEEE Trans. Circuits
+Syst. II: Exp. Briefs vol. 64, no. 9, pp. 997-1001, Sept. 2017, doi:
+10.1109/TCSII.2016.2615846.
+[7] F. Ulger, S. E. Yuksel, A. Yilmaz and D. Gokcen, "Solder Joint
+Inspection on Printed Circuit Boards: A Survey and a Dataset," IEEE
+Trans. Instrumentation Measurement, vol. 72, pp. 1-21, 2023, Art no.
+2515121, doi: 10.1109/TIM.2023.3277935.
+[8] L. Su, X. Yu, K. Li and M. Pecht, “Defect inspection of flip chip solder
+joints based on non-destructive methods: A review, ” Microelectronics
+Reliability, vol. 110, July 2020.
+[9] L. Alam and N. Kehtarnavaz, "A Survey of Detection Methods for Die
+Attachment and Wire Bonding Defects in Integrated Circuit
+Manufacturing," IEEE Access, vol. 10, pp. 83826-83840, 2022, doi:
+10.1109/ACCESS.2022.3197624.
+[10] M. Wagih, A. Bainbridge, B. Alsulami and J. Kettle, "Environmental
+Life-Cycle Assessment (LCA) of Wireless RF Systems: A Comparative
+Sustainability Analysis and a Microwave Engineers' Guide to LCA,"
+IEEE J. Microw., vol. 4, no. 4, pp. 987-1000, Oct. 2024 doi:
+10.1109/JMW.2024.3455575.
+[11] M. Wagih et al., "Microwave-Enabled Wearables: Underpinning
+Technologies, Integration Platforms, and Next-Generation Roadmap,"
+IEEE J. Microw., vol. 3, no. 1, pp. 193-226, Jan. 2023, doi:
+10.1109/JMW.2022.3223254.
+[12] M. J. Bathaei, R. Singh et al., “Photolithography-Based
+Microfabrication of Biodegradable Flexible and Stretchable Sensors,”
+Adv. Mater, vol. 35, no. 2207081, 2023.
+https://doi.org/10.1002/adma.202207081
+[13] M.Wagih, J. Shi, M, Li et al,, “Wide-range soft anisotropic thermistor
+with a direct wireless radio frequency interface,” Nature
+Communications, no. 452(2024), Jan. 2024.
+[14] Michele De Santis and Ilaria Cacciotti, “Wireless implantable and
+biodegradable sensors for postsurgery monitoring: current status and
+future perspectives,” Nanotechnology, vol. 31 no. 252001,2020.
+[15] N. Gao, X. Wu, Y. He, Q. Ma, Y. Wang, “Reconfigurable and
+Recyclable Circuits Based on Liquid Passive Components,” Adv.
+Electron. Mater. 2020, 6, 1901388.
+https://doi.org/10.1002/aelm.201901388
+[16] A. Wibowo, S. Nagappan et al., “Recyclable, ultralow-hysteresis,
+multifunctional wearable sensors based on water-permeable, stretchable,
+and conductive cellulose/PEDOT:PSS hybrid films,” J. Mater. Chem.
+A, vol. 12, pp.19403-19413, 2024.
+[17] Y. Zhu, D. Yao et al., “Recyclable Bimodal Polyvinyl
+Alcohol/PEDOT:PSS Hydrogel Sensors for Highly Sensitive Strain and
+Temperature Sensing,” Applied Materials & Interfaces, vol. 16, no. 25,
+pp. 32466-32480, 2024.
+[18] H. Park, S. Kim et al., “Organic flexible electronics with closed-loop
+recycling for sustainable wearable technology,” Nature electronics, vol.
+7, pp. 39-50, 2024.
+[19] X. Huang, Y. Liu et al., “Biodegradable Materials for Multilayer
+Transient Printed Circuit Boards,” Adv. Mater., vol. 26, pp:7371-7377,
+2014.
+[20] Turner, B.L., Twiddy, J., Wilkins, M.D. et al., “Biodegradable
+elastomeric circuit boards from citric acid-based polyesters,” npj Flex
+Electron, vol. 7, no.25, 2023.
+[21] G. Nogueira, D. Kumar, et al., “Zero Waste and Biodegradable Zinc
+Oxide Thin-Film Transistors for UV Sensors and Logic Circuits,” IEEE
+Trans. Electron Devices, vol. 70, no. 4, pp. 1702-1709, Apr. 2023.
+[22] A. Géczy, C. Farkas, R. Kovács, D. Froš, P. Veselý and A. Bonyár,
+"Biodegradable and Nanocomposite Materials as Printed Circuit
+Substrates: A Mini-Review," IEEE Open Journal of Nanotechnology,
+vol. 3, pp. 182-190, 2022, doi: 10.1109/OJNANO.2022.3221273.
+[23] X. H. Wang, L. Z. Wang, B. M. Zhang, Y. Xu and X. W. Shi, "Design
+of Frequency/Passband Adjustable Filtering Power Divider Based on
+Liquid Metal," IEEE Trans. Circuits Syst. II: Exp. Briefs2, vol. 69, no.
+3, pp. 1074-1078, March 2022, doi: 10.1109/TCSII.2021.3128761.
+[24] L. Li, X. Yan, H. C. Zhang and Q. Wang, "Polarization- and Frequency-
+Reconfigurable Patch Antenna Using Gravity-Controlled Liquid Metal,"
+IEEE Trans. Circuits Syst. II: Exp. Briefs2, vol. 69, no. 3, pp. 1029-
+1033, March 2022, doi: 10.1109/TCSII.2021.3119040.
+[25] Y. Ren, X. Wang and J. Liu, "Fabrication of High-Resolution Flexible
+Circuits and Sensors Based on Liquid Metal Inks by Spraying and
+Wiping Processing," IEEE Trans. Biomed Circuits and Sys., vol. 13, no.
+6, pp. 1545-1551, Dec. 2019, doi: 10.1109/TBCAS.2019.2935026.
+[26] P. Ralston, M. Oliver, K. Vummidi and S. Raman, "Liquid–Metal
+Vertical Interconnects for Flip Chip Assembly of GaAs C-Band Power
+Amplifiers Onto Micro-Rectangular Coaxial Transmission Lines," IEEE
+J. Solid-State Circuits, vol. 47, no. 10, pp. 2327-2334, Oct. 2012, doi:
+10.1109/JSSC.2012.2204930.
+12
+[27] H. Park et al., "A Wireless and Wearable Body-Pressure-Monitoring
+System for the Prevention of Pressure-Induced Skin Injuries," IEEE
+Trans. Biomed Circuits and Sys., vol. 17, no. 5, pp. 889-899, Oct. 2023,
+doi: 10.1109/TBCAS.2023.3288126.
+[28] X. Li, R. Wen, Z. Shen, Z. Wang, K. D. K. Luk and Y. Hu, "A Wearable
+Detector for Simultaneous Finger Joint Motion Measurement," IEEE
+Trans. Biomed Circuits and Sys., vol. 12, no. 3, pp. 644-654, June 2018,
+doi: 10.1109/TBCAS.2018.2810182.
+[29] R. Lin, H. Kim et al., “Digitally-embroidered liquid metal electronic
+textiles for wearable wireless systems,” Nature Communications, vol.
+13, no. 2190, pp. 1-10, Apr. 2022.
+[30] Y. -W. Wu, S. Alkaraki, S. -Y. Tang, Y. Wang and J. R. Kelly, "Circuits
+and Antennas Incorporating Gallium-Based Liquid Metal," Proceedings
+of the IEEE, vol. 111, no. 8, pp. 955-977, Aug. 2023, doi:
+10.1109/JPROC.2023.3285400.
+[31] X.Fang, Z. Qu et al., “A Liquid Metal Based Frequency Reconfigurable
+Patch Antenna With Cross Placed Fluidic Channel, ” Microw Opt
+Technol Lett., vol. 67, no. 2, Jan. 2025. doi: 10.1002/mop.70112.
+[32] Z. Qu, J. Kelly, Z. Wang, S. Alkaraki and Y. Gao, “A Reconfigurable
+Microstrip Patch Antenna with Switchable Liquid-Metal Ground Plane,”
+IEEE Ant. Wireless Propag. Lett., vol. 22, no. 5, pp. 1045-1049, May
+2023.
+[33] S. Alkaraki, A. Borja, J. Kelly, R. Mittra and Y. Gao, “Reconfigurable
+Liquid Metal-Based SIW Phase Shifter,” IEEE Trans. Microw. Theory
+Tech., vol. 70, no. 1, pp. 323-333, Jan. 2022
+[34] L. Teng, L. Li, J. Huang, S. Li, R. Hu, X. Zhou, H. Wang, Fully
+Recyclable Liquid-Metal-Based Multi-Layer Thermally Triggered
+Transient Electronic Devices. Adv. Mater. Technol. Vol. 8, no. 2201031,
+2023.
+[35] G. Shi, Z. Zou et al., “Heterogeneous integration of rigid, soft, and
+liquid materials for self-healable, recyclable, and reconfigurable
+wearable electronics,” Science Advance, vol. 6, no. 45, Nov. 2020.
+[36] T. Zhang, J. Harwell, R. Mukherjee and J. Kettle, "Sustainable
+Manufacturing of Recyclable Printed Circuit Boards Using Additive
+Manufacturing," 2024 IEEE International Flexible Electronics
+Technology Conference (IFETC), Bologna, Italy, 2024, pp. 1-4, doi:
+10.1109/IFETC61155.2024.10771864.
+[37] F. Xie, J. J. Adams and M. S. Tong, "An UHF Reconfigurable Liquid-
+Metal Monopole Antenna Based on a 2-D Surface," Trans. Comp.
+Packag. Technol., vol. 11, no. 11, pp. 1980-1987, Nov. 2021, doi:
+10.1109/TCPMT.2021.3116056
+[38] K. Khoshmanesh, S. Tang, et al., “Liquid metal enabled fluidic
+channels,” Lab chip, vol. 17, pp. 974-993, Feb. 2017.
+[39] M. Wagih, A. Komolafe and N. Hillier, "Screen-Printable Flexible
+Textile-Based Ultra-Broadband Millimeter-Wave DC-Blocking
+Transmission Lines Based on Microstrip-Embedded Printed Capacitors,"
+IEEE J. Micro., vol. 2, no. 1, pp. 162-173, Jan. 2022, doi:
+10.1109/JMW.2021.3126927.
+[40] P. Geddis et al., “Effect of static liquid Galinstan on common metals and
+non-metals at temperatures up to 200 °C,” Can. J. Chem. vol. 98, no. 12,
+pp: 787-798, 2020.
+[41] J. -H. Low, P. -S. Chee and E. -H. Lim, "Liquid EBG-Backed
+Stretchable Slot Antenna for Human Body," IEEE Trans. Antennas
+Propaga., vol. 70, no. 10, pp. 9120-9129, Oct. 2022.
+[42] J. Yang, W. Cheng and K. Kalantar-zadeh, "Electronic Skins Based on
+Liquid Metals," Proceedings of the IEEE, vol. 107, no. 10, pp. 2168-
+2184, Oct. 2019.
+[43] M. Varga, C. Ladd, S. Ma, J. Holbery, and G. Tröster, "On-skin liquid
+metal inertial sensor," Lab. Chip, vol. 17, no. 17, pp. 2768–2774, 2017.
+[44] C. Bauer, P. Bauduin, J. Dufrêche et al., "Liquid/liquid metal extraction:
+Phase diagram topology resulting from molecular interactions between
+extractant, ion, oil and water," Eur. Phys. J. Spec. Top., vol. 213, pp.
+225–241, 2012.
+[45] M. Dickey, R. Chiechi, R. Larsen, E. Weiss et al., “Eutectic Gallium-
+Indium (EGaIn): A Liquid Metal Alloy for the Formation of Stable
+Structures in Microchannels at Room Temperature,” Adv. Funct. Mater.
+vol. 2008, no. 18, pp. 1097-1104.
+[46] X. Fang, J. Kelly, S. Alkaraki, “A simply accessed approach of 2D-
+shaping liquid metal in microwave device applications,” Microw Opt
+Technol Lett., vol. 66, no. 7, Jun. 2024. doi:10.1002/mop.34240
+[47] S. Mazlouman, X. Jiang, A. Mahanfar et al., “A Reconfigurable Patch
+Antenna Using Liquid Metal Embedded in a Silicone Substrate,” IEEE
+Trans. Antennas Propag., vol.59, no. 12, pp.4406-4412, Dec. 2011.
+[48] X. Fang, G. Wen, D. Inserra, Y. Huang and J. Li, "Compact Wideband
+CPW-Fed Meandered-Slot Antenna With Slotted Y-Shaped Central
+Element for Wi-Fi, WiMAX, and 5G Applications," IEEE Trans.
+Antennas Propag., vol. 66, no. 12, pp. 7395-7399, Dec. 2018, doi:
+10.1109/TAP.2018.286925.
+[49] C. Durand, M. Klingler, D. Coutellier, and H. Naceur, "Power cycling
+reliability of power module: A survey," IEEE Trans. Device Mater.
+Reliab., vol. 16, no. 1, pp. 80–97, Mar. 2016.
+[50] U.-M. Choi, F. Blaabjerg, and S. Jørgensen, "Power cycling test
+methods for reliability assessment of power device modules in respect to
+temperature stress," IEEE Trans. Power Electron., vol. 33, no. 3, pp.
+2531–2551, Mar. 2018.
+[51] A. Otto, S. Rzepka, and B. Wunderle, "Investigation of active power
+cycling combined with passive thermal cycles on discrete power
+electronic devices," ASME J. Electron. Packag., vol. 141, no. 3, Art. no.
+031012, Sep. 2019.
+Xiaochuan Fang received his B.E. and M.Eng.
+degrees from the School of Information and
+Communication Engineering at the University of
+Electronic Science and Technology of China
+(UESTC), Chengdu, China, and his Ph.D. degree
+from the School of Electronic Engineering and
+Computer Science at Queen Mary University of
+London, U.K.
+Currently, he is a research associate at the Green
+RF-Enabled Electronics Lab, University of
+Glasgow, U.K. His research interests include recyclable, biodegradable, and
+reconfigurable RF circuits/microwave devices based on new materials, as well
+as the design and implementation of high-performance antennas.
+Dr Fang is a member of IEEE and the IEEE Antennas and Propagation
+Society. He was awarded the IEEE APS Fellowship in 2024. He serves as a
+reviewer for many journals, including IEEE AWPL, IEEE OJAP, Scientific
+Reports, IEEE Transactions on vehicle technology.
+Mahmoud Wagih received the B.Eng. (Hons.) and
+the Ph.D. degrees from the University of
+Southampton, Southampton, U.K., in 2018 and 2021,
+respectively.
+In 2017-2021, he was a with the University of
+Southampton. Since 2022, he is with the University
+of Glasgow, Glasgow, U.K., leading the Green RF-
+Enabled Electronics Lab, having held a U.K. IC
+Research Fellowship from U.K. Royal Academy of
+Engineering. He has more than 120 refereed journal
+and conference publications and three patents.
+Dr. Wagih is a Senior Member of URSI and is a Member of and a Speakers’
+Bureau lecturer for the IEEE Microwave Theory & Techniques Technical
+Committees TC-26, RFID, IoT, and Wireless Sensors. He received 20+
+awards including the EurAAP Per-Simon Kildal Best Ph.D. in Europe in
+Antennas and Propagation Award, 2022; the URSI Young Scientist Award
+twice; Best Paper/Presentation Awards at IEEE WPTC, PowerMEMS, IMS,
+and others; and was listed in Forbes 30 Under 30 for Science & Healthcare, in
+2024. He has served on various TPC e.g. IEEE IMS, and as the TPC Chair for
+IEEE SAS 2025. He is a Topic Editor for the IEEE Journal of Microwaves
+and an Associate Editor for Royal Society Open Science, He is the advisor for
+two awarded IEEE AP-S scholarships/fellowships.
+Fang, Xiaochuan and Wagih, Mahmoud (2025) Circular wireless RF
+systems with recyclable and degradable components based on additively-
+manufactured liquid metal interconnects. IEEE Transactions on Circuits
+and Systems I: Regular Papers, (doi: 10.1109/TCSI.2025.3568321).
+There may be differences between this version and the published version.
+You are advised to consult the publisher’s version if you wish to cite from
+it.
+http://eprints.gla.ac.uk/357298/
+Deposited on 11 June 2025
+Enlighten – Research publications by members of the University of Glasgow
+http://eprints.gla.ac.uk
+

@@ -1,0 +1,2623 @@
+1
+Future Design Direction for SRAM Data Array:
+Hierarchical Subarray with Active Interconnect
+Hsiao-Hsuan Liu, Graduate Student Member, IEEE, Carlo Gilardi, Shairfe M. Salahuddin, Zhenlin Pei, Pieter
+Schuddinck, Yang Xiang, Pieter Weckx, Geert Hellings, Senior Member, IEEE, Marie Garcia Bardon, Julien
+Ryckaert, Chenyun Pan, Senior Member, IEEE, Subhasish Mitra, Fellow, IEEE, Francky Catthoor, Fellow, IEEE
+Abstract—In sub 10 nm nodes, the growing dominance of
+interconnects in chips poses challenges in designing large-size
+static random-access memory (SRAM) subarrays. The main issue
+is the write failure problem arising from the increased resistance
+and capacitance for bitline (BL) and wordline (WL). To tackle this
+issue, the SRAM subarray design incorporates conventional
+(Conv.) divided WL and divided BL techniques based on 14-Å-
+compatible (A14) nanosheet (NS) technology. This approach
+allows for various subarray sizes with successful write operations,
+resulting in improved subarray-level performance and power
+(PP). However, the additional logic gates come with an area
+penalty that may degrade the overall performance, power, and
+area (PPA) at the macro level due to increased inter-subarray
+interconnect overhead. To overcome this limitation, the active
+interconnect (AIC) design is proposed with the features of
+fabricating another or multiple active regions at the back-end of
+line (BEOL) layers. By moving these extra logic gates from front-
+end of line to BEOL in the AIC divided subarray design, the area
+penalty is significantly mitigated without compromising PP
+compared to the standard (Std.) and Conv. divided counterparts.
+To achieve this concept, carbon nanotube gate-all-around
+transistor is explored as potential BEOL-compatible device. In
+this research, a comprehensive design-technology co-optimization
+analysis is conducted to verify the value and potential benefits of
+up to 65% macro-level energy-delay-area product improvement
+by AIC divided subarray design compared to the Std. subarray
+design.
+Index Terms—SRAM, Nanosheet, DTCO, active interconnect
+(AIC), Carbon Nanotube FET (CNFET).
+I. INTRODUCTION
+In interconnect-dominant nodes, the static random-access
+memory (SRAM) subarray area becomes a critical concern due
+to its impact on inter-subarray interconnect overhead. This
+inter-subarray interconnect, in turn, exerts significant influence
+over the overall macro-level performance, power, and area
+(PPA) [1, 2]. Fig. 1 presents an insightful graph of the energy-
+delay-area product (EDAP) for a 16 MB data array consisting
+of subarrays with varying number of row (-R) and column (-C)
+based on high-density (HD) 6-transistors (6T) SRAM bitcell.
+As depicted in Fig. 1, a significant 56% reduction in macro-
+level EDAP is achieved when transitioning from a small- to a
+large-size standard (Std.) subarray design. Notably, these
+macro-level results have not yet considered the potential write
+failure risk (WFR) [3] within large Std. subarray. This EDAP
+reduction is primarily attributed to the decreased inter-subarray
+interconnect congestion [1]. Remarkably, given the dominance
+of inter-subarray interconnects, the overall EDAP continues to
+decrease even as subarray-level power and performance (PP)
+increases with bigger subarray size [1]. This observation
+propels cache design toward larger SRAM subarrays to attain
+further macro-level PPA improvements.
+128-C 256-C 512-C 1024-C
+128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R
+HD A14 SRAM at 27°C TT Corner
+(Standard Design; 16 MB; Center Pin; H-tree)
+0
+2
+4
+6
+8
+EDAP
+(ns×nJ×mm
+2
+) -56%
+DisregardingWFR
+Fig. 1. Macro-level EDAP benchmark for different subarray sizes of A14
+NSFET SRAM with Std. subarray design (disregarding WFR) (Fig. 3(a)),
+data capacity of 16 MB, center pin access, and H-tree technology based
+on typical-typical (TT) corner and nominal temperature (27°C). C:
+column; R: row.
+A. Problem Statement
+However, enabling a large-size SRAM subarray poses
+challenges due to the significant parasitic resistance and
+capacitance (RC) overhead on both bitline (BL) and wordline
+(WL) [1-3]. This increased RC may cause write failures (Fig. 2)
+in the Std. subarray design (Fig. 3(a) and Table I) [3]. Note that
+the write operation is considered to be at risk of failure when
+the write margin (WM) falls below threshold voltage (VT),
+which is 300 mV in this work [3]. The scope of system-level
+optimization becomes limited to accommodate a wide variety
+of subarray sizes for diverse applications and cache
+configurations. Consequently, the design technology co-
+optimization (DTCO) lacks a complete overview of subarrays’
+PPA in advanced technology nodes.
+H.-H. Liu and F. Catthoor are with IMEC, 3001 Leuven, Belgium, and
+also with the Department of Electrical Engineering (ESAT), Katholieke
+Universiteit Leuven (KU Leuven), 3000 Leuven, Belgium. (email:
+samantha.liu@imec.be)
+S. M. Salahuddin, P. Schuddinck, Y. Xiang, P. Weckx, G. Hellings,
+M. G. Bardon, and J. Ryckaert are with IMEC, 3001 Leuven, Belgium.
+C. Gilardi is with the Department of Electrical Engineering, Stanford
+University, Stanford, CA 94305 USA.
+S. Mitra is with the Department of Electrical Engineering and
+Department of Computer Science, Stanford University, Stanford, CA
+94305 USA.
+Z. Pei and C. Pan are with the Department of Electrical Engineering,
+The University of Texas at Arlington, Arlington, TX 76010, USA.
+2
+128-R 256-R 512-R
+-1000
+-750
+-500
+-250
+0
+μ-6σ
+Write
+Margin
+(mV)
+HD A14 NS SRAM (Std. Design)
+Monte Carlo Simulation (μ-6σ)
+128-C
+256-C
+512-C
+1024-C
+Write failure Risk
+in Std. Design
+Fig. 2. Worst-case WM of HD A14 NSFET SRAM subarray with Std.
+design based on 6-sigma (6σ) Monte Carlo simulation at the worst-case
+temperature (80°C).
+Standard Design
+Conventional Divided Design
+Logic SRAM
+BEOL Interconnect
+BEOL Logic
+Logic SRAM
+BEOL Interconnect
+(a)
+(b)
+LBCS0 LBCS1 LBCS2
+LBRS0
+LBCS3
+LBRS1
+LBRS2
+LBRS3
+LBRS
+Decoder
+LBCS Decoder
+LBRS
+Decoder
+LBCS Decoder
+LBRS0
+LBRS1
+LBRS2
+LBRS3
+LBCS0 LBCS1 LBCS2 LBCS3
+Active Interconnect Divided Design
+(c)
+TopView SideView
+SRAM Isolation Gap
+FEOL Logic
+(std. SRAM peri.)
+BEOL Logic
+(divided design)
+FEOL Logic
+(divided design)
+BEOL
+Interconnect
+SRAM
+Peripheral Logic
+Logic
+BEOL Interconnect
+SRAM
+Fig. 3. Schematics of top and side views of SRAM subarray designs. (a)
+Standard (Std.) design: undivided SRAM bitcell array. (b)
+Conventional (Conv.) divided design: SRAM bitcell array is divided
+into several local blocks by extra FEOL logic gates. (c) Active
+interconnect (AIC) divided design: SRAM bitcell array is divided into
+several local blocks by additional BEOL logic gates.
+Table I. Design types and descriptions for SRAM subarray. (LBCS:
+local block column select; LBRS: local block row select)
+Design Types Descriptions
+Standard (Std.)
+Design
+FEOL SRAM bitcell array & peripheral logic
++ BEOL interconnect
+Conventional
+(Conv.) Divided
+Design
+FEOL SRAM bitcell array & peripheral logic
++ BEOL interconnect + FEOL logic for
+divided technique
+Active
+Interconnect
+(AIC) Divided
+Design
+FEOL SRAM bitcell array & peripheral logic
++ BEOL interconnect + FEOL LBRS and
+LBCS decoders + BEOL logic for divided
+technique without LBRS and LBCS decoders
+To conduct a comprehensive DTCO analysis involving
+various subarray options, multiple sizes of subarrays are
+achieved based on the conventional (Conv.) divided wordline
+(DWL) [4] and divided bitline (DBL) [5] techniques (Fig. 3(b),
+Table I, and Fig. 4). For simplicity, the terms “standard (Std.)”
+and “divided” designs are used to refer to the SRAM subarray
+with and without DWL and DBL techniques, respectively, in
+this work. By implementing selecting and gating circuits to
+partition the SRAM bitcell array into several local blocks (LBs),
+the effective RC for BL and WL is decreased. As a result, the
+Conv. divided subarray design offers significant subarray-level
+improvements in PP and reduces WFR. However, this
+improvement comes at the cost of a noticeable subarray area
+overhead of up to 30% compared to the Std. counterpart (Fig.
+5), which may negatively impact the macro-level PPA.
+LBCS
+ANDLB
+LBTG
+SRAM
+SRAM
+SRAM
+SRAM
+‧
+‧
+‧
+SRAM
+SRAM
+SRAM
+SRAM
+‧
+‧
+‧
+LBLB0
+LBL0
+SRAM
+SRAM
+SRAM
+SRAM
+‧
+‧
+‧
+‧ ‧ ‧
+LBLBm
+LBLm
+‧ ‧ ‧
+GWL0
+GWL1
+GWL2
+GWLn
+LBRS
+GBL0 GBLB0 GBLm GBLBm
+LBLWL
+LB_BLB LBb_BLB
+LB_BL LBb_BL
+LB_BLB LBb_BLB
+LB_BL LBb_BL
+TG
+AND
+LWL0
+LWL1
+LWL2
+LWLn
+Fig. 4. Circuit diagram of a single LB in divided subarray design for
+(WL, BL) = (0~n, 0~m). (LB: local block; TG: transmission gate; AND:
+AND gate for LWL; ANDLB: AND gate for LB select; LBRS: local
+block row select; LBCS: local block column select; GBL/GBLB: global
+BL/BLB; LBL/LBLB: local BL/BLB; GWL: global WL; LWL: local
+WL; LBLWL: LWL select in LB)
+128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R
+LBWL=4 LBWL=16
+LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16
+128-C 256-C 512-C 1024-C
+0
+10
+20
+30
+40
+Area
+Increment
+vs.
+Std.
+Design
+(%)
+Conv. Divided Design AIC Divided Design
+Fig. 5. Subarray area comparison of Conv. and AIC divided subarray
+designs with the optimized LB in different subarray sizes.
+B. Proposed Contribution
+To address this subarray area penalty and maintain similar
+subarray-level PP enhancements, the active interconnect (AIC)
+technique is proposed for implementation within the divided
+design (Fig. 3(c) and Table I). The AIC approach shares
+similarities with the concept of 3-dimensional (3D) sequential
+non-bonding stacking architecture, which involves a blanket
+active layer transfer onto prefabricated bottom devices [6, 7, 8,
+9, 10, 11, 12, 13]. Note that it is sometimes referred to as
+monolithic 3D (M3D) integration [11] where multiple layers
+are fabricated sequentially, which is the opposite of parallel 3D
+technology based on wafer bonding [6]. 3D stacking
+technology has emerged as a promising alternative to extend
+Moore’s law scaling [6], offering increased device density per
+3
+chip area and reduced interconnect length. Among 3D
+techniques, through-silicon-via-based 3D (TSV-3D) stacking is
+a notable example of parallel 3D technology. However, it faces
+challenges such as low alignment precision, limited TSV
+dimension scaling, and taller TSV requirement in vertical
+direction, resulting in an increase in overall volume [6].
+Consequently, 3D sequential (or M3D) technology has gained
+popularity due to its elimination of alignment issues and the
+incorporation of fine-grained monolithic inter-via (MIV)
+connections [6]. To prevent bottom-level device degradation,
+maintaining low thermal budget of the top-level device and
+layer transfer processing is crucial, typically below 500˚C [7, 8,
+9, 10, 11, 12, 13]. The term “BEOL-compatible devices”
+specifically denotes the top-level device in this context. The
+key distinction of the AIC technology, compared to existing 3D
+sequential technology, lies in the insertion of single or multiple
+layers of active devices within the BEOL, which remains a part
+of the bottom SRAM subarray. These BEOL devices contribute
+to the overall SRAM functionality instead of operating as
+separate logic or memory blocks. Therefore, we use the term
+AIC rather than 3D sequential to emphasize this unique
+conceptual framework.
+The proposed AIC technology tackles the subarray area
+penalty issue in the Conv. divided subarray design by
+integrating BEOL-compatible devices. Several 1- or 2-
+dimensional (1- or 2D) options, such as carbon-nanotube (CNT,
+cylinders) [14, 15, 16, 17], MoS2 [18], and WS2 [19] -based
+devices, could be potential candidates. Concerns regarding 2D-
+based FET [20] arise from higher contact resistance and lower
+mobility compared to Si FET, which may potentially lead to PP
+degradation in AIC divided subarray design. Among these
+devices, Carbon Nanotube FETs (CNFETs) have been
+projected to achieve large benefits compared to Si FETs [14]
+due to their superior electrostatic control and large injection
+velocity [7, 14, 15, 16, 17]. Moreover, CNFETs have already
+been integrated in the BEOL within multiple commercial
+silicon fabrication facilities at mature nodes (e.g., 90 nm node)
+[21, 22], leveraging low-temperature fabrication processes (i.e.,
+<400˚C). For these reasons, this work considers gate-all-around
+CNFETs with high-density CNTs [14] as BEOL devices. By
+incorporating the feature of fabricating an active region within
+the SRAM subarray’s BEOL layer, the extra logic gates can be
+relocated from FEOL to BEOL. Hence, the AIC divided
+subarray design is predicted to reduce the subarray area
+overhead from up to 30% to less than 5% (Fig. 5) without any
+significant degradation in subarray-level PP compared to the
+Conv. counterparts.
+Multiple nanosheet (NS) FET SRAM subarray options are
+thoroughly optimized across three design types (Std., Conv.
+divided, and AIC divided designs) with distinct subarray sizes
+and numbers of local blocks (LBs) in 14-Å-compatible
+technology (A14) [23]. Furthermore, to validate the value of
+AIC divided subarray design and motivate more concrete
+process development, corresponding DTCO PPA analysis [3]
+is carried out at both subarray and macro levels.
+II. SRAM SUBARRAY DESIGNS
+This study presents the HD 6T SRAM bitcell array and
+periphery designs based on A14 NS [23] and A14 CNT [14]
+technology for devices at FEOL and BEOL, respectively. A
+quick overview of the three different SRAM subarray designs
+(Fig. 3 and Table I): Std., Conv. divided, and AIC divided
+designs, are described in this section. Fig. 6 and Fig. 7 illustrate
+the schematic views of the single LB layout in conv. and AIC
+divided designs, respectively, according to the circuit diagram
+shown in Fig. 4. Their physical parameters for each signal line
+and the corresponding estimated RC per cell (without device
+capacitance) extracted by the QuickCap tool [24] are listed in
+Table II and Table III.
+A. Std. design (Fig. 3(a))
+This design consists of peripheral logic, including
+address/timing control, precharge circuits, row decoder,
+column multiplexer, sense amplifiers, and write drivers, and
+SRAM bitcell array. All the devices are placed at FEOL. More
+details of the SRAM subarray architecture can be found in [3].
+Expanding the subarray size in the Std. design causes dramatic
+degradation in RC for BL and WL, resulting in slower speed
+and write failure. Hence, the available subarray design options
+become limited.
+B. Conv. divided design (Fig. 3(b))
+To reduce the effective RC for BL and WL for avoiding
+write failure, the SRAM bitcell array is divided into several
+LBs using selecting and gating circuits. The reference layout
+example is presented in Fig. 6, where every 2 ANDs in
+sequences are arranged at the same horizontal level starting
+from the top-left corner. Similarly, every 2 TGs in sequences
+are placed at the same vertical level starting from the bottom-
+left corner. Additional logic gates such as AND gates (AND),
+transmission gates (TG), LB column select (LBCS) decoder,
+and LB row select (LBRS) decoder are added beyond the Std.
+design (Fig. 4). Moreover, the isolation gaps (ISO) are required
+to be inserted in between the logic and SRAM regions.
+Therefore, the Conv. divided design leads to an area increment
+of up to 30% among the optimized subarrays compared to the
+Std. design (Fig. 5). Although the subarray-level PP improves,
+the overall PP at macro level may be degraded due to the
+consequent larger inter-subarray interconnect and logics
+overhead [1, 2].
+To achieve the division into several local WL (LWL) and BL
+(LBL), the ANDs and TGs are connected to global WL (GWL)
+and BL (GBL), respectively. AND is used to generate the LWL
+signal with the input of GWL and LBLWL, and TG is the
+switch between GBL/GBLB and LBL/LBLB. Each LB is
+activated by selecting the corresponding LBCS and LBRS
+signals. The number of LBs in WL (LBWL) and BL (LBBL)
+determines the number of LB in the WL and BL directions,
+respectively. The number of columns (Ncol_LB) and rows
+(Nrow_LB) in each LB is calculated by dividing the total number
+of column (Ncol) and row (Nrow) in subarray by LBWL and
+LBBL, respectively. In this initial work, full swing on GBL and
+LBL is assumed, but there is potential to extend it to full swing
+GBL and low swing LBL for lower energy designs in the future.
+4
+A
+N
+D
+0
+A
+N
+D
+1
+A
+N
+D
+2
+A
+N
+D
+3
+A
+N
+D
+n-5
+A
+N
+D
+n-4
+A
+N
+D
+n-3
+A
+N
+D
+n-2
+A
+N
+D
+n-1
+A
+N
+D
+n
+AND
+LB
+‧
+‧
+‧
+TG
+LBLB
+m-1
+TG
+LBLB
+m
+TG
+LBL
+m-1
+TG
+LBL
+m
+TG
+LBLB2
+TG
+LBLB3
+TG
+LBL2
+TG
+LBL3
+TG
+LBLB0
+TG
+LBLB1
+TG
+LBL0
+TG
+LBL1
+ISO
+LBBL30 LBLB31
+LBBL30 LBLB31
+0-0 0-1
+1-0
+2-0
+3-0
+0-2 0-3 0-(m-1) 0-m
+1-m
+2-m
+3-m
+‧ ‧ ‧
+(n-5)-0
+(n-4)-0
+(n-3)-0
+(n-2)-0
+(n-5)-m
+(n-4)-m
+(n-3)-m
+(n-2)-m
+‧ ‧ ‧
+‧
+‧
+‧
+‧
+‧
+‧
+(n-1)-0
+n-0 n-1 n-2 n-3
+(n-1)-m
+n-(m-1) n-m
+I
+S
+O
+A
+N
+D
+0
+A
+N
+D
+1
+A
+N
+D
+2
+A
+N
+D
+3
+A
+N
+D
+n-5
+A
+N
+D
+n-4
+A
+N
+D
+n-3
+A
+N
+D
+n-2
+A
+N
+D
+n-1
+A
+N
+D
+n
+AND
+LB
+‧
+‧
+‧
+TG
+LBLB
+m-1
+TG
+LBLB
+m
+TG
+LBL
+m-1
+TG
+LBL
+m
+TG
+LBLB2
+TG
+LBLB3
+TG
+LBL2
+TG
+LBL3
+TG
+LBLB0
+TG
+LBLB1
+TG
+LBL0
+TG
+LBL1
+ISO
+LBBL30 LBLB31
+LBBL30 LBLB31
+0-0 0-1
+1-0
+2-0
+3-0
+0-2 0-3 0-(m-1) 0-m
+1-m
+2-m
+3-m
+‧ ‧ ‧
+(n-5)-0
+(n-4)-0
+(n-3)-0
+(n-2)-0
+(n-5)-m
+(n-4)-m
+(n-3)-m
+(n-2)-m
+‧ ‧ ‧
+‧
+‧
+‧
+‧
+‧
+‧
+(n-1)-0
+n-0 n-1 n-2 n-3
+(n-1)-m
+n-(m-1) n-m
+I
+S
+O
+A
+N
+D
+0
+A
+N
+D
+1
+A
+N
+D
+2
+A
+N
+D
+3
+A
+N
+D
+n-5
+A
+N
+D
+n-4
+A
+N
+D
+n-3
+A
+N
+D
+n-2
+A
+N
+D
+n-1
+A
+N
+D
+n
+AND
+LB
+‧
+‧
+‧
+TG
+LBLB
+m-1
+TG
+LBLB
+m
+TG
+LBL
+m-1
+TG
+LBL
+m
+TG
+LBLB2
+TG
+LBLB3
+TG
+LBL2
+TG
+LBL3
+TG
+LBLB0
+TG
+LBLB1
+TG
+LBL0
+TG
+LBL1
+ISO
+LBBL30 LBLB31
+LBBL30 LBLB31
+0-0 0-1
+1-0
+2-0
+3-0
+0-2 0-3 0-(m-1) 0-m
+1-m
+2-m
+3-m
+‧ ‧ ‧
+(n-5)-0
+(n-4)-0
+(n-3)-0
+(n-2)-0
+(n-5)-m
+(n-4)-m
+(n-3)-m
+(n-2)-m
+‧ ‧ ‧
+‧
+‧
+‧
+‧
+‧
+‧
+(n-1)-0
+n-0 n-1 n-2 n-3
+(n-1)-m
+n-(m-1) n-m
+I
+S
+O
+(a) (b)
+(c) (d)
+HSRAM//WL
+WSRAM//BL
+L
+B
+L
+B
+L
+B
+L
+L
+B
+L
+B
+L
+B
+L
+LWL
+L
+B
+L
+B
+L
+B
+L
+LWL
+G
+B
+L
+G
+B
+L
+B
+L
+B
+C
+S
+L
+B
+L
+W
+L
+GWL
+LBTG
+LBRS
+M3
+MINT
+M1
+TG
+SRAM
+AND
+M2
+ISO
+A
+N
+D
+0
+A
+N
+D
+1
+A
+N
+D
+2
+A
+N
+D
+3
+A
+N
+D
+n-5
+A
+N
+D
+n-4
+A
+N
+D
+n-3
+A
+N
+D
+n-2
+A
+N
+D
+n-1
+A
+N
+D
+n
+AND
+LB
+‧
+‧
+‧
+TG
+LBLB
+m-1
+TG
+LBLB
+m
+TG
+LBL
+m-1
+TG
+LBL
+m
+TG
+LBLB2
+TG
+LBLB3
+TG
+LBL2
+TG
+LBL3
+TG
+LBLB0
+TG
+LBLB1
+TG
+LBL0
+TG
+LBL1
+ISO
+LBBL30 LBLB31
+LBBL30 LBLB31
+0-0 0-1
+1-0
+2-0
+3-0
+0-2 0-3 0-(m-1) 0-m
+1-m
+2-m
+3-m
+‧ ‧ ‧
+(n-5)-0
+(n-4)-0
+(n-3)-0
+(n-2)-0
+(n-5)-m
+(n-4)-m
+(n-3)-m
+(n-2)-m
+‧ ‧ ‧
+‧
+‧
+‧
+‧
+‧
+‧
+(n-1)-0
+n-0 n-1 n-2 n-3
+(n-1)-m
+n-(m-1) n-m
+I
+S
+O
+Fig. 6. Schematic views of a single LB layout in Conv. divided subarray
+design. (a) SRAM bitcell array, isolation gap between SRAM and logic
+(ISO), AND and TG (FEOL active layer) located around LB. (b)
+LBL/LBLB (MINT) (c) LWL (M1). (d) GBL/GBLB (M2), GWL (M3),
+LBCS (M2), LBLWL (M2), LBTG (M3), and LBRS (M3).
+Table II. Physical parameters and estimated RC per cell (without device
+capacitance) for each signal line (ruthenium is assumed) in
+conventional divided design. (Twire: wire thickness; Wwire: wire width;
+Lwire: wire length)
+Metal
+Layer
+Twire
+(nm)
+Wwire
+(nm)
+Lwire
+(nm)
+R (Ω) C (aF)
+BL MINT 27 27 84 16 56.6
+WL M1 49 70 150 5.55 177
+GBL M2 27 63 84 6.54 37.3
+GWL M3 49 70 150 5.55 51.3
+LBCS M2 27 81 168 10.08 25.5
+LBRS M3 49 70 150 5.55 26.8
+LBLWL M2 27 81 168 10.08 25.5
+LBTG M3 49 70 150 5.55 26.8
+C. AIC divided design (Fig. 3(c))
+To overcome the area bottleneck observed in the Conv.
+divided subarray design, the AIC divided technique is
+introduced for SRAM subarray. The AIC concept entails the
+introduction of an additional active layer at BEOL and the
+integration of BEOL-compatible and low-temperature growth
+(250~450°C) CNFET [6, 7, 8, 9]. Consequently, it brings
+significant subarray area savings: less than 5% overhead (Fig.
+5) at the FEOL by relocating a portion of the devices to the
+BEOL layer. It’s important to emphasize that CNFET is
+exclusively utilized for the additional logic gates in the divided
+design for specific reasons. Firstly, it aids in managing
+fabrication costs [15, 17], thereby preventing an undue
+escalation in comparison to the Std. subarray design. Secondly,
+while several process and design techniques (i.e., imperfection-
+immune paradigm [25]) have been introduced to mitigate
+CNFET variability, an assessment of the impact of variability
+in A14 is still lacking. For example, targets of chiral
+purification of CNTs (demonstrated in [26, 27, 28, 29] and
+necessary to achieve low variability in leakage and threshold
+voltage) are still unclear in A14. As a result, this study
+predominantly concentrates on integrating CNFET into
+specific circuit components while excluding SRAM bitcell
+array and other peripheral elements. The approach aims to
+successfully incorporate CNFET in SRAM AIC divided
+subarray design, avoiding excessively high fabrication costs
+and operating under less strict variability constraints. Future
+research should explore hybrid design strategies integrating
+both Si and CNT technologies in the SRAM bitcell array and
+its peripheral design. This involves a more in-depth
+investigation, specifically focusing on mitigating CNFETs
+variability in A14.
+In this approach, all the ANDs and TGs used for the divided
+techniques are moved to the BEOL active layer and placed on
+top of the SRAM bitcell array as depicted in the reference
+layout example (Fig. 7). The arrangement consists of placing
+every 4 ANDs in sequences at the same horizontal level starting
+from the top-left corner, and every 2 TGs in sequences at the
+same vertical level starting from the bottom-left corner. Note
+that the LBCS and LBRS decoders are retained at the FEOL
+due to inadequate space available in the BEOL active layer (Fig.
+3(c) and Table I).
+Fig. 8 and Table III show the schematic views and physical
+parameters of 3D vias assumed in AIC divided design. The
+layers from bottom to top include FEOL active region (SRAM
+and peripheral logics), 1st
+BEOL (VINT to V2), BEOL active
+region (AND and TG), and 2nd
+BEOL (V1 to M7). Notably, the
+2nd
+BEOL initiates from V1 layer due to the pitch requirement
+of customized layout designs shown in Fig. 7. The term “3D
+via” represents any type of vias (e.g., stacked via, buried power
+rail, nanoscale through-silicon via, etc.) that vertically connects
+BEOL devices to the 1st
+BEOL layer without additional area
+cost. For a simple RC approximation of 3D vias, stacked via is
+assumed for the connection between LBL to TG, TG to GBL,
+LWL to AND, and AND to GWL without any shift in between
+(Fig. 8). Accurate RC values should be extracted by a full-
+custom layout design in the future, which is not the primary
+focus of the current study.
+LBBL30 LBLB31
+LBBL30 LBLB31
+0-0 0-1
+1-0
+2-0
+3-0
+0-2 0-3 0-(m-1) 0-m
+1-m
+2-m
+3-m
+‧ ‧ ‧
+(n-5)-0
+(n-4)-0
+(n-3)-0
+(n-2)-0
+(n-5)-m
+(n-4)-m
+(n-3)-m
+(n-2)-m
+‧ ‧ ‧
+‧
+‧
+‧
+‧
+‧
+‧
+(n-1)-0
+n-0 n-1 n-2 n-3
+(n-1)-m
+n-(m-1) n-m
+L
+B
+L
+L
+B
+L
+B
+LWL
+TG
+LBLB
+m-1
+TG
+LBLB
+m
+TG
+LBL
+m-1
+TG
+LBL
+m
+TG
+LBLB2
+TG
+LBLB3
+TG
+LBL2
+TG
+LBL3
+TG
+LBLB0
+TG
+LBLB1
+TG
+LBL0
+TG
+LBL1
+A
+N
+D
+0
+A
+N
+D
+1
+A
+N
+D
+2
+A
+N
+D
+3
+AND
+LB
+‧
+‧
+‧
+A
+N
+D
+4
+A
+N
+D
+5
+A
+N
+D
+6
+A
+N
+D
+7
+LBBL30 LBLB31
+LBBL30 LBLB31
+0-0 0-1
+1-0
+2-0
+3-0
+0-2 0-3 0-(m-1) 0-m
+1-m
+2-m
+3-m
+‧ ‧ ‧
+(n-5)-0
+(n-4)-0
+(n-3)-0
+(n-2)-0
+(n-5)-m
+(n-4)-m
+(n-3)-m
+(n-2)-m
+‧ ‧ ‧
+‧
+‧
+‧
+‧
+‧
+‧
+(n-1)-0
+n-0 n-1 n-2 n-3
+(n-1)-m
+n-(m-1) n-m
+LBBL30 LBLB31
+LBBL30 LBLB31
+0-0 0-1
+1-0
+2-0
+3-0
+0-2 0-3 0-(m-1) 0-m
+1-m
+2-m
+3-m
+‧ ‧ ‧
+(n-5)-0
+(n-4)-0
+(n-3)-0
+(n-2)-0
+(n-5)-m
+(n-4)-m
+(n-3)-m
+(n-2)-m
+‧ ‧ ‧
+‧
+‧
+‧
+‧
+‧
+‧
+(n-1)-0
+n-0 n-1 n-2 n-3
+(n-1)-m
+n-(m-1) n-m
+L
+B
+L
+L
+B
+L
+B
+LWL
+L
+B
+L
+L
+B
+L
+B
+LWL
+TG
+LBLB
+m-1
+TG
+LBLB
+m
+TG
+LBL
+m-1
+TG
+LBL
+m
+TG
+LBLB2
+TG
+LBLB3
+TG
+LBL2
+TG
+LBL3
+TG
+LBLB0
+TG
+LBLB1
+TG
+LBL0
+TG
+LBL1
+A
+N
+D
+0
+A
+N
+D
+1
+A
+N
+D
+2
+A
+N
+D
+3
+AND
+LB
+‧
+‧
+‧
+A
+N
+D
+4
+A
+N
+D
+5
+A
+N
+D
+6
+A
+N
+D
+7
+(a) (b)
+(c) (d)
+LBBL30 LBLB31
+LBBL30 LBLB31
+0-0 0-1
+1-0
+2-0
+3-0
+0-2 0-3 0-(m-1) 0-m
+1-m
+2-m
+3-m
+‧ ‧ ‧
+(n-5)-0
+(n-4)-0
+(n-3)-0
+(n-2)-0
+(n-5)-m
+(n-4)-m
+(n-3)-m
+(n-2)-m
+‧ ‧ ‧
+‧
+‧
+‧
+‧
+‧
+‧
+(n-1)-0
+n-0 n-1 n-2 n-3
+(n-1)-m
+n-(m-1) n-m
+L
+B
+L
+L
+B
+L
+B
+TG
+LBLB
+m-1
+TG
+LBLB
+m
+TG
+LBL
+m-1
+TG
+LBL
+m
+TG
+LBLB2
+TG
+LBLB3
+TG
+LBL2
+TG
+LBL3
+TG
+LBLB0
+TG
+LBLB1
+TG
+LBL0
+TG
+LBL1
+HSRAM//WL
+WSRAM//BL
+M3
+M4
+M5
+MINT
+M1
+TG
+SRAM
+AND
+M2
+M6
+M7
+LWL
+A
+N
+D
+0
+A
+N
+D
+1
+A
+N
+D
+2
+A
+N
+D
+3
+AND
+LB
+‧
+‧
+‧
+A
+N
+D
+4
+A
+N
+D
+5
+A
+N
+D
+6
+A
+N
+D
+7
+19
+G
+B
+L
+G
+B
+L
+B
+GWL
+G
+B
+L
+G
+B
+L
+B
+GWL
+L
+B
+C
+S
+L
+B
+L
+W
+L
+LBRS
+LBTG
+Fig. 7. Schematic views of a single LB layout in AIC divided subarray
+design. (a) SRAM bitcell array, LBL/LBLB (MINT), and LWL (M1).
+(b) AND and TG (BEOL active layer). (c) GBL/GBLB (M4) and GWL
+(M5). (d) LBCS (M6), LBLWL (M6), LBTG (M7), and LBRS (M7).
+5
+SR
+AM
+SR
+AM
+SR
+AM
+SR
+AM
+TG
+LBL
+TG
+LBLB
+LBL
+GBL
+LBTG LBRS
+LWL0
+SRAM SRAM
+A
+N
+D
+0
+A
+N
+D
+1
+GWL0
+A
+N
+D
+0
+A
+N
+D
+1
+SRAM
+LBCS LBLWL
+Can be any
+type of 3D via
+Along LWL Direction Along LBL Direction
+ViaAND-GWL
+ViaLWL-AND
+ViaTG-GBL
+ViaLBL-TG
+M3
+M4
+M5
+V2
+V4
+V3
+M6
+V5
+MINT
+M2
+M1
+V1
+BS via
+(V2)
+V0
+VINT
+TG
+SRAM
+AND
+M2
+V1
+BEOL interconnect
+for
+BEOL devices
+BEOL devices
+BEOL interconnect
+for SRAM
+FEOL devices
+M7
+V6
+Fig. 8. Schematic views of 3D vias along LWL and LBL directions in
+AIC divided subarray design.
+Table III. Physical parameters and estimated RC per cell (without
+device capacitance) for each signal line (ruthenium is assumed) and 3D
+vias in AIC divided design. (Twire: wire thickness; Wwire: wire width; Lwire:
+wire length)
+Metal
+Layer
+Twire
+(nm)
+Wwire
+(nm)
+Lwire
+(nm)
+R (Ω) C (aF)
+BL MINT 27 27 84 16 56.6
+WL M1 49 42 150 9.45 164
+GBL M4 28 47 84 3.68 22
+GWL M5 28 58 150 5.05 30
+LBCS M6 80 80 168 1.06 26.1
+LBRS M7 80 80 150 0.95 23.1
+LBLWL M6 80 80 168 1.06 26.1
+LBTG M7 80 80 150 0.95 23.1
+ViaLBL-TG V0-V2 16 16 144 88 20.8
+ViaTG-GBL V1-V3 16 16 152 84 19.6
+ViaLWL-AND V1-V2 16 16 75 46 22.7
+ViaAND-GWL V1-V4 16 16 208 101 26.8
+D. SRAM Bitcell Layout Design
+Fig. 9 displays the three layout designs of HD A14 6T
+NSFET SRAM bitcell for Std. [8], Conv. divided, and AIC
+divided subarray designs, each with distinct signal routing
+requirements. In all designs, the ground voltage (VSS) is
+assumed to be placed at the backside using buried power rail
+(BPR) technique [30, 31, 32]. The internal nodes (Q and QB),
+supply voltage (VDD), and local signals (BL/LBL, BLB/LBLB,
+and WL/LWL) are located at the MINT and M1 layers. The
+main difference between the Conv. and AIC designs is the
+width of LWL, GBL, and GBLB due to distinct pitch
+limitations (Table II and Table III). In Conv. divided design
+(Fig. 9(b)), the global signals (GWL and GBL) are connected
+from the AND and TG located outside the SRAM bitcell
+regions (Fig. 6). This arrangement leads to M1, M2, and M3
+being exclusively occupied by LWL, GBL/GBLB, and GWL,
+respectively. However, in AIC divided subarray design (Fig.
+9(c)), the AND and TG are placed right above the SRAM bitcell
+regions (Fig. 7). Therefore, the metal widths in AIC divided
+subarray design become narrow since extra spaces are required
+for the vertical connections from GBL/GBLB and GWL to the
+bitcell compared to the conventional counterpart.
+LWL
+GWL
+BPR
+VSS
+BPR
+VSS
+WL
+BL
+Q
+VDD
+QB
+BLB
+WL
+WL
+LWL
+GWL
+Std. Conv. Divided AIC Divided
+(a) (b) (c)
+LBL
+Q
+VDD
+QB
+LBLB
+LWL
+LWL
+GBL
+GBLB
+LBL
+Q
+VDD
+QB
+LBLB
+LWL
+LWL
+GBL
+GBLB
+HD A14 6T NSFET SRAM Bitcell Layout Design
+M0A
+n-channel
+p-channel
+Gate
+MINT
+M1
+BPR
+M3
+M2
+Gate Cut
+M4
+M5
+Fig. 9. Schematic views of HD A14 6T NSFET SRAM bitcell layout
+design for (a) Std., (b) Conv. divided, and (c) AIC divided subarray
+designs.
+III. CNFET OPTIMIZATION IN AIC DIVIDED SUBARRAY
+DESIGN
+A14 CNFET has demonstrated the ability to deliver the Ion
+that is three times as large as that of A14 Si NSFET at VDD =
+0.45V and off current (Ioff) = 2 nA [14]. This higher current
+capability of CNFET may help offset the additional parasitic
+RC introduced by the AIC divided subarray design. Therefore,
+CNFETs are introduced in AIC divided subarray design for
+further PPA analysis. In this work, the model proposed in [14]
+was utilized, including both nanosheet (NS) and forksheet (FS)
+based layouts (NS and FS CNFET). The simulations were
+conducted utilizing Cadence Virtuoso [33] and Cadence
+Spectre [34].
+Table IV. Optimized physical parameters for A14 Si NSFET, A14
+CNFET, and N22 FDSOI devices in AIC divided subarray design at
+VDD = 0.7V. (NS: nanosheet; FS: forksheet; CPP: contacted poly pitch;
+LG: gate length; Wch: channel width; NNS: number of nanosheet stacks;
+dCNT: CNT diameter; pCNT: CNT pitch; Ion: on current, Ioff: off current)
+Parameters
+A14 Si NSFET A14 CNFET
+N22
+FDSOI
+SRAM Logic NSFET FSFET Planar
+CPP (nm) 42 104
+LG (nm) 15 14 14 14 20
+Wch (nm) 11 12 12 21 170
+NNS 4 4 3 2 --
+dCNT (nm) -- -- 0.85 0.85 --
+pCNT (nm) -- -- 2 2 --
+VDD (V) 0.7 0.8
+Ion (μA/FET) 69 91 164 199 113
+Ioff (nA/FET) 0.02 0.2 0.2 0.2 0.2
+Model Ref. [23] [14] [37]
+A. Model Calibration
+In this section, the simulations are performed at nominal VDD
+= 0.7V, temperature = 27°C, and typical-typical (TT) corner.
+Except for the SRAM bitcell, where the Ioff is assumed to be
+0.02 nA, the assumption of Ioff = 0.2 nA for all the peripheral
+logics remains identical in both Si and CNFETs models. The
+optimization of CNFETs is conducted considering their distinct
+applied voltage, on current (Ion), subarray sizes, and application
+in comparison to the previous work [14]. To achieve the
+optimal read delay and write margin while maintaining
+identical Ioff between CNFET and Si NSFET models, the
+number of stacked nanosheets (NNS) of CNFET (NNSCNT) and
+6
+CNT diameter (dCNT) were systematically optimized. Table IV
+listed the optimized results of physical parameters for the
+devices in AIC divided design. After completing this model
+optimization, the subarray- and macro-level DTCO are
+analyzed in the following section. It is important to note that
+the LB sizes used here have been optimized for each size of
+subarray as discussed in the next section.
+a. Impact of NNSCNT
+Fig. 10 and Fig. 11 show the impact of the NNSCNT on read
+delay (RD) and write margin (WM) in the AIC divided subarray
+design with various subarray sizes. These simulations are taken
+under fixed NS width (WNS) = 12 nm, dCNT = 0.8 nm, CNT pitch
+(pCNT) = 2 nm, and NNS of Si NSFET (NNSSi) = 4. The read and
+write metrics are determined by the balance between the
+increased strength of the transistors and the larger device
+capacitance as NNS increases [17]. As a result, the optimized
+NNS is found to be 3 and 2 for NS and FS CNFET, respectively,
+as values tend to saturate beyond these NNS (Table IV).
+1 2 3 4 5 6
+0
+100
+200
+300
+400
+500
+600
+Read
+Delay
+(ps)
+NNSCNT
+128-Cx128-R 256-Cx128-R 512-Cx128-R 1024-Cx128-R
+128-Cx256-R 256-Cx256-R 512-Cx256-R 1024-Cx256-R
+128-Cx512-R 256-Cx512-R 512-Cx512-R 1024-Cx512-R
+(NNSSi = 4)
+HD A14 Si NSFET SRAM (27°C TT corner)
+AIC Divided Design w/ A14 NS CNFET
+(WNS / dCNT / pCNT = 12 / 0.8 / 2 nm)
+1 2 3 4 5 6
+-300
+-200
+-100
+0
+100
+200
+Write
+Margin
+(mV)
+NNSCNT
+128-Cx128-R 256-Cx128-R 512-Cx128-R 1024-Cx128-R
+128-Cx256-R 256-Cx256-R 512-Cx256-R 1024-Cx256-R
+128-Cx512-R 256-Cx512-R 512-Cx512-R 1024-Cx512-R
+(NNSSi = 4)
+HD A14 Si NSFET SRAM (27°C TT corner)
+AIC Divided Design w/ A14 NS CNFET
+(WNS / dCNT / pCNT = 12 / 0.8 / 2 nm)
+(a)
+(b)
+Fig. 10. (a) RD and (b) WM with varying NNSCNT of A14 NS CNFET
+(WNS / dCNT /pCNT = 12 / 0.8/ 2 nm) for HD A14 Si NSFET (WNS = 12
+nm; NNSSi = 4) AIC divided subarray design.
+1 2 3 4 5 6
+0
+100
+200
+300
+400
+500
+600
+Read
+Delay
+(ps)
+NNSCNT
+128-Cx128-R 256-Cx128-R 512-Cx128-R 1024-Cx128-R
+128-Cx256-R 256-Cx256-R 512-Cx256-R 1024-Cx256-R
+128-Cx512-R 256-Cx512-R 512-Cx512-R 1024-Cx512-R
+(NNSSi = 4)
+HD A14 Si NSFET SRAM (27°C TT corner)
+AIC Divided Design w/ A14 FS CNFET
+(WNS / dCNT / pCNT = 21 / 0.8 / 2 nm)
+1 2 3 4 5 6
+-300
+-200
+-100
+0
+100
+200
+Write
+Margin
+(mV)
+NNSCNT
+128-Cx128-R 256-Cx128-R 512-Cx128-R 1024-Cx128-R
+128-Cx256-R 256-Cx256-R 512-Cx256-R 1024-Cx256-R
+128-Cx512-R 256-Cx512-R 512-Cx512-R 1024-Cx512-R
+HD A14 Si NSFET SRAM (27°C TT corner)
+AIC Divided Design w/ A14 FS CNFET
+(WNS / dCNT / pCNT = 21 / 0.8 / 2 nm)
+(NNSSi = 4)
+(a)
+(b)
+Fig. 11. (a) RD and (b) WM with varying NNSCNT of A14 FS CNFET
+(WNS / dCNT /pCNT = 21 / 0.8/ 2 nm) for HD A14 Si FSFET (WNS = 21
+nm; NNSSi = 4) AIC divided subarray design.
+b. Impact of dCNT
+Fig. 12 and Fig. 13 demonstrate the impact of dCNT on read
+delay and write margin in the AIC divided subarray design with
+various subarray sizes. These simulations are performed with
+fixed values of WNS = 12 nm, pCNT = 2 nm, and NNSSi = 4. The
+sweeping range for dCNT is from 0.7 to 0.89 nm, ensuring the
+same leakage assumption (0.2 nA) [35]. As dCNT increases, both
+the transistor’s strength and device capacitance increase.
+However, saturation or degradation occurs in RD and WM
+when dCNT exceeds 0.85 nm due to the increased device
+capacitance. Thus, an optimized value of dCNT at 0.85 nm is
+considered suitable for both NS and FS CNFETs (Table IV).
+0.7 0.75 0.8 0.85 0.89
+-300
+-200
+-100
+0
+100
+200
+Write
+Margin
+(mV)
+dCNT (nm)
+128-Cx128-R 256-Cx128-R 512-Cx128-R 1024-Cx128-R
+128-Cx256-R 256-Cx256-R 512-Cx256-R 1024-Cx256-R
+128-Cx512-R 256-Cx512-R 512-Cx512-R 1024-Cx512-R
+HD A14 Si NSFET SRAM (27°C TT corner) AIC Divided Design
+w/ A14 NS CNFET (WNS / pCNT = 12 / 2 nm; NNS = 3)
+0.7 0.75 0.8 0.85 0.89
+0
+100
+200
+300
+400
+500
+Read
+Delay
+(ps)
+dCNT (nm)
+128-Cx128-R 256-Cx128-R 512-Cx128-R 1024-Cx128-R
+128-Cx256-R 256-Cx256-R 512-Cx256-R 1024-Cx256-R
+128-Cx512-R 256-Cx512-R 512-Cx512-R 1024-Cx512-R
+HD A14 Si NSFET SRAM (27°C TT corner) AIC Divided Design
+w/ A14 NS CNFET (WNS / pCNT = 12 / 2 nm; NNS = 3)
+(a)
+(b)
+Fig. 12. (a) RD and (b) WM with varying dCNT of A14 NS CNFET (WNS
+/ pCNT = 12 / 2 nm; NNSCNT = 3) for HD A14 Si NSFET (WNS = 12 nm;
+NNSSi = 4) AIC divided subarray design.
+0.7 0.75 0.8 0.85 0.89
+0
+100
+200
+300
+400
+500
+Read
+Delay
+(ps)
+dCNT (nm)
+128-Cx128-R 256-Cx128-R 512-Cx128-R 1024-Cx128-R
+128-Cx256-R 256-Cx256-R 512-Cx256-R 1024-Cx256-R
+128-Cx512-R 256-Cx512-R 512-Cx512-R 1024-Cx512-R
+HD A14 Si NSFET SRAM (27°C TT corner) AIC Divided Design
+w/ A14 FS CNFET (WNS / pCNT = 21 / 2 nm; NNS = 2)
+0.7 0.75 0.8 0.85 0.89
+-300
+-200
+-100
+0
+100
+200
+Write
+Margin
+(mV)
+dCNT (nm)
+128-Cx128-R 256-Cx128-R 512-Cx128-R 1024-Cx128-R
+128-Cx256-R 256-Cx256-R 512-Cx256-R 1024-Cx256-R
+128-Cx512-R 256-Cx512-R 512-Cx512-R 1024-Cx512-R
+HD A14 Si NSFET SRAM (27°C TT corner) AIC Divided Design
+w/ A14 FS CNFET (WNS / pCNT = 21 / 2 nm; NNS = 2)
+(a)
+(b)
+Fig. 13. (a) RD and (b) WM with varying dCNT of A14 FS CNFET (WNS
+/ pCNT = 21 / 2 nm; NNSCNT = 2) for HD A14 Si NSFET (WNS = 12 nm;
+NNSSi = 4) AIC divided subarray design.
+B. Variability
+Several key factors such as the variation in dCNT, chirality
+(yield of metallic or semiconducting CNTs, density, bandgap),
+and doping, play a vital role in shaping the characteristics of
+CNFET [17]. These sources of variation add to the traditional
+variability encountered in silicon CMOS, which may affect the
+7
+overall PP results. While existing process and design
+techniques for mitigating these variations were well-
+demonstrated [16, 27, 28, 29], CNT pitch uniformity and CNT
+alignment control at the wafer-scale still represent a key
+challenge. However, this discussion goes beyond the primary
+focus of this work. It is imperative to extend the investigation
+of the variation’s impact on CNFETs associated with the
+SRAM AIC divided subarray design in future studies.
+IV.SUBARRAY OPTIMIZATION FOR HD OPTION
+A. Benchmark at Subarray Level
+The optimized design types and their corresponding LB sizes
+for each subarray are summarized in Table V. Note that these
+LB sizes have undergone optimization across all the LBWL and
+LBBL configurations based on the write-ability studies shown
+in Fig. 14 [3]. Fig. 15, Fig. 16, Fig. 17, and Fig. 18 present the
+comparison for various subarray row (-R) and column (-C) with
+optimized LB sizes between Std., Conv. divided, and AIC
+divided subarray designs at both subarray and macro levels.
+Std. Conv. Divided
+x LBWL=4 LBWL=8 LBWL=16
+x LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16
+HD A14 NS SRAM at 80°C with 6σ Monte Carlo Simulation
+-1000
+-800
+-600
+-400
+-200
+0
+μ-6σ
+Write
+Margin
+(mV)
+128-C x 128-R 128-C x 256-R 128-C x 512-R
+256-C x 128-R 256-C x 256-R 256-C x 512-R
+512-C x 128-R 512-C x 256-R 512-C x 512-R
+1024-C x 128-R 1024-C x 256-R 1024-C x 512-R
+Write Failure Risk
+in Std. Design
+Fig. 14. Worst-case WM of HD A14 NSFET SRAM with Conv. divided
+subarray design based on 6-sigma (6σ) Monte Carlo simulation at the
+worst-case temperature (80°C). Subarrays that experience write
+operation failures are highlighted in red color.
+For the subarray sizes of 128-C/256-C×128-R (Fig. 15), the
+Std. design demonstrates similar RD, WM, and write delay
+(WD) as the Conv. and AIC divided subarray designs without
+compromising the subarray area. As a result, the Std. subarray
+design is considered the optimized design type for 128-C/256-
+C×128-R. Notably, the comparable margin and performance
+observed in smaller subarrays between Si and CNT models can
+be attributed to the compensatory effect of the delay overhead
+from additional logics’ RC even though CNFET has relatively
+higher Ion than Si NSFET in A14. However, for the remaining
+Nrow and Ncol configurations, the Conv. and AIC divided
+subarray designs outperform the Std. counterpart. Hence,
+although the Std. subarray designs for 256-C×128/256-R and
+512-C×128-R configurations do not suffer from WFR, they are
+not regarded as optimized designs. Particularly, in the case of
+512-R, the Std. subarray design encounters write failures
+necessitating the divided techniques to ensure successful write
+operations (Fig. 14). By utilizing Conv. divided technique, the
+WM and RD improve by 338 mV and 37%/68%, respectively,
+for 512-C/1024-C×512-R. Among all the designs, the AIC
+divided subarray design stands out as it offers the best
+performance and write margin with only a slight increase in
+area of less than 5% compared to the Std. counterpart (Fig. 5).
+AIC divided subarray design even provides additional 99 mV
+WM and 37% RD enhancements compared to Conv.
+counterparts due to faster CNFET. This promising result
+prompts further PPA exploration at the macro level to validate
+its potential value.
+128-C 256-C 512-C 1024-C
+128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R
+LBWL=4 LBWL=16
+LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16
+HD A14 NS SRAM at 27°C TT Corner
+-600
+-300
+0
+300
+600
+900
+1200
+1500
+Std. Design
+Conv. Divided Design
+AIC Divided Design (BEOL CNT FSFET)
+Read Delay (ps)
+Write Margin (mV)
+Write Delay (ps)
+CNT FSFET (WNS / dCNT / pCNT = 21 / 0.85 / 2 nm)
+Write Failure
+in Std. Design
+Standard is similar to Divided
+-68%
+-37%
++338 mV
++432 mV
++99 mV
+-37%
+-34%
+Fig. 15. SRAM subarray-level RD, WM, and WD benchmark in the Std.,
+Conv. divided, and AIC divided subarray designs with optimized
+LBWL and LBBL for each subarray size. Subarrays that experience
+write operation failures are highlighted in red color.
+Table V. Optimized (opt.) results of each subarray with the
+corresponding LB size between Std. and divided subarray designs.
+Ncol Nrow Opt. Design LBWL LBBL
+128-C
+128-R Standard × ×
+256-R Divided 4 8
+512-R Divided 4 16
+256-C
+128-R Standard × ×
+256-R Divided 4 8
+512-R Divided 4 16
+512-C
+128-R Divided 4 4
+256-R Divided 4 8
+512-R Divided 4 16
+1024-C
+128-R Divided 16 4
+256-R Divided 16 8
+512-R Divided 16 16
+B. Benchmark at Data Array Macro Level
+Fig. 16 and Fig. 17 present macro-level simulation data
+based on a 16 MB data capacity, center pin access, and H-tree
+interconnect technology [1, 2]. As shown in Fig. 16 and Fig. 17,
+a notable 11%, 23%, 36%, and 56% of delay, energy, area, and
+EDAP gain, respectively, can already be achieved in Std.
+design by simply transitioning from small (128-C×128-R) to
+large (1024-C×512-R) subarray size due to less H-tree
+contribution (disregarding WFR). Fig. 16 clearly shows that the
+inter-subarray interconnect has a decisive influence on the
+overall macro-level PPA. To optimize this aspect, choosing a
+bigger-size subarray is the preferred approach to reduce the
+interconnect overhead. Further macro-level PPA improvement
+is still achievable even if they involve a larger subarray-level
+PPA overhead, which is relatively less impactful than inter-
+subarray interconnect. It is worth noting that increasing Nrow is
+more effective for PP improvement compared to Ncol since the
+longest wire is on horizontal direction [1, 2, 36].
+8
+128-C 256-C 512-C 1024-C
+128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R
+HD A14 SRAM (Standard Design; 16 MB; Center Pin; H-tree) at 27°C TT Corner
+0.00
+0.01
+0.05
+0.10
+0.15
+0.20
+0.25
+0.30
+0.35
+Energy
+(nJ)
+Subarray Tree Control/Driver Core to Data
+128-C 256-C 512-C 1024-C
+128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R
+HD A14 SRAM (Standard Design; 16 MB; Center Pin; H-tree) at 27°C TT Corner
+0
+1
+2
+3
+4
+5
+Delay
+(ns)
+Subarray Tree Control/Driver Core to Data
+-11%
+(a)
+(b)
+-23%
+WFR
+WFR
+DisregardingWFR
+DisregardingWFR
+Fig. 16. SRAM data macro-level (a) delay and (b) energy breakdown in
+the Std. subarray designs (disregarding WFR) for each subarray size
+with data capacity of 16 MB, center pin access, and H-tree technology.
+Data arrays that experience write operation failures are highlighted in
+red color.
+While employing a bigger-size subarray with Std. subarray
+design may suffer from the WFR, this problem can be
+effectively addressed through the implementation of divided
+design. In the previous subsection, the Conv. divided subarray
+design substantially enhances subarray-level performance and
+WM compared to the Std. counterpart (Fig. 15). However, this
+enhancement comes at the cost of unignorable subarray-level
+area penalty that could potentially lead to larger inter-subarray
+interconnects and logic gates overhead at macro level.
+Consequently, this 24% macro-level area overhead in Conv.
+divided subarray design causes 26% macro-level EDAP
+degradation compared to Std. counterpart (Fig. 17). To address
+these challenges, AIC divided subarray design has been
+proposed to mitigate the macro-level area overhead to less than
+3% (Fig. 17 (a)). AIC divided subarray design also successfully
+provides up to 65% macro-level EDAP improvement compared
+to a realistic Std. counterpart that does not have WFR (Fig. 18).
+Fig. 18 indicates the preferred selection between AIC divided
+subarrays, either with a subarray size of 1024-C×256-R or
+1024-C×512-R. This decision stems from the negligible EDAP
+gain (0.2%) in a 1024-C×128-R subarray compared to the Std.
+256-C×256-R subarray. Even assuming a non-failing write in
+Std. subarray design, AIC divided subarray design still achieves
+a notable 19% enhancement with a 1024-C×512-R subarray
+size (Fig. 17(b)). Notably, the increased macro-level area in the
+AIC divided subarray design associated with CNFET
+fabrication may cause a higher overall die cost when compared
+to the Std. counterpart and the traditional Si FET process. A
+more comprehensive cost analysis is advisable for future
+research, which falls outside the central scope of this work.
+128-C 256-C 512-C 1024-C
+128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R
+LBWL=4 LBWL=16
+LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16
+HD A14 NS SRAM (16 MB; Center Pin; H-tree) at 27°C TT Corner
+0
+2
+4
+6
+8
+10
+12
+EDAP
+(ns×nJ×mm
+2
+)
+Std. Design
+Conv. Divided Design
+AIC Divided Design
+128-C 256-C 512-C 1024-C
+128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R
+LBWL=4 LBWL=16
+LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16 LBBL=4 LBBL=8 LBBL=16
+HD A14 NS SRAM (16 MB; Center Pin; H-tree) at 27°C TT Corner
+0
+2
+4
+6
+8
+10
+Area
+(mm
+2
+)
+Std. Design
+Conv. Divided Design
+AIC Divided Design
+(a)
+(b)
+DisregardingWFR
+DisregardingWFR
+WFR
+WFR
+-19%
+w/o WFR
++26%
+w/o WFR
+-56%
+w/ WFR
+-65%
+w/o WFR
+-2%
++24%
+-36%
+-35%
+Fig. 17. SRAM data macro-level (a) area and (b) EDAP benchmark in
+the Std. (disregarding WFR), Conv. divided, and AIC divided designs
+with optimized LBWL and LBBL for each subarray size with data
+capacity of 16 MB, center pin access, and H-tree technology. Data
+arrays that experience write operation failures are highlighted in red
+color.
+AIC 1024-Cx128-R AIC 1024-Cx256-R AIC 1024-Cx512-R
+HD A14 NS SRAM (16 MB; Center Pin; H-tree) at 27°C TT Corner
+0
+20
+40
+60
+80
+100
+EDAP
+Improvement
+in
+AIC
+(%)
+AIC vs Std. Design w/o WFR
+Std. 128-Cx128-R
+Std. 128-Cx256-R
+Std. 256-Cx128-R
+Std. 256-Cx256-R
+Std. 128-Cx512-R
+Fig. 18. EDAP improvements in AIC divided of 1024-C×128/256/512-
+R compared to Std. design (regarding WFR) for subarray size of
+128/256-C×128-R, 128/256-C×256-R, and 128-C×512-R with data
+capacity of 16 MB, center pin access, and H-tree technology.
+C. Comparison of Si, FDSOI, and CNT models
+In this section, the examination focuses on the comparison
+of utilizing A14 Si NSFET [23], 22-nm (N22) fully depleted
+silicon-on-insulator (FDSOI) [37], and A14 CNFET [14]
+models for realistic SRAM AIC divided subarray design to
+highlight the benefits of employing CNFET devices (Fig. 19
+and Fig. 20). Over the past few years, several experimental
+studies on BEOL-compatible and low-temperature-fabricated
+CNFETs for 3D integration have been reported [6, 7, 8, 9],
+establishing them as realistic candidates for further 3D
+integrated-circuit (IC) development. Additionally,
+investigations into low-temperature-fabricated FDSOI as top-
+level transistors (below 500°C) for 3D stacking technology
+have been conducted including electrical characteristics and
+reliability measurements [10, 12, 13]. However, it’s important
+to note that the FDSOI device is a planar-type transistor, with
+mass production limited to 22 nm by GlobalFoundries until
+now [37]. Apparently, the device dimensions of N22 FDSOI
+transistors could not align with A14 design rules in this study.
+9
+Therefore, the FEOL-compatible A14 Si NSFET model
+(identical model as SRAM bitcell in this work) [23], regardless
+of potential degradation from the low-thermal-budget process,
+is also considered as an optimistic upper bound for BEOL
+logics in our realistic AIC technology comparison.
+128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R 128-R 256-R 512-R
+128-C 256-C 512-C 1024-C
+0
+10
+20
+30
+40
+700
+800
+900
+1000
+Subarray
+Area
+vs.
+Std.
+(%)
+Conv. Divided Design
+AIC Divided Design (A14 Si NSFET & A14 FS CNFET)
+AIC Divided Design (N22 FDSOI)
+Std. Conv. Divided AIC Divided
+FEOL Si NS
+FEOL Si NS
+BEOL Si NS
+FEOL Si NS
+BEOL CNT FS
+FEOL Si NS
+BEOL FDSOI
+HD A14 NS SRAM at 27°C TT Corner (1024-Cx512-R)
+-250
+0
+250
+500
+750
+1500
+2000
+2500
+3000
+7000
+7500
+8000
+Read Delay (ps) Read Energy (fJ)
+Write Margin (mV) Write Delay (ps) Write Energy (fJ)
+(a)
+(b)
+Write
+Failure
+in Std.
+Design
+890%
+-54 mV
++38%
+Fig. 19. SRAM subarray-level (a) area, (b) margin, performance, and
+power comparison in Std., Conv. divided, and AIC divided subarray
+designs assuming A14 Si, A14 CNT, and N22 FDSOI models for BEOL
+logics. Subarrays that experience write operation failures are
+highlighted in red color.
+Fig. 19 and 20 show the subarray- and data array macro-level
+PPA benchmark, respectively, across five distinct subarray
+designs: Std., Conv. divided, AIC divided with A14 Si NSFET,
+AIC divided with A14 FS CNFET, and AIC divided with N22
+FDSOI. The parameters for the N22 FDSOI device, including
+VDD, gate length, width, contacted poly pitch, and metal pitch,
+are set at 0.8 V, 20 nm, 170 nm, 104 nm, and 80 nm,
+respectively, based on low VT (LVT) transistors from
+GlobalFoundries’ 22FDXTM
+technology (Table IV) [37].
+However, the implementation of the AIC divided subarray
+design with the N22 FDSOI model results in a considerable
+subarray area overhead, reaching up to 890% compared to the
+Std. counterpart (Fig. 19(a)). This amplified area incurs
+substantial macro-level PPA degradation due to longer inter-
+subarray interconnects (Fig. 20). Moreover, the N22 FDSOI
+model shows a 54 mV decrease in write margin and a 38%
+increase in write energy at the subarray level (1024-C×512-R)
+in comparison to the A14 FS CNFET counterparts, attributed
+to higher VDD and inferior device performance (Fig. 19(b)).
+Consequently, while the N22 FDSOI represents an existing
+solution for 3D integration, it proves unsuitable and serves as
+pessimistic lower bound for the AIC divided subarray design in
+the ultra-scaled A14 technology. This result indicates that
+BEOL-compatible logic still has strict requirements in terms of
+logic density.
+Conversely, the AIC divided subarray design with A14 Si
+NSFET model demonstrates comparable (less than 2%
+difference) performance/power and identical area results to the
+A14 FS CNFET model at both subarray and macro levels. This
+validates the inherent advantages of employing CNFET as
+BEOL-compatible devices in the AIC divided subarray design,
+surpassing the optimistic yet unfeasible upper bound
+showcased by the A14 Si NSFET counterpart.
+Std. Conv. Divided AIC Divided
+FEOL Si NS
+FEOL Si NS
+BEOL Si NS
+FEOL Si NS
+BEOL CNT FS
+FEOL Si NS
+BEOL FDSOI
+HD A14 SRAM (AIC Divided Design; 16 MB; Center Pin; H-tree) at 27°C TT Corner
+0
+5
+10
+15
+30
+40
+130
+140
+150
+Delay (ns) Energy (ÅJ) Interconnect Length (mm)
+Area (mm2
+) EDP (ns×ÅJ) EDAP (ns×nJ×mm2
+)
+CNFET
+provides the
+best PPA
+Write Failure
+in Std. Design
+Fig. 20. SRAM data macro-level benchmark comparison in Std., Conv.
+divided, and AIC divided subarray designs assuming A14 Si, FDSOI,
+and A14 CNT models for BEOL logics. Data arrays that experience
+write operation failures are highlighted in red color. (EDP: energy-
+delay product)
+V. CONCLUSION
+This study presents a comprehensive DTCO analysis,
+establishing the potential of the AIC divided subarray design
+integrated with CNFET as BEOL-compatible devices for future
+PPA improvements of 3D SRAM data array design. In
+interconnect-dominated nodes, macro-level PPA is heavily
+influenced by the inter-subarray interconnect, a factor
+intricately linked to the subarray size. By scaling up the
+subarray size from 128-C×128-R to 1024-C×512-R,
+remarkable 11%, 23%, 36%, and 56% of macro-level delay,
+energy, area, and EDAP improvements, respectively, are
+achieved, albeit with the trade-off of a WFR in the Std. subarray
+design. To address this WFR, the Conv. divided subarray
+design has been explored, offering an improved WM of 338
+mV. However, this enhancement comes at the cost of up to 30%
+additional macro-level area overhead. To circumvent this area
+penalty and maintain it below 3%, the AIC divided technique
+emerges as a promising solution for SRAM subarray design. It
+not only further enhances the WM (+99 mV) compared to Conv.
+counterparts but also provides up to 65% macro-level EDAP
+improvement compared to the Std. counterpart, which can only
+employ a relatively smaller but realistic subarray size. This
+underscores the potential value of the AIC divided subarray
+design in advancing PPA of SRAM cache.
+REFERENCES
+[1] Z. Pei, M. Mayahinia, H.-H. Liu, M. Tahoori, F. Catthoor, Z. Tokei, and
+C. Pan, “Graphene-Based Interconnect Exploration for Large SRAM
+Caches for Ultrascaled Technology Nodes,” in IEEE Transactions on
+Electron Devices, vol. 70, no. 1, pp. 230-238, Jan. 2023, doi:
+10.1109/TED.2022.3225512.
+[2] Z. Pei, M. Mayahinia, H.-H Liu, M. Tahoori, S. M. Salahuddin, F.
+Catthoor, Z. Tokei, and C. Pan, “Emerging Interconnect Exploration for
+SRAM Application Using Nonconventional H-Tree and Center-Pin
+Access,” 2023 24th International Symposium on Quality Electronic
+Design (ISQED), pp. 1-1, Apr. 2023, doi:
+10.1109/ISQED57927.2023.10129316.
+[3] H.-H. Liu, S. M. Salahuddin, D. Abdi, R. Chen, P. Weckx, P. Matagne,
+and F. Catthoor, “Extended Methodology to Determine SRAM Write
+10
+Margin in Resistance-Dominated Technology Node,” in IEEE
+Transactions on Electron Devices, vol. 60, no. 6, pp. 3113-3117, July,
+2022, doi: 10.1109/TED.2022.3165738.
+[4] M. Yoshimoto, K. Anami, H. Shinohara, T. Yoshihara, H. Takagi, S.
+Nagao, S. Kayano, and T. Nakano, “A divided word-line structure in the
+static RAM and its application to a 64K full CMOS RAM,” in IEEE
+Journal of Solid-State Circuits, vol. 18, no. 5, pp. 479-485, Oct. 1983,
+doi: 10.1109/JSSC.1983.1051981.
+[5] A. Karandikar and K. K. Parhi, “Low power SRAM design using
+hierarchical divided bit-line approach,” Proceedings International
+Conference on Computer Design. VLSI in Computers and Processors
+(Cat. No.98CB36273), Austin, TX, USA, 1998, pp. 82-88, doi:
+10.1109/ICCD.1998.727027.
+[6] S. Datta, S. Dutta, B. Grisafe, J. Smith, S. Srinivasa and H. Ye, “Back-
+End-of-Line Compatible Transistors for Monolithic 3-D Integration,” in
+IEEE Micro, vol. 39, no. 6, pp. 8-15, 1 Nov.-Dec. 2019, doi:
+10.1109/MM.2019.2942978.
+[7] M. M. Shulaker, T. F. Wu, A. Pal, L. Zhao, Y. Nishi, K. Saraswat, H.-S.
+P. Wong, and S. Mitra, “Monolithic 3D integration of logic and memory:
+Carbon nanotube FETs, resistive RAM, and silicon FETs,” 2014 IEEE
+International Electron Devices Meeting, San Francisco, CA, USA, 2014,
+pp. 27.4.1-27.4.4, doi: 10.1109/IEDM.2014.7047120.
+[8] M. M. Shulaker, G. Hills, R. S. Park, R. T. Howe, K. Saraswat, H.-S. P.
+Wong, S. Mitra, “Three-dimensional integration of nanotechnologies for
+computing and data storage on a single chip,” Nature, vol. 547, pp. 74–
+78, 2017, doi: 10.1038/nature22994.
+[9] T. Srimani, G. Hills, M. Bishop, C. Lau, P. Kanhaiya, R. Ho, A. Amer,
+M. Chao, A. Yu, A. Wright, A. Ratkovich, D. Aguilar, A. Bramer, C.
+Cecman, A. Chov, G. Clark, G. Michaelson, M. Johnson, K. Kelley, P.
+Manos, K. Mi, U. Suriono, S. Vuntangboon, H. Xue, J. Humes, S. Soares,
+B. Jones, S. Burack, Arvind, A. Chandrakasan, B. Ferguson, M. Nelson,
+and M. M. Shulaker, “Heterogeneous Integration of BEOL Logic and
+Memory in a Commercial Foundry: Multi-Tier Complementary Carbon
+Nanotube Logic and Resistive RAM at a 130 nm node,” 2020 IEEE
+Symposium on VLSI Technology, pp. 1-2, 2020, doi:
+10.1109/VLSITechnology18217.2020.9265083.
+[10] L. Brunet, P. Batude, C. Fenouillet-Beranger, P. Besombes, L. Hortemel,
+F. Ponthenier1, B. Previtali, C. Tabone, A.Royer, C. Agraffei, C.
+Euvrard-Colnat, A. Seignard, C. Morales, F. Fournel,L. Benaissa, T.
+Signamarcheix, P. Besson, M. Jourdan, R. Kachtouli, V. Benevent, J.-
+M. Hartmann, C. Comboroure, N. Allouti, N. Posseme, C. Vizioz, C.
+Arvet, S. Barnola, S. Kerdiles, L. Baud, L. Pasini, C.-M. V. Lu, F. Deprat,
+A. Toffoli, G. Romano, C. Guedj, V. Delaye, F. Boeuf, O. Faynot, and
+M. Vinet, “First demonstration of a CMOS over CMOS 3D VLSI
+CoolCube™ integration on 300mm wafers,” 2016 IEEE Symposium on
+VLSI Technology, pp. 1-2, 2016, doi: 10.1109/VLSIT.2016.7573428.
+[11] M. M. Sabry Aly, T. F. Wu, A. Bartolo, Y. H. Malviya, W. Hwang, G.
+Hills, I. Markov, M. Wootters, M. M. Shulaker, H.-S. Philip Wong, and
+S. Mitra, “The N3XT Approach to Energy-Efficient Abundant-Data
+Computing,” in Proceedings of the IEEE, vol. 107, no. 1, pp. 19-48, Jan.
+2019, doi: 10.1109/JPROC.2018.2882603.
+[12] A. Vandooren, Z. Wu, J. Franco, W. Li, H. Arimura, G. Mannaert, E.
+Rosseel, A. Hikavyy, G. Besnard, I. Radu, E. Dentoni Litta, and N.
+Horiguchi, “3D sequential CMOS top tier devices demonstration using
+a low temperature Smart Cut™ Si layer transfer,” 2021 Silicon
+Nanoelectronics Workshop (SNW), pp. 1-2, 2021.
+[13] A. Vandooren, N. Parihar, J. Franco, R. Loo, H. Arimura, R. Rodriguez,
+F. Sebaai, S. Iacovo, K. Vandersmissen, W. Li, G. Mannaert, D. Radisic,
+E. Rosseel, A. Hikavyy, A. Jourdain, O. Mourey, G. Gaudin, G. Besnard,
+C. Roda Neve, B.-Y. Nguyen, I. Radu, E. Dentoni Litta, and N.
+Horiguchi, “Demonstration of 3D sequential FD-SOI on CMOS FinFET
+stacking featuring low temperature Si layer transfer and top tier device
+fabrication with tier interconnections,” 2022 IEEE Symposium on VLSI
+Technology and Circuits, pp. 330-331, 2022 doi:
+10.1109/VLSITechnologyandCir46769.2022.9830400.
+[14] C. Gilardi, B. Chehab, G. Sisto, P. Schuddinck, Z. Ahmed, O. Zografos,
+Q. Lin, G. Hellings, J. Ryckaert, H.-S.P. Wong, and S. Mitra, “Extended
+Scale Length Theory Targeting Low-Dimensional FETs for Carbon
+Nanotube FET Digital Logic Design-Technology Co-optimization,”
+2021 IEEE International Electron Devices Meeting (IEDM), pp. 27.3.1-
+27.3.4, Dec. 2021, doi: 10.1109/IEDM19574.2021.9720672.
+[15] F. Liu, X. Chen, H. Liu, J. Zhao, M. Xi, H. Xiao, T. Lu, Y. Cao, Y. Li,
+L. Peng, and X. Liang, “High-yield and low-cost separation of high-
+purity semiconducting single-walled carbon nanotubes with closed-loop
+recycling of raw materials and solvents” Nano Research, vol. 14, no. 11,
+pp. 4281-4287, July 2021, doi: 10.1007/s12274-021-3671-x.
+[16] R. Chen, L. Chen, J. Liang, Y. Cheng, S. Elloumi, J. Lee, K. Xu, V. P.
+Georgiev, K. Ni, P. Debacker, A. Asenov, and A. Todri-Sanial, “Carbon
+Nanotube SRAM in 5-nm Technology Node Design, Optimization, and
+Performance Evaluation—Part I: CNFET Transistor Optimization,” in
+IEEE Transactions on Very Large Scale Integration (VLSI) Systems, vol.
+30, no. 4, pp. 432-439, April 2022, doi: 10.1109/TVLSI.2022.3146125.
+[17] F. Zahoor, M. Hanif, U. I. Bature, S. Bodapati, A. Chattopadhyay, F. A.
+Hussin, H. Abbas, F. Merchant, and F. Bashir, “Carbon nanotube field
+effect transistors: an overview of device structure, modeling, fabrication
+and applications,” Physica Scripta, vol. 98, no. 8, pp. 082003, doi:
+10.1088/1402-4896/ace855.
+[18] J. Zhu, JH. Park, S.A. Vitale, W. Ge, G. S. Jung, J. Wang, M. Mohamed,
+T. Zhang, M. Ashok, M. Xue, X. Zheng, Z. Wang, J. Hansryd, A. P.
+Chandrakasan, J. Kong, and T. Palacios, “Low-thermal-budget synthesis
+of monolayer molybdenum disulfide for silicon back-end-of-line
+integration on a 200 mm platform,” Nature Nanotechnology, vol. 18, pp.
+456–463, April 2023 doi: 10.1038/s41565-023-01375-6.
+[19] T. Schram, Q. Smets, D. Radisic, B. Groven, D. Cott, A. Thiam, W. Li,
+E. Dupuy, K. Vandersmissen, T. Mauice, I. Asselberghs, and I. Radu,
+“High yield and process uniformity for 300 mm integrated WS2 FETs,”
+2021 Symposium on VLSI Technology, pp. 1-2, 2021.
+[20] S. H. Mir, V. K. Yadav, and J. K. Singh, “Recent Advances in the Carrier
+Mobility of Two-Dimensional Materials: A Theoretical Perspective,”
+ACS Omega, vol. 5, no. 24, pp. 14203-14211, 2020, doi:
+10.1021/acsomega.0c01676.
+[21] T. Srimani, A. C. Yu, R. M. Radway, D. T. Rich, M. Nelson, S. Wong,
+D. Murphy, S. Fuller, G. Hills, S. Mitra, and M. M. Shulaker, “Foundry
+Monolithic 3D BEOL Transistor + Memory Stack: Iso-performance and
+Iso-footprint BEOL Carbon Nanotube FET+RRAM vs. FEOL Silicon
+FET+RRAM,” 2023 IEEE Symposium on VLSI Technology and Circuits
+(VLSI Technology and Circuits), pp. 1-2, 2023, doi:
+10.23919/VLSITechnologyandCir57934.2023.10185414.
+[22] M. D. Bishop, G. Hills, T. Srimani, C. Lau, D. Murphy, S. Fuller, J.
+Humes, A. Ratkovich, M. Nelson, and M. M. Schulaker, “Fabrication of
+carbon nanotube field-effect transistors in commercial silicon
+manufacturing facilities,” Nat Electron, vol. 3, pp. 492–501, 2020, doi:
+10.1038/s41928-020-0419-7.
+[23] D. Jang, D. Yakimets, G. Eneman, P. Schuddinck, M. G. Bardon, P.
+Raghavan, A. Spessot, D. Verkest, and Anda Mocuta, “Device
+exploration of NanoSheet transistors for sub-7-nm technology node,”
+IEEE Trans. Electron Devices, vol. 64, no. 6, pp. 2707–2713, Jun. 2017,
+doi: 10.1109/TED.2017.2695455.
+[24] QuickCap R-2020.09-SP4, Synopsys
+[25] M. M. Shulaker, G. Hills, T. F. Wu, Z. Bao, H.-S. P. Wong, and S. Mitra,
+“Efficient metallic carbon nanotube removal for highly-scaled
+technologies,” 2015 IEEE International Electron Devices Meeting
+(IEDM), pp. 32.4.1-32.4.4, 2015, doi: 10.1109/IEDM.2015.7409815.
+[26] Jeffrey A. Fagan, “Aqueous two-polymer phase extraction of single-wall
+carbon nanotubes using surfactants,” Nanoscale Advances, vol. 1, no. 9,
+pp. 3307-3324, 2019, doi: 10.1039/c9na00280d.
+[27] G. Hills, J. Zhang, M. M. Schulaker, H. Wei, C.-S. Lee, A. Balasingam,
+H.-S. Philip Wong, and S. Mitra, “Rapid Co-Optimization of Processing
+and Circuit Design to Overcome Carbon Nanotube Variations,” in IEEE
+Transactions on Computer-Aided Design of Integrated Circuits and
+Systems, vol. 34, no. 7, pp. 1082-1095, July 2015, doi:
+10.1109/TCAD.2015.2415492.
+[28] M. M. Shulaker, G. Hills, T. F. Wu, Z. Bao, H.-S. P. Wong and S. Mitra,
+"Efficient metallic carbon nanotube removal for highly-scaled
+technologies," 2015 IEEE International Electron Devices Meeting
+(IEDM), pp. 32.4.1-32.4.4, 2015, doi: 10.1109/IEDM.2015.7409815.
+[29] J. Zhang, N. Patil, H.-S. Philip Wong, and S. Mitra, “Overcoming carbon
+nanotube variations through co-optimized technology and circuit design,”
+2011 International Electron Devices Meeting (IEDM), pp. 4.6.1-4.6.4,
+2011, doi: 10.1109/IEDM.2011.6131490.
+[30] H.-H. Liu, S. M. Salahuddin, BT Chan, P. Schuddinck, Y. Xiang, P.
+Weckx, G. Hellings, and F. Catthoor, “DTCO of Sequential and
+11
+Monolithic CFET SRAM,” Proc. SPIE, DTCO and Computational
+Patterning II, 124950Z, Apr. 2023, doi: 10.1117/12.2657524.
+[31] H.-H. Liu, S. M. Salahuddin, BT Chan, P. Schuddinck, Y. Xiang, G.
+Hellings, P. Weckx, J. Ryckaert, and F. Catthoor, “CFET SRAM DTCO,
+Interconnect Guideline, and Benchmark for CMOS Scaling,” in IEEE
+Transactions on Electron Devices, vol. 70, no. 3, pp. 883-890, March
+2023, doi: 10.1109/TED.2023.3235701.
+[32] S. Salahuddin, M. Perumkunnil, E. D. Litta, A. Gupta, P. Weckx, J.
+Ryckaert, M. H. Na, and A. Spessot, “Buried Power SRAM DTCO and
+System-Level Benchmarking in N3,” 2020 IEEE Symposium on VLSI
+Technology, pp. 1-2, June 2020, doi:
+10.1109/VLSITechnology18217.2020.9265076.
+[33] Cadence® Virtuoso® Layout Suite.
+[34] Cadence® Spectre® Circuit Simulator
+[35] Q. Lin, C. Gilardi, S.-K. Su, Z. Zhang, E. Chen, P. Bandaru, A. Kummel,
+I. Radu, S. Mitra, G. Pitner, and H.-S. Philip Wong, “Band-to-Band
+Tunneling Leakage Current Characterization and Projection in Carbon
+Nanotube Transistors,” ACS Nano, vol. 17, no. 21, pp. 21083-21092,
+2023, doi: 10.1021/acsnano.3c04346.
+[36] H.-H. Liu, P. Schuddinck, Z. Pei, L. Verschueren, H. Mertens, S. M.
+Salahuddin, G. Hiblot, Y. Xiang, BT Chan, S. Subramanian, P. Weckx,
+G. Hellings, M. G. Bardon, J. Ryckaert, C. Pan, and F. Catthoor, “CFET
+SRAM with Double-sided Interconnect Design and DTCO Benchmark,”
+in IEEE Transactions on Electron Devices, vol. 70, no. 10, pp. 5099-
+5106, Oct. 2023, doi: 10.1109/TED.2023.3305322.
+[37] R. Carter, J.Mazurier, L.Pirro, J-U.Sachse, P.Baars, J.Faul, C.Grass,
+G.Grasshoff, P.Javorka, T.Kammler, A.Preusse, S.Nielsen, T.Heller,
+J.Schmidt, H.Niebojewski, P-Y.Chou, E.Smith, E.Erben, C.Metze,
+C.Bao, Y.Andee, I.Aydin, S.Morvan, J.Bernard, E.Bourjot, T.Feudel,
+D.Harame, R.Nelluri, H.-J.Thees, L.M-Meskamp, J.Kluth, R.Mulfinger,
+M.Rashed, R.Taylor, C.Weintraub, J.Hoentschel, M.Vinet, J.Schaeffer,
+and B.Rice, “22nm FDSOI technology for emerging mobile, Internet-of-
+Things, and RF applications,” 2016 IEEE International Electron
+Devices Meeting (IEDM), pp. 2.2.1-2.2.4, 2016, doi:
+10.1109/IEDM.2016.7838029.
+Hsiao-Hsuan Liu (Graduate Student
+Member, IEEE) received the B.S. degree
+in optics and photonics from National
+Central University, Taoyuan, Taiwan, in
+2017, and the M.S. degree with the
+Graduate Institute of Electronics
+Engineering, National Taiwan University,
+Taipei, Taiwan, in 2019. She is currently
+pursuing the Ph.D. degree in electrical engineering with KU
+Leuven in collaboration with imec. Her current research
+interests include SRAM design and technology co-optimization
+based on nanosheet, forksheet, and complimentary FET
+technology.
+Shairfe M. Salahuddin received the B.S.
+degree in electrical and electronic
+engineering from the Bangladesh
+University of Engineering and
+Technology, Dhaka, Bangladesh, and the
+Ph.D. degree in electronic and computer
+engineering from The Hong Kong
+University of Science and Technology,
+Hong Kong. In 2017, he joined imec,
+Leuven, Belgium. In 2023, he joined Intel, Oregon, USA.
+Carlo Gilardi received his B.S. (2015)
+and M.S. (2017) in Engineering Physics at
+Politecnico di Milano, Milan, Italy and is
+currently pursuing his Ph.D. in Electrical
+Engineering at Stanford University. His
+current research interests include
+modeling and simulation of nanoscale
+carbon nanotube electronic devices and
+technology assessment and benchmarking.
+Zhenlin Pei (Graduate Student Member,
+IEEE) received his M.S. degree in
+electrical engineering from Columbia
+University. He worked as a senior design
+engineer in the IP group R&D for tapeout
+at Cadence for four years. He is currently
+pursuing a Ph.D. degree in electrical
+engineering at The University of Texas at
+Arlington. His research interests include modeling and
+optimizing energy-efficient computing systems from the device
+level to the system level, using emerging interconnect and
+device technologies at ultrascaled technology nodes.
+Rongmei Chen is an assistant professor at
+the Research Center for Carbon-based
+Electronics, Peking University. The main
+research areas of Prof. Chen Rongmei are
+carbon-nanotube integrated circuits, three-
+dimensional integrated circuits,
+DTCO/STCO based on advanced
+semiconductor technology, and large-
+scale digital chip design. More than 60 journals and conference
+papers have been published, including Nature Electronics,
+IEEE series and other journals, as well as three top-level
+conferences on microelectronics and integrated circuits,
+namely IEDM/VLSI/ISSCC.
+Pieter Schuddinck received the M.Sc.
+degree in electrotechnical engineering
+from Ghent University, Ghent, Belgium,
+in 2005. He has been involved in
+electronics research in both private and
+academic institutions. In 2011, he joined
+Inter-University Micro-Electronics
+Center, Leuven, Belgium, as a Design
+Engineer, where he has been focusing on modeling and
+evaluation of FE/MOL parasitic impedances in advanced
+technology nodes.
+Yang Xiang received the Ph.D. degree in electrical engineering
+from KU Leuven, Leuven, Belgium (in collaboration with
+imec). Xiang’s research has been focusing on the compact
+modeling of novel logic and memory devices.
+12
+Pieter Weckx received the B.Sc. degree in
+electronic engineering, the M.Sc. degree
+in nanoscience and technology, and the
+Ph.D. degree in engineering from
+Katholieke Universiteit Leuven, Leuven,
+Belgium, in 2009, 2011, and 2016,
+respectively. In 2015, he joined imec,
+Leuven, where he is currently a Research
+and Development Manager leading the Research Group for
+Future Scaled CMOS Technologies, spanning from device to
+components for systems.
+Geert Hellings (Senior Member, IEEE)
+received the M.S. degree in electrical
+engineering from Katholieke Universiteit
+Leuven (KU Leuven), Leuven, Belgium,
+in 2007, and the Ph.D. degrees from the
+Electrical Engineering Department
+(ESAT), Integrated Systems Division
+(INSYS), KU Leuven, and the CMOS
+Technology Department, imec, Leuven, in 2012. In 2011, he
+joined the Device Reliability and Electrical Characterization
+group in imec, Belgium, researching ESD, LU and I/O.
+Afterwards he joined the imec DTCO Research as Program
+Manager (2020) and Program Director (2022). He holds 20+
+patents and has authored or co-authored >200 technical papers
+for publication in journals and presentations at conferences.
+Marie Garcia Bardon received the M.Sc.
+degree in engineering from Université
+Catholique de Louvain, Belgium, in 2004,
+and the Ph.D. degree in electronics from
+Katholieke Universiteit Leuven in
+collaboration with Inter-University Micro-
+Electronics Center (IMEC), Belgium, in
+2010. She is currently a Senior Research
+Scientist with IMEC, where she has been continuously working
+on emerging technologies targeting ultrascaled nodes. Her
+interests include analysis and modeling of CMOS and beyond
+CMOS devices (FinFETs, nanosheets, Tunnel FETs,
+FerroFETs, CNTs), power-performance-area (PPA) analysis
+and benchmarking of digital circuits, and design/technology
+co-optimization.
+Julien Ryckaert received the M.Sc.
+degree in electrical engineering from the
+University of Brussels (ULB), Brussels,
+Belgium, in 2000, and the Ph.D. degree
+from Vrije Universiteit Brussel (VUB),
+Brussels, in 2007. In 2000, he joined imec,
+Leuven, Belgium, as a Mixed-Signal
+Designer, specializing in RF transceivers,
+ultralow power circuit techniques, and analog-to-digital
+converters. In 2010, he joined the Process Technology Division
+in charge of design enablement for 3DIC technology. In 2018,
+he became the Program Director focusing on scaling beyond
+the 3-nm technology node and the 3-D scaling extensions of
+CMOS. Since 2013, he has been with the Design-Technology
+Co-Optimization (DTCO) Platform, imec, for advanced CMOS
+technology nodes. He is currently the Vice President of logic in
+charge of compute scaling.
+Chenyun Pan (Senior Member, IEEE)
+received the B.S. degree in
+microelectronics from Shanghai Jiao Tong
+University, Shanghai, China, in 2010 and
+the Ph.D. degree in ECE from the Georgia
+Institute of Technology, Atlanta, GA,
+USA, in 2015. He is currently an Assistant
+Professor with the Department of
+Electrical Engineering, The University of
+Texas at Arlington, Arlington, TX, USA. His research interests
+include device-, circuit-, and system-level modeling and
+optimization for energy-efficient Boolean and non-Boolean
+computing systems based on various emerging device and
+interconnect technologies. He received Research Spotlight
+Award in 2018, when he was a Research Engineer with the
+Institute for Electronics and Nanotechnology, Georgia Institute
+of Technology. He was the recipient of the Early Career
+Research Program Award from the Department of Energy in
+2022.
+Subhasish Mitra is a professor of
+electrical engineering and computer
+science at Stanford University Stanford,
+CA, 94305, USA. His research ranges
+across robust computing, nano systems,
+electronic design automation, and
+neurosciences. Mitra is a Fellow of IEEE
+and ACM.
+Francky Catthoor (Fellow, IEEE)
+received the Ph.D. degree in EE from
+Katholieke University Leuven (KU
+Leuven), Belgium, in 1987. From 1987 to
+2000, he headed several research domains
+in the area of synthesis techniques and
+architectural methodologies. Since 2000,
+he has been strongly involving in other
+activities with IMEC, Leuven, Belgium,
+including co-exploration of application, computer architecture
+and deep submicron technology aspects, biomedical systems
+and IoT sensor nodes, and photo-voltaic modules combined
+with renewable energy systems. Currently, he is an IMEC
+Senior Fellow. He is also a part-time Full Professor with the EE
+Department, KU Leuven. He has been an associate editor of
+several IEEE and ACM journals.
+

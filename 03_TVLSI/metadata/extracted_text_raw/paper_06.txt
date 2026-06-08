@@ -1,0 +1,995 @@
+                                        IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. 14, NO. 8, AUGUST 2021                                              1
+
+
+
+
+                                          CapsBeam: Accelerating Capsule Network based
+                                           Beamformer for Ultrasound Non-Steered Plane
+                                          Wave Imaging on Field Programmable Gate Array
+                                             Abdul Rahoof, Student Member, IEEE, Vivek Chaturvedi, Senior Member, IEEE, Mahesh Raveendranatha
+                                                      Panicker, Senior Member, IEEE, and Muhammad Shafique, Senior Member, IEEE
+
+
+
+                                           Abstract—In recent years, there has been a growing trend                  solution by combining the beamformed outputs of multiple
+                                        in accelerating computationally complex non-real-time beam-                  insonifications. Nonetheless, this approach comes with the
+arXiv:2509.03201v1 [cs.AR] 3 Sep 2025
+
+
+
+
+                                        forming algorithms in ultrasound imaging using deep learning                 drawback of reduced frame rate, leading to a trade-off between
+                                        models. However, due to the large size and complexity these state-
+                                        of-the-art deep learning techniques poses significant challenges             image quality and frame rate. Adaptive beamforming tech-
+                                        when deploying on resource-constrained edge devices. In this                 niques such as Minimum Variance Distortionless Response
+                                        work, we propose a novel capsule network based beamformer                    (MVDR) [5] provide an alternative by using data-dependent
+                                        called CapsBeam, designed to operate on raw radio-frequency                  apodization weights on the delay-compensated signals. How-
+                                        data and provide an envelope of beamformed data through non-                 ever, the computational demands of MVDR, especially the
+                                        steered plane wave insonification. Experiments on in-vivo data,
+                                        CapsBeam reduced artifacts compared to the standard Delay-                   matrix inversions, presents challenges for real-time imple-
+                                        and-Sum (DAS) beamforming. For in-vitro data, CapsBeam                       mentation, with a complexity of O(n3 ), where n represents
+                                        demonstrated a 32.31% increase in contrast, along with gains                 the aperture size of the transducer array. For instance, it
+                                        of 16.54% and 6.7% in axial and lateral resolution compared to               necessitates approximately 98.78 GOPs/Frame for a frame size
+                                        the DAS. Similarly, in-silico data showed a 26% enhancement                  of (368, 128) [6].
+                                        in contrast, along with improvements of 13.6% and 21.5% in
+                                        axial and lateral resolution, respectively, compared to the DAS.                The impressive progressions in deep learning motivated
+                                        To reduce the parameter redundancy and enhance the compu-                    researchers to explore its potential applications in ultrasound
+                                        tational efficiency, we pruned the model using our multi-layer               beamforming [7]–[10]. While traditional methods like MVDR
+                                        LookAhead Kernel Pruning (LAKP-ML) methodology, achieving                    improve image quality, they are computationally expensive.
+                                        a compression ratio of 85% without affecting the image quality.              Recent advances in deep learning have shown promising
+                                        Additionally, the hardware complexity of the proposed model is
+                                        reduced by applying quantization, simplification of non-linear               results in reducing artifacts and improving resolution, yet
+                                        operations, and parallelizing operations. Finally, we proposed a             they often demand substantial computational resources, which
+                                        specialized accelerator architecture for the pruned and optimized            limits their use in embedded systems. The complexity of
+                                        CapsBeam model, implemented on a Xilinx ZU7EV FPGA. The                      these models, such as [9] (90 GOPs/Frame) and [10] (95
+                                        proposed accelerator achieved a throughput of 30 GOPS for the                GOPs/Frame), makes them suitable for high-performance
+                                        convolution operation and 17.4 GOPS for the dynamic routing
+                                        operation.                                                                   CPUs or GPUs but presents challenges for implementation
+                                                                                                                     on resource-constrained devices. While existing beamforming
+                                          Index Terms—Capsule Network, Beamforming, FPGA, Hard-
+                                                                                                                     techniques [5], [9], [10] offer high-quality images, they fail
+                                        ware Accelerator, Reconstruction, Ultrasound Imaging.
+                                                                                                                     to meet the real-time processing requirements for high-frame-
+                                                                                                                     rate ultrasound imaging. The gap addressed in this paper is the
+                                                                 I. I NTRODUCTION                                    need for a computationally efficient, high quality high frame
+                                           Plane-Wave Imaging [1], [2] is a high frame rate ultra-                   rate ultrasound beamforming technique that can be deployed
+                                        sound imaging technique, wherein the entire medium under-                    on resource-constrained edge devices.
+                                        goes insonification through the simultaneous activation of all                  High frame ultrasound imaging is getting popular due to
+                                        transducer elements. Consequently, all piezoelectric elements                its applications in analyzing transient motions through B-
+                                        capture the backscattered signals from the medium, resulting in              mode videos as well tissue and blood velocity imaging.
+                                        frame rates reaching several thousands of frames per second.                 Incorporating high frame rate imaging into point of care
+                                        However, the resulting image quality is compromised when                     ultrasound devices is an unsolved challenge and is attempted
+                                        employing the standard Delay-and-Sum (DAS) [3] beam-                         in this work through a light weight neural network based
+                                        forming technique for image reconstruction. To address this,                 approach. For high frame rate ultrasound imaging, non-steered
+                                        Coherent Plane-Wave Compounding [4] presents an effective                    (i.e. single angle 0 deg) transmission is employed which
+                                                                                                                     will typically result in low quality images. Specialized hard-
+                                           Abdul Rahoof and Vivek Chaturvedi are with the Indian Institute of
+                                        Technolgy Palakkad (IITPKD), India (e-mail: 112004001@smail.iitpkd.ac.in;    ware accelerators provide an efficient solution for handheld
+                                        vivek@iitpkd.ac.in).                                                         ultrasound imaging, offering a superior power-performance
+                                           Mahesh Raveendranatha Panicker is with the Singapore Institute of Tech-   tradeoff compared to general-purpose processors in resource-
+                                        nology (SIT), Singapore (e-mail: mahesh.panicker@singaporetech.edu.sg ).
+                                           Muhammad Shafique is with the New York University Abu Dhabi, UAE          constrained environments. Among these, field-programmable
+                                        (e-mail: muhammad.shafique@nyu.edu).                                         gate arrays (FPGAs) are inherently essential for beamforming
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. 14, NO. 8, AUGUST 2021                                                                     2
+
+
+
+                                                                     RF Data   Time-of-Flight                                                         Reconstructed
+control in conventional ultrasound signal chains, and in this                    Correction       Beamforming
+                                                                                                                     Envelope
+                                                                                                                     Detection
+                                                                                                                                       Log
+                                                                                                                                    Compression          Image
+                                                                                  (ToFC)
+work, we leverage them to accelerate beamforming using
+neural networks. Additionally, transferring data from an FPGA
+                                                                                                                Designed an FPGA
+                                                                          Capsule network                                            Evaluated the
+(which is already part of the ultrasound signal chain) to GPU             based lightweight
+                                                                                                Pruned the      based accelerator
+                                                                                                                                    performance on
+                                                                                                model using      architecture for
+                                                                            Beamformer                                               Xilinx ZCU104
+requires a CPU in between and will reduce the frame rate                                         LAKP-ML        Pruned CapsBeam
+                                                                            (CapsBeam)                                               Evaluation Kit
+                                                                                                                     model
+
+drastically, particularly in the case of plane wave imaging
+                                                                                 Fig. 1: Overview of the proposed CapsBeam framework
+due to high frame rate transmission. Moreover, FPGAs have
+emerged as a promising choice for beamforming due to their                 ML) method and achieved a compression ratio of 85%
+power efficiency, flexibility, and parallel processing capabili-           without compromising the image quality. Moreover, the
+ties. Their reprogrammability enables adaptable functionality              proposed framework optimized dynamic routing algo-
+and circuit configurations, making them widely adopted in                  rithm by simplifying its non-linear operations, reorder-
+edge devices for deep learning inference and medical imaging               ing the loops, and enabling parallel operations. These
+applications [11]–[16].                                                    optimizations increased the throughput of the dynamic
+   Combining the adaptive beamforming acceleration enabled                 routing operation from 0.37 GOPS to 17.4 GOPS.
+by deep learning and reconfiguration and parallel processing            • Finally, we quanitized the parameters and designed a
+capability of FPGAs, we propose a novel capsule network [17]               specialized accelerator architecture for our pruned and
+based beamformer called CapsBeam, designed for non-steered                 optimized CapsBeam model and deployed it on Xilinx
+insonification plane wave imaging. The capsule networks have               ZCU104 evaluation board with clock frequency 100MHz.
+recently gained significant traction and demonstrated superior             The proposed accelerator achieved a throughput of 30
+accuracy in various computer vision tasks. Due to its ability              GOPS for the convolution operation and 17.4 GOPS for
+to preserve spatial relationships between features, the capsule            the dynamic routing operation.
+network is well-suited for data-adaptive beamforming, where          To the best of our knowledge, the proposed study represents
+maintaining the spatial relationships between signal compo-          the first attempt to assess the feasibility of beamforming using
+nents is critical. We utilized convolutional capsule layers, as      a capsule network and deploy the complete model on resource-
+described in [18], with modifications to facilitate easier feature   constrained edge devices. Fig. 1 provides an overview of the
+learning and image reconstruction. The calculation pattern           proposed CapsBeam framework.
+used in the dynamic routing algorithm within the capsule
+layer is distinct from other operations in deep learning models,
+necessitating a specialized accelerator for the capsule network.                   II. BACKGROUND AND R ELATED W ORKS
+We utilized the FastCaps proposed in [23] approach for                  This section provides a concise overview of different beam-
+deploying the proposed CapsBeam model on FPGA. To adapt              forming techniques for plane wave imaging and their as-
+the model on FPGA with limited resources, we compressed              sociated limitations. Following this, the capsule network is
+the model using a novel multi-layer LookAhead Kernel                 introduced. Finally, network pruning is described as a method
+Pruning (LAKP-ML) method. Additionally, we streamlined               to reduce computational complexity within the model.
+the dynamic routing algorithm by simplifying its non-linear
+operations. Finally, we developed a specialized accelerator
+architecture for our pruned and optimized CapsBeam model             A. Beamforming Techniques
+and deployed it on the Zynq UltraScale+ MPSoC ZCU104                    In ultrasound imaging, the computational tasks can be
+FPGA.                                                                broadly classified into delay estimation (or time-of-flight cor-
+   The main contributions in this work are:                          rection) and beamforming. Delay estimation can be performed
+   • We propose a capsule network based ultrasound imaging           using time domain interpolation, where complexity can be
+      model, CapsBeam, which improves the quality of recon-          minimized by precomputing delays based on the probe ge-
+      structed images in terms of contrast and resolution as         ometry and imaging parameters. On the other hand, beam
+      compared to the standard DAS [3] and state-of-the-art          summation of the delay compensated data can be adaptive
+      tinyML models [7], [8], [19]. Moreover, our CapsBeam           based on the tissue reflected signals and hence is computa-
+      is computationally light and uses fewer FLOPs (28.79           tionally intensive. Furthermore, the performance and quality
+      GOPs/Frame) compared to the MVDR [5] beamformer                of the reconstructed image are significantly impacted by the
+      (98.78 GOPs/Frame).                                            beamforming algorithm applied. The conventional Delay-and-
+   • We extended the LookAhead Kernel Pruning (LAKP)                 Sum (DAS) [3] is a simple beamformer that utilizes the
+      method described in [23] by computing the pruning score        predefined geometry driven apodization weights to compute
+      with weights of more than one succeeding and preceding         the beamformed output. DAS is computationally efficient but
+      layers. This extension resulted in an improvement of           provides reconstructed images of poor quality when used
+      nearly 0 − 2% in terms of accuracy on ResNet18 and             with plane wave imaging. Minimum Variance Distortionless
+      VGG19, respectively, on CIFAR-10 data.                         Response (MVDR) [5] beamforming aims at minimizing the
+   • The proposed approach pruned the CapsBeam model                 variance of the received signal therby having a more directed
+      based on resolution and contrast, focusing on image            receive beam. While MVDR produces high-quality images,
+      quality rather than minimizing mean square error, using        its computational complexity is high, making it non-trivial to
+      the novel multi-layer LookAhead Kernel Pruning (LAKP-          deploy in real-time applications.
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. 14, NO. 8, AUGUST 2021                                         3
+
+
+
+   Numerous machine learning and deep learning approaches           network is pruned using the LAKP approach, then optimized
+exist to improve a wide range of tasks in signal processing for     the dynamic routing algorithm to reduce complexity and
+ultrasound imaging, with a specific emphasis on accelerating        enable parallel operations. In this study, we implemented a
+beamforming techniques. The work in [7] devised a fully             capsule network-based beamformer and compressed it using
+connected neural network refered to as FCNN for pixel-by-           our LAKP-ML method. We simplified the dynamic routing
+pixel beamforming. This approach exhibited enhanced reso-           algorithm and designed a specialized accelerator for the pruned
+lution and contrast compared to the Delay-and-Sum (DAS).            and optimized CapsBeam model. Finally, we deployed the
+However, the FCNN model solely captures local features in the       model on FPGA and evaluated its performance.
+input data to determine apodization weights. The Tiny-CNN              1) Dynamic Routing Algorithm: The dynamic routing algo-
+beamformer [8] processes data from a region and generates a         rithm between capsule layers serves as a fundamental building
+beamformed image, rather than processing pixel by pixel. This       block in the capsule network. It maps the capsules (groups of
+approach improved resolution and contrast with fewer angles         neurons) in the lower layer to those in the upper layer by
+of transmission, compared to DAS. However, the quality of           dynamically adjusting a parameter called the coupling coeffi-
+images generated through non-steered plane-wave imaging is          cient. The three main operations involved in dynamic routing
+limited to the performance attained by the DAS method. The          are softmax, fully connected transformation, and agreement,
+works in [9], [10] introduced extensive convolutional neural        as described in Equations 1-3 [17].
+networks (CNNs) for image reconstruction. Notably, these
+approaches significantly improved resolution and contrast in                                     exp(bij )
+                                                                                          cij = P                                  (1)
+both in-silico and in-vitro data compared to the DAS method,                                     k exp(bik )
+demonstrating notable reductions in sidelobes and artifacts.                                                            !
+However, these methods [9], [10] primarily targeted software-                                         X
+                                                                                      vj = squash           cij ûj|i              (2)
+based applications utilizing GPU accelerators and exhibited
+                                                                                                        i
+high computational complexity, exceeding 90 GOPs/Frame for
+a frame size of (368, 128). Additionally, its implementation on                           bij ← bij + ûj|i · vj                   (3)
+resource-constrained edge devices presents challenges. To the
+best of our knowledge, there have been limited attempts to          Here, ûij represents the input vector (also known as prediction
+develop beamforming accelerators using neural networks for          vector for capsule j in layer l + 1 made by capsule i in layer
+deployment on edge devices. In a recent study [19], a vision        l), while bij are the logits, initialized as zero. The final output
+transformer [20] based beamformer called Tiny-VBF was               vector of capsule j is denoted as vj . Squash is a nonlinear
+introduced, which demonstrated better resolution and contrast       function that ensures the output vector remains within a unit
+on in-silico and in-vitro data compared to DAS and Tiny-CNN.        norm. The process described in Equations 1-3 is repeated for
+Additionally, the model was deployed on an FPGA platform.           a specified number of routing iterations to refine the coupling
+However, the model lacks flexibility in handling varying frame      coefficients and improve feature representation.
+sizes, as it supports only a depth of 368 rows for inference. In
+this paper, we propose a capsule network-based beamformer
+                                                                    C. Neural Network Pruning
+for non-steered plane wave imaging that achieved better image
+quality compared to the DAS, Tiny-CNN and Tiny-VBF on                  Network pruning enhances computational efficiency and
+in-vivo, in-vitro, and in-silico data.                              reduces energy consumption by reducing parameter redun-
+                                                                    dancy and minimizing memory references. Structured kernel
+                                                                    pruning [24], owing to its organized nature, is compatible
+B. Capsule Network                                                  with most neural network accelerators and embedded GPUs.
+   The capsule network, introduced by [17], enhances the            Look-Ahead Kernel Pruning (LAKP) [23] leverages the sum
+model’s capability to retain spatial features and enhances its      of look-ahead scores of parameters and has demonstrated su-
+learning capacity compared to CNNs. The study implemented           perior compression rates compared to magnitude-based kernel
+a fully connected dynamic routing algorithm, demonstrating          pruning [24], especially in high-sparsity scenarios. The Look-
+superior accuracy on MNIST and F-MNIST datasets compared            Ahead Score for the q th kernel in the pth filter of the ith
+to CNNs. However, the significant drawback is the high              layer is calculated as the product of two terms: (1) the sum of
+number of parameters required for operation. The introduc-          the absolute values of the parameters in kernel k(p, q), and (2)
+tion of DeepCaps in [18] utilizes a 3D convolution-based            the summed absolute values of the parameters in its connected
+dynamic routing algorithm, showcasing improved performance          kernels from the (i − 1)th and (i + 1)th layers. Specifically,
+on CIFAR10, SVHN, and Fashion MNIST datasets while                  in the (i − 1)th layer, the connected kernels belong to the
+reducing the parameter count by 68%. While several stud-            q th filter, while in the (i + 1)th layer, the connected kernels
+ies have explored FPGA-based accelerators for CNNs like             correspond to the pth channel across all filters. Finally, the
+AngelEye [12], the distinct computational flow inherent in          kernels that attain the lowest look-ahead score will be pruned
+the routing algorithm and the unique capsule structure pose         from the filter. In this work, we employ a multi-layer Look-
+challenges in applying these findings to capsule networks.          Ahead Kernel Pruning method known as LAKP-ML, which
+In a recent study [23], a two-step approach for deploying           examines the weights of more than one neighboring layers to
+the CapsNet model on FPGA was proposed. Initially, the              compute the importance score of a kernel.
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. 14, NO. 8, AUGUST 2021                                                                                                                                                           4
+
+
+
+                   Time-of-flight                                            IQ Demodulated                                           Reconstructed                                            (3,3,64)      (64)       (64)        (64)
+  RF Data                                           Beamforming                                            Log Compression
+                     Correction                                                   Data                                                   Image                                                                                                I value
+                                                                                                                                                               Input
+                                                                                                                                                             (7,7,128)                                         Dynamic
+                                                                                                                                                                                      Conv2D        Conv2D                  Dense       Dense
+                                                                                                                                Quantizing the                                                                 Routing
+ Ultrasound     Ultrasound        Ultrasound                                                 Simplifying exp()                   parameters
+                                                      Trained
+ Simulation      Phantom          Multi-angle                                Pruned          as multiplication
+                                                     CapsBeam
+    Data           Data              Data                                    Model          and addition using
+                                                       Model                                                               Designing Processing
+                                                                                             Taylor expansion                Elements (PEs)                                   (5,5,128)
+  CapsBeam
+                    Training/ Fine                  Pruning                 Removing              Optimizing               Computation mapping
+    Model
+                                                 Convolution and            redundant             the routing
+                                                                                                                                                                                              (3,3,64)      (64)     (64)        (64)
+                       Tuning                                                                                                    on PE
+                       (GPU)                      Conv-Capsule               capsules              algorithm                                                                                                                               Q value
+                                                     layers                                                            Generating RTL for Caps-
+  Optimizing                                                                                                              Beam Accelerator                                                                    Dynamic
+  CapsBeam          Determining                                              Design              Ultrasound                                                          Conv2D          Conv2D        Conv2D                Dense        Dense
+                   Resolution and
+                                                   Multi-layer
+                                                                             space                                                                                                                            Routing
+                                                  LookAhead                                      Test Data
+                      Contrast                                             exploration                                       Inference Engine
+                                                 Kernel Pruning                                                                   (FPGA)
+
+
+                        Fig. 2: An outline of the proposed methodology                                                                                                               Filter Dim:   Filter Dim:      Weight Dim: Weight Dim:
+                                                                                                                                                                      Filter Dim:
+                                                                                                                                                                                    (3,3,128,64)   (3,3,64,64)        (64,64)     (64,1)
+                                                                                                                                                                    (3,3,128,128)
+
+                                                                                                                                                      Fig. 4: Illustrates the flow of computing the envelope value (I and Q) using
+                                                                       Convolutional                                                                  our CapsBeam model for each pixel
+                                                                       Capsule Layer
+                                                                              64
+                                                                                 1
+                                                                                                                  ReLU                  I-phase          The convolution layers within the model extract relevant
+                    128
+      ToFC RF                     ReLU              ReLU
+                                                                                                                                       Image
+                          368
+
+
+
+
+                    3                                                                                                                                 features from the receptive field for each pixel in the beam-
+       data                                                2D Convolution                                                            (368,128)
+                      3                                                         Dynamic               Point-wise           Point-wise
+  (368,128,128)                                             Filter Size: 64     Routing                  Fully                Fully
+            2D Convolution 2D Convolution
+            Filter Size: 128 Filter Size: 64
+                                                            Kernel Size: 3
+                                                                Stride:1
+                                                                                                      Connection           Connection                 formed image. Subsequently, the dynamic routing algorithm
+             Kernel Size: 3 Kernel Size: 3                  Padding: True
+                Stride: 1       Stride: 1                              Convolutional
+                                                                                                                                                      in the convolutional capsule layer, followed by the point-wise
+             Padding: True Padding: True                               Capsule Layer
+                                                                              64                                                                      fully connected layers, maps these features to the envelop
+                                                                                 1
+                                                                                                                  ReLU                  Q-phase       value (real and Hilbert transform values) for each pixel in-
+                                                                                                                                       Image
+                                                           2D Convolution
+                                                                                Dynamic               Point-wise           Point-wise
+                                                                                                                                     (368,128)        dividually.
+                                                            Filter Size: 64                              Fully
+                                                                                Routing                                       Fully
+                                                            Kernel Size: 3
+                                                                Stride:1
+                                                                                                      Connection           Connection
+                                                                                                                                                         The ground truth for the model is the MVDR envelope of
+                                                            Padding: True
+                              1                                        1                    1         1                     1
+                                                                                                                                                      beamformed data. The covariance of the MVDR beamforming
+                                             1             8                        8
+                                         1           ...           1         ...
+                              2
+                                                                             ...
+                                                                                            2         2                     2                         is computed with subarrays of length L=48 and temporal aver-
+                                                     ...
+                                                                                                                                                      aging over 2×(K=7)+1 samples. Similarly, the proposed model
+                                                                                                                     ...
+
+
+                                                                                                                                ...
+                                                                                                           ...
+                                                    ...
+
+
+
+
+                                                                             ...
+
+
+
+
+                                  Reshape                                               Reshape
+                                                     ...                      ...
+                                  ...
+
+
+
+
+                                                                                                ...
+
+
+
+
+                                         8                         8
+
+                                                  Point-wise Dynamic
+                                                                                                                                                      also considers the 7×7 receptive field (taking into account all
+                             64                                                            64         64                   64
+                                                        Routing                                              Dense                Dense
+                                                                                                                                                      four convolutions) for each pixel in the beamformed image and
+Fig. 3: The proposed CapsBeam architecture. The I-phase and Q-phase rep-
+resent the real and Hilbert transform of the beamformed image, respectively.                                                                          outputs performance similar to that of the MVDR beamformer
+The convolutional capsule conducts 2D convolution, followed by pixel-wise                                                                             with significantly less computational complexity.
+dynamic routing, and finally, the pixel-wise fully connected layers to generate                                                                          The depicted flow of computing the beamformed value
+the I and Q values.
+                                                                                                                                                      using our CapsBeam model for each pixel value is illustrated
+                                III. P ROPOSED M ETHODOLOGY                                                                                           in Fig. 4. Initially, the first two convolution operations and the
+                                                                                                                                                      subsequent two convolutions in the capsule layers construct a
+   In this section, we describe the implementation of the                                                                                             7x7 receptive field. We leverage a modified version of the dy-
+proposed CapsBeam model and its deployment on FPGA. An                                                                                                namic routing algorithm from the literature, tailored to process
+overview of the proposed methodology is shown in Fig. 2. The                                                                                          the features extracted from these receptive fields individually.
+process starts with designing a beamformer model, CapsBeam,                                                                                           Subsequently, the four fully connected layers compute both the
+by refining the layers and its computation mapping to improve                                                                                         real and Hilbert transformed output of the beamformed value
+the throughput as well as the image quality. We utilized our                                                                                          for the specific pixel. Consequently, our model demonstrates
+structured multi-layer LookAhead Kernel Pruning (LAKP-                                                                                                rapid learning capabilities and exhibits performance similar to
+ML) method and pruned the convolution layers in the network                                                                                           that of the target MVDR beamformer, all while maintaining
+with contrast and resolution as the quality measure. The                                                                                              significantly reduced computational complexity. To further re-
+pruned model undergoes fine tuning to improve the image                                                                                               fine the image quality, we fine-tuned the model using Coherent
+quality. Then we analysed the network and removed the                                                                                                 Plane-Wave Compounding (CPWC) beamformer output with
+redundant kernels and capsules. Furthermore, we conducted                                                                                             5 insonifications at angles of -0.86, -0.43, 0, 0.43, and 0.86
+a comprehensive design space exploration and reduced the                                                                                              degrees.
+offchip memory transaction overhead as well as the hardware
+                                                                                                                                                      B. Dataset
+complexity by quantizing the model and optimizing the design
+flow. Finally, our pruned and optimized CapsBeam model is                                                                                                The training dataset was collected in-house using the Ve-
+deployed on FPGA and evaluated the performance.                                                                                                       rasonics Vantage 128 attached with an L11-5v transducer
+                                                                                                                                                      (Verasonics Inc., Redmond, WA) [26], [27]. The acquisition
+                                                                                                                                                      procedure is detailed in [8], [26], [27], and adhered to the
+A. CapsBeam Architecture
+                                                                                                                                                      guidelines set forth in the Helsinki Declaration of 1975, which
+   The architecture of the proposed CapsBeam model is de-                                                                                             were revised in 2000. Additionally, the model underwent fine
+picted in the Fig. 3. It comprises of two convolution layers,                                                                                         tuning using multi-angled images from the CUBDL dataset
+two convolutional capsule layers, and four point-wise fully                                                                                           with 5 transmission angles [28]. The performance evaluation
+connected layers. The time-of-flight-corrected (ToFC) RF data                                                                                         was conducted on datasets provided by the PICMUS [25].
+is given as input to the model, which examines the signal
+values across the channels (elements in the transducer array).                                                                                        C. Parameter Setting
+It then suppresses interference and noise from RF data and                                                                                              The proposed approach involves various hyperparameters
+generates a high-quality envelope of the beamformed image.                                                                                            crucial for its execution. The learning rate was initially set at
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. 14, NO. 8, AUGUST 2021                                           5
+
+
+
+                                                                        the CapsBeam model differs from typical pruning methods
+                                                                        used for classification models, as our focus is on preserving
+                                                                        the resolution and contrast of the reconstructed images rather
+                                                                        than optimizing classification accuracy. This iterative pruning
+                                                                        process is repeated until the best-compressed model that
+                                                                        maintains the original image quality is identified.
+               (a)                              (b)
+Fig. 5: Comparison of LAKP and LAKP-ML on (a) ResNet18 and (b) VGG-     F. Design Space Exploration
+19 utilizing CIFAR-10 dataset and when r=2
+                                                                           Due to the large size of input, intermediate outputs and
+10−4 and reduced to 10−6 for fine tuning. A batch size of               weights of each layer, it is not feasible to store all the param-
+2 was chosen, and optimization utilized the Adam optimizer.             eters in the on-chip memory. Consequently, these parameters
+The chosen loss function for this method is Mean Squared                must be loaded online during inference, resulting in increased
+Error (MSE) employed on the I and Q components of the                   latency due to the overhead of external memory transactions.
+beamformed image before log compression.                                Partitioning the operations into tiles, storing a segment of
+  The proposed CapsBeam model was implemented using the                 the input and weights, and preparing a subset of outputs
+TensorFlow platform (version 2.40) and was trained and tested           for subsequent layer operations is an effective approach to
+on a 12th Gen Intel® Core™ i9-12900K × 24 system with                   minimize latency. Additionally, these block operations can be
+an NVIDIA RTX A4500 GPU. The model comprises a total                    executed in parallel by configuring processing elements and
+of 303,682 weights and has a computational complexity of                implementing an efficient data flow design. However, these
+approximately 28.79 GOP.                                                optimizations are constrained by the resources availability on
+                                                                        the target board.
+D. Evaluation Metrics                                                      In the case of the non-optimized CapsBeam model, the
+                                                                        first layer input dimension is (368, 128, 128), and the filter
+   We employed four performance metrics to assess the res-
+                                                                        dimension is (3, 3, 128, 128). If we consider on-chip BRAM
+olution and contrast of the ultrasound reconstructed images.
+                                                                        for storing three rows of input and one set of filter weights (3,
+The axial and lateral resolutions were estimated using the
+                                                                        3, 128) at a time, then the total external memory transaction
+full width half maximum (FWHM) measure at -6 dB of the
+                                                                        overhead is calculated as 368 × 3 × 3 × 128 × 128 + 368 ×
+pins/wires in the PICMUS dataset. Contrast was evaluated
+                                                                        128 × 128 = 60, 293, 120. This occurs because the weight has
+using three metrics: contrast ratio (CR) [29], contrast-to-
+                                                                        to be repeated for each block of computation. However, this
+noise ratio (CNR) [30], and generalized contrast-to-noise ratio
+                                                                        transaction becomes infeasible for a single transmission using
+(gCNR) [31].
+                                                                        the available DMA due to buffer overflow issues.
+                                                                           Our LAKP-ML method reduces the number of parameters
+E. Multi-layer LookAhead Kernel Pruning (LAKP-ML)                       to 15% and enables the weights of each layer to be stored on
+   Multi-layer LookAhead Kernel Pruning (LAKP-ML) is an                 on-chip memory, significantly reducing the external memory
+extension of the structured LAKP method. LAKP examines the              transaction overhead. During each layer operation, the com-
+kernels in both the preceding and succeeding layers that are            plete weights are loaded once, while the input is partially
+linked to the current kernel being pruned. LAKP showed good             loaded and then reloaded after the computation for that input
+performance across standard models such as ResNet-18, VGG-              is complete, ensuring that all parameters are loaded only once,
+19, CapsNet when evaluated on CIFAR-10, GTSRB, F-MNIST                  thus reducing external memory transactions. Additionally, we
+and MNIST datasets. LAKP-ML considers weights of multiple               have utilized two DMAs for transmitting input and weights in
+preceding and succeeding layers, rather than solely relying on          parallel, further reducing the latency of memory transactions.
+the weights of direct neighboring layers, when pruning the
+current layer. The multi-layer pruning score for the kernel k           G. CapsBeam Accelerator
+in the i-th layer can be computed as:
+                                                                           The Fig. 6 illustrates the accelerator architecture of the
+ Pi (k) = ∥Ki−r [:]∥ ... ∥Ki−1 [:]∥ . ∥k∥ . ∥Ki+1 [:]∥ ... ∥Ki+r [:]∥   CapsBeam model designed for FPGA implementation. Our
+                                                                  (4)   primary focus was on reducing external memory transactions
+where k denotes the kernel in the i-th layer, Ki−1 [:] and Ki+1 [:      and maximizing resource utilization. External off-chip mem-
+] represent the subsets of kernels in the (i − 1)-th and (i +           ory is accessed through two DMAs: one for input RF data or
+1)-th layers, respectively, which are linked to the kernel k,           intermediate output and another for model weights. This setup
+and r signifies the number of neighboring layers. Experiments           ensures that the model input and weights are transmitted and
+conducted on ResNet-18 and VGG19 models demonstrated                    available simultaneously for the computation engine, allowing
+that LAKP-ML enhanced the accuracy of the pruned model                  computation to commence without any unwanted delays. We
+compared to LAKP when evaluated on CIFAR-10 dataset, as                 employed a 16-bit vector bus for data transmission through
+shown in the Fig. 5.                                                    the DMA, transmitting 4 data in a channel (64 Bytes) on each
+   We utilized the LAKP-ML approach for pruning the kernels             cycle from off-chip memory, thereby reducing the external data
+of the convolution layers in our CapsBeam model. Pruning                transmission overhead.
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. 14, NO. 8, AUGUST 2021                                                                                                                                  6
+
+
+
+                                                                           Algorithm 2: Dynamic Routing Module
+                                        AXI
+                       PS                             DMA    DMA
+                                   Interconnect                       1 for p = 0 to num rows * num cols do
+                                                                      2     Stream in the input activation with dimension (8,
+                                         AXI Stream
+                                                                             8) utilizing the DMA-2
+                                                  Dynamic             3     Initialize logits, b, with zeros
+                      BRAM          Convolution
+                                                  Routing   Squash
+                                      Module
+                                                   Module     &
+                                                                      4     Initialize coupling coefficients, c, with sof tmax(b)
+                      Weights
+                                                             exp      5     for r = 0 to (num routing / 4) do
+                     Activations
+                     Parameters                              Unit
+                                           PE Array                   6          if r > 0 then
+          Fig. 6: The proposed CapsBeam accelerator architecture      7               Compute the sof tmax(b) utilizing the
+                                                                                       exponential PEs
+                                                                      8          Compute s = input ∗ c utilizing the PEs
+    Algorithm 1: Convolution Module                                   9          Compute s = squash(s) utilizing the built-in
+1  Stream in the weights, bias and index for the current                           sqrt and the PEs
+    layer utilizing the DMA-1                                        10          Compute b = input.s utilizing the PEs, where .
+ 2 Fill the first row of input BRAM block with zeros
+                                                                                   represents the dot product
+    (padding)                                                        11     Stream out the output s with dimension (8, 8)
+ 3 Stream in the first row of input activation for the                       utilizing the DMA-2
+    current layer utilizing the DMA-2
+ 4 for row = 0 to num rows do
+                                                                                                                Index (BRAM block)                    Weight (BRAM block)
+ 5     if row != 0 then                                                                                       98                             98
+                                                                                      Index
+ 6         Shift the data in second row of input BRAM to                             Control                    1     2   ...   84       3 1          2        ...             84
+                                                                                     Module
+                                                                                                                                              3
+             first row                                                                                                                                           (3,3,98,84)
+
+                                                                                                                                                                                                   in_wgt
+ 7         Shift the data in third row of input BRAM to                                                                   128                     PE Array (4x128 MAC)
+                                                                     (BRAM block)
+
+
+
+
+                                                                                                                                             PE        PE      PE      PE                                             in_wgt
+                                                                                                                                                                                                                  R
+             second row                                                             1     2             ...           128
+                                                                                                                                             PE           PE         PE             PE
+
+
+
+
+                                                                                                              shift
+                                                                                                                            (3,128,98)
+                                                                                     2                                                                                                    in_act
+ 8     if row == num rows − 1 then                                                                                                           PE           PE         PE             PE             ×         ＋        out_col
+                                                                                          stream in
+
+
+
+                                                                                    3
+                                                                                                                                             PE           PE         PE             PE    out_col_part
+ 9         Fill the last (third) row of input BRAM with
+                                                                     (DRAM block)
+
+
+
+
+                                                                                                                                                                 (4,128,21)
+                                                                                     4
+             zeros (padding)
+                                                                                    ...
+
+
+
+
+10     else                                                                         368                                           21
+                                                                                                                                         1        2            ...            128
+                                                                                                                                                                                     21
+                                                                                                                                                                                          1    2            ...         128
+
+
+11         Stream in the next row of input activation                                                 Input
+                                                                                                                                         1        2            ...            128         1    2            ...         128
+                                                                                                                                  21                                                 21
+             utilizing the DMA-2                                                                                                                                     Output (BRAM block)
+
+12     for f = 0 to (num f ilters / 4) do                                                              Fig. 7: The design flow of the convolution operation
+13         Compute the convolution output for the current
+                                                                        1) Convolution architecture: We designed the convolu-
+             row utilizing the PEs, producing partial
+                                                                     tion architecture with minimal external memory access. The
+             output with 4 output channels with dimension
+                                                                     micro-architecture of the convolution operation is shown in
+             (num cols, 4)
+                                                                     Fig. 7. For each convolution operation, the corresponding layer
+14     if ReLU = True then                                           pruned weights along with its indices are stored to the BRAM
+15         Apply ReLU to the output                                  block. The input is partially loaded into the BRAM block dur-
+16      Add bias to the output                                       ing each iteration. Initially, 3 rows of input (with dimensions
+17      Stream out the output row with dimension                     of (3, 128, 128) for the first layer) are loaded into the BRAM.
+         (num cols, num f ilters) utilizing the DMA-2                These are then processed with weights (with dimensions of
+                                                                     (3, 3, 98, 84)), generating a single row of convolution output
+   We implemented the convolution and dynamic routing                (with dimensions of (128, 84)). Subsequently, the next row
+as two separate modules due to their distinct computation            of input values (with dimensions of (1, 128, 128)) is loaded,
+flows. On-chip BRAM blocks were utilized for storing partial         and computation is performed using the processing elements.
+network weights, network inputs, and intermediate outputs.           This process continues until the complete convolution output
+Additionally, there is another block dedicated to non-linear ex-     is generated.
+ponential and squash operations. All these blocks and data are          The array of processing elements generates partial outputs
+coordinated through a controller module. We employed 16-bit          with dimensions of (128, 4) during each cycle, where 128
+fixed point quantization to minimize the resource consumption        represents the column dimension and 4 represents the output
+and utilized an array of processing elements (PEs) to enable         channel. These partial outputs are then reused for the next
+parallel operations. The convolution accelerator architecture        iteration. After processing all the weights, the computed single
+achieves a throughput of 30 GOPS, while the dynamic routing          row of output with dimensions of (128, 84) is streamed to
+accelerator architecture achieves a throughput of 17.4 GOPS,         off-chip memory for the next layer operation. Meanwhile, the
+despite the limited available hardware resources. Furthermore,       next input row values are stored in the BRAM block and the
+the design flow of convolution and dynamic routing modules           computation process continues.
+are described in Algorithm 1 and Algorithm 2 respectively.              We utilized an array of 4x128 processing elements (PEs)
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. 14, NO. 8, AUGUST 2021                                                                              7
+
+
+
+                       Parameter (BRAM                                                                DAS           MVDR        Tiny-CNN       Tiny-VBF         CapsBeam
+                            block)
+                                                                                                                                                                           0
+
+                                                   c1    c2                               PE                                                                               -10
+                                      8
+            Input         1   2                x   × ＋        c3                                                                                                           -20
+
+         (BRAM block)
+                                                        × ＋        c4
+                                                                                                                                                                           -30
+
+                  64
+                                                              × ＋
+                                                                                                                                                                           -40
+
+          1   2                                                         c5
+                         Softmax                                                                                                                                           -50
+
+                                                                   × ＋        c6                                                                                           -60
+
+
+                                                                        × ＋           y≈exp(x)
+                                                                                                                                                                           0
+
+
+                          Fully
+                                                                                                                                                                           -5
+
+                                                        in_wgt
+                        Connected                                                      PE                                                                                  -10
+
+        Squash                                                              in_wgt
+                                                                                                                                                                           -15
+
+                                                                        R                                                                                                  -20
+
+                                                                                                                                                                           -25
+
+
+                        Agreement              in_act
+                                                        ×          ＋
+                                                                                                                                                                           -30
+
+                                                                            out_col                                                                                        -35
+
+                                               out_col_part                                                                                                                -40
+
+
+
+
+              Output                      64
+                                                                                                 Fig. 9: Reconstrcuted images of standard DAS, MVDR, Tiny-CNN, Tiny-
+           (BRAM block) 1         2                                                              VBF and the proposed CapsBeam for in-silico contrast evaluation (top) and
+        Fig. 8: The design flow of the dynamic routing operation                                 resolution-distortion dataset (bottom)
+
+each performing single fixed point multiplication and addition
+                                                                                                       TABLE I: Contrast metrics (mean) on in-silico and in-vitro data
+operation. The input weights and input activations for each PE
+                                                                                                   Beamformer         Simulation (dB)                Phantom (dB)
+are multiplied together, and the result is accumulated with the                                                   CR       CNR       GCNR CR              CNR       GCNR
+partial output to generate a new partial output.                                                   DAS            13.78    2.37      0.83      11.70      1.04      0.83
+   2) Dynamic Routing Architecture: Due to the complex                                             MVDR           21.66    1.95      0.78      15.09      2.63      0.72
+                                                                                                   Tiny-CNN       13.45    2.04      0.83      11.30      1.05      0.79
+dataflow of dynamic routing algorithm, we designed it as a                                         Tiny-VBF       14.89    1.75      0.74      12.20      1.39      0.67
+separate architecture module and performs computation with                                         CapsBeam       17.36    2.0       0.86      15.48      1.84      0.84
+array processing elements and non-linear units. The micro-
+architecture of dynamic routing algorithm is demonstrated in
+the Fig. 8. It loads input values with dimension (2, 64) and
+generates dynamically routed outputs of the same dimension
+(2, 64) during each iteration. This process continues until
+all (368, 128, 64) values are generated. The Onchip BRAM
+block is utilized to store input, intermediate results, and
+dynamic routing parameters. The exponential operation within
+the Softmax() function is executed through five multiplications
+and five additions, leveraging the first five components of
+its Taylor expansion, as explained in [23]. The square root                                                      (a)                                      (b)
+                                                                                                 Fig. 10: Lateral profile at (a) 15.12 mm and (b) 35.15 mm where x-
+operation within the squash module is executed by invoking                                       axis represents the pixel position and y-axis represents the log compressed
+the built-in hls::sqrt() function present in the Vitis HLS tool.                                 amplitude values
+For the remaining dot product operations, array processing
+elements are utilized, with each conducting multiplication
+                                                                                                 TABLE II: Quantitative measure interms of axial and lateral resolution on
+followed by addition. Additionally, partitioning of the BRAM                                     in-silico and in-vitro data
+blocks facilitates data availability for the computation engine.                                            Beamformer       Simulation (mm)   Phantom (mm)
+                                                                                                                             Axial    Lateral  Axial    Lateral
+                                                                                                            DAS              0.405    0.6      0.496    0.9
+                  IV. E XPERIMENTAL R ESULTS                                                                MVDR             0.334    0.45     0.496    0.78
+   We evaluated our CapsBeam model using the publicly                                                       Tiny-CNN         0.405    0.6      0.503    1.02
+                                                                                                            Tiny-VBF         0.340    0.45     0.481    0.78
+available in-silico, in-vitro, and in-vivo ultrasound datasets                                              CapsBeam         0.350    0.471    0.414    0.84
+accessible through PICMUS. For the in-silico and in-vitro
+datasets, we assessed the performance of each beamformer in                                      Tiny-CNN exhibit noise and other artifacts in the cyst region,
+terms of contrast and resolution. Regarding the in-vivo data,                                    which are significantly reduced in the case of CapsBeam.
+we compared the performance of each beamformer with the                                          Furthermore, the quantitative results presented in the Table I
+CPWC beamformed output. CPWC is derived from 5 insonifi-                                         indicate that the CR and GCNR are improved by 26% and
+cations, while all other beamformed images are obtained from                                     3.61% in the case of CapsBeam compared to DAS, respec-
+a single angle insonification of 0◦ .                                                            tively. Similarly, for point-scattered data, the performance of
+                                                                                                 our CapsBeam is greatly improved compared to DAS and
+                                                                                                 TinyCNN. The graphs presented in Fig. 10 illustrate the lateral
+A. In-silico data                                                                                profile of pixel intensities along the lines of point scatters
+   Fig. 9 illustrates the results of different beamforming meth-                                 at depths of 15.12 and 35.15. It is evident from the results
+ods on the in-silico resolution and contrast data. The proposed                                  that the CapsBeam substantially reduces the mainlobe width
+CapsBeam yields high-contrast, high-resolution imaging that                                      and sidelobes compared to DAS and Tiny-CNN. Moreover,
+is qualitatively comparable to the MVDR target with signif-                                      Table II shows the quantitative analysis of average axial and
+icantly less clutter than DAS, Tiny-CNN and Tiny-VBF. In                                         lateral resolution using different beamformers. We observe that
+evaluating the cyst data, the performance of the state-of-the-                                   our CapsBeam model improved the axial and lateral resolution
+art Tiny-CNN model is limited to that of the DAS. DAS and                                        by 13.6% and 21.5% as compared to DAS.
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. 14, NO. 8, AUGUST 2021                                                                             8
+
+
+
+     DAS           MVDR         Tiny-CNN       Tiny-VBF      CapsBeam    0
+                                                                                    DAS            CPWC             Tiny-CNN          Tiny-VBF             CapsBeam
+                                                                                                                                                                      0
+
+
+                                                                         -10                                                                                          -10
+
+
+                                                                         -20                                                                                          -20
+
+
+                                                                         -30                                                                                          -30
+
+
+                                                                         -40                                                                                          -40
+
+
+                                                                         -50                                                                                          -50
+
+                                                                         0
+                                                                                                                                                                      0
+
+                                                                         -10
+                                                                                                                                                                      -10
+
+                                                                         -20
+                                                                                                                                                                      -20
+
+                                                                         -30
+                                                                                                                                                                      -30
+
+                                                                         -40
+                                                                                                                                                                      -40
+
+                                                                         -50
+                                                                                                                                                                      -50
+
+
+Fig. 11: Reconstrcuted images of standard DAS, MVDR, Tiny-CNN, Tiny-           Fig. 13: Reconstrcuted images of standard DAS, MVDR, Tiny-CNN, Tiny-
+VBF and the proposed CapsBeam for in-vitro contrast evaluation (top) and       VBF and the proposed CapsBeam for in-vivo carotid artery (top) and breast
+resolution-distortion dataset (bottom)                                         mass dataset (bottom)
+
+                                                                                      CR: 17.71     Axial: 0.371         CR: 14.51         Axial: 0.414
+                                                                                      CNR: 1.63     Lateral: 0.51        CNR: 1.34         Lateral: 0.84
+                                                                                      GCNR: 0.87                         GCNR: 0.85
+
+
+
+
+                                                                                      CR: 16.36     Axial: 0.371         CR: 14.22         Axial: 0.414
+                                                                                      CNR: 1.26     Lateral: 0.51        CNR: 1.19         Lateral: 0.84
+                                                                                      GCNR: 0.85                         GCNR: 0.85
+
+
+
+
+                (a)                                   (b)
+Fig. 12: Lateral profile at (a) 14.01 mm and (b) 32.79 mm where x-
+                                                                               Fig. 14: Reconstrcuted images of pruned CapsBeam on CPU (top) and
+axis represents the pixel position and y-axis represents the log compressed
+                                                                               optimized CapsBeam on FPGA (bottom) for in-silico, in-vitro and in-vivo
+amplitude values
+                                                                               datasets
+B. In-vitro data                                                               is maintained, and artifacts are reduced, resulting in images
+   We conducted experiments on in-vitro data and analyzed                      highly similar to CPWC beamformed output.
+the contrast and resolution of DAS, MVDR, TinyCNN, Tiny-                       D. Evaluating LAKP-ML on CapsBeam
+VBF, and our CapsBeam model. The reconstructed images
+are depicted in Fig. 11. Our CapsBeam model exhibits signif-                      Even though the CapsBeam model possesses a low number
+icantly improved contrast and resolution compared to other                     of parameters and computations, further model compression is
+beamformers, as observed both qualitatively and quantita-                      necessary to reduce computation and facilitate deployment on
+tively. The quantitative analysis is presented in the Table I,                 resource-constrained edge devices. We pruned the CapsBeam
+where the mean CR, CNR, and GCNR for the cyst targets                          model using our LAKP-ML method, achieving an effective
+demonstrate notable improvements with CapsBeam, showing                        compression ratio of 85% with minimal loss in image quality.
+improvements of 32.31%, 76.9%, and 1.2% compared to DAS,                       Fig. 14 depicts the beamformed output of the pruned Caps-
+respectively. Furthermore, CapsBeam enhances the axial and                     Beam model across different datasets, showcasing that the
+lateral resolution by 16.54% and 6.7%, respectively, surpass-                  model maintains its reconstruction quality with 15% of its
+ing DAS, as demonstrated in the Table II. Additionally, the                    original weights. Additionally, from the quantitative measures,
+lateral profile of pixel intensities for contrast and resolution               it is evident that while the axial and lateral resolution remain
+data is illustrated in Fig. 12. Our CapsBeam model effectively                 similar to the original model, there is a slight degradation in
+reduces overall artifacts and minimizes mainlobe width and                     contrast.
+sidelobes in the point scatter data.
+                                                                               E. Evaluation on FPGA
+                                                                                  We deployed the 85% pruned model on the Xilinx ZCU104
+C. In-vivo data
+                                                                               evaluation board. The input to the accelerator is RF data with
+   In addition to the in-silico and in-vitro data, we evaluated                size of (368,128,128), and the final output from the beam-
+the performances of the beamformers on in-vivo data as                         former is envelope data (I and Q data) with size (368,128).
+well. Fig. 13 displays the longitudinal view of the in-vivo                    However, our accelerator design is compatible with any image
+carotid artery. We observe that the contrast in the artery region              size. We quantized the model using a 16-bit fixed-point format,
+is significantly higher in the case of our CapsBeam model                      which reduced computation and energy consumption. The
+compared to DAS, Tiny-CNN, and Tiny-VBF. Additionally,                         reconstructed images on the FPGA are depicted in the Fig. 14.
+clutter artifacts, such as white shades, are greatly reduced with              We observe that the quality of the images remains similar to
+our CapsBeam model. Similarly, for the CUBDL JHU data                          that of the pruned CapsBeam model even after the optimiza-
+(bottom view of breast mass) shown in the figure, our Caps-                    tions. Additionally, the performance of Tiny-CNN and Tiny-
+Beam model demonstrates superior performance compared to                       VBF are evaluated on the FPGA. The convolutional architec-
+DAS, Tiny-CNN, and Tiny-VBF. We observe that contrast                          ture of the Tiny-CNN and non-optimized CapsBeam models
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. 14, NO. 8, AUGUST 2021                                                      9
+
+
+
+TABLE III: Resource utilization of different tinyML beamformers on Xilinx    TABLE IV: Comparison of frame rate for different beamformers on GPU
+ZCU104 evaluation board                                                                                            Frame Rate (FPS)
+ Resources     Tiny-CNN        Tiny-VBF         CapsBeam   Optimized            Beamformer                 NVIDIA        T4 NVIDIA RTX
+                                                           CapsBeam                                        Tensor Core         A4500
+ Slice LUTs 72286              134895           107557     163048               DAS [3]                    714                 1657
+               (31%)           (59%)            (47%)      (71%)                MVDR [5]                   6                   11
+ LUTRAM        1488            24582            2080       22271                CNN [10]                   67                  150
+               (1%)            (24%)            (2%)       (22%)                Tiny-CNN [8]               270                 526
+ BRAM          278             129              283        182.5                Tiny-VBF [19]              179                 757
+               (89%)           (41%)            (91%)      (59%)                Non-optimized CapsBeam     172                 380
+ DSP48E        1038            1298             1490       1363
+               (60%)           (75%)            (86%)      (79%)            optimized CapsBeam model achieved a significant throughput
+ Power (W) 5.611               5.501            5.96       6.721            improvement, over 28× compared to the MVDR beamformer
+follows a similar structure as demonstrated in Section III-G,               and 2.5× compared to the CNN beamformer, while preserving
+apart from the absence of the index parameters. The Tiny-                   acceptable image quality. In contrast, Tiny-CNN and Tiny-
+VBF accelerator is implemented based on the design presented                VBF achieved approximately 1 − 2× higher frame rates than
+in [19], with the additional optimizations demonstrated in                  the non-optimized CapsBeam model, but this came at the cost
+Section III-G. Experimental results showed that Tiny-CNN,                   of reconstructed image quality, as discussed in Section IV.
+Tiny-VBF, and our non-optimized CapsBeam had computation                       We compressed the CapsBeam model to enhance compu-
+latencies of 0.71, 1.49, and 1.35 seconds, respectively. More-              tational efficiency using our multi-layer LookAhead Kernel
+over, our optimized CapsBeam model significantly reduced                    Pruning (LAKP-ML), achieving an 85% compression rate
+the computation latency from 1.35 to 0.482 seconds, demon-                  while preserving reconstruction quality. This parameter re-
+strating a substantial improvement in efficiency. Table III                 duction significantly minimized off-chip data transmission and
+lists the amount of resources utilized by Tiny-CNN, Tiny-                   reduced computational complexity from 28.79 GOPs/Frame to
+VBF, CapsBeam and the pruned and optimized CapsBeam                         approximately 6 GOPs/Frame for a frame size of (368,128).
+model. The results demonstrate that, in the case of optimized               Additionally, we designed an FPGA-based accelerator archi-
+CapsBeam, the combined effect of optimization and additional                tecture for the pruned CapsBeam model. Quantizing activa-
+parallelism in the accelerator’s computation led to a slight                tions and parameters from 32-bit to 16-bit doubled the data
+increase in LUT and DSP utilization while reducing BRAM                     transmission rate, while utilizing separate channels for weight
+usage. However, these enhancements significantly improved                   and activation transmission further improved data throughput.
+the overall throughput of image reconstruction, delivering                  We extended the exponential function simplification approach,
+higher performance and superior image quality compared to                   initially evaluated for classification tasks in [23], to beam-
+other beamformers.                                                          forming. This optimization reduced the latency of dynamic
+                                                                            operations from 0.11 seconds to 0.03 seconds. Furthermore,
+                          V. D ISCUSSION                                    quantizing to fixed-point arithmetic, increasing parallelism,
+                                                                            and simplifying the exponential operation significantly opti-
+   The primary objective in this work is to develop a hardware-
+                                                                            mized computational efficiency, reducing the overall latency
+optimized, lightweight beamformer for real-time ultrasound
+                                                                            from 1.35 seconds (non-optimized) to 0.482 seconds when im-
+image reconstruction and implement a specialized accelerator,
+                                                                            plemented on the Xilinx ZCU104 evaluation board. To bench-
+evaluating its feasibility and performance on a resource-
+                                                                            mark performance, we implemented the state-of-the-art CNN
+constrained FPGA platform. State-of-the-art CNN-based ap-
+                                                                            (with an accelerator architecture similar to Tiny-CNN), Tiny-
+proaches [9], [10], are primarily optimized for software-based
+                                                                            CNN and Tiny-VBF on the Xilinx ZCU104 evaluation board
+applications and have a computational complexity exceeding
+                                                                            and evaluated their frame rates. Experimental results showed
+90 GOPs/Frame for a frame size of (368,128). These models
+                                                                            that our optimized CapsBeam achieves 2.07 FPS, surpassing
+are implemented on GPUs, specifically the Titan Xp and
+                                                                            state-of-the-art models, including CNN (0.015 FPS), Tiny-
+Nvidia GeForce GTX 1080Ti. However, their large parameter
+                                                                            CNN (1.41 FPS), and Tiny-VBF (1.48 FPS). This highlights
+sizes and high computational demands make them impractical
+                                                                            CapsBeam’s efficiency in both throughput and image quality
+for resource-constrained edge devices. The Tiny-CNN [8] and
+                                                                            compared to other beamformers.
+Tiny-VBF [19] introduced lightweight beamformers leverag-
+ing CNNs and vision transformers, respectively. Notably, Tiny-                 In our comprehensive evaluation of different beamformers
+VBF was implemented on the Xilinx ZCU104 evaluation                         using resolution (FWHM) and contrast (CR, CNR, GCNR)
+board, demonstrating feasibility for FPGA-based deployment.                 quality metrics, the proposed CapsBeam model consistently
+However, the reconstructed image quality is suboptimal, par-                outperformed DAS, Tiny-CNN, and Tiny-VBF, particularly on
+ticularly for in-vivo datasets. In this study, we propose a cap-            in-vivo data. While CapsBeam demonstrated superior reso-
+sule network-based lightweight beamformer that outperforms                  lution compared to DAS and Tiny-CNN, it showed a slight
+both standard DAS and existing tinyML beamformers [8],                      lateral resolution degradation of approximately 7.6% on in-
+[19]. We implemented the beamformers, including DAS [3],                    silico and in-vitro data compared to Tiny-VBF, as shown in Ta-
+MVDR [5], CNN [10], Tiny-CNN [8], and Tiny-VBF [19], and                    ble II. This indicates that Tiny-VBF achieves better resolution
+compared their frame rates against our CapsBeam model on                    in smooth regions where artifacts in the retrieved signal are
+the NVIDIA T4 Tensor Core and NVIDIA RTX A4500 GPUs,                        minimal. Notably, the in-silico evaluations involve computa-
+as shown in Table IV. The results demonstrate that the non-                 tional simulations, while the in-vitro evaluations use phantoms
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. 14, NO. 8, AUGUST 2021                                                            10
+
+
+
+containing wires or cysts at fixed locations, both specifically                [13] D. T. Nguyen, T. N. Nguyen, H. Kim and H. -J. Lee, “A High-
+designed to assess resolution and contrast. However, in the                        Throughput and Power-Efficient FPGA Implementation of YOLO CNN
+                                                                                   for Object Detection,” in IEEE Transactions on Very Large Scale Inte-
+case of in-vivo data collected from living tissue, where various                   gration (VLSI) Systems, 2019, vol. 27, pp. 1861-1873.
+artifacts are present, CapsBeam effectively minimizes these                    [14] S. Li, Y. Luo, K. Sun, N. Yadav and K. K. Choi, ”A Novel FPGA Accel-
+                                                                                   erator Design for Real-Time and Ultra-Low Power Deep Convolutional
+distortions, as illustrated in Fig. 14, outperforming Tiny-VBF,                    Neural Networks Compared With Titan X GPU,” in IEEE Access, vol. 8,
+Tiny-CNN, and DAS. This highlights CapsBeam’s superior                             pp. 105455-105471, 2020.
+generalization capability in real-world imaging scenarios.                     [15] X. Lian, Z. Liu, Z. Song, J. Dai, W. Zhou and X. Ji, “High-Performance
+                                                                                   FPGA-Based CNN Accelerator With Block-Floating-Point Arithmetic,”
+                       VI. C ONCLUSION                                             in IEEE Transactions on Very Large Scale Integration (VLSI) Systems,
+                                                                                   2019, vol. 27, pp. 1874-1885.
+   In this study, we developed a novel capsule network-                        [16] C. Zhu, K. Huang, S. Yang, Z. Zhu, H. Zhang and H. Shen, “An Efficient
+based adaptive beamformer for ultrasound plane wave imag-                          Hardware Accelerator for Structured Sparse Convolutional Neural Net-
+                                                                                   works on FPGAs,” in IEEE Transactions on Very Large Scale Integration
+ing. Experiments conducted on in-silico, in-vitro and in-vivo                      (VLSI) Systems, 2020, vol. 28, pp. 1953-1965.
+data showed that the CapsBeam model improved resolution                        [17] S. Sabour, N. Frosst, and G. E. Hinton, “Dynamic Routing Between
+and contrast compared to the standard DAS beamformer. To                           Capsules,” in International Conference on Neural Information Processing
+                                                                                   Systems, 2017, pp. 3859–3869.
+reduce the computational load of CapsBeam, we pruned the                       [18] J. Rajasegaran, V. Jayasundara, S. Jayasekara, H. Jayasekara, S. Senevi-
+model using our LAKP-ML approach and compressed model                              ratne, and R. Rodrigo, “DeepCaps: Going Deeper with Capsule Net-
+parameters by 85%. Additionally, we reduced the hardware                           works,” in IEEE/CVF Conference on Computer Vision and Pattern
+                                                                                   Recognition, 2019, pp. 10717-10725.
+complexity of the model through quantization and simplifi-                     [19] A. Rahoof, V. Chaturvedi, M. R. Panicker, and M. Shafique, “Tiny-VBF:
+cation of non-linear operations. Finally, we designed a spe-                       Resource-Efficient Vision Transformer based Lightweight Beamformer
+cialized accelerator architecture for our CapsBeam model and                       for Ultrasound Single-Angle Plane Wave Imaging,”, in 2024 Design,
+                                                                                   Automation & Test in Europe Conference & Exhibition (DATE), 2024.
+evaluated its performance on the Xilinx ZCU104 board. Our                      [20] A. Dosovitskiy et al., “An image is worth 16x16 words: Transformers
+accelerator achieved a throughput of 30 GOPS for convolution                       for image recognition at scale,” International Conference on Computer
+and 17.4 GOPS for dynamic routing operation.                                       Vision and Pattern Recognition, 2020.
+                                                                               [21] A. Marchisio, V. Mrazek, A. Massa, B. Bussolino, M. Martina, and
+                                                                                   M. Shafique, “RoHNAS: A Neural Architecture Search Framework With
+                             R EFERENCES                                           Conjoint Optimization for Adversarial Robustness and Hardware Effi-
+[1] J. Bercoff, “Ultrafast ultrasound imaging,” in Ultrasound Imaging-             ciency of Convolutional and Capsule Networks,” in IEEE Access, 2022,
+    Medical Applications, 2011, pp. 3–24.                                          vol. 10.
+[2] M. Tanter and M. Fink, “Ultrafast Imaging in Biomedical Ultrasound,”       [22] A. Marchisio, B. Bussolino, E. Salvati, M. Martina, G. Masera, and M.
+    in IEEE Trans. Ultrason. Ferroelectr. Freq. Control, 2014, vol. 61, pp.        Shafique, “Enabling Capsule Networks at the Edge through Approximate
+    102–119.                                                                       Softmax and Squash Operations,” in ACM/IEEE International Symposium
+[3] T. L. Szabo, “Diagnostic Ultrasound Imaging: Inside Out,” in Elsevier          on Low Power Electronics and Design, 2022, pp. 1-6.
+    Inc., 2004, pp. 1–549.                                                     [23] A. Rahoof, V. Chaturvedi, and M. Shafique, “FastCaps: A Design
+[4] G. Montaldo, M. Tanter, J. Bercoff, N. Benech, and M. Fink, “Coher-            Methodology for Accelerating Capsule Network on Field Programmable
+    ent plane-wave compounding for very high frame rate ultrasonography            Gate Arrays,” in International Joint Conference on Neural Networks
+    and transient elastography,” in IEEE Trans. Ultrason. Ferroelectr. Freq.       (IJCNN), 2023, pp. 1-8.
+    Control, 2009, vol. 56, pp. 489-506.                                       [24] H. Mao, S. Han, J. Pool, W. Li, X. Liu, Y. Wang and W. J. Dally,
+[5] J. -f. Synnevag, A. Austeng, and S. Holm, “Benefits of minimum-variance        “Exploring the Regularity of Sparse Structure in Convolutional Neural
+    beamforming in medical ultrasound imaging,” in IEEE Trans. Ultrason.           Networks,” in IEEE Conference on Computer Vision and Pattern Recog-
+    Ferroelectr. Freq. Control, 2009, vol. 56, pp. 1868-1879.                      nition Workshops (CVPRW), 2017, pp. 1927-1934.
+[6] J. Chen, J. Chen, R. Zhuang, and H. Min, “Multi-Operator Minimum           [25] H. Liebgott, A. Rodriguez-Molares, F. Cervenansky, J.A. Jensen, and
+    Variance Adaptive Beamforming Algorithms Accelerated With GPU,” in             O. Bernard, “Plane-Wave Imaging Challenge in Medical Ultrasound,” in
+    IEEE Transactions on Medical Imaging, 2020, vol. 39, pp. 2941-2953.            IEEE International Ultrasonics Symposium (IUS), 2016, pp. 1-4.
+[7] B. Luijten et al, “Adaptive Ultrasound Beamforming Using Deep Learn-       [26] G. Malamal and R. Mahesh, “Towards Diffuse Beamforming For Spec-
+    ing,” in IEEE Transactions on Medical Imaging, 2020, vol. 39, pp. 3967-        ular Reflectors: A Pixel-Level Reflection Tuned Apodization Scheme For
+    3978.                                                                          Ultrasound Imaging,” in IEEE International Symposium on Biomedical
+[8] R. P. Mathews and R. Mahesh, “Towards Fast Region Adaptive Ultra-              Imaging, 2021, pp. 415-418.
+    sound Beamformer for Plane Wave Imaging Using Convolutional Neural         [27] A. N. Madhavanunni and R. Mahesh, “A nonlinear beamforming for
+    Networks,” in International Conference of the IEEE Engineering in              enhanced spatiotemporal sensitivity in high frame rate ultrasound flow
+    Medicine and Biology Society, 2021, pp. 2910-2913.                             imaging,” in Computers in Biology and Medicine, 2022, vol. 147, p.
+[9] S. Goudarzi, and H. Rivaz, “Deep reconstruction of high-quality ultra-         105686.
+    sound images from raw plane-wave data: A simulation and in vivo study,”    [28] D. Hyun et al., “Deep Learning for Ultrasound Image Formation:
+    in Ultrasonics, 2022, vol. 125, p. 106778.                                     CUBDL Evaluation Framework and Open Datasets,” in IEEE Trans.
+[10] J. -Y. Lu, P. -Y. Lee, and C. -C. Huang, “Improving Image Quality             Ultrason. Ferroelectr. Freq. Control, 2021, vol. 68, pp. 3466-3483.
+    for Single-Angle Plane Wave Ultrasound Imaging With Convolutional          [29] S. W. Smith, H. Lopez, W. J. Bodine, “Frequency independent ultrasound
+    Neural Network Beamformer,” in IEEE Trans. Ultrason. Ferroelectr. Freq.        contrast detail analysis,” in Ultrasound in Medicine and Biology, 1985,
+    Control, 2022, vol. 69, pp. 1326-1336.                                         vol. 11, pp. 467-477.
+[11] J. Luo, Q. Huang, S. Chang, X. Song, and H. Wang, “Compact                [30] R. M. Rangayyan, “Biomedical Image Analysis,” in CRC Press, 2004.
+    Beamformer Design with High Frame Rate for Ultrasound Imaging,” in         [31] A. Rodriguez-Molares et al., “The Generalized Contrast-to-Noise Ratio:
+    Sensors and Transducers, 2014, vol. 168, pp. 237-242.                          A Formal Definition for Lesion Detectability,” in IEEE Trans. Ultrason.
+[12] K. Guo, L. Sui, J. Qiu, J. Yu, J. Wang, S. Yao, “Angel-Eye: A                 Ferroelectr. Freq. Control, 2020, vol. 67, pp. 745-759.
+    Complete Design Flow for Mapping CNN Onto Embedded FPGA,” in
+    IEEE Transactions on Computer-Aided Design of Integrated Circuits and
+    Systems, 2017, vol. 37, pp. 35-47.
+IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS, VOL. 14, NO. 8, AUGUST 2021                                                                   11
+
+
+
+                       Abdul Rahoof received the B.Tech. degree in Com-                                      Muhammed Shafique (Senior Member, IEEE) re-
+                       puter Science and Engineering from Lal Bahadur                                        ceived the Ph.D. degree in computer science from
+                       Shastri College of Engineering, Kasaragod, Kerala,                                    the Karlsruhe Institute of Technology (KIT), Ger-
+                       India, in 2017, and the M.Tech. degree in Infor-                                      many, in 2011.
+                       mation Security from the College of Engineering,                                         He established and led a highly recognized re-
+                       Trivandrum (CET), Kerala, in 2019. He is currently                                    search group at KIT for several years and conducted
+                       pursuing the Ph.D. degree at the Indian Institute                                     impactful collaborative research and development
+                       of Technology (IIT) Palakkad, Kerala. His current                                     activities across the globe. In October 2016, he
+                       research focuses on the application of deep learning                                  joined the Institute of Computer Engineering, Fac-
+                       techniques and hardware acceleration for complex                                      ulty of Informatics, Technische Universität Wien
+                       algorithms, particularly in the domain of medical                                     (TU Wien), Vienna, Austria, as a Full Professor of
+imaging. His broader research interests include hardware optimization and          computer architecture and robust, and energy-efficient technologies. Since
+machine learning.                                                                  September 2020, he has been with New York University (NYU), where he is
+                                                                                   currently a Full Professor and the Director of the eBrain Laboratory, NYU,
+                                                                                   Abu Dhabi, United Arab Emirates, and a Global Network Professor with the
+                                                                                   Tandon School of Engineering, NYU, New York City, USA. He is also a Co-
+                                                                                   PI/Investigator in multiple NYUAD Centers, including the Center of Artificial
+                         Vivek Chaturvedi (Member, IEEE) is currently              Intelligence and Robotics (CAIR), the Center of Cyber Security (CCS), Center
+                         working as Associate Professor in the Department          for Interacting Urban Networks (CITIES), and the Center for Quantum and
+                         of Computer Science and Engineering at Indian             Topological Systems (CQTS). He holds one U.S. patent. He has (co)authored
+                         Institute of Technology, Palakkad, India. Previously,     six books, more than ten book chapters, more than 350 papers in premier jour-
+                         he was a Research Scientist in the School of com-         nals and conferences, and more than 100 archive articles. His research interests
+                         puter science and engineering at Nanyang Tech-            include AI and machine learning hardware and system-level design, brain-
+                         nological University, Singapore. He received his          inspired computing, machine learning security and privacy, quantum machine
+                         M.S. from Syracuse University, NY and Ph.D. from          learning, cognitive autonomous systems, wearable healthcare, energy-efficient
+                         Florida International University, Miami. He has also      systems, robust computing, hardware security, emerging technologies, FPGAs,
+                         worked in Sun Microsystems as a Student intern.           MPSoCs, embedded systems, cross-layer analysis, modeling, design, and
+                         Dr. Chaturvedi’s current research interest includes       optimization of computing and memory systems. The researched technologies
+power, thermal and lifetime reliability optimization in multi/many core pro-       and tools are deployed in application use cases from the Internet of Things
+cessors including both 2D and 3D architectures. He is also actively working        (IoT), smart cyber-physical systems (CPS), and ICT for development (ICT4D)
+on Hardware acceleration of complex algorithms and Adversarial Machine             domains. He is a Senior Member of the IEEE Signal Processing Society
+Learning. He has served as reviewer and TPC for several IEEE/ACM Journals          (SPS) and a member of ACM, SIGARCH, SIGDA, SIGBED, and HIPEAC.
+and Conferences.                                                                   He received the 2015 ACM/SIGDA Outstanding New Faculty Award, the AI
+                                                                                   2000 Chip Technology Most Influential Scholar Award, in 2020 and 2022,
+                                                                                   and the ASPIRE AARE Research Excellence Award, in 2021. He received
+                                                                                   six gold medals and several best paper awards and nominations at prestigious
+                                                                                   conferences. He has served as the PC chair, the general chair, the track chair,
+                          Mahesh Raveendranatha Panicker (Senior Mem-              and a PC member for several prestigious IEEE/ACM conferences. He has
+                          ber, IEEE) received his B. Tech. degree in Electri-      given several keynotes, invited talks, and tutorials as well as organized many
+                          cal and Electronics Engineering from Rajiv Gandhi        special sessions at premier venues.
+                          Institute of Technology, India in 2003 and Ph.D.
+                          degree from the School of Computer Engineering,
+                          Nanyang Technological University (NTU), Singa-
+                          pore in 2009. Post a two-year stint as postdoctoral
+                          fellow at NTU, Mahesh transitioned to industry,
+                          working as a Lead Research Engineer at GE Global
+                          Research Centre, Bangalore, from 2010 to 2017.
+                          Subsequently, he served as Senior Chief Engineer at
+Samsung Research Institute, Bangalore, until 2018. He entered academia as an
+Assistant Professor of Electrical Engineering at IIT Palakkad in 2018, and later
+became an Associate Professor in 2021. Since December 2023, he has been
+an Associate Professor at the Singapore Institute of Technology’s Infocomm
+Technology Cluster. His research interests include signal/image processing,
+machine learning, and embedded and accelerated computing, with applications
+in diagnostic ultrasound, biomedical systems, and industrial prognostics.
+

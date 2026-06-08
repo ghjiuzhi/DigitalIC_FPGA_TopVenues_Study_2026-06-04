@@ -1,0 +1,525 @@
+King’s Research Portal
+
+DOI:
+10.1109/TCSII.2024.3378280
+
+
+Document Version
+Peer reviewed version
+
+
+Link to publication record in King's Research Portal
+
+
+
+
+Citation for published version (APA):
+Su, J., Lam, H.-K., Liu, J., & Yu, J. (2024). Fuzzy Observer-based Command Filtered Adaptive Control of
+Flexible Joint Robots with Time-varying Output Constraints. IEEE TRANSACTIONS ON CIRCUITS AND
+SYSTEMS II-EXPRESS BRIEFS, 71(9), 4251-4255. https://doi.org/10.1109/TCSII.2024.3378280
+
+
+
+
+Citing this paper
+Please note that where the full-text provided on King's Research Portal is the Author Accepted Manuscript or Post-Print version this may
+differ from the final Published version. If citing, it is advised that you check and use the publisher's definitive version for pagination,
+volume/issue, and date of publication details. And where the final published version is provided on the Research Portal, if citing you are
+again advised to check the publisher's website for any subsequent corrections.
+General rights
+Copyright and moral rights for the publications made accessible in the Research Portal are retained by the authors and/or other copyright
+owners and it is a condition of accessing publications that users recognize and abide by the legal requirements associated with these rights.
+
+•Users may download and print one copy of any publication from the Research Portal for the purpose of private study or research.
+•You may not further distribute the material or use it for any profit-making activity or commercial gain
+•You may freely distribute the URL identifying the publication in the Research Portal
+Take down policy
+If you believe that this document breaches copyright please contact librarypure@kcl.ac.uk providing details, and we will remove access to
+the work immediately and investigate your claim.
+
+
+
+
+Download date: 04. Jun. 2026
+                                                                                                                                                1
+
+
+
+
+Fuzzy Observer-based Command Filtered Adaptive
+Control of Flexible Joint Robots with Time-varying
+                Output Constraints
+              Junhao Su, Hak-Keung Lam, Fellow, IEEE, Jiapeng Liu, Jinpeng Yu , Senior Member, IEEE
+
+
+
+   Abstract—Flexible joint robots (FJR) systems are used in                     extensively. However, the traditional backstepping method
+many aspects of actual production due to its high compliance,                   used in [7]-[9] has the problem of “explosion of complexity
+low energy consumption, human-computer interaction safety and                   (EOC)”, which increases the computation burden and leads
+other characteristics. A fuzzy observer-based command filtered
+adaptive control method is applied to make FJR systems with                     to limitations in the application of the backstepping control
+time-varying output constraints (TVOC) and model uncertainties                  of FJR. To solve EOC, the dynamic surface control (DSC)
+operate safely in a complex environment in this paper. Chiefly, a               method [10], [15] has been presented, but the filtering errors in
+fuzzy observer is developed to estimate the link’s angle velocity               the DSC will affect the tracking performance. The command
+and motor angle velocity of the FJR. Next, by combining time-                   filtered control (CFC) method with the error compensation
+varying barrier Lyapunov function (TVBLF) with fuzzy logic
+systems, the uncertainties of the FJR model are approximated                    mechanism (ECM) has been presented in [11]-[13] to remove
+without violating the TVOC. Besides, the command filtered                       the impacts of filtering errors. Combined with adaptive control,
+method with error compensation signal resolves the issue of                     a new CFC method has been expanded into nonlinear multi-
+“explosion of complexity” and removes the impacts of filtering                  agent systems by Zhao et al. [11]. Considering the tracking
+errors. The stability of the FJR system is verified by Lyapunov                 control of the FJR, CFC method has been introduced in [12]-
+stability theory. Simulation shows that the devised approach
+can insure the TVOC, the validity of the observer and position                  [13]. However, the above results did not consider the complex
+tracking accuracy of the system.                                                and changeable work environment of FJR.
+  Index Terms—Fuzzy observer, Adaptive control, Flexible-joint                      The working environment of FJR is usually complicated and
+robot, Time-varying output constraint, Command filtered.                        volatile, which may cause safety risks to the robot itself, and
+                                                                                even personal. As a result, the FJR system’s TVOC must be
+                                                                                ensured. The TVBLF has been used to fulfill the output con-
+                          I. I NTRODUCTION                                      straints [14]. [15] designed an output-feedback-based prede-
+                                                                                fined time full-state error constrained controller. The combine
+F    LEXIBLE-joint robots (FJR) are widely used in medical
+     and health, aerospace, education industry, life services
+and so on, on account of its light weight, high compliance,
+                                                                                of a tangent barrier Lyapunov-Krasovskii function and DSC
+                                                                                has been used in [19]. In addition, it is arduous to obtain the
+low energy consumption, human-computer interaction safety                       velocity terms of FJR. Observer technique [15]-[16] solves
+and other characteristics [1]. At the same time, the FJR system                 the problem and has been applied to FJRs [16]. Considering
+is a high-order nonlinear system with strong coupling, which                    the factors of highly nonlinear and the velocity terms that
+limits the control performance. Therefore, the control design                   is difficult to measure in FRJ system with complex work
+problems for FJR is of essential importance, and becoming                       environment, the fuzzy observer-based CFC with TVOC in
+a research hot spot. There are a number of studies on the                       FJR system is worth discussing.
+tracking control of FJR systems, such as singular perturbation                      A fuzzy observer-based CFC for FJR with TVOC is studied.
+method [2], sliding mode control [3]-[4], variable structure                    The proposed scheme has the following advantages.
+control [5], feedback linearization method [6], backstepping                        (1) Compared with [12], [13], [17], the combine of TVBLF
+control [7]-[9] and so on.                                                      and Lyapunov stability theory are used for the n-link FJR
+   The combination of adaptive backstepping control and fuzzy                   system to make it suitable for complex working environments
+approximation theory is used in the tracking control of FJR                     and ensure the boundness of all signals, which . In [12]-[13],
+   This work was supported in part by the National Natural Science Foundation
+                                                                                the problem of output constraints has not been considered. In
+of China under Grant 61973179, in part by the Chang Jiang Scholars Program,     [17], the time-varying nature of the constraints has not been
+in part by the Major Innovation Project of Shandong Province under Grant        taken into account.
+2022CXGC020901, in part by the Taishan Scholar Special Project Fund under
+Grant TSTP20221120, and in part by the Qingdao Key Technology Research              (2) Compared with [7]-[10], the CFC method with ECM is
+and Industrialization Demonstration Project under Grant 23-1-4-xxgg-6-gx.       used to solve the problem of EOC caused by backstepping as
+(Corresponding author: Jinpeng Yu.)                                             well as remove the effect of filtering errors to obtain better
+   Junhao Su, Jiapeng Liu and Jinpeng Yu are with the School
+of Automation, Qingdao University, Qingdao 266071, China (e-mail:               tracking effect of the n-link FJR system.
+13296360412@163.com; ljpqdu1990@qdu.edu.cn; yjp1109@hotmail.com;).                  (3) Fuzzy state observer technique is used to solve the
+   Hak-Keung Lam is with the Department of Engineering, King’s
+College London, Strand, London, WC2R 2LS, U.K. (e-mail: hak-                    problem that the velocity terms of n-link FJR are difficult
+keung.lam@kcl.ac.uk).                                                           to measure, which can improve the reliability.
+                                                                                                                                                                     2
+
+
+
+     II. M ATHEMATICAL M ODEL AND P RELIMINARIES                                               III. D ESIGN OF THE FUZZY OBSERVER
+A. FJR system description                                                          In order to obtain the link’s angle velocity and motor angle
+  Considering the following dynamic model of n-link FJR:                        velocity of the running FJR, the fuzzy observer is designed as
+                                                                               follows:
+  M (q)q̈ + C(q, q̇)q̇ + G(q) + F (q̇) + Kq = Kqm
+                                                                                          ˙
+               ˙ + K(qm − q) = u
+    J q¨m + B qm                                       (1)                                  ςˆ1 = ςˆ2 + d¯1 (y − ŷ)
+    y=q                                                                                   ςˆ˙2 = h2 ς3 + fˆ(ˆ   ς2 |ϑ̂2 ) + d¯2 (y − ŷ)
+                                                                                        
+                                                                                         
+                                                                                         
+                                                                                             ˙ςˆ3 = ςˆ4 + d¯3 (ς3 − ςˆ3 )                   (5)
+where the definitions and values of q, q̇, qm , qm           ˙ , M (q) ∈                      ˙              ˆ              ¯
+                                                                                                                ς4 |ϑ̂4 ) + d4 (ς3 − ςˆ3 )
+Rn×n , C(q, q̇) ∈ Rn×n , G(q) ∈ Rn , F (q̇) ∈ Rn , K ∈                                    ςˆ4 = h4 u + f (ˆ
+                                                                                         
+                                                                                         
+                                                                                         
+Rn×n , J ∈ Rn×n , B ∈ Rn×n and u ∈ Rn can be found                                           ŷ = ςˆ1
+in [13]. Suppose that B contains uncertainty.
+    Let ς1 = q = [ς1,1 , ς1,2 , ..., ς1,n ]T , ς2 = q̇ = [ς2,1 , ς2,2 ,         where ςˆ = [ˆ    ς1 , ςˆ2 , ςˆ3 , ςˆ4 ]T is the estimate of ς, then, the
+..., ς2,n ]T , ς3 = qm = [ς3,1 , ς3,2 , ..., ς3,n ]T , ς4 = qm          ˙ =     observer is rewritten as
+[ς4,1 , ς4,2 , ..., ς4,n ]T , (1) is rewritten as                                          
+                                                                                              ςˆ˙ = Aˆ     ς + Dy + Γς3 + Hu + β
+                                                                                                                                                     (6)
+                           
+                              ς˙1 = ς2                                                       ŷ = C ςˆ
+                           
+                            ς˙2 = h2 ς3 + f2
+                           
+                           
+                               ς˙3 = ς4                                   (2)   where A = [−d¯1 − d¯2 0 0; 1 0 0 0; 0 0 − d¯3 −
+                           
+                               ς˙  = h   u + f                                  d¯4 ; 0 0 1 0], D = [d¯1 , d¯2 , 0, 0]T , Γ = [0, h2 , d¯3 , d¯4 ]T , H =
+                                 4     4       4
+                           
+                                                                                [0, 0, 0, h4 ]T , β = [0, fˆ(ˆ       ς2 |ϑ̂2 ), 0, fˆ(ˆ ς4 |ϑ̂4 )]T , and C =
+                           
+                           
+                               y = ς1
+                           
+                                                                                [1, 0, 0, 0].
+where h2 = KM −1 (ς1 ), h4 = J −1 , f2 = M −1 (ς1 )                                 Define fˆi (ς̂ i |ϑ∗i ) = ϑ∗i T ϕi (ς̂ i ), fˆi (ς̂ i |ϑ̂i ) = ϑ̂Ti ϕi (ς̂ i ),
+(−C(ς1 , ς2 )ς2 − G(ς1 ) − Kς1 − F (ς2 )), f4 = J −1 (K(ς1 −                    where i = 2, 4, ς̂ i = [ˆ    ς1 , ςˆ2 , ..., ςˆi ]T , ϑ̃i = ϑ∗i − ϑ̂i , ϑ∗i is the
+ς3 ) − Bς4 )                                                                    optimal parameter, σ̃i = fi (ς̂ i ) − fˆi (ς̂ i |ϑ̂i ), where |σ̃i | ≤ σ0 ,
+   Remark 1. The FJR system is a 4-order nonlinear system                       and σ0 is a positive constant. Define e = [e1 , e2 , e3 , e4 ]T as
+with uncertain terms, which brings some difficulties when                       observer error vector, ej = ςj − ςˆj , j = 1, 2, 3, 4. The error
+controlling it, meanwhile, measuring the velocity terms of an                   expression of the observer is as follows:
+operating FJR system, dealing with the uncertainties and the
+problem of TVOC without affecting the tracking effect brings                                                ė = Ae + Ξ + σ̃                                      (7)
+challenges when designing the controller.
+                                                                                where         Ξ=[0,        f2 (ς i ) − f2 (ς̂ 2 ),            0,      f4 (ς i ) −
+                                                                                f2 (ς̂ 4 )]T , σ̃=[0, f2 (ς̂ 2 )− fˆ2 (ς̂ 2 |ϑ̂2 ), 0, f4 (ς̂ 4 )− fˆ4 (ς̂ 4 |ϑ̂4 )]T .
+B. Preliminaries
+                                                                                   Based on Assumption 3,                            fi (ς i ) − fi (ς̂ i )         ≤
+    Assumption 1. The uncertain term F (q̇) is continuous and                   m̄i ς i − ς̂ i          = m̄i kek , (i = 2, 4). And σ̃ =
+bounded.                                                                        [0, σ̃2 , 0, σ̃4 ]T , (σ̃)2 ≤ 2σ02 . A is a standard Hurwitz
+    Assumption 2. The desired trajectory yd,i and its first deriva-             matrix by choosing the right d1 , d2 , d3 and d4 . Given a
+tive ẏd,i are continuous and bounded with |yd,i | ≤ Y0 <kc,i ,                 matrix Q̌T = Q̌ > 0, there exists P̌ T = P̌ > 0 such that
+|ẏd,i | ≤ Y1 , where Y0 and Y1 are positive constants.                         AT P̌ + P̌ A = −Q̌.
+    Assumption 3. [15] Based on Lipschitz conditions, for a                        Choosing the Lyapunov function V0 = eT P̌ e, and then
+functions fi (=) and constants mi > 0, i = 1, 2..., n, the
+inequality holds fi (=) − fi (=) ˆ ≤ mi ||= − =||,ˆ where =    ˆ is                      V̇0 = ėT P̌ e + eT P̌ ė = −eT Q̌e + 2eT P̌ (Ξ + σ̃)                    (8)
+the estimated value of =, and || · || denotes the 2-norm.
+    Lemma 1. [11] The command filter is defined as follows:                     Using Young’s inequality,
+
+                                                                                                                        1
+           
+               κ̇i,1 = ωn κi,2                                                                                    2                      2  2
+                                                                                          2eT P̌ Ξ ≤ η02 kek +              m22 + m24 P̌ kek
+                                                                                                                                     
+                                                                (3)                                                                                               (9)
+               κ̇i,2 = −2ζωn κi,2 − ωn (κi,1 − αi )                                                                     η02
+
+where αi is the input of the filter and κi,1 (0) =                                                                                  2      2
+                                                                                                                            2
+αi (0), κi,2 (0) = 0, if $1 > 0, $2 > 0 satisfy |α̇i | ≤ $1                                         2eT P̌ σ̃ ≤ η02 kek +               P̌ σ02                   (10)
+                                                                                                                                    η02
+and |α̈i | ≤ $2 for all t ≥ 0, then for any % > 0, existing
+ωn > 0 and ζ ∈ (0, 1], so that |κi − αi | ≤ %, |κ̇i | and |κ̈i | are
+                                                                                where η0 is a positive constant. Let P̌0 = λmin (Q̌) − 2η02 −
+bounded.                                                                         1
+                                                                                                   2
+                                                                                η02
+                                                                                    m22 + m24 P̌      > 0, where λmin (Q̌) is the minimum
+   Lemma 2. [14] Defining a continuous function f (Φ) on the
+set ΩΦ , for ∀ε>0, it always has a fuzzy logic system W T S(Φ)                  eigenvalue of Q̌,then
+such that                                                                                                                       2
+                                                                                                            V̇0 ≤ −P̌0 kek + R0                                  (11)
+                   f (Φ) = W T S(Φ) + σ(Φ)                       (4)
+                                                                                                            2 2
+where σ(Φ) is the approximation error and |σ(Φ)| ≤ ε.                           where R0 = η22 P̌            σ0 .
+                                                                                                    0
+                                                                                                                                                       3
+
+
+
+   IV. C ONTROLLER DESIGN AND S TABILITY ANALYSIS                                   Step 2: Choosing the Lyapunov function (LF) as V2 = V1 +
+                                                                                 1 T          1    T
+   The following error variables are defined as: z1 = ς1 −                       2 κ2 κ2 + 2λ2 ϑ̃2 ϑ̃2 , where λ2 > 0, ϑ̃2 = ϑ̂2 − ϑ2 , ϑ̂2 is the
+                                                                                 estimate of ϑ2 , then, it obtains
+yd , zv = ςˆv − ςv−1,c , v = 2, 3, 4, κj = zj − ξj , j =                                         n                           n
+                                                                                                                2
+1, 2, 3, 4, where ςv−1,c = [ςv−1,c,1 , ςv−1,c,2 , ..., ςv−1,c,n ]T is                           X              κ1,i         X   κ1,i κ2,i
+                                                                                    V̇2 ≤V̇0 −       k1,i ( 2       2   ) +      2 − κ2
+the output of the filter. ξj is the error compensation signal,                                  i=1
+                                                                                                           kb,i − κ 1,i        k
+                                                                                                                            i=1 b,i    1,i
+κj = [κj,1 , κj,2 , ..., κj,n ]T , ξj = [ξj,1 , ξj,2 , ..., ξj,n ]T . Then,
+                                                                                          + κ2T (h2 ς3 + ϑ̂T2 ϕ(ˆ  ς2 ) + d¯2 e1 − ς˙1,c − ξ˙2 )
+choosing the control laws and the adaptive laws as
+                                                                                             1                           ˙                        1 2
+                                      1                                                   + ϑ̃T2 (λ2 κ2 ϕ(ˆ     ς2 ) − ϑ̂2 ) − κ2 ϑ̃T2 ϕ(ˆ
+                                                                                                                                         ς2 ) + kek .
+                   α1 = −k1 z1 + ẏd − z1 + S1 ,                        (12)                 λ2                                                   2
+                                      2                                                                                                             (22)
+                                                                                 Using Young’s inequality, we have
+                                       1
+              α2 =(h2 )−1 (−k2 z2 − z2 − ϑ̂T2 ϕ2 (ˆ
+                                                  ς2 )                                                                1            1
+                                       2                                (13)                   −κ2 ϑ̃T2 ϕ(ˆ  ς2 ) ≤ κ2T κ2 + ϑ̃T2 ϑ̃2 .             (23)
+                                                                                                                      2            2
+                   + ς˙1,c − d¯2 e1 − ð),
+                                                                                 Putting (13), (16), (18) and (23) into (22), the following
+                              1                                                  inequalities hold:
+                 α3 = −k3 z3 − z3 + ς˙2,c − h2 z2 ,                     (14)                    n                2
+                              2                                                               X                κ1,i               T              T
+                                                                                   V̇2 ≤V̇0 −      k1,i ( 2          2 ) − k2 κ2 κ2 + h2 κ3 κ2
+                                    1                                                                    k  b,i −  κ 1,i
+           u =(h4 )−1 (−k4 z4 − z3 − z4 − ϑ̂T4 ϕ4 (ˆ
+                                                   ς4 )
+                                                                                              i=1                                                   (24)
+                                    2                                   (15)                       1      2
+                                                                                         + ∆2 + kek
+               + ς˙3,c − d¯4 e3 ),                                                                 2
+                                                                                                nj T
+                                                                                 where ∆j = λj ϑ̃j ϑ̂2 + 21 ϑ̃Tj ϑ̃j , (j = 2, 4).
+                      ˙                                                 (16)
+                     ϑ̂2 = −n2 ϑ̂2 + λ2 κ2 ϕ(ˆ
+                                             ς2 ),                                  Step 3: Selecting the LF as V3 = V2 + 12 κ3T κ3 , then, it
+                                                                                 obtains
+                        ˙                                               (17)
+                       ϑ̂4 = −n4 ϑ̂4 + λ4 κϕ (ˆ
+                                              ς4 )                                  V̇3 =V̇2 + κ3T (ς˙3 − ς˙2,c − ξ˙3 )
+                                                                                                 n                2
+                    kT I k̇                     κ                κ
+                                                                                               X                κ1,i
+                      i b
+where S1 = kT Ii kbb −v T       v1 , ð = [ k2 −κ1,1               1,n
+                                                    2 , ..., k 2 −κ 2     ]T .          ≤V̇0 −      k1,i ( 2                       T           T
+                                                                                                                       2 ) − k2 κ2 κ2 + κ3 (h2 κ2
+               b        1 Ii v1             b,1     1,1       b,n     1,n                                  k     −  κ
+                                                                                                i=1          b,i      1,i
+λi (i = 2, 4), ni (i = 2, 4), k1 , k2 , k3 and k4 are designed as
+positive constants.                                                                                                                     1   2
+                                                                                         + κ4 + ξ4 + ς3,c + e4 − ς˙2,c − ξ˙3 ) + ∆2 + kek .
+   Error compensation signals are designed as                                                                                           2
+                                                                                                                                             (25)
+     ˙
+       ξ1 = −k1 ξ1 + ξ2 + ς1,c − α1 − ξ1 ,                                       Using Young’s inequality, it obtains
+    
+     ˙                                                                                                       1          1
+    
+       ξ2 = −k2 ξ2 − ξ1 + h2 (ξ3 + ς2,c − α2 ) − 12 ξ2 ,                                           κ3T e4 ≤ κ3T κ3 + kek .
+                                                                                                                              2
+                                                                                                                                             (26)
+                                                                        (18)                                  2          2
+       ξ˙ = −k3 ξ3 + ξ4 + ς3,c − α3 − h2 ξ2 − 21 ξ3 ,
+     ˙3
+    
+    
+       ξ4 = −k4 ξ4 − ξ3 − 12 ξ4                                                  Then, substituting (14), (18) and (26) into (25) results in
+                                                                                               n             2
+                                                                                             X              κ1,i            T          T
+   Step 1: Choosing a TVBLF as V1 = V0 +                                          V̇3 ≤V̇0 −      k1,i ( 2        2 ) − k2 κ2 κ2 − k3 κ3 κ3
+Pn 1               2
+                  kb,i (t)                                          T                         i=1
+                                                                                                        kb,i −  κ1,i                         (27)
+   i=1 2 log kb,i
+              2 (t)−κ 2 (t) , where kb = [kb,1 , kb,2 , ..., kb,n ]   is
+                                                                                                                 2
+                                                                                         + κ4T κ3 + ∆2 + kek .
+                         1,i
+the constraints of κ1 , |κ1,i (t)|<kb,i (t), it follows that
+                     n                                                           Step 4: Selecting the LF as V4 = V3 + 21 κ4T κ4 + 2λ1 4 ϑ̃T4 ϑ̃4 ,
+                     X   κ1,i
+       V̇1 =V̇0 +      2 − κ 2 (κ2,i + ξ2,i + κ1,c,i                             where λ4 > 0, ϑ̃4 = ϑ̂4 − ϑ4 , ϑ̂4 is the estimate of ϑ4 , then
+                     k
+                  i=1 b,i     1,i                                       (19)
+                                                                                  V̇4 =V̇3 + κ T (ς˙4 − ς˙3,c − ξ˙4 )
+                                                                                                4
+              + e2,i − ςd,i − ξ1,i − S1 )                                                     n                            3
+                                                                                                              2
+                                                                                              X              κ1,i         X                       2
+Exploring the Young’s inequality gives                                               ≤V̇0 −       k1,i ( 2        2   ) −     ki κiT κi + ∆2 + kek
+                                                                                              i=1
+                                                                                                        k b,i − κ 1,i     i=2
+                                 1 T    1
+                      κ1T e2 ≤
+                                            2
+                                  κ κ1 + kek .                          (20)                                      ς4 ) + d¯4 e3 − ς˙3,c − ξ˙4 )
+                                                                                        + κ4T (h4 u + κ3 + ϑ̂T4 ϕ(ˆ
+                                 2 1    2
+                                                                                                          1                       ˙
+By combining (12), (18)-(20), one has                                                   − κ4 ϑ̃T4 ϕ(ˆ
+                                                                                                    ς4 ) + ϑ̃T4 (λ4 κ4 ϕ(ˆς4 ) − ϑ̂4 ).
+                                                                                                          λ4
+               n                          n
+                                                                                                                                            (28)
+                             2
+               X            κ1,i         X    κ1,i κ2,i   1    2                 Exploring the Young’s inequality gives
+ V̇1 ≤ V̇0 −      k1,i ( 2       2   ) +       2      2  + kek .
+              i=1
+                        kb,i − κ 1,i     i=1
+                                             kb,i − κ1,i  2                                                     1          1
+                                                             (21)                                        ς4 ) ≤ κ4T κ4 + ϑ̃T4 ϑ̃4 .
+                                                                                              −κ4 ϑ̃T4 ϕ(ˆ                                  (29)
+                                                                                                                2          2
+   Remark 2. Choosing log-type TVBLF in Step 1, the log-                         Then, substituting (15), (17), (18) and (29) into (28), we have
+arithmic function term has been eliminated when deducing                                      n              2            4
+this step, it is easier to combine with the ordinary Lyapunov
+                                                                                              X             κ1,i         X                            2
+                                                                                 V̇4 ≤V̇0 −       k1,i ( 2       2   ) −     ki κiT κi + ∆2 + ∆4 + kek .
+function in Steps 2-4 to facilitate the following stability                                   i=1
+                                                                                                        kb,i − κ 1,i     i=2
+analysis.                                                                                                                                      (30)
+                                                                                                                                                    4
+
+
+                                                                                                        q
+                                                                                                                    $%
+   Remark 3. The fuzzy observer used in this paper can be                   e2 − ς1,c,i , then |ς2,i | ≤ 2b  a + 2k0 q + ς 1,c,i + |e|. Similarly,
+applied together with the controller, and the adaptive law                           q
+                                                                                              $%                                $%
+designed can be applied together in the two parts to better                 |ς3,i | ≤ 2b a + 2k0 + ς 2,c,i , |ς4,i | ≤
+                                                                                                                        2b
+                                                                                                                         a + 2k0 + ς 3,c,i + |e|.
+deal with the uncertainties in the system, while the high-gain                 In summary, we can get that all variables of the FJR are
+observer [20], the finite-time observer [21] are independent of             bound and Theorem 1 can be demonstrated.
+the controller.
+   Theorem 1. Based on Assumption 1, the system (1), com-                                            V. S IMULATION
+mand filter (3), control law (12)-(17) and compensation signal               To show the advantages of the presented method, simulation
+(18) are taken into account. If |ς1,i (0)|<kc,i (0), then                analysis is verified by MATLAB/Simulink on a 2-link FJR
+   (1) κj,i is bounded and zj,i can converge to a small                  system whose matrices and parameters in model (1) are
+neighborhood close to the origin by choosing the parameters              given below: M (q) = [M11 M12 ; M21 M22 ], C(q, q̇) =
+appropriately.                                                           [C11 C12 ; C21 0], G(q) = [G1 , G2 ]T , J = diag[1, 1], K =
+   (2) All signals are bounded in the FJR system .                       diag[2, 2].
+   (3) The output variables are constrained in the presupposed           where M11 = I1 + m1 L2c1 + m2 l12 + I2 + m2 L2c2 +
+space: ς1,i (t)<kc,i (t).                                                2m2 l1 Lc2 (cos(ς12 )), M12 = M21 = I2 + m2 L2c2 +
+Stability analysis : Letting V = V4 , from (30), we can get              m2 l1 Lc2 (cos(ς12 )), M22 = I2 + m2 L2c2 , C11 =
+            n             2              4                               −m2 l1 Lc2 (sin(ς12 ))ς22 , C12 = −m2 l1 Lc2 (sin(ς12 ))(ς21 +
+           X             κ1,i          X
+                                                 T                       2
+V̇ ≤V̇0 −      k1,i ( 2       2  )  −      k i κi  κi + ∆ 2 + ∆ 4  + kek   . ), C21 = −m2 l1 Lc2 (sin(ς12 ))ς21 , G1 = −(m1 +
+                                                                         ς22
+           i=1
+                     kb,i − κ1,i       i=2                               m2 )gl1 (sin(ς11 )), G2 = −m2 gl2 (sin(ς12 )).
+                                                                  (31)       TABLE I: Parameters of the two-link FJR
+It follows from Young’s inequality that
+              n2 T            n2 T             n2 T                        Contents              Description            Values     Unit
+                 ϑ̃2 ϑ̂2 ≤ −       ϑ̃2 ϑ̃2 +       ϑ2 ϑ 2         (32)        l1               Length of link 1          0.4        m
+              λ2              2λ2             2λ2                             l2               Length of link 2          0.4        m
+                                                                                Lc1         Centroid distance about link 1      0.2           m
+              n4 T         n4 T        n4 T                                     Lc2         Centroid distance about link 2      0.2           m
+                ϑ̃ ϑ̂4 ≤ −    ϑ̃ ϑ̃4 +    ϑ ϑ4 .                    (33)
+              λ4 4         2λ4 4       2λ4 4                                    m1                Mass about link 1             1.2           kg
+                                                                                m2                Mass about link 2              1            kg
+By [18], when |κ1,i | ≤ kb,i ,                                                  I1                 Inertia of link 1           0.048        kg·m2
+                               2              2                                 I2                 Inertia of link 2            0.04        kg·m2
+                              kb,i           κ1,i                                g             Acceleration of gravity          9.8          m/s2
+                   log    2 − κ2       <  2 − κ2                    (34)
+                         kb,i      1,i   kb,i     1,i
+
+then,                                                                          The system parameters are given in TABLE I. The de-
+                          V̇ ≤ −aV + b                              (35)    sired trajectories yd = [0.5 sin(2t); 0.4 sin(2t) + 0.2 sin(t)],
+                                                                            the initial state are ς1 (0) = ς3 (0) = ςˆ1 (0) = ςˆ3 (0) =
+where a      =     min{2k1 , 2k2 , 2k3 , 2k4 , λ P̌0 +1
+                                                      (P̌ )
+                                                                    n2
+                                                            , 2λ2 ( 2λ2
+                                                                        −   [0, 0]T , ς2 (0) = ςˆ2 (0) = [1, 1]T , ς4 (0) = [0.8, 1.2]T , ςˆ4 (0) =
+                                                  max
+1          n4    1
+2 ), 2λ4 ( 2λ4 − 2 )},b = 2λ n2
+                                 ϑ2 T ϑ2 + 2λ
+                                            n4
+                                                ϑ4 T ϑ4 + R0 . For          [1.2, 0.8]T , the uncertainties are defined as F (q̇) =
+                               2              4
+a > 0, b > 0, the selection of control parameters should satisfy           [0.01 cos(ς21 ); 0.01 cos(ς21 )], B =diag[0.1, 0.1].
+                                  2       n2             n4                    1)The fuzzy observer-based command filtering backstep-
+λmin (Q̌) − 3 − m22 + m24 P̌ > 0, 2λ        2
+                                              − 12 > 0, 2λ 4
+                                                             − 12 >
+0.                                                                          ping controllers with output constraint (FOBCFBCOC) are
+   Multiply both sides of equation (35) by eat and integrate:               constructed. Select the design parameters as k1 = k2 =
+                                                                            k3 = k4 = 10, λ2 = λ4 = 0.5, n2 = n4 = 10, kb =
+                                   b                                        [0.2 + 0.1 sin(t); 0.2 + 0.1 sin(t)], d¯1 = 40, d¯2 = 80000, d¯3 =
+               V (t) ≤(V (t0 ) − )e−a(t−t0 )
+                                   a                       (36)             500, d¯4 = 80000, ωn = 1100, ζ = 0.8.
+                                 b                                             2) The CFBC (command filtering backstepping controller)
+                     ≤V (t0 ) + , (∀t ≥ t0 )
+                                 a                                          without output constraint will be designed as a comparison.
+                                   q                                        The control parameters are the same as 1).
+                    |κ    | ≤            −2V (0)− 2b
+then,
+q     (36) becomes
+               q      1,i     kqb,i 1 − e         a , |κ
+                                                        2,i | ≤                3) The DSCOC (dynamic surface controllers with output
+   2b               2b                  2b                                  constraint) without ECM will be introduced as a comparison.
+   a , |κ3,i | ≤    a , |κ4,i | ≤              = κj,i + ξj,i
+                                        a , since zj,i
+and according to literature [16], lim kξi k ≤ 2k $%
+                                                     , where                The control parameters are the same as 1), ζ = 0.05.
+                                   t→∞
+                                    q              0
+                                                                               Remark 4. From the simulation, the larger ki and d¯i are,
+                                                  2b    $%
+k0 = 21 mini (ki ), then,z1,i ≤ kb,i 1 − e−2V (0)− a + 2k 0
+                                                            .               the better the tracking effect and estimated effect are, but
+                          k2
+                           b,i                                              the more energy will be consumed. Considering the above
+Based on (34), log k2 −κ       2   is bounded. Furthermore, κ1,i =
+                       b,i     1,i                                          situation comprehensively, the control parameters are selected
+z1,i − ξ1,i , κ1,i <kb,i , one can get that |z1,i | ≤ |κ1,i | +             by trial and error method.
+|ξ1,i | ≤ kb,i + |ξ1,i |. Based on z1,i = ς1,i − yd,i and                      As can be seen from Figs.1-2, contrasting CFBC method
+|yd,i | ≤ Y0 ,|ς1,i |<kb,1,i + |ξ1,i | + Y0 = kc,1,i , so ς1,c,i is         and DSCOC method, the proposed control algorithm has a
+bounded. Supposing ς1,c,i satisfies |ς1,c,i | ≤ ς 1,c,i , where             more outstanding tracking effect and can get smaller tracking
+ς 1,c,i > 0, furthermore, becauseq       z2,i = κ2,i + ξ2,i , it has        errors. From Figs.3-4 that the TVOC bound is not been
+                                   2b  $%
+|z2,i | ≤ |κ2,i | + |ξ2,i | ≤      a + 2k0 . Due to z2,i      = ς2,i −      violated by the output y, the method proposed can estimate
+                                                                                                                                                 5
+
+
+
+                                                                   preset area. In the end, the devised approach has been validated
+                                                                   by simulation results. In the future research, the full-state time-
+                                                                   varying asymmetric constrains will be considered.
+                                                                                              R EFERENCES
+                                                                   [1] M. W. Spong, “Adaptive control of flexible-joint manipulators,” Auto-
+  (a) the 1-th of the model       (b) the 2-th of the model            matica, vol. 31, no. 4, pp. 585-590, 1995.
+                                                                   [2] T. Hao, H. Wang, F. Xu, J. Wang, and Y. Miao, “ Uncalibrated visual
+                   Fig. 1: Output signal y.                            servoing for a planar two link rigid-flexible manipulator without joint-
+                                                                       space-velocity measurement,” IEEE Trans. Syst., Man, Cybern. Syst.,
+                                                                       vol. 52, no. 3, pp. 1935–1947, Mar. 2022.
+                                                                   [3] H. Wang, W. Peng, X. Tan, J. Sun, X. Tang, and I. -M. Chen, “
+                                                                       Robust output feedback tracking control for flexible-joint robots based
+                                                                       on CTSMC technique,” IEEE Trans. Circuits Syst. II-Exp. Briefs, vol.
+                                                                       68, no. 6, pp. 1982–1986, Jun. 2021.
+                                                                   [4] Khan, K. Rsetam, Z. Cao, and Z. Man, “ Singular perturbation-based
+       (a) the 1-th link               (b) the 2-th link               adaptive integral sliding mode control for flexible joint robots,” IEEE
+                                                                       Trans. Ind. Electron., vol. 70, no. 10, pp. 10516–10525, Oct. 2023.
+                  Fig. 2: Tracking error z1 .                      [5] D. Shang, X. Li, M. Yin, and F. Li, “ Dynamic modeling and fuzzy
+                                                                       compensation sliding mode control for flexible manipulator servo system,”
+                                                                       Appl. Math. Model., vol. 170, pp. 530–556, Jun. 2022.
+                                                                   [6] G. Rigatos and M. Abbaszadeh, “ Nonlinear optimal control for multi-
+                                                                       DOF robotic manipulators with flexible joints,” Optimal Control Appl.
+                                                                       Methods, vol. 42, pp. 1708–1733, Nov. 2021.
+                                                                   [7] L. Wang, Q. Shi, J. Liu, and D. Zhang, “ Backstepping control of flexible
+                                                                       joint manipulator based on hyperbolic tangent function with control input
+        (a)the 1-th link               (b) the 2-th link               and rate constraints,” Asian J. Control, vol. 22, no. 3, pp. 1268–1279,
+                                                                       May. 2020.
+      Fig. 3: Trajectories of ς1 and ςˆ1 of the two links.         [8] R. Datouo, J. J. B. M. Ahanda, A. Melingui, F. Biya-Motto, and B.
+                                                                       E. Zobo, “ Adaptive fuzzy finite-time command-filtered back-stepping
+                                                                       control of flexible-joint robots,” Robotica, vol. 39, no. 6, pp. 1081–1100,
+                                                                       Jun. 2021.
+                                                                   [9] S. Y. Dian, Y. Hu, T. Zhao, and J. X. Han, “ Adaptive backstepping
+                                                                       control for flexible-joint manipulator using interval type-2 fuzzy neural
+                                                                       network approximator,” Nonlinear Dyn., vol. 97, no. 2, pp. 1567–1580,
+                                                                       Jul. 2019.
+  (a1)ς2 and ςˆ2 of 1-th link     (b1)ς2 and ςˆ2 of 2-th link      [10] S. Sui, C. L. P. Chen, and S. Tong, “ A novel full errors fixed-time
+                                                                       control for constraint nonlinear systems,” IEEE Trans. Autom. Control,
+                                                                       vol. 68, no. 4, pp. 2568–2575, Apr. 2023.
+                                                                   [11] L. Zhao, J. Yu, and C. Lin, “ Distributed adaptive output consensus
+                                                                       tracking of nonlinear multi-agent systems via state observer and command
+                                                                       filtered backstepping,” Inf. Sci., vol. 478, no. 4, pp. 355-374, 2019.
+                                                                   [12] W. Chang, Y. Li, and S. Tong, “ Adaptive fuzzy backstepping tracking
+                                                                       control for flexible robotic manipulator,” IEEE/CAA J. Autom. Sinica,
+  (a2)ς4 and ςˆ4 of 1-th link     (b2)ς4 and ςˆ4 of 2-th link          vol. 8, no. 12, pp. 1923–1930, 2021.
+                                                                   [13] S. Ling, H. Q. Wang, and P. X. Liu, “ Adaptive fuzzy tracking control
+                   Fig. 4: Estimation effect.                          of flexible-joint robots based on command filtering,” IEEE Trans. Ind.
+                                                                       Electron., vol. 67, no. 5, pp. 4046-4055, 2020.
+                                                                   [14] J. Yu, L. Zhao, H. Yu, and C. Lin, “ Barrier Lyapunov functions-
+                                                                       based command filtered output feedback control for full-state constrained
+                                                                       nonlinear systems,” Automatica, vol. 105, pp. 71-79, 2019.
+                                                                   [15] H. Xu, D. Yu and Y. -J. Liu, “ Observer-based fuzzy adaptive
+                                                                       predefined time control for uncertain nonlinear systems with full-state
+                                                                       error constraints,” IEEE Trans. Fuzzy Syst., early access, Oct. 13, 2023,
+        (a)the 1-th link                (b)the 2-th link               doi: 10.1109/TFUZZ.2023.3321669.
+                                                                   [16] H. Ma, H. Ren, Q. Zhou, H. Li and Z. Wang, “ Observer-Based Neural
+                   Fig. 5: Control input u.                            Control of N -Link Flexible-Joint Robots,” ” IEEE Trans. Neural Netw.
+                                                                       Learn. Syst., early access, Sep. 2022.
+the velocities of FJR effectively and the estimation errors are    [17] Z. Zhang, Y. Song, and K. Zhao, “ Neuroadaptive cooperative control
+                                                                       without velocity measurement for multiple humanoid robots under full-
+small, which proves that the designed fuzzy observer has a             state constraints,” IEEE Trans. Ind. Electron., vol. 66, no. 4, pp.
+good estimation effect. Fig.5 displays that the control input is       2956–2964, Apr. 2019.
+smooth and bounded.                                                [18] C. Si, Q. Wang, G. Cui and J. Yu, “ Event-triggered adaptive output
+                                                                       feedback control for stochastic nonlinear systems with time-varying full-
+                      VI. C ONCLUSION                                  state constraints,” IEEE Trans. Circuits Syst. II-Exp. Briefs, vol. 70, no.
+                                                                       1, pp. 251-255, 2023.
+   For FJR system with TVOC, a fuzzy observer-based CFC            [19] K. Zhao, Y. Song, and Z. Shen, “Neuroadaptive fault-tolerant control of
+method has been proposed in the article. A fuzzy state observer        nonlinear systems under output constraints and actuation faults,” IEEE
+                                                                       Trans. Neural Netw. Learn. Syst., vol. 29, no. 2, pp. 286–298, Feb. 2018.
+has been projected to effectively estimate the link’s angle        [20] D. M. Jeong, Y. H. Choi, and S. J. Yoo, “ Adaptive output-feedback
+velocity and motor angle velocity of FJR, as well as resolve           control of a class of nonlinear systems with unknown sensor sensitivity
+the uncertainties of the system. The combination of CFC                and its experiment for flexible-joint robots,” J. Elect. Eng. Technol., vol.
+                                                                       15, no. 2, pp. 907-918, 2020.
+method and ECM solves the problem of EOC in the process of         [21] D. Wu, M. Chen, and H. Gong, “ Robust control of post-stall pitching
+the controller design and eliminates the influence of filtering        maneuver based on finite-time observer,” ISA Trans., vol. 70, pp. 53–63,
+errors. In addition, the output has been constrained in the            2017.
+

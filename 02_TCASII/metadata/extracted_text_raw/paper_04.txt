@@ -1,0 +1,734 @@
+A novel error metric for evaluating the error correction capability of
+approximate units
+Dou, Y., Waris, H., Woods, R., & Liu, W. (2025). A novel error metric for evaluating the error correction capability
+of approximate units. IEEE Transactions on Circuits and Systems II: Express Briefs, 72(7), 892-902.
+https://doi.org/10.1109/TCSII.2025.3574662
+Published in:
+IEEE Transactions on Circuits and Systems II: Express Briefs
+
+Document Version:
+Peer reviewed version
+
+Queen's University Belfast - Research Portal:
+Link to publication record in Queen's University Belfast Research Portal
+
+Publisher rights
+© 2025 The Authors.
+This is an accepted manuscript distributed under a Creative Commons Attribution License (https://creativecommons.org/licenses/by/4.0/),
+which permits unrestricted use, distribution and reproduction in any medium, provided the author and source are cited.
+General rights
+Copyright for the publications made accessible via the Queen's University Belfast Research Portal is retained by the author(s) and / or other
+copyright owners and it is a condition of accessing these publications that users recognise and abide by the legal requirements associated
+with these rights.
+Take down policy
+The Research Portal is Queen's institutional repository that provides access to Queen's research output. Every effort has been made to
+ensure that content in the Research Portal does not infringe any person's rights, or applicable UK laws. If you discover content in the
+Research Portal that you believe breaches copyright or violates any law, please contact openaccess@qub.ac.uk.
+Open Access
+This research has been made openly available by Queen's academics and its Open Research team. We would love to hear how access to
+this research benefits you. – Share your feedback with us: http://go.qub.ac.uk/oa-feedback
+
+Download date:04. Jun. 2026
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS II: EXPRESS BRIEFS, VOL. XX, NO. X, 2024
+
+1
+
+A Novel Error Metric for Evaluating the Error
+Correction Capability of Approximate Units
+Yuqin Dou, Haroon Waris, Roger Woods, Senior Member, IEEE and Weiqiang Liu, Senior Member, IEEE
+
+Abstract—The use of Approximate Arithmetic Units (AAUs) in
+an error-tolerant application enhance circuit performance and
+reduce power consumption. Recently, a lot of technical work
+is reported on the Approximate High-Level Synthesis (AHLS)
+where these AAUs are used to create high-quality approximate
+system-level designs, To enhance the quality of approximate
+designs produced by AHLS the existing studies primarily focus
+on search algorithms within AHLS, while neglecting the fact
+that the optimal approximate designs exhibit a higher frequency
+of effective error capability. Therefore, the objective of this
+work is to delve into the error correction capabilities of AAUs
+that have not received adequate attention and integrate them
+in AHLS design. This effort provides new perspectives and
+methods to improve the quality of AHLS design exploration. To
+achieve this, we propose a novel metric for evaluating the error
+correction capabilities of AAUs, detailing its calculation method
+and properties. We applied this metric to two AHLS case studies
+and experimentally validated its effectiveness as AHLS achieved
+superior approximate designs.
+Index Terms—Approximate computing, DSE, Number-aware
+Pruning, GA
+
+I. I NTRODUCTION
+The approximate arithmetic units (AAUs) use an approximation design philosophy that allows controlled computational
+errors to significantly reduce energy consumption and enhance
+computation speed, optimizing computing resources while
+maintaining system performance. The AAUs have already
+been successfully applied in error-tolerant applications. For
+example, [1] replaced the precise operations of a Gaussian
+filter with an approximate multiplier, resulting in 32.5% power
+savings. Additionally, [2] described the design of an approximate multiplier for machine learning, which improved the
+energy efficiency by 1.7x (up to 2.1x) with negligible impact
+on machine learning accuracy.
+Manuscript received ** **, 2024; revised ,**, **, 2024. This work was
+supported by the National Natural Science Foundation of China under Grant
+62022041 and the Fundamental Research Funds for the Central Universities
+under Grant NP2022103.
+Corresponding author: Weiqiang Liu.
+Y. Dou is with the College of Integrated Circuit Science and Engineering,
+Nanjing University of Posts Telecommunications (NJUPT), China, 210023.
+E-mail: douyuqin@njupt.edu.cn
+H. Waris is with the Department of Electrical Engineering, Institute of
+Space Technology, Islamabad, Pakistan, E-mail: haroon.waris@ist.edu.pk
+R. Woods is with the School of Electronics, Electrical Engineering and
+Computer Science, Queen’s University Belfast, Belfast BT9 5AH, U.K. Email: r.woods@qub.ac.uk;
+W. Liu is with College of Electronic and Information Engineering, Nanjing
+University of Aeronautics and Astronautics (NUAA), China, 211106. E-mail:
+liuweiqiang@nuaa.edu.cn
+
+Recently, a new research focus has emerged on how to
+combine different AAUs to minimize errors and maximize the
+approximation benefits1 . The existing state-of-the-art approach
+to address this challenge is Approximate High-Level Synthesis
+(AHLS), which can automatically search for different combinations of AAUs and select an optimal combination for the
+final approximate design. The research on AHLS primarily
+focuses on improving outcomes through search algorithms or
+error estimation; however, it overlooks the error correction capabilities of AAUs [3] [4] [5]. The error correction capability
+of AAU refers to utilize its own inherent errors to correct
+input errors. The inclusion of this feature can improve the
+results of AHLS. In high-quality approximation designs, the
+AAUs tend to have a higher frequency of triggering error
+correction (Section V will introduce the relationship between
+error correction capabilities and optimal approximate design.).
+To better understand and utilize this capability, we propose
+a new metric for evaluating the error correction capability of
+AAUs. Moreover, we have systematically devised a calculation
+method and properties of this metric. We applied the metric
+to two AHLS case studies and experimentally validated its
+effectiveness in helping AHLS achieve optimal designs. This
+work not only provides a new perspective for approximate
+design but also opens new avenues for optimizing efficient
+computing systems in AHLS.
+II. BACKGROUND
+A. Approximate arithmetic unit
+The AAUs optimize energy consumption, area, and speed
+of the circuit on account of minimal accuracy loss.The current design methodologies for AAUs primarily include logic
+simplification and voltage scaling. The voltage scaling technology achieves power reduction by lowering the voltage of
+the circuit. However, this typically impacts the speed and
+stability of the circuit, and the control over circuit accuracy
+becomes challenging. Contrary, the logic simplification involves reducing the complexity and power consumption of
+the circuit by simplifying the computational logic, such as by
+merging certain logic gates or reducing the number of bits. The
+advantage of this method is that it allows for direct control over
+the source and magnitude of errors, facilitating precise adjustments to the performance and accuracy of the approximate
+circuit. Therefore, modern research in the design of AAUs
+predominantly focuses around the logic simplification. A large
+number of open-source high-quality AAUs are now available
+1 Approximate benefits refer to the savings in area or power consumption
+achieved through the use of approximate units.
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS II: EXPRESS BRIEFS, VOL. XX, NO. X, 2024
+
+in the technical literature because in recent years researchers
+have given significant attention to this research domain.
+For example, the EvoApprox8b [6] contains 500 designs
+of various AAUs, [7] has recently provided the designs for
+approximate adders and approximate multipliers. These approximate units entail different error characteristics, and there
+have been recent studies concerning the varying errors of
+AAUs. In, [8] the security of CNNs has been enhanced by
+utilizing the error variance of approximate unitsIn the domain
+of hardware security the intruders try to steal the information,
+the [9]demonstrated that the errors in ap- proximate arithmetic
+units can be used to obscure information leakage. In the work
+of [10], it was first discovered that errors in approximate
+circuits could play a role in error correction, although the
+systematic analysis was not presented.
+B. Approximate High-Level Synthesis
+The emergence of numerous AAUs has greatly advanced
+the field of AHLS. The AHLS aims to utilize approxima- tion
+techniques to automatically generate designs that achieve high
+approximation benefits while satisfying the error constraints.
+In recent studies, [4] has used approximate units as core technology and combined space pruning and genetic algorithms
+to improve the exploration quality of AHLS. [3] employed a
+method based on prior knowledge to enhance design quality
+while reducing the exploration time. [11] first constructed an
+approximate library using approximate units and then applied
+reinforcement learning to search for excellent approximate
+designs. [12] utilized a jump algorithm to effectively search
+the best designs and designed a metric to select approximate
+units to ensure outstanding results. However, the method for
+selecting approximate units in this work overlooked the error
+correction capability between approximate units
+In summary, these studies primarily focus on improving
+algorithms to achieve better approximate designs, but they
+neglect the fundamental reason for selectiong excellent approximate designs—research on the error correction capability
+of approximate units. In this work, we proposed a a systematic
+methodology that leverages AHLS to achieve better designs by
+incorporating the error compensation mechanism of AAUs.
+III. M OTIVATION
+The multiply-add circuit in Fig. 1 is analyzed as a motivational example, which is a commonly used structure in
+digital signal processing and machine learning. Nodes a0 and
+a1 in Fig. 1 are configured with the approximate multipliers
+Mul8u EXZ and Mul8u 150Q, respectively, both sourced
+from the literature [6]. Fig. 1 also shows their corresponding
+mean error distance (MED) and area savings2 . The difference
+between Fig. 1(a) and Fig. 1(b) is that Fig. 1(b) uses an
+approximate adder for the addition operation Generally, the
+use of AAUs brings greater area savings and power savings to
+the circuit. The area savings in Fig. 1(b) are also significantly
+greater than those in Fig. 1(a). Correspondingly, the error of
+2 The error estimates in Figure 6.1 use the same 100,000 random test vectors
+
+as inputs. Area savings refer to the difference between the area of the exact
+circuit and that of the approximate circuit.
+
+2
+
+𝑎𝑎0 0
+
+𝑎𝑎
+11
+
+𝑎𝑎2 2
+
+Mul8u_EXZ
+adder
+Mul8u_EXZ Mul8u_150Q
+Mul8u_150Q Exact
+Exact
+adder
+
+𝑎𝑎0 0
+
+𝑎𝑎
+11
+
+𝑎𝑎2 2
+
+MED
+MED
+
+Area
+savings
+Area
+savings
+
+5.59
+5.59
+
+2 2
+𝑢𝑚
+32(
+) )
+𝑢𝑚
+32(
+
+(a) The circuit with two approximate multipliers.
+
+𝑎𝑎0 0
+
+𝑎𝑎
+11
+
+𝑎𝑎2 2
+
+Mul8u_EXZ
+Mul8u_EXZ Mul8u_150Q
+Mul8u_150Q Add16u_0AV
+Add16u_0AV
+
+𝑎𝑎0 0
+
+𝑎𝑎
+11
+𝑎𝑎2 2
+
+MED
+MED
+
+Area
+savings
+Area
+savings
+
+5.48
+5.48
+
+2 2
+𝑢𝑚
+47(
+) )
+𝑢𝑚
+47(
+
+(b) The circuit with two approximate multipliers and one
+approximate adder.
+
+Fig. 1: The error and area savings of the multiply-accumulate
+circuit.
+
+Fig. 1(b) would theoretically be worse than Fig. 1(a). However,
+the comparison results of the two figures show that the MED in
+Fig. 1(b) is smaller than that in Fig. 1(a). This indicates that the
+approximate adder Add16u 0AV has mitigated the can make
+the initial errors introduced by the two approximate multipliers
+in Fig. 1(a) smaller. This is an interesting phenomenon, as
+the introduction of another approximate units not only did not
+increase the error but actually reduced the initial overall errors.
+We assume that the input error of the addition operation
+under the input i is ei0 + ei1 , where ei0 is the error introduced by Mul8u EXZ, and ei1 is the error introduced by
+Thus, the sum of output errors in Fig. 1(a)
+Mul8u 150Q. P
+n
+i
+i
+is sum1 P
+=
+i=1 e0 + e1 , and the error in Fig. 1(b) is
+n
+i
+i
+i
+i
+sum2 =
+i=1 e0 + e1 + e2 , where e2 is the error introduced by Add16u 0AV. To ensure that sum2 is less than
+sum1, there must exist a significant number of ei2 to meet
+ei0 + ei1 + ei2 < ei0 + ei1 . The above analysis shows that it
+is precisely due to the error of add16u 0AV that the error of
+the approximate configuration in Figure 6.1(b) is reduced. The
+individual error of add16u 0AV acts as a correction for the
+overall system error, which also means that the approximate
+adder add16u 0AV is more suitable for this approximate
+configuration. Hence, we can conclude that in certain cases the
+individual errors in the AAUs can improve the initial errors of
+the system (in the above example, e0 and e1 can be regarded
+as the initial system error). This is a special error handling
+capability of AAUs, and in this work, we define this ability as
+AAUEcc . The example shown above is a motivation for this
+research work, and we are able to achieve high-quality results.
+Moreover, we believe this research will be a foundation for
+new research direction in the domain of AHLS.
+IV. AAUEcc
+A. AAUEcc Evaluation
+The evaluation of AAUEcc require the analysis of related
+parameters. such as the initial errors of the system, which are
+
+(
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS II: EXPRESS BRIEFS, VOL. XX, NO. X, 2024
+
+the errors that the AAU is expected to improve. The expected
+improvement error (EIE) is defined as follows:
+X
+EIE =
+abs {E1 , E2 , E3 . . . Em }
+(1)
+where {E1 , E2 , E3 . . . Em } refers to all possible initial errors
+exact
+in the circuit. In this formula, Ei = Outerr
+, which
+i −Outi
+represents the difference between the initial output and the
+exact result for all possible inputs. EIE denotes the sum of
+the absolute values of all Ei .
+Secondly, the errors corrected by AAU need to be considered. This is also a key factor in evaluating the error correction
+capability of the approximate unit. The actual improvement
+error (AIE) is defined as:
+X
+AIE =
+{X1 , X2 , X3 . . . Xn }
+(2)
+where Xi = |Ei | − |OutAxe
+− Outexact
+|, and OutAxe
+is the
+i
+i
+i
+output using the AAU that needs to be evaluated
+Similarly, the errors introduced to the system by the AAU
+are considered by using Increased error(INE):
+X
+IN E =
+{Y1 , Y2 , Y3 . . . Ym }
+(3)
+where Yi = |OutAxe
+− Outexact
+| − |Ei |.
+i
+i
+Finally, considering only errors is not sufficient because
+a small number of inputs cannot adequately evaluate the
+AAUEcc . Therefore, the total number of inputs and the frequency changes also need to be considered. Thus, we have
+defined the following metric:
+(AIE − IN E) ∗ (n + m)
+(4)
+EIE ∗ N
+where N is the number of all possible inputs, n is the
+number of Xi , and m is the number of Yi . This metric clearly
+demonstrates the capability of AAU to handle input errors
+under the current inputs.
+AAUEcc can only be used to evaluate the error correction
+capability of a single AAU. However, an approximate design
+may utilize multiple AAUs. When analyzing the overall phenomenon of error correction within an approximate design,
+the AAUEcc becomes invalid. Therefore, we define a new
+metric for the evaluation, which is calculated by summing the
+AAUEcc values of multiple approximate units and then taking
+the average.
+X
+Ave.AAUEcc =
+AAUEcc k
+(5)
+AAUEcc =
+
+k=1
+
+V. P ROPERTY A NALYSIS
+A. The properties of AAUEcc
+Table I is used as an example to analyze the properties of
+AAUEcc . In Table I , a0 , a1 , and a2 represent the nodes of the
+circuit in Fig 1, where a0 and a1 are multiplication operations,
+and a2 is an addition operation. a2 is the AAU to be estimated,
+MED1 refers to the error of a0 and a1 , MED2 refers to the
+error of a0 , a1 and a2 . The term ’utilization’ refers to the
+ratio of area savings to the errors introduced, where a higher
+value is clearly preferable. In this table, MED1, MED2, and
+AAU are all calculated using the same 100,000 random test
+vectors.
+
+3
+
+In this table, we can observe that the initial error of the
+system is MED1 = 4.954. When AAUEcc is less than 0, the
+approximate adder of a2 introduces errors into the system, as
+its MED2 is bigger than MED1. Furthermore, given the same
+initial error, the smaller the AAUEcc , the worse introduced
+error. Conversely, in the last row, when AAUEcc is greater
+than 0, the approximate adder of a2 improves the errors of
+system, as MED2 is less than MED1. Moreover, we can see
+that the variation of ’utilization’ aligns with AAUEcc . This
+can be explained as follows; a larger AAUEcc indicates that
+AAU have more errors that play a role in correcting the error of
+system. Consequently, with the same approximate benefits, the
+errors introduced into the system decrease. This can provide
+us with an insight while selecting an appropriate approximate
+adder from the set of available approximate adders to configure
+node a2 . Typically, we would utilize the calculation method
+of ”utilization” which involves calculating the error first and
+then performing complex physical synthesis. However, we can
+also use AAUEcc instead of ”utilization” at this point, thereby
+avoiding the complex physical synthesis process.
+In summary, we can conclude two properties of AAUEcc :
+• The larger the value of AAUEcc , the smaller the error
+introduced, and the more errors are corrected. When
+AAUEcc is greater than 0, it indicates that the error
+characteristics of the AAU can improve the error of
+system.
+• The value of AAUEcc also reflects the ’utilization’ of
+the approximate unit. This implies that AAUEcc can be
+used for the preliminary selection of approximate units,
+allowing users to assess the ’utilization’ without complex
+physical synthesis.
+TABLE I: The analysis for the properties of AAUEcc
+a0
+
+a1
+
+a2
+
+utilization
+
+MED1
+
+AAUEcc
+
+MED2
+
+AxMul1
+AxMul1
+AxMul1
+
+AxMul2
+AxMul3
+AxMul3
+
+add16u 0P8
+add16u 0HE
+Add16u 0AV
+
+AxMul2
+AxMul3
+AxAdd1
+
+4.954
+4.954
+5.598
+
+-0.24206
+-0.11721
+1.19047
+
+14.0456
+5.598
+5.487
+
+AxMul1: Mul8u 150Q, AxMul2: Mul8u 2P7, AxMul3:Mul8u EXZ. All
+these approximate arithmetic units come from [6]
+
+B. The properties of Ave.AAUEcc
+The Ave.AAUEcc reflects the average error correction capability of the approximate units in the approximate design.
+The Fig. 2 is used to analyze the properties of Ave.AAUEcc .
+Fig 2 illustrates the exploration process of ENAP in finding
+the optimal approximate design for 2x2 convolution under
+different constraints (MED<15 and MED<20). Each small
+black dot represents an approximate design, with the Y-axis
+showing the area savings of the approximate design and the
+X-axis showing the error of the approximate design. All the approximate designs shown in Fig. 2 meet the error constraints,
+but the area savings of each approximate design are different.
+Clearly, the greater the area savings, the better the approximate
+design. To analyze the characteristics of Ave.AAUEcc , we
+present the area savings and corresponding Ave.AAUEcc of
+the approximate designs within the red dashed line in Table
+II.
+
+4
+
+Area面积节省
+Savings(um2)
+
+面积节省
+Area Savings(um2)
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS II: EXPRESS BRIEFS, VOL. XX, NO. X, 2024
+
+MED<15
+错误边界
+
+MED<20
+错误边界
+
+Fig.
+(a)
+(b)(b)
+(a) 2: The exploration process of 2x2 convolution
+TABLE II: The properties of Ave.AAUEcc
+MED<15
+
+MED<20
+
+Area savings
+
+Ave.AAUEcc
+
+Area savings
+
+Ave.AAUEcc
+
+83
+97
+117
+128
+139
+
+-0.30654
+-0.23643
+-0.11162
+-0.08364
+-0.05278
+
+114
+134
+163
+178
+189
+
+-0.11065
+-0.06534
+-0.05026
+-0.03842
+0.11106
+
+From Table II, it can be observed that the Ave.AAUEcc of
+the approximate designs increase with the area savings. This
+demonstrates that Ave.AAUEcc effectively reflects the quality
+of the approximate design. This phenomenon can be easily
+explained. In approximate designs, a higher Ave.AAUEcc
+indicates that more errors are being corrected. This provides
+a greater opportunity to use more AAUs or larger areasaving AAUs, consequently leading to greater area savings.
+Therefore, like AAUEcc , Ave.AAUEcc can be used for the
+preliminary evaluation of approximate designs, eliminating the
+need for physical synthesis by the user.
+
+The FIR filter is used as an application of this experiment, com- prising of 24 nodes, including 13 multiplication
+operations and 12 addition operations. This work use ENAP
+framework to explore two methodologies. The difference lies
+in the method used to generate the initial design: the first
+method follows the aforementioned method, while the second
+method employs a random approach to form the initial design.
+Fig. 3 illustrates the search process and results of the two
+methods under different error constraints. The black dots
+represent the search process of the initial ENAP, while the red
+dots represent the search process of ENAP using AAUEcc ,
+with both methods iterated 10 times. The legend shows the
+highest Ave.AAUEcc of the initial designs for both methods,
+calculated according to Equation (5). As shown in Fig. 3,
+regardless of the error constraint, the search results of ENAP
+using AAUEcc are significantly better than those of the initial
+ENAP. Moreover, the search curve of the initial ENAP does
+not converge to a result after ten iterations, indicating that
+many good results have not been found. In contrast, ENAP
+using AAUEcc converges to a result, for example, when the
+MED < 5 and MED < 15, it begins to converge at the 7th
+iteration, and the results at the start of convergence are much
+better than those of the initial ENAP after ten iterations.
+
+VI. A PPLICATION C ASE
+A. Formation of the initial configurations
+In ENAP [4], genetic algorithm(GA) is employed as the
+search algorithm to obtain high-quality approximate designs.
+However, the results of GA are constrained by the initial designs.In the original framework, ENAP lacked suitable criteria
+for creating initial designs; thus, a random method was adopted
+to create these initial designs. In this work, AAUEcc is utilized
+to assist in the formation of initial designs, which is shown as
+follows:
+Step1: Initially, a node is selected at random, and an AAU
+is configured randomly.
+Step2: Starting from the node of the previously configured
+AAU, the next step involves sequentially selecting the AAU
+with the maximum AAUEcc from the approximation library.
+Step3: Finally, the process concludes either when the configuration of all nodes is complete or when the error constraint
+is exceeded, thus forming an initial design.
+
+B. Selection for Approximate Units
+[12] employed the jump search(JS) for the design space
+exploration of approximate circuits. This method initially
+configures the first node, and then sequentially configures
+subsequent nodes by selecting approximate units from an
+approximation library. The selection of these approximate
+units is governed by the FOM(Figure of Merit) defined in
+[12] . The FOM does not account for variations in error
+propagation; it only selects the approximate unit that provides
+the greatest area savings at that moment. Therefore, it does not
+guarantee the selection of the most suitable approximate unit.
+We modified the JS framework by adopting AAUEcc as the
+criterion for selecting approximate units and the approximate
+unit with the highest AAUEcc is selected for design each time.
+The 2 × 2 convolution operation is used as an application
+for this experiment. It consists of 7 nodes, including 4 multiplication operations and 3 addition operations. The Fig. 4
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS II: EXPRESS BRIEFS, VOL. XX, NO. X, 2024
+
+5
+
+Iteration
+(MED<5)
+Iteration
+(MED<5)
+
+Iteration
+(MED<10)
+Iteration
+(MED<10)
+
+Area savings(um2)
+
+Area savings(um2)
+
+Area savings(um2)
+Area savings(um2)
+
+Area savings(um2)
+Area savings(um2)
+
+Iteration (MED<5)
+
+Iteration (MED<15)
+
+Area savings(um2)
+Area savings(um2)
+
+Area savings(um2)
+Area savings(um2)
+
+Fig. 3: The search results of ENAP using different methods to generate the initial design.
+
+proposed metric. This work is the first to investigate the error
+correction capability of approximate units, aiming to improve
+the design exploration quality of AHLS and provide a new
+research perspective for AHLS.
+R EFERENCES
+
+[1] B. Garg and S. Patel, “Reconfigurable rounding based approximate multiplier for energy efficient multimedia applications,” Wireless Personal
+Iteration
+(MED<15)
+Iteration
+(MED<20)
+Iteration
+(MED<15)
+Iteration
+(MED<20)
+Communications, vol. 118, no. 2, pp. 919–931, 2021.
+[2] Z. Liu, A. Yazdanbakhsh, T. Park, H. Esmaeilzadeh, and N. S. Kim,
+“Simul: An algorithm-driven approximate multiplier design for machine
+learning,” IEEE Micro, vol. 38, no. 4, pp. 50–59, 2018.
+[3] Y. Dou, C. Wang, H. Waris, R. Woods, and W. Liu, “Fpax: A fast prior
+knowledge-based framework for dse in approximate configurations,”
+IEEE Transactions on Computer-Aided Design of Integrated Circuits
+and Systems, 2023.
+[4] Y. Dou, C. Wang, R. Woods, and W. Liu, “Enap: An efficient numberaware pruning framework for design space exploration of approximate
+configurations,” IEEE Transactions on Circuits and Systems I: Regular
+Fig. 4: The search results of JS using two metrics.
+Papers, 2023.
+[5] V. Mrazek, M. A. Hanif, Z. Vasicek, L. Sekanina, and M. Shafique,
+“autoax: An automatic design space exploration and circuit building
+shows the search results using two different metrics. The Ymethodology utilizing libraries of approximate components,” in Proceedings of the 56th Annual Design Automation Conference 2019, pp. 1–6,
+axis represents area savings; thus, a higher value indicates
+2019.
+better quality of the approximate design. The X-axis represents
+[6] V. Mrázek, R. Hrbáček, Z. Vašı́ček, and L. Sekanina, “Evoapprox8b:
+different error constraints, using MED as the evaluation metric
+Library of approximate adders and multipliers for circuit design and
+benchmarking of approximation methods,” in Proc. Design, Automation
+for error quality. The Fig. 4 demonstrates that search results
+& Test in Europe Conference & Exhibition (DATE), pp. 258–261,
+using AAUEcc as the metric for selecting approximate units
+European Design and Automation Association, 2017.
+are better than FOM, especially when the error constraints in[7] H. Waris, C. Wang, W. Liu, J. Han, and F. Lombardi, “Hybrid partial product-based high-performance approximate recursive multipliers,”
+crease. The primary difference between AAUEcc and FOM is
+IEEE Transactions on Emerging Topics in Computing, vol. 10, no. 1,
+that AAUEcc considers the current error characteristics when
+pp. 507–513, 2022.
+selecting approximate units. It selects high-fitness approximate
+[8] A. Guesmi, I. Alouani, K. N. Khasawneh, M. Baklouti, T. Frikha,
+M. Abid, and N. Abu-Ghazaleh, “Defensive approximation: securing
+units based on the current error, making the use of approximate
+cnns using approximate computing,” in Proceedings of the 26th ACM
+units more valuable. In contrast, FOM does not consider the
+international conference on architectural support for programming
+current error, often leading to identical search results under
+languages and operating systems, pp. 990–1003, 2021.
+[9] Y. Dou, C. Wang, C. Gu, M. O’Neill, and W. Liu, “Design and analysis
+different error constraints. For instance, in Fig. 4, the search
+of hardware trojans in approximate circuits,” Electronics Letters, vol. 58,
+results for MED=10 and MED=20 are the same, despite the
+no. 5, pp. 197–199, 2022.
+different error constraints.
+[10] C. Li, W. Luo, S. S. Sapatnekar, and J. Hu, “Joint precision optimization
+and high level synthesis for approximate computing,” in Proceedings of
+the 52nd Annual Design Automation Conference, pp. 1–6, 2015.
+[11] M. Awais, H. Ghasemzadeh Mohammadi, and M. Platzner, “LDAX: A
+VII. C ONCLUSION
+learning-based fast design space exploration framework for approximate
+In this work, we have defined a novel error metric to assess
+circuit synthesis,” in Proceedings of the 2021 on Great Lakes Symposium
+on VLSI, pp. 27–32, 2021.
+the error correction capabilities of approximation units. MoreL. Witschen, H. Ghasemzadeh Mohammadi, M. Artmann, and
+over, this metric has been applied to two case studies within the [12] M.
+Platzner, “Jump search: A fast technique for the synthesis of
+AHLS framework. The experimental results demonstrate that
+approximate circuits,” in Proceedings of the 2019 on Great Lakes
+Symposium on VLSI, pp. 153–158, 2019.
+AHLS achieved better results by taking incto consideration the
+
+

@@ -1,0 +1,515 @@
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. X, NO. Y, ZZZZ                                                                          1
+
+
+
+
+           A Cryo-CMOS Triple Tail Comparator with
+           Capacitive Over-Neutralization to Suppress
+                Freeze-Out Induced Hysteresis
+          Bram Veraverbeke ID , Graduate Student Member, IEEE, Filip Tavernier ID , Senior Member, IEEE
+
+
+                                                                                                 VDD
+   Abstract—Dopant freeze-out severely increases the bulk re-                                                       OUTk-1 = 1               @4K
+                                                                                          CLK      M0
+sistance of cryogenic bulk CMOS transistors by up to 106 × at                                                              Reset to 0 V
+                                                                                   VINP                      VINN                   Decision and reset
+4.2 K compared to room temperature. This work describes, for                               M1N         M1P                            couple to bulk
+the first time in the literature, how this increased bulk resistance                       VDN         VDP            VOP      CDB           Start next
+                                                                                S2N                    S2P
+introduces a memory effect in the latch of dynamic comparators,              CLK    RB   M2N M2P   RB      CLK      V                        comparison
+                                                                                                                     ON
+which leads to hysteresis. To measure this hysteresis reliably in                   VB2N                                           VB3P
+                                                                                                  VB2P                        RB
+                                                                                     VON                             M3P             VB3P < 0 V
+the presence of noise, a statistical characterization procedure                                  VOP
+                                                                                                                                     → VT 
+                                                                               S1N       M3N M3P        S1P
+is developed. For a 40 nm bulk CMOS strongARM comparator                            VB3N          VB3P                               → P(OUTk = 1) 
+with an input-referred noise voltage of 348 µVRMS , a hysteresis                    RB             RB
+                                                                                                                     Large RB jeopardizes reset of latch
+voltage >898 µV is measured at 6 K, substantially deteriorating
+the precision. Therefore, this paper introduces a triple tail               Fig. 1. The conventional strongARM (SA) comparator. The increased bulk
+comparator with capacitive over-neutralization to increase the              resistance RB jeopardizes a proper reset of the latch.
+preamplification gain, suppressing the hysteresis >6× to only
+141 µV.
+  Index Terms—Cryo-CMOS, dopant freeze-out, bulk resistance,
+                                                                            Secondly, a statistical characterization procedure is developed
+memory effect, hysteresis, strongARM, dynamic comparator                    to reliably measure the hysteresis voltage in the presence of
+                                                                            noise. Finally, a triple tail comparator with capacitive over-
+                       I. I NTRODUCTION                                     neutralization (TTCO) is proposed to suppress the hysteresis
+                                                                            >6× by boosting the preamplification gain.
+      RYO-CMOS has recently gained much attention thanks
+C     to emerging applications, such as quantum computing,
+particle physics experiments, and gravitational wave detectors
+                                                                               The remainder of this brief is organized as follows. Sec-
+                                                                            tion II discusses the dopant freeze-out introduced hysteresis.
+                                                                            Next, Section III introduces the proposed TTCO comparator.
+[1], [2], [3], [4], [5], [6], [7]. To date, cryogenic character-
+                                                                            Sections IV and V discuss the custom cryogenic measurement
+ization and modeling of modern CMOS processes primarily
+                                                                            setup and the statistical characterization procedure, respec-
+focus on DC-characteristics [6], [7], [8]. However, these are
+                                                                            tively, after which the measurement results are presented in
+insufficient for analog-to-digital converters (ADCs), which
+                                                                            Section VI. Finally, a conclusion is formulated in Section VII.
+contain many switching circuits such as dynamic comparators,
+since any inaccuracy due to transient effects in the comparator                   II. D OPANT F REEZE - OUT I NDUCED H YSTERESIS
+affects the full ADC performance. Still, in the literature, the
+                                                                               The strongARM (SA) comparator [9], [12] in Fig. 1 is a
+characterization of cryogenic comparators is limited to a noise
+                                                                            popular topology thanks to its fast, energy-efficient, and robust
+analysis of a strongARM comparator for a 7-bit ADC [9].
+                                                                            operation. It comprises a capacitive preamplifier (M0-1 ) and a
+   This paper shows, for the first time in the literature, that
+                                                                            latch (M2-3 ). During the reset phase (CLK = VDD ), the pream-
+cryogenic bulk CMOS comparators such as the prevalent
+                                                                            plifier and latch outputs are discharged to VSS through the
+strongARM comparator in Fig. 1 suffer from hysteresis in
+                                                                            reset switches (S1-2 ). In the comparison phase (CLK = VSS ),
+their latch. This hysteresis is induced by a severe increase
+                                                                            the tail transistor M0 is turned on, gradually charging VDP
+(106 ×) of the bulk resistance due to dopant freeze-out [6],
+                                                                            and VDN to VDD at a slightly different rate, which generates
+[10], [11]. The presented work provides additional insights
+                                                                            some gain before the latch turns on. After the comparison
+into cryogenic bulk CMOS behavior and advances the state-of-
+                                                                            phase, the next reset phase should erase all information from
+the-art in three ways. Firstly, it describes in detail how dopant
+                                                                            the previous decision. At room temperature, a proper reset is
+freeze-out introduces hysteresis in cryogenic comparators.
+                                                                            easily guaranteed by correctly sizing S1-2 .
+This article focuses on dynamic comparators, but the same
+                                                                               At cryogenic temperatures, however, dopant freeze-out
+concepts can be applied to assess the impact of dopant freeze-
+                                                                            severely increases the substrate resistance by up to 106 × at
+out on any cryogenic circuit with fast switching transients.
+                                                                            4.2 K compared to room temperature [6], [10], [11]. This leads
+  Bram Veraverbeke and Filip Tavernier are with the Department of           to a large and unpredictable bulk resistance RB , as highlighted
+Electrical Engineering, KU Leuven, 3001 Leuven, Belgium. (e-mail:           in Fig. 1. Such a high resistance leaves the bulk vulnerable
+bram.veraverbeke@kuleuven.be, filip.tavernier@kuleuven.be). This work was
+supported by the Research Foundation-Flanders (FWO) under grant             for capacitive coupling of the latch outputs through the drain-
+11N0523N.                                                                   bulk capacitance CDB . The bulk voltage, and consequently
+                                                         0000–0000/00$00.00 © 2025 IEEE
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. X, NO. Y, ZZZZ                                                                                                                           2
+
+
+
+                          OUTk-1 = 1                       VB3P < VB3N             VB2P < VB2N                                      Input-referred hysteresis voltage VHYS
+                1                      1
+                                                                      VB3P        1.5                                                                    + VHYS if OUTk–1 = 1
+                               VOP                         0.2
+ Voltage [V]
+
+
+
+                                                     VDP                                    VB2P
+                                                                                                                                                         - VHYS if OUTk–1 = 0
+               0.5                   0.5                     0                     1
+                                               VDN                    VB3N              VB2N                                                VINP
+                                                           -0.2                   0.5                                                                                        OUT = 1,1,0,0,0,0,1
+                         VON
+                0                      0                                                                                                    VINN
+                                                                                   0
+                     0      50 100         0      50 100          0      50 100         0      50 100
+                                                                                                                                                                        CLK
+                         Time [ns]             Time [ns]              Time [ns]             Time [ns]
+
+                                VB3P < VB3N           VT (M3P) > VT (M3N)                                                4                                                   4
+ OUTk-1 = 1                                                                         P(OUTk = 1)                                 fclk = 10 MHz                                       RB = 15 MΩ
+
+
+
+
+                                                                                                             VHYS [mV]
+
+
+
+
+                                                                                                                                                                 VHYS [mV]
+                                VB2P < VB2N           VT (M2P) < VT (M2N)
+  Previous                                                                                    Next
+  decision                                                                                  decision                     2                                                   2
+                                VB3N < VB3P           VT (M3N) > VT (M3P)
+ OUTk-1 = 0                                                                         P(OUTk = 0)                                                 RMS                                              RMS
+                                VB2N < VB2P           VT (M2N) < VT (M2P)                                                                        Noise                                            Noise
+                                                                                                                         0                                                   0
+                                                                                                                             1           10          100                         1            10      100
+Fig. 2. Transient simulations of the preamplifier and latch outputs, and the                                                         RB [MΩ]                                             fclk [MHz]
+bulk voltages of the latch transistors in the conventional SA comparator with
+RB = 15 MΩ and fclk = 10 MHz (top). VT -modulation through the bulk results                             Fig. 3. Equivalent model of the hysteresis voltage VHYS (top), and simulations
+in hysteresis that favors the same decision as the previous one (bottom).                               of VHYS in a conventional strongARM comparator versus bulk resistance RB
+                                                                                                        and clock frequency fclk (bottom).
+
+                                                                                                                    75
+the threshold voltage VT , of the latch transistors M2-3 is thus                                                                           Hysteresis                        0
+                                                                                                                                                                            VHYS = 1 mV
+
+
+
+
+                                                                                                                                                           Power [dB]
+                                                                                                                                           White noise
+
+                                                                                                        SNDR [dB]
+modulated by the previous comparator decision. In this way,                                                         70                                                      f = 0.483 fsample
+                                                                                                                                                                        -40 in
+information from the previous comparison leaks to the next                                                                                                                  SNDR = 59.24 dB
+                                                                                                                    65
+comparison phase, jeopardizing a proper reset of the latch,                                                                  VFS = 2 Vpp,diff
+                                                                                                                                                                        -80
+which leads to hysteresis.                                                                                          60
+                                                                                                                             Resolution = 12 bits
+                                                                                                                                                                  -120
+   Since foundry models do not support cryogenic tempera-                                                                0     0.2 0.4 0.6 0.8 1                      0 0.1 0.2 0.3 0.4 0.5
+                                                                                                                             VHYS / σnoise [mV/mVRMS]                  Normalized frequency [-]
+tures, the effects of dopant freeze-out are emulated by placing
+an additional large RB between the bulk terminal and VDD or                                             Fig. 4. Simulated performance of a 12-bit SAR ADC with a full-scale VFS of
+                                                                                                        2 Vpp,diff . SNDR with hysteresis VHYS or white noise σ noise in the comparator
+VSS . The transient simulations with room temperature models                                            (left), and output spectrum for VHYS = 1 mV and σ noise = 0 mVRMS (right).
+and an RB of 15 MΩ in Fig. 2 show that the bulk voltages
+of M2-3 are heavily disturbed by the large voltage swing at
+VOP/N and VDP/N . Even at a low clock frequency fclk of only                                            sponding hysteresis error has a white spectrum, even though it
+10 MHz, the bulk voltages cannot recover to their DC-values                                             is a deterministic process, because the errors are approximately
+by the end of the reset phase. When the previous comparator                                             uncorrelated across consecutive ADC samples.
+decision was positive (OUTk-1 = 1), VB3P will be lower than
+VB3N at the start of the next comparison, while VB2P will be                                                  III. P ROPOSED T RIPLE TAIL C OMPARATOR WITH
+lower than VB2N . Hence, M3P will have a higher VT than M3N ,                                                        C APACITIVE OVER -N EUTRALIZATION
+whereas M2P will have a lower VT than M2N . This increases                                                 Since the freeze-out induced hysteresis originates in the
+the probability of a positive decision during the next com-                                             latch, a high preamplification gain can effectively suppress
+parison. Due to the symmetrical topology of the comparator,                                             VHYS . However, this gain is limited in the conventional SA
+a previous negative decision (OUTk-1 = 0) will analogously                                              comparator because it comprises only one preamplification
+increase the probability of a negative decision during the next                                         stage. Prior art multi-stage comparators usually include half-
+comparison. Consequently, the increased bulk resistance at                                              latches in the preamplifier to increase the gain [13], [14].
+cryogenic temperatures could introduce a noticeable hysteresis                                          However, these extra half-latches also suffer from the freeze-
+in the latch. The swing at VDP/N will also disturb the bulk of the                                      out induced hysteresis, nullifying the benefit of the additional
+input pair, but since both VDP and VDN have the same swing                                              preamplification gain.
+from VDD to VSS , this is mainly a common-mode disturbance.                                                Therefore, this work introduces the triple tail compara-
+Hence, it does not significantly affect the next decision.                                              tor with capacitive over-neutralization (TTCO) in Fig. 5. Its
+   As the freeze-out induced hysteresis favors the same deci-                                           preamplifier consists of two stages, and the second stage
+sion as the previous one, it can be modeled by an input-referred                                        (M2 ) adopts the cross-coupled capacitors CN . These capacitors
+voltage source VHYS whose sign depends on the previous                                                  boost the preamplification gain by overcompensating the gate-
+decision, as shown in Fig. 3. Simulations show that VHYS may                                            drain capacitance of M2 , as is typically done in RF and
+rise substantially above the noise level of 350 µVRMS for bulk                                          mm-wave circuits [15], [16]. Cross-coupling these capacitors
+resistances above 10 MΩ or clock frequencies above 10 MHz,                                              creates a positive feedback path for differential signals from
+so that the precision of the SA comparator is bounded by                                                the preamplifier outputs VXP/N to VDP/N . A larger CN provides
+VHYS instead of noise. Such a large hysteresis can introduce                                            more positive feedback, leading to a noticeably higher gain, as
+significant errors in an ADC. For example, in a successive-                                             illustrated in the bottom-right graph of Fig. 5. In this way, the
+approximation-register (SAR) ADC, VHYS results in a noise-                                              preamplification gain is significantly larger for the proposed
+like precision degradation, as illustrated in Fig. 4. The corre-                                        TTCO comparator than for the conventional SA comparator.
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. X, NO. Y, ZZZZ                                                                                                                                   3
+
+
+
+                           VDD                                            1                                                                   TTCO 6 fF
+
+
+
+
+                                                          CLK, VD [V]
+               CLK           M0                                                                                                                                              SA: conventional strongARM
+                                                                                   CLK        VDP                                                                   Input    TTCO: Proposed triple tail with
+                                                                         0.5                                                                                                 capacitive over-neutralization
+       VINP                                                                                                                                                          pair
+                     M1P         M1N         VINN                                    CN = 6 fF
+                                                                                                    VDN
+                                                                          0
+                                                                                                                                                               CN = 6 fF
+
+
+
+
+                                                                                                             10.2 µm
+                                                                               0        50             100
+                     VDN         VDP                                                                                                                                                                  SA
+                                                                                                                                                                 Bulk
+
+
+
+
+                                                          CLK, VX [V]
+                           CLK                                            1
+               S1P                     S1N                                                                                                                     contacts
+
+
+
+
+                                                                                                                                                                                                               4.5 µm
+                                                                                   CLK              VXP
+                                                                         0.5
+        VDD                                  VDD                                            VXN                                                                 Latch
+                                 CN                                       0          CN = 6 fF
+ CLK
+             S2P                        S2N
+                                                    CLK
+                                                                               0        50             100                                                       Bulk
+                     CN                                                                                                                                        contacts
+
+
+
+
+                                                          CLK, VO [V]
+                                                                          1
+                            VDD                                                    CLK              VOP                             10.3 µm                                             9.1 µm
+       M2P                                    M2N                        0.5
+                    CLK          M6                                                  CN = 6 fF      VON      Fig. 6. Layout of the TTCO comparator with CN = 6 fF (left) and the SA
+                                                                          0
+   VXP                                         VXN                             0         50            100   comparator (right).
+                                                          CLK, ΔVX [V]
+              M5P                      M5N                                                    10 fF
+                                                                          1
+             VON                       VOP                               0.5       CLK
+                                                                                         CN         6 fF
+    M3P                                        M3N
+              M4P                      M4N                                                            2 fF
+                                                                          0
+                                                                               0         50            100
+                                                                                     Time [ps]
+Fig. 5. Triple tail comparator with capacitive over-neutralization (TTCO) and                                                                                                       Comparators
+transient simulations for ∆VIN = 0.5 mV, VDD = 0.9 V, and VCM = 0.3 V. The
+upper three graphs show simulations for CN = 6 fF. The bottom graph shows
+the preamplifier output ∆VX for CN = 2 fF, 6 fF, 10 fF.
+
+                                                                                                                                                      Cryostation
+   In contrast to the half-latches in prior art multi-stage com-                                                Keithley 2450                                   VINP        VOP
+                                                                                                                    SMU                 LPF
+                                                                                                                                                                                      100 Ω
+parators, the positive feedback of the cross-coupled capacitors                                                 Keithley 2450
+                                                                                                                                                             100 Ω
+                                                                                                                    SMU                 LPF                     VINN        VON                   Agilent DSA-X
+does not cause full regeneration of the preamplifier outputs                                                                      Balun Bias-T (2×)
+                                                                                                                                                                                                     92004Q
+                                                                                                                   R&S                                                                             Oscilloscope
+VXP/N to VDD and VSS . Instead, both VXP and VXN are                                                            SMBV100A
+                                                                                                                                                             100 Ω
+                                                                                                                                                                            CLK
+                                                                                                                                                                                      100 Ω
+                                                                                                                  Signal
+precharged to VDD during the reset phase and discharged to                                                       generator
+                                                                                                                                                                            CLK
+VSS during the comparison phase. Hence, the voltage swing at                                                           Agilent E3610A                                                  Chip
+the drains of M2 causes primarily a common-mode disturbance
+of the bulk voltages, introducing negligible hysteresis. Conse-                                              Fig. 7. Measurement PCB mounted on the base platform of a Montana
+quently, the TTCO comparator is considerably less susceptible                                                Instruments s200 cryostation, chip micrograph and measurement setup.
+to freeze-out induced hysteresis than multi-stage comparators
+with half-latches in their preamplifiers.                                                                    noise of the source measure units (SMU) and the comparator
+                                                                                                             and clock outputs are sampled by an oscilloscope. Unless
+                            IV. M EASUREMENT S ETUP                                                          stated otherwise, measurements are performed at a platform
+   To demonstrate the effectiveness of the proposed capacitive                                               temperature of 6 K, a supply voltage VDD of 0.9 V and an
+over-neutralization, a chip containing an SA and three TTCO                                                  input common-mode voltage VCM of 0.3 V.
+comparators (CN of 2 fF, 6 fF and 10 fF) was manufactured
+in a 40 nm bulk CMOS technology. All comparators were                                                                            V. C HARACTERIZATION M ETHODOLOGY
+sized for similar noise and offset. To mimic the cryogenic                                                      Characterizing the magnitude of the hysteresis in the pres-
+I-V characteristics in simulations, the BSIM4 mobility and VT                                                ence of noise requires a statistical method, as shown in Fig. 8.
+model parameters were adapted based on [6], so that foundry                                                  The output probability of the kth decision P(OUTk = 1) has a
+statistical data can be reused for approximate Monte Carlo                                                   Gaussian cumulative density function (CDF) with standard de-
+simulations [7]. To compensate for the higher VT at cryogenic                                                viation σ noise . Without hysteresis, this CDF is centered around
+temperatures [6], [7], [8], all transistors are implemented as                                               a differential input of 0 V (with the offset VOS removed), ir-
+low-VT (LVT) core devices. Furthermore, all comparators                                                      respective of the previous decision. However, hysteresis shifts
+employ a PMOS input pair to counteract the higher impact                                                     the CDF center to VHYS or -VHYS when the previous decision
+of 1/f-noise at cryogenic temperatures [17]. To reduce RB as                                                 is negative or positive, respectively, increasing the probability
+much as possible, a double row of bulk contacts is placed as                                                 PSAME of the same decision for the next comparison. This
+close to the latch as minimally allowed by the foundry design                                                probability can thus be expressed using the shifted Gaussian
+rules, as shown in the example layouts of Fig. 6.                                                            CDF:
+   The measurement setup and chip micrograph are depicted
+in Fig. 7. The chip is mounted on a PCB and installed
+                                                                                                                                   PSAME ≜ P (OUT k = 0|OUT k−1 = 0)
+in a Montana Instruments s200 cryostation for cryogenic
+characterization. The samples are thermalized by fixing them                                                                                     = P (OUT k = 1|OUT k−1 = 1)
+directly on a gold-plated copper heat sink with silver paint                                                                                     = CDF |OUT k−1 =1 (0)                                         (1)
+[7]. The minimal achievable platform temperature of this setup
+                                                                                                                                                                       
+                                                                                                                                                   1             VHYS
+is 6 K. The input signals are low-pass filtered to remove the                                                                                    =    1 + erf √
+                                                                                                                                                   2             2σnoise
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. X, NO. Y, ZZZZ                                                                                                     4
+
+
+
+                                                                 TABLE I
+         C OMPARISON OF THE PRESENTED TOPOLOGIES AT AND 6 K WITH THE STATE - OF - THE - ART HIGH - SPEED MULTI - STAGE COMPARATORS
+                                             Cryogenic temperature (T = 6 K)                   Room temperature (T = 300 K)
+                                              SA                                 ISSCC 07 [19]        TCAS-I 22 [13]     ESSCIRC 23 [14]
+                                                           This Work: TTCO
+                                         strongARM                                 Double Tail           Triple Tail       Quadruple Tail
+  Technology [nm]                             40           40      40       40           90                  28                   28
+  Supply voltage [V]                          0.9         0.9      0.9      0.9          1.2                 1.0                 1.0
+  CN [fF]                                      -           2        6       10            -                   -                    -
+  Noise voltage (σ noise ) [µVRMS ]           348         293     277      237          1500                890                  980
+  Hysteresis voltage (VHYS ) [µV]           >898         >655     256      141            -                   -                    -
+  Energy/comp (Ecomp ) [fJ]                  26.5         93.2    128      158          113                 163                  193
+  Delay (VIN -VOS = 5 mV) [ps]                95           47      54       58   100 (simulated)             27            15 (estimated)
+  Ecomp ·Delay (VIN -VOS = 5 mV) [fJ·ns]      2.5         4.4      7.0      9.2   11 (simulated)             4.4           2.8 (estimated)
+  Area [µm2 ]                                41.0         87.8    105      121          82.5                 78                  136
+  FoMnoise (Ecomp ·σ 2noise ) [nJ ·µV2 ]      3.2         8.0      9.8      8.9         170                 129                  193
+  FoMHYS (Ecomp ·V2HYS ) [nJ ·µV2 ]         >21.4        >40.0     8.4     3.14           -                   -                    -
+
+
+
+A PSAME > 1/2 introduces a positive correlation between                             1                                                             1 Measure σnoise without
+consecutive comparator decisions. With the comparator biased                              OUTk–1 = 1                                              hysteresis (low clock frequency)
+
+
+
+
+                                                                       P(OUTk=1)
+in its trip point (∆VIN - VOS = 0), the mean outcome µOU T is                                                                                     2 Measure autocorrelation with
+                                                                                   0.5                                                            hysteresis (high clock frequency)
+equal to 1/2. Then, the output autocorrelation ρ1 across KT OT
+decisions, defined in the following equation [18], is a measure                                                OUTk–1 = 0
+for the increase of PSAME :                                                         0                                                             3 VHYS
+                                                                                              - VHYS     0      VHYS     Δ VIN – VOS
+             PKTOT
+               k=1    (OUT k+1 − µout )(OUT k − µout )                 Fig. 8. Procedure to calculate VHYS from the measured autocorrelation
+      ρ1 ≜             PKTOT                                     (2)   between consecutive comparator decisions.
+                                            2
+                        k=1 (OUT k − µout )
+
+In the trip point, (OUT k+1 − µout )(OUT k − µout ) equals                           1                                                       1
+                                                                        P(OUT=1)
+
+
+
+
+                                                                                                                                 P(OUT=1)
+                                                                                              Measured                                                 Measured
+1/4 with a probability PSAME , while it equals -1/4 with a                                    Fit CDF                                                  Fit CDF
+                                                                                   0.5                                                      0.5
+probability 1−PSAME . Furthermore, (OUT k −µout )2 always                                                         SA                                                    TTCO 2 fF
+                                                                                                             σ = 348 μVRMS                                            σ = 293 μVRMS
+equals 1/4. So, for sufficiently large KTOT , ρ1 converges to:                       0                                                       0
+                                                                                         -2     -1       0         1         2                    -2       -1     0        1      2
+                                                                                               Δ VIN – VOS [mV]                                         Δ VIN – VOS [mV]
+                              1         1                                            1                                                       1
+                              4 PSAME − 4 (1 − PSAME )                                        Measured
+                                                                        P(OUT=1)
+
+
+
+
+                                                                                                                                                       Measured
+
+                                                                                                                                 P(OUT=1)
+             lim    (ρ1 ) =              1                                                    Fit CDF                                                  Fit CDF
+         KTOT →∞
+                                         4                       (3)               0.5                                                      0.5
+                                                                                                               TTCO 6 fF                                               TTCO 10 fF
+                         = 2PSAME − 1                                                0                       σ = 277 μVRMS                                            σ = 237 μVRMS
+                                                                                                                                             0
+                                                                                         -2     -1       0         1         2                -2           -1     0        1      2
+Then, substituting (1) in (3) results in an expression for VHYS :                              Δ VIN – VOS [mV]                                         Δ VIN – VOS [mV]
+                              √                                        Fig. 9. Output probability distributions of the measured comparators.
+                   VHY S =        2σnoise erf −1 (ρ1 )           (4)
+
+                   VI. M EASUREMENT R ESULTS                           comparator with a CN of 10 fF. Below 20 K, the dopant freeze-
+   For the noise measurements, the clock is set to a low               out makes VHYS rise steeply above the noise level in the SA
+frequency of 100 kHz, resulting in the output distributions            comparator. In contrast, in the TTCO comparator VHYS stays
+shown in Fig. 9. The σ noise derived from these CDFs serves as         well below the noise level for all platform temperatures, down
+an input for the hysteresis characterization in Fig. 10. The VHYS      to 6 K.
+of all four comparators is characterized for three samples and            Table I summarizes the measurement results at a platform
+clock frequencies from 100 kHz to 50 MHz. At 100 kHz, VHYS             temperature of 6 K. The SA comparator has a VHYS above
+is negligible. However, around 5 MHz, the SA comparator                898 µV, substantially deteriorating its precision compared to its
+has a VHYS above 850 µV, which is almost 3σ noise . At higher          noise level of 348 µVRMS . In contrast, the TTCO comparator
+frequencies, VHYS cannot be characterized accurately anymore           with a CN of 10 fF lowers VHYS >6× to only 141 µV, well below
+due to the high sensitivity of the inverse error function when         its noise level of 237 µVRMS . Since VHYS degrades the SNDR of
+the autocorrelation gets too close to 1. This means that VHYS is       a SAR ADC like a white noise source with power (VHYS )2 , the
+even higher at these high frequencies. In contrast, the TTCO           FoMHYS adapts the FOMnoise , introduced in [20], accordingly.
+comparators show a noticeably lower VHYS . The extra stages            Despite its higher power consumption, the TTCO comparator
+and the capacitive over-neutralization provide a significantly         with a CN of 10 fF shows a >6× better FOMHYS than the SA
+higher preamplification gain, which successfully suppresses            comparator. Furthermore, the value of CN allows to trade off
+VHYS .                                                                 VHYS suppression and power consumption effectively. For com-
+   The temperature dependence of VHYS at a clock frequency             pleteness, the table also includes the room temperature double
+of 10 MHz is shown in Fig. 11 for the SA and the TTCO                  tail comparator from [19] and the multi-stage comparators
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. X, NO. Y, ZZZZ                                                                            5
+
+
+
+                             Autocorrelation ≈ 1 → No accurate                                                R EFERENCES
+                             characterization possible anymore
+              1                                                                  [1] H. Fuketa, I. Akita, T. Ishikawa, H. Koike, and T. Mori, “A cryogenic
+                                                                                     CMOS current integrator and correlation double sampling circuit for spin
+                                                                                     qubit readout,” IEEE Transactions on Circuits and Systems I: Regular
+             0.8                          SA                                         Papers, vol. 70, no. 12, pp. 5220–5228, 2023.
+                                                                                 [2] D. Minn, K. Kang, J. Lee, S. Bae, B. Kim, J. Lee, and J.-Y. Sim, “A
+VHYS [mV]
+
+
+
+
+                                                                                     40 nm cryo-CMOS homodyne-demodulation readout SoC for supercon-
+             0.6                                                                     ducting qubits,” IEEE Transactions on Circuits and Systems I: Regular
+                                                          TTCO 2 fF                  Papers, vol. 72, no. 3, pp. 1003–1016, 2025.
+             0.4                                                                 [3] B. Veraverbeke and F. Tavernier, “A cryo-CMOS 800MS/s 7b CI-
+                                                         TTCO 6 fF                   SAR with only 4fF input capacitance and 64dB SFDR,” in 2025 IEEE
+                                                                                     International Solid-State Circuits Conference (ISSCC), vol. 68, 2025,
+             0.2                                                                     pp. 1–3.
+                                                                                 [4] G. Kiene, R. W. J. Overwater, M. Babaie, and F. Sebastiano, “A cryo-
+                                                         TTCO 10 fF                  CMOS SAR ADC with FIA sampling driver enabled by cryogenic-aware
+              0
+                                 1                 10             100                back-biasing,” IEEE Transactions on Circuits and Systems I: Regular
+                                     fclk [MHz]                                      Papers, vol. 71, no. 3, pp. 1071–1081, 2024.
+Fig. 10. Measured VHYS versus clock frequency for three samples at a platform    [5] F. Tavernier, A. Gatti, and C. Barretto, “Chip design for future gravi-
+temperature of 6 K (□ : sample 1, ∆ : sample 2, O : sample 3).                       tational wave detectors,” in 2020 IEEE International Electron Devices
+                                                                                     Meeting (IEDM), 2020, pp. 25.4.1–25.4.4.
+                                                                                 [6] R. M. Incandela, L. Song, H. Homulle, E. Charbon, A. Vladimirescu,
+                                                                                     and F. Sebastiano, “Characterization and compact modeling of nanome-
+             0.8        SA                        Sample 1                           ter CMOS transistors at deep-cryogenic temperatures,” IEEE Journal of
+             0.6                                  fclk = 10 MHz                      the Electron Devices Society, vol. 6, pp. 996–1006, 2018.
+ VHYS [mV]
+
+
+
+
+                                                                                 [7] A. Gatti and F. Tavernier, “Cryogenic small dimension effects and
+             0.4                        Noise level                                  design-oriented scalable compact modeling of a 65-nm CMOS tech-
+                                                                                     nology,” IEEE Journal of the Electron Devices Society, vol. 12, pp.
+             0.2                                                                     369–378, 2024.
+                                                                                 [8] A. Beckers, F. Jazaeri, and C. Enz, “Characterization and modeling of
+               0     TTCO                                                            28-nm bulk CMOS technology down to 4.2 K,” IEEE Journal of the
+                   0 10 fF 20         40        60                   80              Electron Devices Society, vol. 6, pp. 1007–1018, 2018.
+                                Temperature [K]                                  [9] G. Kiene, A. G. Sreenivasulu, R. W. Overwater, M. Babaie, and
+                                                                                     F. Sebastiano, “Cryogenic comparator characterization and modeling for
+Fig. 11. Measured VHYS versus platform temperature at fclk = 10 MHz.                 a cryo-CMOS 7b 1-GSa/s SAR ADC,” in ESSCIRC 2022- IEEE 48th
+                                                                                     European Solid State Circuits Conference (ESSCIRC), 2022, pp. 53–56.
+                                                                                [10] P. A. ‘t Hart, T. Huizinga, M. Babaie, A. Vladimirescu, and F. Sebas-
+from [13], [14]. Even though these comparators are designed                          tiano, “Integrated cryo-CMOS temperature sensors for quantum control
+                                                                                     ICs,” in 2022 IEEE 15th Workshop on Low Temperature Electronics
+to operate under completely different conditions in terms of                         (WOLTE), 2022, pp. 1–4.
+temperature and noise, this comparison shows that the TTCO                      [11] D. P. Foty, “Impurity ionization in MOSFETs at very low temperatures,”
+comparators have a competitive absolute energy consumption                           Cryogenics, vol. 30, no. 12, pp. 1056–1063, 1990. [Online]. Available:
+                                                                                     https://www.sciencedirect.com/science/article/pii/001122759090207S
+ECOMP compared to state-of-the-art multi-stage comparators.                     [12] B. Razavi, “The strongARM latch [a circuit for all seasons],” IEEE
+Although white noise does not reduce proportional to temper-                         Solid-State Circuits Magazine, vol. 7, no. 2, pp. 12–17, 2015.
+ature down to 6 K [9], [17], the cryogenic temperature still                    [13] A. T. Ramkaj, M. J. M. Pelgrom, M. S. J. Steyaert, and F. Tavernier, “A
+                                                                                     28 nm CMOS triple-latch feed-forward dynamic comparator with <27
+significantly improves the noise efficiency FoMnoise .                               ps/1 V and <70 ps/0.6 V delay at 5 mV-sensitivity,” IEEE Transactions
+                                                                                     on Circuits and Systems I: Regular Papers, vol. 69, no. 11, pp. 4404–
+                      VII. C ONCLUSION                                               4414, 2022.
+                                                                                [14] Z. Li and F. Tavernier, “A 10 GHz quadruple-tail comparator with
+   The freeze-out induced increase of the bulk resistance                            double feedforward paths and minimal delay slope in 28 nm CMOS,”
+jeopardizes a proper reset of the latch in cryogenic bulk CMOS                       in ESSCIRC 2023- IEEE 49th European Solid State Circuits Conference
+                                                                                     (ESSCIRC), 2023, pp. 205–208.
+comparators. This introduces hysteresis, favoring the same                      [15] Z. Wang, P.-Y. Chiang, P. Nazari, C.-C. Wang, Z. Chen, and P. Heydari,
+decision as the previous one. This work developed a statistical                      “A CMOS 210-GHz fundamental transceiver with OOK modulation,”
+characterization procedure to reliably measure the hysteresis                        IEEE Journal of Solid-State Circuits, vol. 49, no. 3, pp. 564–580, 2014.
+                                                                                [16] H. S. Bindra, J. Ponte, and B. Nauta, “A 174µVRMS input noise, 1 GS/s
+in the presence of noise, showing that hysteresis severely                           comparator in 22nm FDSOI with a dynamic-bias preamplifier using tail
+degrades the precision of the popular strongARM comparator.                          charge pump and capacitive neutralization across the latch,” in 2022
+In contrast, the proposed TTCO comparator effectively sup-                           IEEE International Solid-State Circuits Conference (ISSCC), vol. 65,
+                                                                                     2022, pp. 1–3.
+presses the hysteresis in a simple and robust way by boosting                   [17] G. Kiene, S. İlik, L. Mastrodomenico, M. Babaie, and F. Sebastiano,
+the preamplification gain using capacitive over-neutralization.                      “Cryogenic characterization of low-frequency noise in 40-nm CMOS,”
+The prototype TTCO comparator with a CN of 10 fF has a                               IEEE Journal of the Electron Devices Society, vol. 12, pp. 573–580,
+                                                                                     2024.
+hysteresis voltage of only 141 µV, which stays well below its                   [18] G. E. Box, G. M. Jenkins, and G. C. Reinsel, Time series analysis:
+noise voltage of 237 µVRMS . Hence, the TTCO comparator                              forecasting and control., 3rd ed. Prentice Hall, 1994.
+maintains high precision in the cryogenic environment up to                     [19] D. Schinkel, E. Mensink, E. Klumperink, E. van Tuijl, and B. Nauta,
+                                                                                     “A double-tail latch-type voltage sense amplifier with 18ps setup+hold
+clock frequencies well above 10 MHz.                                                 time,” in 2007 IEEE International Solid-State Circuits Conference.
+                                                                                     Digest of Technical Papers, 2007, pp. 314–605.
+                    ACKNOWLEDGMENTS                                             [20] X. Tang, L. Shen, B. Kasap, X. Yang, W. Shi, A. Mukherjee, D. Z.
+                                                                                     Pan, and N. Sun, “An energy-efficient comparator with dynamic floating
+  The authors thank Frederik Daenen, Donald Raddoux, and                             inverter amplifier,” IEEE Journal of Solid-State Circuits, vol. 55, no. 4,
+Rudi Vanlaer for technical support and Jun Feng and Alberto                          pp. 1011–1022, 2020.
+Gatti for discussions.
+

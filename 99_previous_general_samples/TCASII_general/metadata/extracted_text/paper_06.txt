@@ -1,0 +1,421 @@
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS II: EXPRESS BRIEFS, VOL. V, NO. N, AUGUST YYYY                                                                            1
+
+
+
+
+                       A Multi-GHz Inverter-Based ASDM
+                          with Distortion Cancellation
+                                      Caro Meysmans , Achim Vandierendonck ,
+                     Pieter Rombouts , Senior Member, IEEE, Guy Torfs , Senior Member, IEEE
+
+
+
+   Abstract—This brief proposes and demonstrates an asyn-                                                 Baseband
+
+chronous sigma-delta modulator (ASDM) which is based entirely                                        ȳ              v̄
+on pseudo-digital inverters. To achieve multi-GHz operation,                                              g −1                                        −gm
+the proposed ASDM employs a delay-based approach, with a
+quantizer consisting of a cascade of pseudo-differential inverters.
+The loop filter is a Gm-RC low-pass filter with a Nauta transcon-                                                         u                       y             v
+                                                                                  u                                             gm
+                                                                                                     y               v
+ductor [1], which consists of two input inverter pairs loaded by                      + F (j2πf )
+a self-coupled and cross-coupled inverter pair. By suitably sizing                    −                                              R      C
+the loop filter, the non-linearity of the quantizer compensates the
+non-linearity of the transconductor. Fabricated in 28 nm CMOS,
+the prototype oscillates at 6.9 GHz, achieving an SNDR of 46.5 dB
+                                                                                               (a)                                          (b)
+and a dynamic range of 56.6 dB over a 500 MHz bandwidth. The
+prototype occupies an area of 58 (µm)2 , and consumes a power
+of 2.6 mW from a 0.9 V supply.
+                                                                                                                 v(t)     v̄(t)          u(t)
+   Index Terms—inverter-based, asynchronous sigma-delta mod-
+ulator (ASDM), pulse-width modulator (PWM)
+
+
+                                                                                                                                                            t
+                         I. I NTRODUCTION
+      SYNCHRONOUS sigma-delta modulators transform
+A     their input signal to a two-level signal, without suffering
+from quantization noise [2]. For this reason, ASDMs are
+                                                                                                                          (c)
+                                                                              Fig. 1. (a) Block diagram of a generic ASDM, and its baseband represen-
+particularly useful at the input of ADCs [3]–[5] and class-D                  tation. (b) Circuit diagram of a first-order ASDM using a Gm-RC low-pass
+power amplifiers [6] to relax the linearity requirements of their             filter. (c) Time domain waveform of the output signal v, and its baseband
+input stage. Alternatively, using a time-to-digital converter, a              representation v̄ (no carrier and its sidebands), for a sinusoidal input signal
+                                                                              u.
+complete ADC can be realized with most of its functionality in
+the digital domain [7], reducing area and power consumption.
+   Unlike its synchronous counterpart, the modulator is not                   This approach does not lead to a less linear design [9], contrary
+clocked. Instead, the modulator exhibits a self-oscillation of                to what was previously believed.
+which both the instantaneous frequency and pulse-width are                       We propose an inverter-based implementation that provides
+modulated by the input signal, as shown in Fig. 1c. Prior                     compatibility with the decreasing supply voltage and stricter
+implementations rely on a quantizer with hysteresis [2], [8]                  layout rules of aggressively scaled CMOS technologies, while
+to establish a well-defined self-oscillation frequency. However,              simultaneously benefiting from the improvements in switching
+higher frequencies can be obtained by eliminating this hystere-               speed and power efficiency. This approach results in a very
+sis and by relying solely on the inherent delay of the quantizer.             compact modulator with a self-oscillation frequency at multi-
+                                                                              GHz frequencies. Fabricated in 28 nm CMOS, the prototype
+   Manuscript received TODO; revised TODO; accepted TODO. Date of             oscillates at 6.9 GHz, achieving an SNDR of 46.5 dB and a
+publication TODO; date of current version TODO. This work was supported
+by the Research Foundation - Flanders (file number 1S85222N) and the          dynamic range of 56.6 dB over a 500 MHz bandwidth. The
+                                                                                                                     2
+H2020 Int5Gent project (project number 957403). (Corresponding author C.      prototype occupies an area of 58 (µm) , and consumes a power
+Meysmans.)                                                                    of 2.6 mW from a 0.9 V supply. This prototype is intended for
+   C. Meysmans, A. Vandierendonck, and G. Torfs are with the Department
+of Information Technology (INTEC), Ghent University-imec, 9052 Gent, Bel-     upstream sigma-delta-over-fiber transceivers [10]. However, it
+gium (e-mail: caro.meysmans@ugent.be; achim.vandierendonck@ugent.be;          can be readily adapted to suit a wider range of applications.
+guy.torfs@ugent.be).                                                             This work is structured as follows. In Section II, we
+   P. Rombouts is with the Department of Electronics and Informa-
+tion Systems (ELIS), Ghent University, 9052 Gent, Belgium (e-mail:            outline the performance-defining parameters of the ASDM. In
+pieter.rombouts@ugent.be).                                                    Section III, we discuss our implementation. The experimental
+   Color versions of one or more of the figures in this paper are available   results are then discussed in Section IV. Finally, conclusions
+online at TODO.
+   Digital Object Identifier TODO                                             are drawn in Section V.
+                                                           0000–0000/00$00.00 © 2024 IEEE
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS II: EXPRESS BRIEFS, VOL. V, NO. N, AUGUST YYYY                                                                                                    2
+
+
+
+    II. A SYNCHRONOUS S IGMA -D ELTA M ODULATION                            yc + y2d
+                                                                                       Y0P          Y1N           Y2P                                Y3N
+                                                                                                                                                                                 vc + v2d
+
+                                                                                         ×2           ×2            ×4                                 ×4
+   The block diagram of a generic ASDM is shown in Fig. 1a.                                                                   CC2N         ×2                      CC3P      ×2
+
+It is a closed-loop configuration consisting of a continuous-               yc − y2d
+                                                                                                                             ×2         CC2P                    ×2        CC3N
+                                                                                                                                                                                 vc − v2d
+time loop filter F (j2πf ) and a quantizer, which generates                            Y0N
+                                                                                         ×2
+                                                                                                    Y1P
+                                                                                                      ×2
+                                                                                                                  Y2N
+                                                                                                                    ×4
+                                                                                                                                                     Y3P
+                                                                                                                                                       ×4
+the binary output signal. This structure is very similar to
+a conventional (synchronous) sigma-delta modulator, except                Fig. 2. Quantizer circuit
+that there is no sampling in the loop. Consequently, the error
+introduced by the quantizer cannot be modeled as a white noise                                       Nauta transconductor
+
+sequence. Instead, as will be detailed below, it can be modeled
+by an odd, expansive non-linear function g −1 . As a result, the                                         SCN                                         VN
+                                                                                                                                                              vc − v2d
+
+role of the loop filter shifts from shaping quantization noise                                             ×2                                   ×1
+
+
+to suppressing the non-linearity of g −1 . However, typically an                              uc + u2d
+                                                                                                           UP
+                                                                                                                                                              yc − y2d
+
+active loop filter also compresses large input signals due to the                                            ×2
+                                                                                                                       CCN         ×2
+non-linearity of its transconductor. Instead of optimizing both                                                   ×2         CCP
+                                                                                                                                                          C
+
+non-linearities independently, we propose to compensate the                                   uc − u2d
+                                                                                                         UN
+                                                                                                                                                              yc + y2d
+
+loop filter compression with the quantizer expansion, saving                                               ×2
+
+
+both power and area.                                                                                     SCP                                         VP
+                                                                                                                                                              vc + v2d
+
+   To quantify the intrinsic distortion of an ASDM, the high                                               ×2                                   ×1
+
+frequency behavior (f ⩾ fc ) of the loop filter F (j2πf ) should
+satisfy [9], [11]
+                                                                          Fig. 3. Loop filter circuit
+                        1                                     −1
+ ℜ {F (j2πf )} ≈             2 , ℑ {F (j2πf )}           ≈          (1)
+                    (2πf τr )                                2πf τi
+               √                                                          modulation depth on the distortion, and can be approximated
+where τr = gm R · C/gm and τi = C/gm for the low-pass                     as A3 /4 for A ≪ 1.
+filter in Fig. 1b. Under these conditions, the baseband response             To compensate the third-order non-linearity of the transcon-
+of the ASDM can be modeled by the following non-linear                    ductor, (6) should be tuned to match the level of third-
+differential equation [9], [11]                                           order distortion of the transconductor. This can be realized
+                                              ∞
+                                              X                           by tuning the filter time constant RC. However, to ensure
+          (u − v̄) ∗ f = g(v̄) = g1 v̄ − g3         v̄ 2m+1         (2)   effective compensation over input frequency, we must ensure
+                                              m=1                         that F (j2πµ) = gm R across the targeted bandwidth fB of the
+where u is the input, v̄ is the baseband output, f is the loop            ASDM, limiting the filter time constant, RC ⩽ 1/(2πfB ).
+filter, and g is an odd, compressive non-linear function. The
+baseband representation is equivalent to substituting g −1 for                                           III. I MPLEMENTATION
+the quantizer, as shown in Fig. 1a. Prior implementations rely            A. Quantizer
+on a quantizer with hysteresis [2], [8] (e.g., a Schmitt trigger).           The quantizer comprises a cascade of pseudo-differential
+However, higher frequencies can be obtained by eliminating                inverters, as shown in Fig. 2. A total of four stages was selected
+this hysteresis and by relying solely on the inherent delay of            to obtain a sufficiently large gain. The last stage comprises
+the quantizer. On top of that, the self-oscillation frequency             four unit inverters to provide sufficient drive strength. The
+now only depends on the quantizer delay TD and is given by                first stage comprises only two unit inverters. Although further
+[9], [11]                                                                 reducing the size of the first stage results in a lower static
+                                  1
+                           fc =                               (3)         power consumption, we decided against it in order to maintain
+                                4TD
+                                                                          a reasonable ratio between the first and last stage. A large
+Additionally, the coefficients of g can now be approximated               ratio between these stages would negatively impact the overall
+as [9], [11]                                                              propagation delay. For the intermediate stages, the number of
+                   TD
+                                
+                                  TD
+                                                                         unit inverters was chosen to minimize the overall propagation
+             g1 ≈      = gm R           ,               (4)               delay. Additionally, cross-coupled inverters were added to
+                    τi            RC
+                          2               2                           prevent common mode oscillations. The gain of the first two
+                   2 TD           2       TD                              stages minimizes the resulting hysteresis, as seen by the input.
+             g3 ≈              = gm R                   (5)
+                   3 τr           3       RC                              Ultimately, this design procedure yielded a quantizer with a
+Using perturbation theory, (2) can be used to determine the               simulated propagation delay of 27.5 ps, which corresponds to
+level of third-order harmonic distortion, yielding [9], [11]              a 9.1 GHz self-oscillation frequency, according to (3).
+
+                                      1             g3
+             |A3 | = K3 (A)                                         (6)   B. Loop Filter
+                              g1−1 F (j2π3µ)        g1
+                                                                             For high speed operation, a Gm-RC low-pass filter is used
+where A and µ are the amplitude and frequency of the                      to implement the loop filter. This is shown in Fig. 1b. Both
+input signal, respectively. K3 (A) describes the impact of the            the input and feedback transconductor are implemented using
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS II: EXPRESS BRIEFS, VOL. V, NO. N, AUGUST YYYY                                                                       3
+
+
+
+                                                                                                                           0.85 V      0.90 V         0.95 V
+                               C C C C C
+                                                                                                            1
+
+                                                                                             0.98
+
+
+
+
+                                                   8.7 µm
+
+
+
+
+                                                                           f /fc
+                                                                                             0.96
+
+
+                               C C C C C                                                                    −100      −50          0        50       100
+                                                                                                              (a) Input differential mode voltage [mV]
+                                     6.7 µm
+
+
+
+
+                                                                                   Power consumption [mW]
+                                                                                                            4
+Fig. 4. Die micrograph and ASDM layout view                                                                                                  0.95 V
+                                                                                                            3
+                                                                                                                                    0.90 V
+a Nauta transconductor [1], as shown in Fig. 3. A Nauta                                                                   0.85 V
+transconductor is a differential circuit comprising an input                                                2
+inverter pair (UP, UN) loaded by a cross-coupled inverter pair
+(CCP, CCN) and a self-coupled inverter pair (SCP, SCN). Since                                                   5.5         6      6.5       7      7.5    8
+both the input and feedback transconductor share the same                                                             (b) Self-oscillation frequency [GHz]
+output, the cross-coupled and self-coupled inverter pair can be
+shared [12], saving both area and power. The output impedance      Fig. 5. (a) Ratio of the instantaneous frequency f to the self-oscillation
+                                                                   frequency fc as a function of the input differential mode voltage. The result is
+of the Nauta transconductors is used to realize R. Contrary to     shown for different supply voltages. (b) Power consumption and corresponding
+the normal Nauta configuration, as explained in [1], where the     self-oscillation frequency as a function of the supply voltage (in steps of
+output resistance is canceled, we intentionally sized the self-    10 mV)
+coupled invertor to realize the required output resistance R,
+realizing a low-pass filter without internal parasitic poles. In
+our design, the input inverter pair was sized twice as large as    pads through a current-mode logic driver, whose power con-
+the feedback inverter pair. This introduces a gain of 6 dB in      sumption is not included in the reported measurements. The
+the ASDM operation and reduces the full scale differential         prototype is wirebonded to a custom printed circuit board.
+input amplitude to half the supply voltage, i.e., 0.9 Vpp .           The input signal is sourced from a Keysight N5247B PNA-
+Consequently, the transconductor will relatively behave more       X, which can generate an accurately balanced differential
+linear.                                                            signal. The receivers of the PNA-X are configured as a
+    If the transistors would follow the well known square law      differential spectrum analyzer. The available PNA-X, however,
+model, the Nauta transconductor is perfectly linear. However,      lacks support for noise measurements. Hence, a Keysight
+a real deep submicron transistor deviates significantly from       N9020A MXA spectrum analyzer is used for this purpose.
+this model. Consequently, in this case a Nauta transconductor      This instrument, however, requires a single-ended input signal
+exhibits third-order distortion (see (9) in [1]). Additionally,    and hence a wideband balun is used to perform the differential
+mismatch introduces second-order distortion and further de-        to single-ended conversion. As will be detailed below, the im-
+grades the linearity.                                              balance of this balun introduces unwanted distortion, resulting
+    Due to the very high self-oscillation frequency, and the       in a degraded measured linearity. To overcome this, the PNA-
+rather limited linearity of the Nauta transconductor, the loop     X linearity measurements are combined with the MXA noise
+filter does not have to satisfy very stringent requirements.       measurements to obtain the SNDR of the modulator
+Using the design procedure of Section II, we found that a DC          In a first set of measurements, the self-oscillation of our
+gain of −2.2 dB, combined with a 55 fF MOM-type capacitor          circuit is characterized. Assuming no offset, the self-oscillation
+enables the ASDM to compensate the non-linearity of the            frequency fc is the instantaneous frequency f at which the
+Nauta transconductor. The resulting 1.9 GHz cut-off frequency      ASDM oscillates when a zero input u is applied. When a non-
+ensures that the distortion is independent of input frequency      zero input is applied, the instantaneous frequency is given by
+well beyond the targeted bandwidth of the ASDM.                    [9], [11]
+                                                                                            f ≈ fc 1 − u2                         (7)
+                                                                                                          
+                IV. E XPERIMENTAL R ESULTS
+   The prototype was fabricated using a commercially avail-        We measured the instantaneous frequency as a function of the
+able 28 nm CMOS technology. Fig. 4 shows the die micro-            DC input voltage. The result, after dividing it by max (f )
+graph, which includes test circuits beyond the scope of this       which, according to (7), is equal to the self-oscillation fre-
+brief. Also shown is the ASDM layout view. The ASDM                quency, is shown in Fig. 5a for different supply voltages.
+measures 6.7 µm × 8.7 µm. Its input is directly connected to       As can be seen from the figure, the measurement matches
+the bonding pads and is differentially terminated with an off-     the predicted parabolic behavior of (7). For the considered
+chip 100 Ω resistor. Its output is connected to the bonding        supply voltages, the vertex of the parabola occurs for an input
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS II: EXPRESS BRIEFS, VOL. V, NO. N, AUGUST YYYY                                                                              4
+
+
+
+                                                            MXA     PNA-X                                            Sim      0.85 V       0.90 V        0.95 V
+        Output spectrum [dBFS]
+                                           0                                                                 −20
+                                        −20                        RBW = 1 MHz
+
+
+
+
+                                                                                                 THD [dB]
+                                                                   SNR = 36.6 dB                             −40
+                                        −40                       THD = −58.4 dB
+                                        −60                       SNDR = 36.6 dB
+                                                                                                             −60
+                                        −80                                                                                                     No HD2
+                                        −100                                                                 −80
+                                               0   0.2      0.4    0.6   0.8         1                         −20         −15       −10      −5             0
+                                                         Frequency [GHz]                                                     Input level [dBFS]
+
+Fig. 6.    Output spectrum of a −20 dBFS 100 MHz input tone for a                        Fig. 8. THD for a 100 MHz input tone as a function of the input level. The
+0.9 V supply voltage, as measured by the MXA with a 1 MHz resolution                     measurement was repeated 201 times on a single die. The result is shown for
+bandwidth. Also shown are the levels of the fundamental tone and its distortion          different supply voltages. Also shown is the simulated result and the THD for
+components, as measured by the PNA-X.                                                    a 0.9 V supply voltage when neglecting the second-order harmonic distortion.
+                                                                                         The lines represent the mean, while the shaded areas represent the range of
+        Total integrated noise [dBFS]
+
+
+
+
+                                                   0.85 V     0.90 V      0.95 V         values within one standard deviation of the mean.
+                                        −50
+                                                                                                                       0.85 V          0.90 V       0.95 V
+                                        −55                                                                  60
+                                        −60                                                                          48
+                                                                                                                     46
+
+
+
+
+                                                                                                 SNDR [dB]
+                                        −65                                                                  40      44
+                                        −70                                                                          42
+                                                                                                                      −10 −8 −6 −4
+                                        −75                                                                  20
+                                        −80                                                                                     Dynamic Range
+                                          106           107          108           109                        0
+                                                   Integration bandwidth [Hz]
+                                                                                                              −60            −40          −20                 0
+Fig. 7. Total integrated noise as a function of the integration bandwidth. The                                              Input level [dBFS]
+result is shown for different supply voltages.
+                                                                                         Fig. 9. SNDR in a 500 MHz bandwidth for a 100 MHz input tone as a
+                                                                                         function of the input level. The result is shown for different supply voltages.
+differential mode voltage of around 20 mV. Hence, we can
+conclude that this sample has a 20 mV offset voltage.
+   Next, the self-oscillation frequency and the corresponding                               Next, the total integrated noise as a function of the inte-
+power consumption is measured as a function of the supply                                gration bandwidth is measured. The result is shown in Fig. 7
+voltage (in steps of 10 mV). The result is shown in Fig. 5b. The                         for different supply voltages. For the considered bandwidths,
+input common mode voltage is set to half the supply voltage,                             the total integrated noise is dominated by 1/f noise. In
+while the input differential mode voltage is set to 20 mV to                             fact, the simulated 1/f corner frequency is 91 MHz, which
+compensate the offset voltage. The measurement shows self-                               results from the small devices used. Nonetheless, this design
+oscillation frequencies of 6.3 GHz, 6.9 GHz, and 7.4 GHz at                              choice is justified since the performance is still limited by
+supply voltages of 0.85 V, 0.90 V, and 0.95 V, respectively.                             distortion. It helps minimize power consumption for a given
+The corresponding power consumptions are 2.0 mW, 2.6 mW,                                 self-oscillation frequency and input bandwidth, and leads to a
+and 3.2 mW. These measurement points are marked for refer-                               compact design. For a 500 MHz bandwidth, the measurement
+ence. The loop filter accounts for 53.3 % of this power, while                           shows a total integrated noise of −55.8 dBFS, −56.6 dBFS,
+the comparator utilizes the remaining 46.7 %.                                            and −57.2 dBFS at supply voltages of 0.85 V, 0.90 V, and
+   Fig. 6 shows the output spectrum of a −20 dBFS 100 MHz                                0.95 V, respectively. These results are in very good agreement
+input tone for a 0.9 V supply voltage, as measured by the MXA                            with the simulated noise performance of the loop filter.
+with a 1 MHz resolution bandwidth. This is the largest input                                Next, the THD is measured for a 100 MHz input tone as
+signal for which we do not overload the input of the instrument                          a function of the input level. This measurement was repeated
+without using an attenuator. Also shown are the levels of the                            201 times on a single die. The result is shown in Fig. 8 for
+fundamental tone and its distortion components, as measured                              different supply voltages. Also shown is the simulated result
+by the PNA-X. These distortion levels are considerably better                            and the THD for a 0.9 V supply voltage when neglecting
+than those measured by the MXA. As was explained above,                                  the second-order harmonic distortion. The lines represent the
+this is due to the imbalance of the balun at the input of the                            mean, while the shaded areas represent the range of values
+MXA. Hence, the PNA-X is used for distortion measurements                                within one standard deviation of the mean. The THD is
+(THD), whereas the MXA is used for noise measurements                                    dominated by second-order harmonic distortion, caused by
+(SNR). Consequently, the SNDR is a combined measurement,                                 mismatch resulting from the very small area of the circuit.
+employing the results of both instruments. Using this proce-                             Meanwhile, the third-order harmonic distortion closely mirrors
+dure, we obtain a 36.6 dB SNR, a −58.4 dB THD, and a                                     the simulations.
+36.6 dB SNDR.                                                                               Finally, the SNDR in a 500 MHz bandwidth is measured
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS II: EXPRESS BRIEFS, VOL. V, NO. N, AUGUST YYYY                                                                                 5
+
+
+
+                             TABLE I                                                                                       R EFERENCES
+              P ERFORMANCE OVER A 500 MHz BANDWIDTH
+                                                                                              [1] B. Nauta, “A CMOS Transconductance-C Filter Technique for Very
+                                           Measured                         Simulateda            High Frequencies,” IEEE Journal of Solid-State Circuits, vol. 27, no. 2,
+                                                                                                  pp. 142–153, 1992.
+                                0.85 V       0.90 V       0.95 V            µ            σ    [2] S. Ouzounov, E. Roza, J. A. Hegt, G. van der Weide, and A. H. van
+ Offset [mV]                      20              20        20              4.9      16.6         Roermund, “Analysis and design of high-performance asynchronous
+ P [mW]                           2.0             2.6       3.2             2.9      0.2          sigma-delta modulators with a binary quantizer,” IEEE Journal of Solid-
+ f [GHz]                          6.3             6.9       7.4             7.9       0.4         State Circuits, vol. 41, no. 3, pp. 588–596, 2006.
+ DR [dBFS]                       55.8            56.6      57.2            57.5      0.2      [3] A. B. Fishani and P. Rombouts, “Continuous time ∆Σ modulation with
+ SNDR [dB]                       46.3            46.5      45.8              -         -          PWM pre-coding and binary gm blocks,” Electronics letters, vol. 48,
+ SNDR @ −10 dBFS [dB]            44.7            44.7      45.6            49.2      1.5          no. 19, pp. 1187–1188, 2012.
+ a
+     VDD = 0.90 V, T = 70◦                                                                    [4] L. Hernandez, S. Paton, and E. Prefasi, “VCO-based sigma delta
+                                                                                                  modulator with PWM precoding,” Electronics letters, vol. 47, no. 10,
+                                                                                                  pp. 588–589, 2011.
+                               TABLE II                                                       [5] S. Rao, B. Young, A. Elshazly, W. Yin, N. Sasidhar, and P. K. Hanumolu,
+                   C OMPARISON WITH S TATE OF THE A RT                                            “A 71dB SFDR open loop VCO-based ADC using 2-level PWM
+                                                                                                  modulation,” in 2011 Symposium on VLSI Circuits-Digest of Technical
+                    This work            [13]a           [14]       [2]           [15]            Papers. IEEE, 2011, pp. 270–271.
+     VDD [V]           0.9             1                 1.8         1.8         0.25         [6] T. Piessens and M. S. Steyaert, “Behavioral analysis of self-oscillating
+     Tech [nm]         28              65                180         180         130              class D line drivers,” IEEE Transactions on Circuits and Systems I:
+     Area [mm2 ]   58 × 10−6      6.5 × 10−3            0.026       0.04        0.141b            Regular Papers, vol. 52, no. 4, pp. 706–714, 2005.
+     Order              1              1                   1          2           1           [7] J. Daniels, W. Dehaene, M. S. Steyaert, and A. Wiesbauer, “A/D
+     P [W]           2.6 m           240 µ              1.5 m      2.2 m         28 n             conversion using asynchronous delta-sigma modulation and time-to-
+     f [Hz]          6.9 G           300 M              140 M      120 M         630              digital conversion,” IEEE Transactions on Circuits and Systems I:
+     BW [Hz]         500 M            2M                 8M         12 M          30              Regular Papers, vol. 57, no. 9, pp. 2404–2412, 2010.
+     DR [dBFS]        56.6              -                 70          70          58
+     SNDR [dB]        46.5              -                  -           -          58
+                                                                                              [8] G. Della Colletta, L. H. Ferreira, S. R. Sonkusale, and G. V. Rocha, “A
+     FoMs [dB]        169               -                167         167         148              20-nW 0.25-V inverter-based asynchronous Delta–Sigma Modulator in
+     a
+                                                                                                  130-nm digital CMOS process,” IEEE Transactions on Very Large Scale
+       Used in cascade with a VCO-ADC. Separate performance of ASDM not                           Integration (VLSI) Systems, vol. 25, no. 12, pp. 3455–3463, 2017.
+       reported.                                                                              [9] A. Babaie-Fishani, M. De Bock, and P. Rombouts, “Analyzing distortion
+     b
+       Without passive components (external).
+                                                                                                  in ASDMs with loop delay,” in 2014 IEEE International Symposium on
+                                                                                                  Circuits and Systems (ISCAS). IEEE, 2014, pp. 77–80.
+                                                                                             [10] I. C. Sezgin, L. Aabel, S. Jacobsson, G. Durisi, Z. S. He, and C. Fager,
+for a 100 MHz input tone as a function of the input level.                                        “All-digital, radio-over-fiber, communication link architecture for time-
+                                                                                                  division duplex distributed antenna systems,” Journal of Lightwave
+The result is shown in Fig. 9 for different supply voltages. A                                    Technology, vol. 39, no. 9, pp. 2769–2779, 2021.
+peak SNDR of 46.3 dB, 46.5 dB, and 45.8 dB is measured at                                    [11] A. Babaie-Fishani, B. Van Keymeulen, and P. Rombouts, “Analytical
+supply voltages of 0.85 V, 0.90 V, and 0.95 V, respectively.                                      expressions for the distortion of asynchronous sigma–delta modulators,”
+                                                                                                  IEEE Transactions on Circuits and Systems II: Express Briefs, vol. 60,
+   The measured performance, along with a post-layout Monte-                                      no. 8, pp. 472–476, 2013.
+Carlo process and mismatch simulation (N = 200), is sum-                                     [12] P. Crombez, J. Craninckx, and M. Steyaert, “A 100kHz–20MHz recon-
+marized in Table I. Despite the poor power supply rejection                                       figurable nauta gm-C biquad low-pass filter in 0.13 µm CMOS,” in 2007
+                                                                                                  IEEE Asian Solid-State Circuits Conference. IEEE, 2007, pp. 444–447.
+of inverter-based solutions, the circuit proves to work reliably                             [13] Babaie Fishani, Amir and Rombouts, Pieter, “Design of a low-
+across varying supply voltages. Nonetheless, practical imple-                                     voltage op-amp-less ASDM to linearise VCO-ADC,” ELECTRONICS
+mentations would benefit from having a regulated supply.                                          LETTERS, vol. 52, no. 11, pp. 911–912, 2016. [Online]. Available:
+                                                                                                  http://doi.org/10.1049/el.2016.0235
+   As shown in Table II, the reported self-oscillation frequency                             [14] S. Ouzounov, E. Roza, H. Hegt, G. Van Der Weide, and A. Van Roer-
+is a 23× increase with respect to the previously reported fastest                                 mund, “An 8 MHz, 72 dB SFDR asynchronous Sigma-Delta Modulator
+design [13]. Our design obtains the best Schreier figure-of-                                      with 1.5 mW power dissipation,” in 2004 Symposium on VLSI Circuits.
+                                                                                                  Digest of Technical Papers (IEEE Cat. No. 04CH37525). IEEE, 2004,
+merit FoMs [16], while being the most compact in size.                                            pp. 88–91.
+                                                                                             [15] L. H. Ferreira and S. R. Sonkusale, “A 0.25-V 28-nW 58-dB dynamic
+                           V. C ONCLUSION                                                         range asynchronous delta sigma modulator in 130-nm digital CMOS
+                                                                                                  process,” IEEE Transactions on Very Large Scale Integration (VLSI)
+   We have successfully demonstrated a multi-GHz ASDM.                                            Systems, vol. 23, no. 5, pp. 926–934, 2014.
+Its inverter-based implementation provides compatibility with                                [16] S. Pavan, R. Schreier, and G. Temes, Understanding Delta-Sigma
+                                                                                                  Data Converters, ser. IEEE Press Series on Microelectronic Systems.
+the decreasing supply voltage and stricter layout rules of                                        Wiley, 2017. [Online]. Available: https://books.google.be/books?id=
+aggressively scaled CMOS technologies, while simultaneously                                       JBauDQAAQBAJ
+benefiting from the improvements in switching speed and
+power efficiency. Fabricated in 28 nm CMOS, the prototype
+oscillates at 6.9 GHz, achieving an SNDR of 46.5 dB and a
+dynamic range of 56.6 dB over a 500 MHz bandwidth. The
+                                     2
+prototype occupies an area of 58 (µm) , and consumes a power
+of 2.6 mW from a 0.9 V supply.
+

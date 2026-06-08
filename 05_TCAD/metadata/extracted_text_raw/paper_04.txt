@@ -1,0 +1,1816 @@
+1
+Spatz: Clustering Compact RISC-V-Based Vector
+Units to Maximize Computing Efficiency
+Matteo Perotti, Samuel Riedel, Matheus Cavalcante, Luca Benini
+Abstract—The ever-increasing computational and storage re-
+quirements of modern applications and the slowdown of technology
+scaling pose major challenges to designing and implementing
+efficient computer architectures. To mitigate the bottlenecks of
+typical processor-based architectures on both the instruction
+and data sides of the memory, we present Spatz, a compact
+64-bit floating-point-capable vector processor based on RISC-V’s
+Vector Extension Zve64d. Using Spatz as the main Processing
+Element (PE), we design an open-source dual-core vector processor
+architecture based on a modular and scalable cluster sharing
+a Scratchpad Memory (SCM). Unlike typical vector processors,
+whose Vector Register Files (VRFs) are hundreds of KiB large,
+we prove that Spatz can achieve peak energy efficiency with
+a latch-based VRF of only 2 KiB. An implementation of the
+Spatz-based cluster in GlobalFoundries’ 12LPP process with
+eight double-precision Floating Point Units (FPUs) achieves an
+FPU utilization just 3.4% lower than the ideal upper bound on a
+double-precision, floating-point matrix multiplication. The cluster
+reaches 7.7 FMA/cycle, corresponding to 15.7 GFLOPSDP and
+95.7 GFLOPSDP/W at 1 GHz and nominal operating conditions
+(TT, 0.80 V, 25 °C), with more than 55% of the power spent on the
+FPUs. Furthermore, the optimally-balanced Spatz-based cluster
+reaches a 95.0% FPU utilization (7.6 FMA/cycle), 15.2 GFLOPSDP,
+and 99.3 GFLOPSDP/W (61% of the power spent in the FPU) on
+a 2D workload with a 7 × 7 kernel, resulting in an outstanding
+area/energy efficiency of 171 GFLOPSDP/W/mm2
+. At equi-area,
+the computing cluster built upon compact vector processors
+reaches a 30% higher energy efficiency than a cluster with the
+same FPU count built upon scalar cores specialized for stream-
+based floating-point computation.
+Index Terms—RISC-V, Vector Processors, Computer Architec-
+ture, Embedded Systems-on-Chip, Machine Learning.
+I. INTRODUCTION
+THE pervasiveness of Artificial Intelligence (AI) and
+Machine Learning (ML) applications triggered an ex-
+plosion of computational requirements across many application
+domains. The required computing of the largest ML model
+doubles every 3.4 months, while its parameter count doubles
+every 2.3 months [1], [2]. As a result, large-scale computing
+systems struggle to keep up with the increasing complexity
+of such ML models. In fact, the performance of the fastest
+©2025 IEEE. Personal use of this material is permitted. Permission from
+IEEE must be obtained for all other uses, in any current or future media,
+including reprinting/republishing this material for advertising or promotional
+purposes, creating new collective works, for resale or redistribution to servers
+or lists, or reuse of any copyrighted component of this work in other works.
+Matteo Perotti, Samuel Riedel, and Matheus Cavalcante are with the
+Integrated Systems Laboratory (IIS), ETH Zurich, 8092 Zurich, Switzerland.
+E-mail: {mperotti, sriedel, matheus}@iis.ee.ethz.ch.
+Luca Benini is with the Integrated Systems Laboratory (IIS), ETH Zurich,
+8092 Zurich, Switzerland, and also with the Department of Electrical,
+Electronic, and Information Engineering (DEI), University of Bologna, 40126
+Bologna, Italy. E-mail: lbenini@iis.ee.ethz.ch.
+supercomputers only doubles every 1.2 years [2], while their
+power budget is capped around 20 MW by infrastructure and
+operating cost constraints. Furthermore, smart devices running
+AI applications at the Internet of Things (IoT) edge [3]
+are also tightly constrained in their power budget due to
+battery lifetime [4] and passive cooling requirements [5].
+Therefore, small and large modern computing architectures
+must aggressively optimize their compute and data movement
+energy and delay [6].
+To do so, designers often rely on the extreme domain special-
+ization of hardware architectures to boost their energy efficiency
+and performance at the expense of flexibility. However, the pace
+at which AI models evolve today makes extreme specialization
+unsustainable, favoring processor-based architectures that easily
+adapt to novel algorithms, often augmented with hardware that
+can leverage the Data Level Parallelism (DLP) common to AI
+workloads.
+One of the historical limits of processor-based architectures
+is the one-word-at-a-time style of programming inherited from
+the von Neumann computer [7], which contributes to the
+exceedingly high traffic between memory and processor. This
+is a major issue for present computer architectures since
+interconnects cannot keep up with transistor scaling [8] and
+Static Random-Access Memories (SRAMs) are experiencing a
+similar drastic scaling slowdown, leading to large and inefficient
+interconnects and considerable area and energy efficiency
+overhead when higher memory bandwidth is required.
+Moreover, processor-based architectures have very limited
+capacity in their General-Purpose Register File (GPR), i.e., their
+L0 storage. This limits data reuse in key applications, such
+as matrix multiplication, whose arithmetic intensity increases
+when more data elements are stored in the GPR. For example,
+on RISC-V’s RV64I Instruction Set Architecture (ISA), the
+GPR comprises 32 64-bit registers, 256 B [9].
+Vector processor architectures are commonly presented as
+solutions to the first problem thanks to their Single Instruction,
+Multiple Data (SIMD) execution, in which a single instruction
+applies the same operation on multiple elements of a vector,
+decreasing the number of instructions to fetch, decode, and
+issue and relieving the burden on the instruction memory side.
+Also, the Vector Register File (VRF) size of vector processors is
+a design parameter and is decoupled from the datapath width,
+allowing for an additional independent design knob. Many
+researchers documented the positive impact of longer vectors
+(allowed by larger VRFs) on the instruction count and energy
+on the instruction memory side. However, even if longer vectors
+proved to increase the architecture’s memory latency tolerance
+[10], there is a lack of quantitative analyses on how the VRF
+size impacts the bandwidth on the data memory thanks to the
+arXiv:2309.10137v2
+[cs.AR]
+9
+Jan
+2025
+2
+additional data reuse.
+In addition, even though common vector processor architec-
+tures try to maximize the energy efficiency of their compute,
+they commonly rely on scalar cores with complex logic that
+leverages the applications’ Instruction Level Parallelism (ILP),
+practically limiting the overall architecture’s efficiency.
+This paper presents Spatz, an open-source Floating Point
+Unit (FPU)-ready compact Vector Processing Unit (VPU) based
+on the RISC-V Vector Extension (RVV) specification [11],
+and use it as the processing element in a multi-Processing
+Element (PE) cluster. We couple it with a tiny and lean scalar
+core [12], pursuing higher performance and energy efficiency
+by leveraging DLP and avoiding complex energy-hungry ILP-
+exploitation logic. Spatz reaches high energy efficiency through
+an optimized latch-based Standard Cell Memory (SCM) VRF
+even without resorting to extremely long vectors. With this
+work, we show how Spatz does not only fight the Von Neumann
+Bottleneck (VNB) on the instruction side of the memory, but
+its VRF also allows it to decrease the bandwidth requirement
+on the L1 data Scratchpad Memory (SPM). The contributions
+of this paper are:
+• The architecture of Spatz, a parametric, compact 64-bit
+VPU based on the RVV version 1.0. Spatz uses a generic
+accelerator interface, allowing it to work in tandem with
+any scalar core compatible with this interface (Section IV).
+To our knowledge, the Spatz cluster is the first open-source
+multi-core RVV-based vector processor architecture;
+• The design of a physically-driven latch-based SCM acting
+as a VRF, and an analysis of its post-implementation
+energy consumption as a function of its capacity in Glob-
+alFoundries’ 12 nm Fin Field-Effect Transistor (FinFET)
+node (Section II);
+• An analysis of the energy efficiency of the Spatz-based L1
+cluster as a function of its L0 VRF capacity. Our analysis
+also covers typical clusters built with simple scalar PEs,
+and memory streaming solutions (Section III);
+This work significantly extends the initial Spatz publica-
+tion [13], where Spatz was a 32-bit VPU with no support
+for floating-point computation. The addition of 64-bit floating-
+point support fundamentally changes Spatz’ target applications
+and is an argument for lean PEs driving large functional units.
+Furthermore, the discussion concerning the latch-based SCM
+architecture and the design of a shared-L1 cluster based on
+Spatz are exclusive to this publication. An implementation
+of the Spatz-based cluster in GlobalFoundries’ 12 nm FinFET
+process with eight double-precision FPUs achieves an FPU
+utilization just 3.4% lower than the ideal upper bound on
+a double-precision, floating-point 64 × 64 matrix multiplica-
+tion. The cluster reaches 7.7 FMA/cycle, corresponding to
+15.7 GFLOPSDP and 95.7 GFLOPSDP/W at 1 GHz and nominal
+operating conditions (TT, 0.80 V, 25 °C), with more than 55%
+of the power spent on the FPUs. At the same area, a computing
+cluster built upon compact vector processors reaches an energy
+efficiency 30% higher than that of a cluster with the same FPU
+count built upon scalar RISC-V-based cores specialized for
+stream-based floating-point computation. Spatz is open-sourced
+under a liberal license1
+.
+II. VECTOR REGISTER FILE
+The VRF is at the core of any vector processor. It must
+provide enough bandwidth for the functional units to achieve
+high utilization. In the RISC-V ISA, the vector instruction
+with the highest bandwidth requirements is the floating-
+point multiply-accumulate between two vectors, vfmacc.vv
+(and its integer equivalent, vmacc.vv) [11]. The VRF must
+handle reading three operands and writing one result per
+cycle to sustain one Fused Multiply-Add (FMA) per cycle.
+Furthermore, more VRF bandwidth is required to execute
+memory operations concurrently with high-bandwidth multiply-
+accumulate operations.
+Large vector processors are typically coupled with equally
+complex scalar processors. For example, CVA6, an application-
+class RV64GC scalar core, consumes 317 pJ per operation of
+a simple dot product kernel, with only 28 pJ spent on the
+actual computation [14]. Therefore, long vectors are needed to
+amortize the large energy overhead associated with fetching
+and dispatching individual instructions with a large application-
+class (super-)scalar core. Typical large vector units achieve long
+vectors and high bandwidth through a large multi-banked VRF,
+with five [15] to eight [16] single read/write port (1RW) SRAM
+banks per FPU. However, this approach requires inflexible
+fine-grained scheduling of the VRF bank accesses [15] or an
+architecture that can handle banking conflicts when multiple
+operands reside at the same bank [16]. Therefore, VRFs are
+coupled with operand “queues” which store the operands until
+they are all simultaneously available.
+Instead of achieving high functional unit utilization through
+hardware complexity, the RISC-V-based Snitch core tries to
+tackle the VNB by maximizing the cores’ compute/control
+ratio, mitigating the efficiency loss due to deep pipelines and
+dynamic scheduling [12]. The Snitch-based shared-L1 cluster
+couples Snitch cores, typically RV32I or RV32E, with large
+double-precision FPUs. It achieves an energy efficiency of
+79 GFLOPSDP/W on a double-precision matrix multiplication
+kernel [12], almost double that of state-of-the-art vector
+machines [15]. This cluster’s high performance is linked to
+Stream Semantic Registers (SSRs) [12], which stream L1 data
+into and from the FPUs without explicit load/store instructions.
+As a result, SSRs incur high L1 traffic. For example, each core
+must read two L1 SPM words per cycle to sustain the execution
+of a matrix multiplication kernel without incurring systematic
+structural hazards. This traffic is particularly taxing on the
+cluster’s physical implementation, as the L1 SPM interconnect
+is the critical factor for its scalability [17]. Furthermore, the
+breakdown of SRAM and interconnect scaling makes achieving
+the L1 bandwidth required by SSRs challenging.
+The vector-SIMD ISA provides a clean abstraction for
+software to adapt automatically to the microarchitecture’s vector
+length [18]. Also, as further discussed in the next sections,
+the VRF increases the data reuse of key applications and
+relieves the bandwidth requirement on the L1 SCM interconnect.
+Therefore, we elect a streamlined VPU with a small VRF to
+1Available at https://github.com/pulp-platform/spatz
+3
+L1 Instruction Cache
+L1 Interconnect
+L1
+SPM
+...
+Bank
+1
+Bank
+2
+Bank
+3
+Bank
+4
+Bank
+5
+Bank
+M
+RemotePorts
+PE1 VRF
+FPU1 FPUF
+...
+...
+PE2 VRF
+FPU1 FPUF
+...
+...
+PEC VRF
+FPU1 FPUF
+...
+...
+...
+Figure 1. A shared-L1 cluster design with C PEs, each controlling F FPUs,
+and a multi-banked L1 Scratchpad Memory (SPM) with M SRAM banks.
+act as the PE of a shared-L1 cluster, depicted in Figure 1. We
+choose a shared-L1 cluster as an architectural template because
+of its modularity and ample adoption from System-on-Chips
+(SoCs) for edge-AI [3] to Graphics Processing Units (GPUs)
+[19]. In our proposed architecture, the VRF size is used as
+an architectural knob to balance the bandwidth and energy
+cost of an L1 SRAM with the size and energy cost of the
+L0 SCM [20]. If the VPU achieves a high compute/control
+ratio, we can explore the capacity/bandwidth trade-off without
+needing large VRFs.
+The VPU is based on the RVV extension version 1.0 of
+the open-source RISC-V ISA [11]. The extension adds 32
+architectural vector registers, v0 to v31, each with VLENB bytes.
+We assume that the VPU operates on vector elements 8-B wide.
+Therefore, each vector register has vl = VLENB/8 vector elements.
+Furthermore, the RVV extension adds the concept of a vector
+register group so that a single vector instruction can operate
+on multiple vector registers. The Vector Length Multiplier
+(LMUL) ℓ, with ℓ ∈ {1, 2, 4, 8}, represents how many vector
+registers are combined to form a vector register group. As a
+result, LMUL trades available vector registers against longer
+vectors at runtime. Taking it into account, RVV provides 32/ℓ
+vector registers, each with ℓ × VLENB/8 elements.
+We implement the VRF as a multi-banked, multi-ported,
+latch-based SCM. We consider the exploration of an SCM-
+based memory as strategic due to the slowdown of SRAM
+scaling. In fact, modern AI accelerators often use SCM [21].
+The 32 VLENB bytes of the VRF are divided into two SCM
+banks with three read ports and one write port (3R1W) and
+16 VLENB bytes each. A single 3R1W SCM cut can provide
+enough bandwidth for executing the vfmacc.vv instruction
+and multiple SCM banks ensure that other instructions can
+execute concurrently with the high-bandwidth vector multiply-
+accumulate instructions. Furthermore, since all operands of a
+vector instruction can be read simultaneously, we can forgo any
+“operand buffers” to time-multiplex the VRF operand fetching.
+Figure 2 shows the architecture of a 3R1W latch-based SCM
+with R rows, each W-bytes wide. This SCM architecture is
+similar to that of [22], [23], with manually-inserted Integrated
+Clock Gating (ICG) cells gating the many clocks reaching the
+latch array. Besides the clock (CLK), write enable (WE), write
+address (WADDR), and write data (WDATA) ports, the SCM also
+has a write byte strobe (WBE) port to select which bytes are
+written at each write transaction. The write data is stored in
+registers before being stored in the latch array. The three read
+address (RADDR[i]) ports directly control muxes that select a
+row to forward to the corresponding read data (RDATA[i]) port.
+Each cell of the storage array comprises eight data latches
+and an AND2 standard cell, 28 GE in total. For comparison,
+an equivalent storage array cell based on multi-bit flip-flop
+standard cells would occupy 49 GE.
+WADDR
+DEC
+A R
+WWL
+CLK
+WE
+D Q
+WDATA
+W
+D Q
+WDATA
+W-1
+D Q
+WDATA
+1
+ICG
+WBEW WBEW-1 WBE1
+...
+WWLR
+D Q
+MW[32]
+WWL1
+RADDR[1]
+A
+RDATA
+W
+[1]
+MUX
+RADDR[2]
+A
+RADDR[3]
+A
+...
+...
+8 8 8
+D Q
+MW[1]
+...
+...
+8
+...
+8
+D Q
+MW-1[32]
+8
+D Q
+MW-1[1]
+MUX
+8
+RDATA
+W-1
+[1]
+...
+...
+D
+M1[32]
+...
+...
+8
+D Q
+M1[1]
+MUX
+8
+RDATA
+1
+[1]
+Sampling
+Registers
+Latch Array
+Q
+Figure 2. Architecture of a 3R1W latch-based SCM with R W-byte-wide
+rows, for a total capacity K = WR bytes.
+We implemented the SCM of Figure 2 with Synopsys’ Fusion
+Compiler 2022.03, for many combinations of W and R, at
+950 MHz in worst-case conditions (SS, 0.72 V, 125 °C) using
+GlobalFoundries’ 12LPP advanced 12 nm FinFET node. Then,
+we used Synopsys’ PrimePower 2022.03 to measure its read and
+write energy consumption, initialized with random numbers, at
+1 GHz and nominal operating conditions (TT, 0.80 V, 25 °C).
+Those results are summarized in Figure 3.
+0.1
+1
+10
+8 16 32 64
+W [B]
+Read
+Energy
+[pJ]
+R = 64
+R = 32
+R = 16
+0.1
+1
+10
+8 16 32 64
+W [B]
+Write
+Energy
+[pJ]
+Figure 3. Energy consumption of a 3R1W latch-based SCM with R rows of
+width W and capacity K = WR bytes. The dashed lines correspond to the
+functions in Equations (1) and (2).
+We interpolate the read and write energy consumption
+of the SCM as a polynomial function on the SCM width
+4
+W and capacity K. Using the least-squares algorithm to fit
+parameterized functions to the points of Figure 3, it costs
+ε̃read
+L0 (W, K) = 47.759W + 0.018WK + 0.275K fJ (1)
+to read W bytes out of the SCM, and
+ε̃write
+L0 (W, K) = 72.077W + 0.006WK + 3.111K fJ (2)
+to write W bytes into the SCM. For comparison, it costs
+ε̃read
+L1 = 4.63 pJ to read and ε̃write
+L1 = 5.77 pJ to write 8 bytes
+into a 1RW SRAM of capacity 8 KiB in the same technology.
+We can gain further insight into the L0 and L1 energy
+consumption by normalizing the cost per byte accessed. For
+example, it takes 0.58 pJ/B to read data from an 1RW SRAM
+of width 8 B and capacity 8 KiB. According to our model, it
+takes 35% less energy, only 0.38 pJ/B, to read data from an
+L0 SCM with the same capacity and width. This comparison
+is not favorable towards the SRAMs since our model does
+not scale to this capacity (the largest 8-B-wide SCM we
+considered has a capacity of only 512 B). However, our results
+back our conclusion that latch-based SCMs are an energy-
+efficient approach for building small-capacity storage buffers.
+Unfortunately, this SCM with a capacity of 8 KiB would be at
+least 25× larger than its equivalent SRAM, which constitutes
+a major drawback of latch-based SCMs with large capacity.
+In the following section, we will discuss how to tune the
+SCM-based VRF capacity to a target workload to minimize
+the overall energy consumption of a shared-L1 computing
+cluster. In particular, we consider the L1 SPM to have a fixed
+configuration. An extension of this work would be the multi-
+variate optimization of the cluster’s energy consumption as a
+function of both the L0 SCM and L1 SPM configurations. This
+multi-variate analysis requires a model of the SRAM energy
+consumption, which could be inferred from either commercial
+or open-source memory macro generators.
+III. MATCHING WORKLOAD AND VRF FOR OPTIMAL
+EFFICIENCY
+Equipped with the efficient SCM VRF architecture of
+Section II and its compact energy consumption model, we
+now shift our focus to the shared-L1 cluster efficiency. This
+section provides a quantitative analysis of the trade-off between
+the VRF (L0) SCM capacity and the L1 SRAM bandwidth,
+which influences the architecture’s energy efficiency. Higher
+VRF sizes improve the data reuse of certain applications
+(reducing their bandwidth requirements) at the expense of
+higher read/write energy consumption.
+For this study, we generalize the model of Choi et al.
+[24], applying their analysis to our hybrid SRAM and SCM-
+based memory hierarchy. The presented method can be used
+to match the VRF size with the target workload executed
+by the architecture. As an example, we discuss the VRF
+sizing considering a target workload dominated by matrix
+multiplication 2
+. We focus our study on the multiplication
+of two double-precision floating-point matrices, C ← A · B.
+For a more precise tuning on multiple target applications,
+2Most of the Deep Neural Network (DNN) models introduced in the last
+decade are dominated by matrix multiplication [25].
+the analysis can be repeated for every kernel, and the results
+weighted together to select the optimal VRF size.
+Figure 1 shows the architecture of a shared-L1 cluster
+equipped with compact vector PEs. The C PEs control F
+double-precision FPUs each. Each PE has a VRF divided
+into two 3R1W SCM banks, each 8F-bytes wide. Since the
+F double-precision FPUs of each PE produce 8F bytes per
+cycle, a single 3R1W SCM bank provides enough bandwidth
+to sustain F FMAs per cycle. Furthermore, the L1 SPM is
+implemented as 16 SRAM banks of 8 KiB each, 128 KiB. All
+matrices are n × n and are preallocated in the cluster’s SPM.
+Kung’s balance principle states that the machine’s inherent
+balance point should be no greater than the algorithm’s
+arithmetic intensity [20]. The architectural balance relationship
+is generalized by [26], considering the machine’s degree of
+memory parallelism and the algorithm’s degree of compute par-
+allelism. Applying the relationship to the matrix multiplication
+kernel on our shared-L1 cluster, we find that
+CF
+β
+≤
+√
+Z, (3)
+where β is the PE’s bandwidth into the L1 SPM, and Z is the
+total capacity of a PE’s VRF. Therefore, if we increase the
+VRF capacity by a factor α, i.e., Z′
+= αZ, we can decrease
+the L1 bandwidth by a factor β′
+= β/
+√
+α without changing the
+machine’s balance. In other words, we can trade L0 capacity
+against L1 bandwidth to relax the physical scalability issue of
+the PE-to-L1 interconnect. Furthermore, we can exploit the L0
+capacity knob to optimize the cluster’s energy efficiency.
+Our model assumes that the matrix multiplication is a
+representative kernel for data-parallel workloads. Ultimately,
+we will optimize the energy efficiency of the shared-L1 cluster
+running a matrix multiplication and expect its energy efficiency
+for other kernels to be near-optimal. Thanks to lean PEs, kernels
+with even higher arithmetic intensity (e.g., 2D convolution)
+will run efficiently thanks to the low overhead of a small
+controller. Nevertheless, for memory-bound kernels, it still
+makes sense to have some L0 SCM. Namely, when performance
+and memory bandwidth are well-matched (i.e., the kernel is
+only marginally memory-bound), some L0 storage helps hide
+the memory latency from upper memory levels. In an alternative
+direction of exploration for future work, highly memory-bound
+kernels could bypass the L0 SCM completely and operate
+directly on elements from the L1 SPM [27].
+A. Energy Consumption Model
+In the following, we will analyze the energy consumption
+of each major component of the shared-L1 cluster.
+1) FPUs: Assume that the FPUs achieve peak utilization,
+i.e., each executes one FMA per cycle. If it costs ε̃FPU pJ for
+an FPU to execute an FMA instruction, the CF FPUs consume
+εFPU = CFε̃FPU pJ/cycle. (4)
+2) PEs: It costs ε̃′
+PE pJ for a PE to fetch, decode, and
+dispatch the i instructions of the kernel’s hot loop. This
+loop is three instructions long in a typical vectorized matrix
+multiplication kernel [16]. Therefore, on average, each PE
+5
+would consume ε̃PE ≜ ε̃′
+PE/i pJ every cycle to fetch, issue, and
+dispatch the instructions of the hot loop, as long as the PE
+sustains an Instructions Per Cycle (IPC) rate of 1.
+The vector-SIMD abstraction amortizes this von-Neumann-
+related bottleneck in two ways. First, the instruction issue
+cost of each PE is amortized by its F FPUs running in
+parallel. Furthermore, since each vector instruction potentially
+encodes enough micro-operations to keep the FPU datapath
+busy for many cycles, the PE can keep the FPUs completely
+utilized at a lower IPC. As discussed in Section II, each of
+the 32/ℓ vector registers has ℓ × VLENB/8 elements. Since the
+FPUs produce F elements per cycle, a vector instruction
+takes ℓ × VLENB/8F cycles to execute. In particular, our matrix
+multiplication implementation uses ℓ = 4. Therefore, the C
+PEs consume
+εPE = ε̃PE
+2CF
+VLENB
+pJ/cycle. (5)
+3) L0 SCM: The F FPUs of each PE must each be able to
+fetch three double-precision operands out of the VRF to achieve
+a peak collective result throughput of F double-precision
+results per cycle without any hazards. Since each SCM bank
+is 16 VLENB B large, we can apply Equations (1) and (2) to
+estimate that, because of the FPU accesses, the L0 of the C
+PEs consume, on average,
+εL0 = C[3ε̃read
+L0 (8F, 16 VLENB)+ε̃write
+L0 (8F, 16 VLENB)] pJ/cycle.
+(6)
+4) L1 SPM: Since the FPUs operate on operands stored in
+the L0 SCM, we must account for the data movement cost
+between the two memory hierarchy levels in the shared-L1
+cluster. We will split the analysis into transfers from L0 to L1
+and vice-versa. First, regardless of the L0 capacity, we must
+move n2
+elements from the L0 to the L1, corresponding to
+the n2
+elements of matrix C. Assuming that the n × n matrix
+multiplication kernel takes n3
+/CF cycles to execute, i.e., we
+achieve peak FPU utilization, it costs
+εL0→L1 =
+1
+n3
+/CF
+
+n2
+ε̃read
+L0 (8F, 16 VLENB)
+F
++ n2
+ε̃write
+L1
+
+=
+Cε̃read
+L0 (8F, 16 VLENB) + CFε̃write
+L1
+n
+pJ/cycle (7)
+to transfer the matrix multiplication results from the L0 to
+the L1. Furthermore, we can use Equation (3) to estimate
+the cost of L1 to L0 transfers as a function of the L0 SCM
+capacity. We assume that an FPU needs at least eight 8-B
+wide registers to achieve full utilization, a total capacity of
+64 bytes. This accounts for four registers to store intermediate
+accumulations (since our FMA pipeline has four cycles of
+latency), and four registers to hold matrix operands. In this
+case, each FPU requires 2 words per cycle out of the L1 SPM,
+at a cost εread
+L1 = 2ε̃read
+L1 pJ/cycle. Therefore, considering that
+each VRF has a capacity of 32 VLENB bytes, the C PEs spend
+εL1→L0 = C
+"
+2Fε̃read
+L1 + 2ε̃write
+L0 (8F, 16 VLENB)
+p
+32 VLENB/64
+#
+pJ/cycle (8)
+copying elements from the L1 memory into the L0 VRF.
+Therefore, data transfers between the L0 and the L1 memories
+consume εL1 = εL0→L1 + εL1→L0 pJ/cycle.
+B. Energy Efficiency Optimization
+Assume a shared-L1 cluster implementation with C = 2
+PEs, each controlling F = 4 FPUs. The eight FPUs per cluster
+are similar to equivalent Snitch-based clusters [17]. Based on
+an explorative implementation of the Snitch scalar core in
+12-nm technology, we estimate that it costs ε̃PE = 3.6 pJ for
+Snitch to fetch, decode, and dispatch an instruction of the
+matrix multiplication kernel and ε̃FPU = 13.3 pJ for an FPU
+to execute a double-precision FMA instruction. We can use
+Equations (4) to (8) to estimate the energy consumption of the
+shared-L1 cluster as a function of the vector length VLENB, as
+seen in Figure 4.
+8 16 32 64 128 256
+0
+50
+100
+150
+200
+VLENB [B]
+Energy
+[pJ/cycle]
+εL1
+εL0
+εPE
+εFPU
+Figure 4. Breakdown of the energy consumption per cycle of the shared-L1
+cluster, as a function of its vector length VLENB.
+The energy breakdown highlights the benefit of a lightweight
+PE. The FPUs dominate the cluster’s energy consumption,
+altogether responsible for about 60% of its energy consumption.
+On the other hand, Snitch is responsible for less than 1% of
+the cluster’s energy consumption per cycle. Therefore, longer
+vectors do little to amortize the cluster’s VNB since the
+instruction dispatch overhead is negligible. Furthermore, the
+breakdown also highlights the data movement overhead and
+the balance between L0 and L1 energy consumption, which
+together amount to 30% of the cluster’s energy consumption.
+We can exploit the L0/L1 energy consumption balance to
+optimize the cluster’s energy efficiency Φ while running the
+matrix multiplication kernel. As seen in Figure 5, the cluster
+reaches a peak energy efficiency of 106.9 GFLOPSDP/W for
+a vector length of 47 B. At the closest power-of-two with the
+best energy efficiency, the cluster reaches 106.4 GFLOPSDP/W
+for a vector length of 64 B, with just a 0.04 ‰ deviation from
+the maximum.
+Assuming VLENB = 64 B, each VRF is 2 KiB large, divided
+into two SCM banks with 32 rows of width 32 B, 1 KiB
+large. Therefore, the C = 2 VRFs account for 4 KiB of L0
+storage, compared to the 128 KiB of L1 SPM storage divided
+into 16 SRAM banks. In this scenario, the FPUs consume
+εFPU = 106.5 pJ/cycle, the PEs consume εPE = 0.9 pJ/cycle,
+the VRFs consume εL0 = 25.7 pJ/cycle on FPUs accesses, the
+data transfers between the VRFs and the L1 SPM SRAM banks
+consume εL1 = 17.3 pJ/cycle, and the total energy consumed by
+VRFs and L1 memory banks every cycle is 29.8 pJ/cycle and
+6
+8 16 32 64 128 256
+90
+95
+100
+105
+110
+VLENB [B]
+Efficiency
+[GFLOPS
+DP
+/W]
+Figure 5. Energy efficiency Φ of the cluster executing a 256 × 256 matrix
+multiplication kernel, as a function of the vector length VLENB.
+13.3 pJ/cycle, respectively. Furthermore, each vector instruction
+takes 8 cycles to execute.
+Applying Equation (3), we expect the PEs to fetch about 3 L1
+words per cycle. Since the cluster has M = 16 SRAM banks,
+we have enough bandwidth for a Direct Memory Access (DMA)
+engine to concurrently load data from an external L2 memory
+into the L1 SPM while the PEs execute their computations.
+We can assess our model’s robustness through a sensitivity
+analysis. Namely, we assess how much the VLENB that mini-
+mizes the cluster’s energy efficiency fluctuates in response to
+relative changes to the model parameters. In this analysis, we
+used 10% changes, and reported the most important sensitivity
+parameters in Table I. For example, since εFPU does not depend
+on VLENB, the vector length that maximizes the cluster’s energy
+efficiency does not depend on ε̃FPU.
+Table I
+SENSITIVITY OF THE ENERGETICALLY-OPTIMAL SHARED-L1 CLUSTER’S
+VLENB TO THE MODEL’S PARAMETERS. α, β, AND γ ARE THE COEFFICIENTS
+OF EQUATION (1) AND EQUATION (2).
+Parameter Sensitivity10% Parameter Sensitivity10%
+ε̃FPU +0.00 B β̃read
+L0 −0.80 B
+ε̃PE +0.39 B γ̃read
+L0 −0.40 B
+ε̃read
+L1 +2.40 B α̃write
+L0 +0.30 B
+ε̃write
+L1 +0.00 B β̃write
+L0 −0.11 B
+α̃read
+L0 +0.00 B γ̃write
+L0 −1.71 B
+The quantitative conclusions of this section are based on an
+idealized vector-based shared-L1 cluster whose workload is
+dominated by matrix multiplications. The proposed VRF sizing
+method can be applied to different applications to show the
+energy efficiency trade-off caused by varying the arithmetic
+intensity of the application and the read/write energy of the
+VRF. Based on this analysis, applications with no data reuse or
+whose data reuse does not depend on their tiling will, therefore,
+prefer lower VRF sizes. However, a VRF can also be useful
+to better tolerate memory latency, especially in architectures
+with a higher-latency memory hierarchy (this is not the case
+for our L1-based cluster).
+Throughout the remainder of this publication, we will build
+out a shared-L1 cluster, starting with the design of the lean
+Spatz VPU as its PE. We size Spatz’s VRF as just discussed
+due to the centrality of the matrix multiplication kernel and to
+provide a practical verification of the numbers hypothesized in
+this Section for our theoretical analysis.
+IV. SPATZ: A COMPACT VECTOR PROCESSING UNIT
+Spatz is a compact parametric VPU based on the RISC-
+V Vector Extension (RVV) version 1.0. Figure 6 shows the
+microarchitecture of SpatzF, a Spatz instance with F FPUs, and
+its integration with a shared-L1 cluster. Snitch and Spatz form
+a Core Complex (CC) integrated within a shared-L1 cluster
+with 16 SRAM banks of 8 KiB each. This section describes
+Spatz’ architecture, highlighting its main components.
+XIF
+I$ Port
+Snitch
+Controller
+VRF
+Bank 0
+v3
+64
+F
+Interfaces
+VLSU
+VAU
+VSLDU
+ROB
+FPUs
+IPUs
+...
+64
+64
+CSRs Scoreboard FPU Sequencer
+64
+XIF
+64
+FPR
+v2
+v1
+v0
+Bank 1
+F+1
+Interfaces
+64
+SpatzF
+...
+64
+64
+64F 64F 64F 64F 64F
+64F
+64F 64F
+64F
+Figure 6. Microarchitecture of the Spatz-based CC, containing a Spatz instance
+with F FPUs, G IPUs, and a Snitch scalar core. Snitch and Spatz communicate
+through CORE-V’s X-Interface (XIF). Each Spatz instance has F + 1 64-bit
+memory interfaces.
+A. Instruction Dispatch
+Spatz implements the RVV ISA, version 1.0 [11]. We target
+the Zve64d subset, designed for embedded vector machines
+with 8, 16, 32, and 64-bit integer and floating-point support.
+Furthermore, we also provide a Spatz configuration targeting
+the Zve32x RVV subset, with support for 8, 16, and 32-bit
+integer operations, presented in [13]. Spatz is processor-agnostic
+and communicates with the scalar core through CORE-V’s X-
+Interface accelerator interface [28]. Therefore, Spatz can be
+used with any core compatible with the X-Interface. Snitch’s
+small footprint is particularly adapted for an execution paradigm
+where most of the computation happens in the vector unit.
+Since the accelerator interface specification is still in its
+infancy, it needs to be better adapted to the memory bandwidth
+requirements of a vector machine. We extended the X-Interface
+to consider cases where the accelerator makes its memory
+access through a wider memory interface than the scalar cores’
+one. Furthermore, we guarantee the ordering between Spatz’
+and Snitch’s memory requests by stalling the scalar core’s
+Load/Store Unit (LSU) while Spatz’ Vector Load/Store Unit
+(VLSU) executes a memory operation and vice-versa.
+B. Controller
+Snitch only pre-decodes vector instructions, dispatching the
+vector instruction and any scalar operands to the vector unit.
+7
+Spatz’ controller decodes the vector instructions, keeps track of
+their execution, and acknowledges their completion with Snitch.
+The controller also manages the Control and State Registers
+(CSRs) of the RVV ISA. For example, the vlen CSR defines
+the vector length of all vector instructions. Another important
+CSR is vtype, which controls the vector elements’ width and
+the vector register grouping LMUL. Finally, the controller
+orchestrates the execution of the vector instructions in the
+functional units. The scoreboard keeps track of the element-
+wise progression of each vector instruction. Hazards between
+vector instructions are handled through operand backpressure.
+In addition, Spatz supports vector chaining on an element basis.
+Within the controller, the FPU Sequencer manages the scalar
+Floating-Point Register File (FPR). It implements a simple
+scoreboard to manage access to instructions that access the FPR,
+e.g., vector instruction with scalar floating-point operands and
+scalar floating-point instructions. Furthermore, the sequencer
+also manages scalar floating-point memory operations, hence
+its dedicated 64-bit memory interface. The FPU sequencer is
+only instantiated when Spatz is configured with FPU support.
+C. Vector Register File
+The VRF is the core of any vector machine. We implemented
+Spatz’ VRF as a multi-banked multi-ported register file with
+two 3R1W banks. Each bank is implemented as a latch-based
+SCM. The VRF is centralized and serves all functional units.
+Its ports match the throughput requirements of the vfmacc
+instruction, which reads three double-precision operands to
+produce one double-precision result. Each bank is VLENB/2
+bytes wide, and each of the 32 VLENB-byte vector registers
+occupies one row in each of the two VRF banks. Each VRF
+port is 64F-bit wide. We studied Spatz’ VRF in Section II.
+The centralized VRF helps the implementation of vector
+instructions with irregular access patterns, e.g., vector slides
+(vd[i] ← vs[i ± shamt]) and reductions (vd[0] ← Σivs[i]).
+Namely, a lane-based vector architecture, where the vector
+registers of the VRF are divided into lanes based on their index
+i, would need extra logic to shuffle the elements and store them
+in the correct lane, with important scalability implications [16].
+D. Functional Units
+Spatz has three functional units: the VLSU, the Vector
+Arithmetic Unit (VAU), and the Vector Slide Unit (VSLDU).
+1) Vector Arithmetic Unit: The VAU is Spatz’ main func-
+tional unit, hosting F transprecision FPUs [29] and G IPUs.
+Each FPU supports fp8, fp16, fp32, and fp64 computation.
+Each IPU supports 8-bit, 16-bit, 32-bit, and 64-bit computation.
+All functional units maintain a throughput of 64 bit/cycle,
+regardless of the element width. Spatz decouples the number of
+integer G and floating-point F functional units. Therefore, we
+can tune Spatz to focus on integer or floating-point workloads.
+This paper will analyze the case where G = 1. Therefore, Spatz
+mainly focuses on floating-point workloads, with the integer dat-
+apath mainly used for address computations. Furthermore, we
+also reuse Spatz’ datapath to execute some scalar instructions
+by reinterpreting scalar multiplications, integer divisions, and
+floating-point operations as vector instructions of unit length
+that commit into the GPR. Our workloads did not have enough
+of those scalar instructions to deserve a dedicated functional
+unit, as derived from our performance results. Thanks to this
+datapath reuse, we can reduce the scalar core area and energy
+overhead. A leaner scalar core has a smaller ε̃PE, reducing the
+vector length that reaches maximal energy efficiency.
+Our FPUs include the ExSdotp extension of [30]. This
+FPU computational unit implements the widening sum-of-dot-
+products operation. It takes four operands expressed in w-bits
+and an accumulator input 2w-bits wide to compute a sum of
+dot products also 2w-bits wide,
+ExSdotp2w = awbw + cwdw + e2w. (9)
+This operation is particularly useful for ML applications. In
+this scenario, we achieve a smaller memory footprint thanks to
+the narrow operand width while retaining high precision thanks
+to the wide accumulation result. Our widening and sum-of-
+dot-products floating-point engines address the accuracy loss
+associated with accumulating low-bitwidth numbers encoded
+with low-precision formats. Therefore, our workloads target
+w = 8 bit and w = 16 bit, although we have the hardware to
+accumulate 32-bit elements into a 64-bit accumulator.
+Our previous publication [13] analyzed Spatz’ performance
+as an integer VPU. However, since integer computations are
+energetically cheaper than floating-point computations, data
+movement is responsible for a larger fraction of the cluster’s
+overall energy consumption. Therefore, the analysis of this
+paper is a “worst-case scenario” concerning the benefits of
+vector processing since the cluster’s power consumption is
+dominated by the FPUs, as seen in Figure 4.
+2) Vector Load/Store Unit: The VLSU handles the memory
+interfaces of Spatz, with support for unit-strided, constant-
+strided, and indexed memory accesses. The VLSU supports
+a parametric number of 64-bit wide memory interfaces. By
+default, the number of memory interfaces F matches the
+number of Functional Units (FUs) in the design. This implies a
+peak operation per memory bandwidth ratio of 0.25 FLOPDP/B.
+Spatz’ independent and narrow memory interfaces allow
+the reuse of the same 64-bit wide L1 SPM interconnect used
+by the scalar cores. The independent interfaces also allow
+fast execution of constant-strided and scatter-gather memory
+operations, as the VLSU does not need to coalesce requests
+into wide memory transfers. However, since the L1 SPM
+interconnect does not guarantee the ordering between the
+responses of the individual memory requests, a Reorder Buffer
+(ROB) sits between the memory interfaces and the VRF. The
+ROB ensures that the memory responses are written in order
+to the VRF, simplifying Spatz’ vector chaining mechanism.
+3) Vector Slide Unit: The VSLDU executes vector permuta-
+tion instructions. Examples of such instructions include vector
+slide up/down and vector moves. The unit operates on two
+private 64F-bit-wide register banks. Between those two register
+banks, an all-to-all interconnect allows the implementation
+of any permutation scheme. Common operations, e.g., slides,
+produce results at 64F bits per cycle ratio, which matches
+Spatz’ other functional units’ peak throughput. The register
+banks also play a role similar to the ROB of Spatz’ VLSU. The
+VSLDU double-buffers on those registers and ensures that the
+8
+unit commits to the VRF in 64F-bit-wide words, simplifying
+the chaining calculation in the scoreboard.
+V. PERFORMANCE ANALYSIS
+We implemented a shared-L1 cluster with two Spatz-based
+CCs, each controlling four FPUs and an IPU. The cluster has
+eight double-precision FPUs, 4 KiB of L0 VRF, 8 KiB of L1
+Instruction Cache (I$), and 128 KiB of SPM divided into 16
+banks. The cluster’s architecture can be seen in Figure 7.
+L1 Instruction Cache
+L1 Interconnect
+L1
+SPM
+...
+Bank
+1
+Bank
+2
+Bank
+3
+Bank
+4
+Bank
+5
+Bank
+16
+Spatz1
+FPU1 FPU4
+... IPU
+VRF
+2 KiB
+Snitch
+1
+128
+KiB
+Spatz2
+FPU1 FPU4
+... IPU
+VRF
+2 KiB
+Snitch
+2
+8 KiB
+64 64 64 64 64 64 64 64 64 64
+64 64 64 64 64 64
+10 masters × 16 slaves
+64-bit-wide crossbar
+64 64
+Figure 7. A shared-L1 cluster with two Spatz PEs, each controlling four
+multi-precision FPUs and one IPU, and a multi-banked L1 SPM with 128 KiB.
+The Spatz-based cluster’s performance metrics were then
+evaluated using a set of common data-parallel workloads,
+matmul: Matrix multiplication between two n × n double-
+precision floating point matrices;
+wid-matmulw: Widening matrix multiplication of two n × n
+matrices of element width w into a matrix of width 2w;
+conv2d: 2D convolution of a double-precision floating point
+matrix of size n × n with a kernel of size 7 × 7.
+dotp: Scalar product between two double-precision, floating-
+point vectors of length n;
+fft: Implementation of Cooley-Tukey’s Fast Fourier Transform
+(FFT) algorithm on a vector with n complex double-
+precision floating point samples.
+All kernels operate on data residing in the cluster’s L1 mem-
+ory. Furthermore, all workloads operate on double-precision
+floating-point elements, except wid-matmulw, which targets
+low-precision floating-point formats instead. The performance
+results were extracted with a cycle-accurate Register Transfer
+Level (RTL) simulation of the target workloads. Table II
+summarizes the cluster’s performance and FPU utilization.
+We will assess the power, performance, and area (PPA) of
+the Spatz-based cluster against a baseline scalar cluster using
+eight Snitch cores as PEs. Snitch is a single-issue core, and its
+instruction issue rate limits the performance of the scalar shared-
+L1 cluster. Therefore, we will compare all cluster metrics
+against a specialized Snitch-based cluster implementing SSRs,
+a stream-based ISA extension. In particular, RISC-V floating
+point instructions access the FPR, while most bookkeeping
+instructions access the GPR instead [9]. SSRs exploit this to
+implement an energy efficient pseudo-double-issue execution
+Table II
+SPATZ CLUSTER’S MULTI-CORE PERFORMANCE AND FPU UTILIZATION.
+Benchmark n Perf. [FLOP/cycle] Util. [%]
+matmul
+16 11.57 72.3
+32 15.00 93.8
+64 15.67 97.9
+wid-matmul16
+64 57.53 89.9
+128 61.52 96.1
+wid-matmul8
+64 112.9 88.2
+128 121.8 95.2
+conv2d
+32 14.91 93.2
+64 15.20 95.0
+dotp
+256 1.67 10.4
+4096 5.45 34.0
+fft
+128 3.43 34.2
+256 4.01 40.1
+between floating-point and integer instructions [12]. With
+hardware loops to remove branches and the elision of explicit
+memory load and store instructions, the Snitch-based SSR
+cluster is highly competitive with the Spatz cluster. The SSR
+Snitch cluster is, therefore, much more efficient than a vanilla
+scalar Snitch cluster, as SSRs with hardware loops can stream
+vectors of data to/from the cores by means of a few dedicated
+instructions. In a high-level sense, the main difference between
+those clusters is the number of ports in the L1 interconnect.
+From an application perspective, the SSR cluster executes
+eight scalar RISC-V threads boosted with SSR instructions,
+while the Spatz cluster deals with two RVV threads. Due to its
+small GPR capacity, each SSR-capable Snitch core has three
+memory ports (24 initiators in total) into the SPM interconnect,
+all connected to 32 SRAM banks. In contrast, Spatz’ VRF
+allows for more data reuse and, consequently, for a reduction
+in L1 SPM bandwidth. Each Spatz CC has four ports into the
+L1 SPM (eight ports in total), all connected to 16 SRAM banks.
+We also note that RVV is a standard extension with compiler
+support and widespread community usage, unlike SSRs, which
+are a non-standard ISA extension.
+Figure 8 shows the speed-up of the Spatz-based and
+SSR-based clusters versus the Snitch-based baseline clus-
+ter on a set of data-parallel workloads. For example,
+Spatz achieves 15.46 FLOPDP/cycle (96.6% of the theoret-
+ical peak performance) running a 64 × 64 matrix multipli-
+cation. This is 5.2× higher than the baseline performance,
+2.99 FLOPDP/cycle. Meanwhile, the SSR-based cluster achieves
+14.67 FLOPDP/cycle, a 4.9× speed-up versus the baseline. A
+similar trend is also seen for the conv2d kernel, with the Spatz-
+based and SSR-based achieving 6.8× and 6.5× speed-ups
+versus the baseline Snitch-based cluster, respectively.
+We also achieve high performance with the wid-matmul16, a
+widening matrix multiplication that operates on 16-bit floating
+point operands and accumulates in a 32-bit register. In this
+scenario, the 64-bit ExSdotp [30] datapath of each FPU can ex-
+ecute four half-precision FMAs per cycle. For a large 128 × 128
+matrix multiplication, Spatz reaches 61.5 FLOPSHP/cycle, an
+FMA utilization of 96.1%. In comparison, the SSR-based
+cluster achieves 52.0 FLOPSHP/cycle on the same kernel, an
+9
+0
+2
+4
+6
+8
+matmul conv2d dotp fft
+1
+3
+5
+7
+Benchmark
+Speed-up
+Baseline
+SSR
+Spatz
+Figure 8. Bar plot of Spatz and SSR-based cluster’s speed-ups versus the
+Snitch baseline cluster on a set of data-parallel workloads. All clusters have the
+same number of FPUs and, therefore, the same peak achievable performance.
+The fourth, lighter bar in the dotp kernel indicates the speedup of a Spatz
+cluster with twice as many VLSU interfaces in the L1 SPM.
+FPU utilization 15.5% lower than that of the Spatz cluster.
+Similar trends are seen for lower precision, e.g., wid-matmul8.
+In general, SSR’s performance drop on the matmul and
+conv2d kernels is explained due to banking conflicts in the L1
+SPM, which degrade the performance of SSR-based solutions
+due to their high L1 SPM bandwidth requirements. Namely,
+since SSRs have very little data reuse, each SSR-powered
+Snitch core reads two elements and writes one element back to
+the L1 SPM per cycle. This implies that 24 out of the 32 L1
+SPM SRAM banks are used per cycle. However, the SSR-based
+cluster performs better on the dotp kernel. The Spatz-based
+cluster reaches a 1.44× speed-up versus the baseline, while the
+SSR-based cluster reaches a speed-up close to 3× versus the
+baseline. This is due to dotp’s very low data reuse, which forces
+to fetch two 64-bit elements from the L1 SPM for each FMA
+operation. The SSR-based cluster’s large L1 SPM interconnect
+and three memory ports per core can supply this throughput to
+the FPUs. On the other hand, the smaller L1 interconnect of
+the Spatz cluster can provide a single 64-bit element per cycle
+to each FPU, throttling the execution of the dotp kernel.
+It is important to mention that the performance difference
+between Spatz and the SSR cluster on low data-reuse kernels,
+e.g., dotp., primarily depends on the current Spatz configuration
+and micro-architecture. A Spatz cluster with 2F L1 SPM
+interfaces per VLSU and streamlined reduction logic can
+achieve a dotp speedup similar to the SSR-based cluster
+while still featuring a lower number of ports in the L1 SPM
+interconnect (16 versus 24), as shown in Figure 8 by the lighter
+bar relative to the dotp kernel. On the other hand, we should
+note that low-compute intensive kernels like dotp are often
+bottlenecked at the cluster memory interface or at the off-chip
+memory controller, weakening the motivation for the local
+complexity increase.
+The fft kernel exemplifies the cluster’s performance on
+workloads with non-linear access patterns in the L1 Memory.
+The SSR-based cluster achieves up to 1.91 FLOPSDP/cycle
+on an FFT with 128 double-precision complex samples,
+3.2× faster than the baseline cluster. The low speed-up
+is due to the frequent synchronization between the FFT
+stages [12]. On the other hand, the Spatz-based cluster achieves
+3.43 FLOPSDP/cycle on the same problem, 5.8× faster than
+the baseline. Spatz benefits from a fast scatter-gather execution
+mechanism (Section IV-D2). Furthermore, since many FFT
+butterflies execute within a Spatz core, there is much less need
+for intra-Spatz atomic synchronization.
+VI. IMPLEMENTATION RESULTS
+This section analyzes the PPA figures of merit of a Spatz-
+based shared-L1 cluster with key data-parallel workloads.
+A. Methodology
+We used Synopsys Fusion Compiler 2022.03 to synthesize,
+place, and route the cluster with GlobalFoundries’ 12LPP
+12 nm advanced FinFET node. We target a minimum operating
+frequency of 950 MHz under worst-case conditions (SS, 0.72 V,
+125 °C). Furthermore, we used Synopsys PrimeTime 2022.02
+for sign-off Static Timing Analysis (STA) and power estimation
+under nominal conditions (TT, 0.80 V, 25 °C) at 1 GHz using
+switching activities extracted from gate-level simulations.
+B. Area Analysis and Breakdown
+Each Spatz-based CC is about 1.01 MGE large. Figure 9
+shows a post-implementation area breakdown of this CC,
+highlighting its main blocks. The VAU is the largest block, with
+its 694 kGE occupying 69% of the CC’s area. Within the VAU,
+each FPU is 142 kGE large, with the remaining 126 kGE being
+occupied by the IPU—particularly by its 64-bit multiplier—and
+by the vector reduction logic. The VRF occupies 169 kGE, 17%
+of the CC’s area. The remaining blocks have small contributions
+to the CC’s area, with Snitch’s 25 kGE, in particular, occupying
+only 2.5% of the CC’s overall footprint.
+FPUs
+IPU
+VRF
+VLSU
+Snitch
+Other
+Figure 9. Post-implementation area distribution of the Spatz-based CC,
+1.01-MGE-large. The slices correspond to (A) FPUs, 568 kGE; (B) IPU,
+126 kGE; (C) VRF, 169 kGE; (D) VLSU, 46 kGE; (E) Snitch, 25 kGE; (O)
+other smaller blocks, e.g., VSLDU, FPU sequencer, and controller, 76 kGE.
+The cluster was implemented as a block of dimensions
+737 µm × 1003 µm, 0.74 mm2
+in total. Figure 10 shows the
+placed-and-routed Spatz-based shared-L1 cluster, highlighting
+its main hierarchical blocks. The cluster was implemented
+with an overall standard cell density of 52%. The L1 SPM
+interconnect and the VRF are routing-intensive blocks and
+achieve a lower utilization of the standard cell area. For
+example, while highly-computational blocks such as the FPUs
+10
+VRF
+VRF
+L1 SPM
+I$
+Snitch
+Snitch
+IPU 1
+FPU 1
+FPU 2
+FPU 3
+FPU 4
+FPU 5
+FPU 6
+FPU 7
+FPU 8
+IPU 2
+Figure 10. Placed-and-routed Spatz-based shared-L1 cluster, implemented as
+a 737 µm × 1003 µm block. The cluster’s main blocks are highlighted: namely
+the Snitch cores, VRFs, IPUs, FPUs, L1 SPM, and I$.
+achieve a standard cell utilization of 60%, the VRFs are placed
+and routed at a standard cell utilization of 49%.
+The critical path of the Spatz cluster starts at Snitch’s L0 I$,
+through the Snitch core and Spatz’ instruction decoder. This
+critical path is about 45-gates long. Furthermore, another long
+path starting at the L0 I$ and through Snitch (without leaving
+the core) is about the same length. Therefore, Spatz’ inclusion
+does not limit the cluster operating frequency, which is the
+same as that of the scalar Snitch-based cluster [17].
+C. Energy Breakdown
+We measured the energy consumption per elementary opera-
+tion of the Spatz-based cluster in nominal operating conditions
+at 1 GHz, using switching activities extracted from a gate-
+level simulation. Figure 11 shows Spatz’ energy breakdown
+when running the vload (load), vfadd (floating-point addition),
+vfmul (floating-point multiplication), and vfmacc (floating-
+point multiply-accumulate) double-precision instructions.
+fmacc
+fmul
+fadd
+load
+27.1 pJ
+23.9 pJ
+20.0 pJ
+14.1 pJ
+6.5 pJ
+18.1 pJ
+16.2 pJ
+12.5 pJ
+6.5 pJ
+5.0 pJ
+5.0 pJ
+Snitch
+VRF
+VAU
+VLSU
+SPM
+Figure 11. Breakdown of the Spatz-based cluster’s energy consumption per
+elementary operation of several vector instructions.
+Snitch consumes only 0.19 pJ per elementary operation
+while issuing instructions to the vector unit. The low energy
+requirement is because Snitch only needs to issue an instruction
+every 32 cycles to keep Spatz’ FPUs fully utilized. For the
+computational operations, the FPUs are responsible for most of
+Spatz’ energy consumption, up to 67% of the cluster’s overall
+energy consumption when running the vfmacc instruction,
+followed by the VRF, which is responsible for 24%. Also of
+note is the reduction in VRF energy consumption between
+the vfadd and vfmul instructions, which read two operands
+and write one result to the VRF per cycle, and the vfmacc
+instruction, which reads an additional third operand.
+Each FPU of the Spatz cluster consumes 18.1 pJ to execute
+an FMA operation while executing the vfmacc instruction. This
+εFPU value is 38% higher than what we estimated from [12]’s
+results, lowering our cluster’s expected energy efficiency.
+Adding packed-SIMD support and including low-precision
+floating-point formats justify and explain the efficiency drop.
+The FPU implementation of [29], which has packed-SIMD
+vector support, consumes 26.1 pJ to execute a double-precision
+FMA operation, in line with what we measure in Spatz.
+It is important to note that the numbers of Figure 11 are not
+directly comparable with the previous Spatz publication [13]
+due to the widening of its datapath from 32 bit to the current
+64 bit. Furthermore, Spatz did not include FPUs, which are the
+focus of this work.
+D. Power Consumption and Energy Efficiency
+The Spatz cluster consumes 164 mW to execute the
+64 × 64 matmul kernel. Therefore, the Spatz cluster achieves
+15.7 GFLOPSDP running the 64 × 64 matmul, for an energy
+efficiency of 95.7 GFLOPSDP/W. Figure 12 shows a breakdown
+of the power consumption of the cluster’s hierarchical blocks.
+FPUs
+VRF
+VLSU
+SPM
+SPM Interconnect
+Controller
+Snitch
+Other
+Figure 12. Average power consumption breakdown of the Spatz-based
+cluster running a 64 × 64 double-precision floating-point matrix multiplication.
+At 1 GHz, the cluster achieves 15.7 GFLOPSDP and consumes, on average,
+164 mW to execute the workload at nominal operating conditions (TT, 0.80 V,
+25 °C). The slices correspond to (A) FPUs, 87 mW; (B) VRF, 34 mW; (C)
+VLSU, 7.5 mW; (D) L1 SPM memories, 4.25 mW; (E) L1 SPM interconnect,
+10.69 mW; (F) Spatz’ controller, 10.3 mW; (G) Snitch, 5.6 mW; (O) other
+smaller hierarchical blocks, 9.1 mW.
+The eight FPUs consume 87 mW, 54% of the cluster’s
+overall power consumption. In comparison, the FPUs consumed
+only 41% of the power consumption of the equivalent Snitch-
+based cluster [12]. Furthermore, the VRF consumes 32 mW
+(19%). This power consumption ratio mirrors the analysis from
+Section III-B. However, we underestimated the VRF energy
+consumption by 30%, probably due to timing pressure in the
+VRF interface with the FUs. Spatz’ VLSU consumes 7.0 mW
+(4.2%), and the L1 SPM SRAMs and interconnect consume
+15.4 mW (8.0%). Finally, Spatz’ controller consumes 9.3 mW
+(5.8%) and the Snitch cores and I$ consume 5.6 mW (3.4%).
+E. Model Validation
+As shown in Table III, our post-implementation energy
+measurements correlate with the numbers used in Section III.
+For example, the VRF consumes 34 pJ/cycle, 4.2 pJ/cycle
+(14%) more than the model estimate. We notice a large relative
+11
+error in the PE energy consumption value that corresponds to
+an absolute error of only 0.8 pJ/cycle. Furthermore, the relative
+discrepancies between the hypothesized and measured FPU,
+L0 VRF, and L1 SPM energy consumption are all less than
+20%, testifying to the soundness of the shared-L1 cluster’s
+energy consumption model.
+Table III
+DISCREPANCIES BETWEEN THE HYPOTHESIZED ENERGY CONSUMPTION IN
+SECTION III AND THE POST-IMPLEMENTATION MEASURED ENERGY
+CONSUMPTION.
+Hypothesis [pJ] Measured [pJ] Abs. Error [pJ] Rel. Error
+FPU 106.5 87 -19.5 -18%
+PE 0.9 1.7 +0.8 +89%
+L0 29.8 34.0 +4.2 +14%
+L1 13.3 15.0 +1.7 +13%
+F. PPA comparison with the SSR-based cluster
+We can use other Snitch-based cluster implementations in
+the literature as proxies to evaluate the area of the Spatz-
+based cluster. First, the Snitch-based cluster of [12] was
+implemented with GlobalFoundries’ 22FDX Fully Depleted
+Silicon on Insulator (FD-SOI) node, containing 128 KiB of L1
+SPM divided into 32 SRAM banks and eight double-precision
+FPUs. The cluster was implemented as a block of dimensions
+858 µm × 1046 µm, 0.90 mm2
+in total. However, the cluster’s
+FPUs did not have packed-SIMD support when running low-
+precision operations, i.e., each FPU can only execute one fp64
+or fp32 operation per cycle. Therefore, an area comparison
+between our design and the Snitch cluster [12] would be biased
+towards the smaller footprint of the latter.
+For a fair comparison, we ported the Snitch cluster [12] to
+GlobalFoundries’ 12LPP technology with the same frequency
+target as Spatz. Furthermore, we also added packed-SIMD
+support to the FPUs of the Snitch cluster [17], [30]. Figure 13a
+shows the area efficiency of the Spatz-based and SSR-based
+clusters on a set of data-parallel workloads. We did not consider
+the area of the L1 SPM SRAM macros in the computation.
+The SSR-based cluster [17] is 0.90-mm2
+large, with 0.17 mm2
+occupied by 128 KiB of L1 SPM. The Spatz-based cluster is
+0.72 mm2
+large, with 0.14 mm2
+occupied by also 128 KiB of
+L1 SPM. On the matmul kernel, the Spatz-based cluster reaches
+up to 26.7 GFLOPSDP/mm2
+, 32% higher than the efficiency
+of the SSR-based cluster. More strikingly, the Spatz-based
+cluster reaches an area efficiency of 5.9 GFLOPSDP/mm2
+on
+fft kernel, which is 2.3× larger than the 2.6 GFLOPSDP/mm2
+area efficiency of the SSR-based cluster on the same kernel.
+In terms of energy efficiency, Figure 13b, the Spatz cluster
+reaches up to 99.3 GFLOPSDP/W. Unlike our area efficiency
+calculations, we did consider the energy consumption of the
+L1 SPM SRAM macros since its contribution impacts the
+optimal VLENB and the number of memory accesses and the
+access pattern change when changing the architecture. In
+general, Spatz achieves higher energy efficiency than the SSR-
+based cluster for highly compute-intensive workloads such as
+matmul and conv2d. For data-intensive workloads such as dotp,
+Spatz reaches 48.2 GFLOPSDP/W, 30% lower than the energy
+efficiency of the SSR-based cluster on the same workload. The
+dot product workload, in particular, has very little data reuse.
+Therefore, transferring data from the L1 SPM to the L0 VRF
+does not improve data locality, explaining the energy efficiency
+drop caused by Spatz’ current bandwidth to L1 memory, which
+is lower than the one in the SSR-based cluster. Finally, for the
+fft kernel, Spatz reaches 32.7 GFLOPSDP/W, 48% larger than
+the energy efficiency of the SSR-based cluster.
+Spatz efficiency scales well for lower-precision formats. For
+example, the Spatz cluster achieves 358 GFLOPSHP/W on a
+128 × 128 wid-matmul16 matrix multiplication between fp16 el-
+ements. This is 3.74× higher than the peak efficiency achieved
+by the matmul double-precision kernel, with further energy
+efficiency gains possible with the ExSdotp [30] extension.
+Finally, we analyze the cluster’s combined area and energy
+efficiency in Figure 13c. Thanks to the small footprint and
+highly-competitive energy efficiency of the Spatz cluster, it
+reaches up to 171 GFLOPSDP/mm2
+/W on the conv2d workload.
+This is 30% larger than the peak area/energy efficiency of the
+SSR-based cluster. This implies that, under the same area
+constraints, a shared-L1 cluster based on Spatz would reach
+an energy efficiency 30% larger than an SSR-based cluster.
+The combined area/energy efficiency of the Spatz cluster is
+only 12% lower than that of the SSR-based cluster for the dotp
+workload. However, for an fft, Spatz’ 56 GFLOPSDP/mm2
+/W
+is almost twice the achieved combined area/energy efficiency
+of the SSR-based cluster on the same workload.
+VII. RELATED WORK
+Increasing memory capacity to lower the bandwidth re-
+quirements at a higher level of the memory hierarchy is
+a fundamental trade-off found in several architectures. For
+instance, GPUs have a large multi-context register file, allowing
+fast context switching between many concurrent threads. Each
+Streaming Multiprocessor (SM) of Nvidia’s Hopper GPUs
+has a 256-KiB-large register file to hold the context of up to
+2048 threads [19]. Therefore, a considerable design effort is
+dedicated to concurrently optimizing the capacity, bandwidth,
+reliability, and power consumption of such large register
+files [31]. Table IV compares our PPA metrics against the
+Snitch cluster [12], Vitruvius+ [15], and Ara [16], on the
+largest problem that fits each design’s SPM. Spatz is highly
+competitive in sustained fraction of peak performance, as well
+as in energy efficiency.
+At a scale much smaller than GPUs, IoT end nodes
+require high performance and energy efficiency under a tight
+power budget to execute edge-AI workloads. In this scenario,
+the Single Instruction, Multiple Thread (SIMT) computation
+paradigm of GPUs is hard to leverage, as it requires a massive
+amount of multi-threaded parallelism (and, therefore, a very
+large register file). Typical IoT end nodes exploit the SIMD
+computing paradigm over a moderate amount of functional
+units. For example, Dustin [32] proposes a configurable Vector
+Lockstep Execution Mode (VLEM), in which its 16 32-bit
+cores are synchronized, and a single instruction fetch controls
+all 16 datapaths. Therefore, Dustin can achieve the high energy
+efficiency of packed-SIMD architectures while keeping the
+12
+0
+10
+20
+30
+matmulconv2d dotp fft
+5
+15
+25
+Benchmark
+[GFLOPS
+DP
+/mm
+2
+]
+(a) Area Efficiency.
+0
+20
+40
+60
+80
+100
+matmulconv2d dotp fft
+Benchmark
+[GFLOPS
+DP
+/W]
+(b) Energy Efficiency.
+0
+50
+100
+150
+200
+matmulconv2d dotp fft
+Benchmark
+[GFLOPS
+DP
+/mm
+2
+/W]
+SSR
+Spatz
+(c) Combined area/energy Efficiency.
+Figure 13. Efficiency metrics of the Spatz-based and SSR-based clusters on a set of data-parallel workloads at nominal conditions (1 GHz, TT, 0.80 V, 25 °C).
+The considered cluster area does not include the area of the L1 SPM SRAM macros.
+Table IV
+COMPARISON BETWEEN SPATZ (US), SNITCH [12], VITRUVIUS+ [15], AND
+ARA [16] ON AN n × n MATRIX MULTIPLICATION.
+Unit Spatz Snitch Vitr. Ara
+Problem size n 64 64 256 256
+Node [nm] 12 12 22 22
+VDD [V] 0.80 0.80 0.80 0.80
+Clock (typ) [GHz] 1.26 1.30 1.40 1.35
+Peak DP [GFLOPSDP] 20.16 20.80 22.40 21.6
+Peak SP [GFLOPSSP] 40.32 41.60 — 43.2
+Sustained DP [GFLOPSDP] 19.74 18.26 21.70 20.95
+Sustained SP [GFLOPSSP] 38.81 33.75 — —
+Total Power DP [W] 0.207 0.227 0.459 0.587
+Efficiency DP [GFLOPSDP/W] 97.39 92.03 47.30 35.70
+flexibility of the Multiple Instruction, Multiple Data (MIMD)
+paradigm. In VLEM mode, the register files of the scalar
+cores act as a single, 512-bit-wide register file. Unlike Spatz,
+Dustin was designed for low-precision (e.g., 2-bit) integer
+computation. However, its architecture highlights the trend of
+compact processing elements exploiting SIMD computation.
+Intel’s Advanced Vector Extension (AVX) family of ISAs also
+exploits the packed-SIMD paradigm. Its widest ISA variant
+proposes 32 512-bit-wide registers [33] on Intel’s line of high-
+performance processors. With the recent introduction of the
+AVX10 ISA, Intel introduces a common vector ISA on the
+high-performance (P) product lines (e.g., Intel Xeon) and the
+to-be-introduced high-efficiency (E) product line, with a shorter
+256-bit vector length on the latter [34].
+It is important to note that all packed-SIMD solutions tie
+the register file width to the number of functional units in the
+system. Thus, the L0 capacity of the GPR is not available
+as an architectural tuning knob once the ISA is defined. The
+vector-SIMD paradigm provides a clean abstraction to separate
+the VRF capacity from the architecture’s programming model.
+Specifically, the same software can run on any vector machine
+thanks to Vector-Length Agnostic (VLA) parametrization:
+programs automatically adjust their execution to exploit the
+longest possible vector, which is impossible with packed-
+SIMD architectures [35] and prohibitively expensive with GPUs.
+Therefore, vector processors present the unique characteristic
+of allowing a full exploration of the memory capacity and
+bandwidth trade-off. Many vector processing units have been
+proposed in recent years, thanks to new vector ISAs such as
+Arm’s Scalable Vector Extension (SVE) [36] and RISC-V’s
+RVV [11]. Examples of such large-scale vector architectures
+based on the RVV ISA include BSC’s Vitruvius [15], PULP
+Platform’s Ara [16], and SiFive’s P270 [37], P870 [38], and
+X280 [39] cores, to name a few.
+Ultimately, vector processing have historically been asso-
+ciated with supercomputers [40], [41], which limited its
+application to the PEs of a compact shared-L1 cluster. In fact,
+vector processors usually include all microarchitectural tricks
+to increase ILP and target very long vectors to amortize the
+VNB [10] and the massive overheads of complex instruction
+issue mechanisms. As a result, the energy efficiency of these
+high-performance architectures is encumbered by their complex,
+out-of-order microarchitecture [42].
+However, the defining characteristic of a vector processor
+is not ILP but DLP. This key observation led to the design
+of streamlined vector cores where most hardware resources
+are dedicated to DLP support [16]. In this vein, the idea of
+an embedded vector machine is gaining traction with modern
+vector ISAs. Arm’s M-Profile Vector Extension (MVE) [36]
+and the Zve∗ subset of RISC-V’s RVV ISA [11] target small
+vector machines for edge processing.
+Arm’s Helium MVE is an optional extension proposed as part
+of the Armv8.1-M architecture [36]. The Arm Cortex-M55 [43]
+is the first processor to ship with support to MVE. However,
+no quantitative assessment of the performance and efficiency of
+a Cortex-M55 silicon implementation has been reported in the
+open literature; hence, a quantitative comparison with Spatz is
+impossible. For what concerns a qualitative comparison, we
+observe that the Helium MVE defines eight 128-bit wide vector
+registers as aliases to the floating-point register file. On the
+M55 processor, the 64-bit datapath means Helium operates on a
+“dual-beat regime,” i.e., vector instructions execute in two cycles.
+This is enough to overlap the execution of successive vector
+instructions in different processing units without a superscalar
+core. However, the scalar core must frequently issue instructions
+to the Helium-capable processing unit to keep its pipeline busy.
+13
+In contrast, Spatz’ longer vector registers and RVV’s LMUL
+register grouping allow for a maximum vector length of 4096
+bits, keeping Spatz busy for 32 cycles. This long execution, as
+shown by our results, massively amortizes the energy overhead
+of the scalar core, which is a considerable part of the overall
+energy consumption even on extremely data-parallel kernels
+such as the matrix multiplication.
+In general, architectures based on a tightly-coupled cluster of
+small vector processors have not been explored in past literature,
+possibly due to the novelty of small vector machines. Small-
+scale vector units have been proposed for Field-Programmable
+Gate Arrays (FPGAs), where the leanness of the vector
+processor is a constraint due to limited FPGA resources.
+Vicuna [44] is a timing-predictable RVV-compliant vector
+processor, synthesized on a Xilinx Series 7 FPGA. Its VRF
+was implemented as a multi-ported Random-Access Memory
+(RAM) due to concerns with timing anomalies with a multi-
+banked VRF. Vicuna’s largest configuration achieves up to
+117 OP/cycle on an 8-bit 1024 × 1024 matrix multiplication
+kernel. Vicuna’s multi-ported VRF is similar to Spatz’ VRF.
+There is no study about Vicuna’s scaling nor an Application-
+Specific Integrated Circuit (ASIC) implementation of this
+architecture, making a power or energy efficiency comparison
+with Spatz difficult. The same can be said about other small-
+scale RVV vector units demonstrated on FPGAs [45]–[47].
+VIII. CONCLUSIONS
+We introduced Spatz, an open-source highly efficient com-
+pact VPU based on the RVV specification. We couple Spatz
+with the lightweight Snitch core and optimize its latch-based
+VRF targeting maximum energy efficiency, leveraging the RVV
+ISA to boost performance. Spatz differs from typical vector
+processors, whose VRFs have to be much larger to amortize
+the overhead of typically-used ILP techniques (e.g., renaming
+and out-of-order execution).
+We use Spatz as the PE of a tightly-coupled shared-L1
+cluster, comprising a set of PEs sharing tightly-coupled L1
+memory through a low-latency interconnect. The Spatz cluster
+contains eight multi-precision FPUs and 128 KiB of L1 SPM.
+We implemented this cluster as a 0.74-mm2
+-large macro with
+GlobalFoundries’ FinFET 12 nm node at an operating frequency
+of 950 MHz in worst-case conditions (SS, 0.72 V, 125 °C). To
+the best of our knowledge, the dual-core Spatz cluster is the
+first open-source multi-core RVV-based processor architecture.
+We used Kung’s architectural balance concept to amortize
+the energy cost of accessing the L1 SPM by tuning the
+capacity of the highly efficient VRF (L0 memory) private
+to each Spatz, quantitatively showing how vector processors
+can not only alleviate the VNB on the instruction side of the
+memory but also the memory bottleneck on the data side,
+thanks to improved data reuse in their VRFs. We developed a
+mathematical model to analyze the energy consumption of the
+cluster when faced with target workloads and demonstrated its
+use with a double-precision floating-point matrix multiplication
+kernel as a function of the VRF (L0) size. A very small VRF
+(L0) is needed to balance the L0 and L1 data access costs.
+The Spatz-based cluster achieves high area and en-
+ergy efficiency on compute-intensive workloads. Spatz
+achieves an 7.7 FMA/cycle when running a 64 × 64 double-
+precision floating-point matrix multiplication, correspond-
+ing to 15.7 GFLOPSDP and 95.7 GFLOPSDP/W at 1 GHz
+and nominal operating conditions (TT, 0.80 V, 25 °C), with
+more than 55% of the power spent on the FPUs. Further-
+more, the optimally-balanced Spatz-based cluster reaches a
+95.0% FPU utilization (7.6 FMA/cycle), 15.2 GFLOPSDP, and
+99.3 GFLOPSDP/W (61% of the power spent in the FPU) on
+a 2D workload with a 7 × 7 kernel, resulting in an outstanding
+area/energy efficiency of 171 GFLOPSDP/W/mm2
+. At the same
+area, a computing cluster built upon compact vector processors
+reaches an energy efficiency 30% higher than that of a cluster
+with the same FPU count built upon scalar RISC-V-based cores
+specialized for stream-based floating-point computation.
+This paper shows that vector processors are a sound approach
+for building PE for shared-L1 clusters. The addition of a VRF
+acting as L0 memory allows for a reduction in the bandwidth
+requirement in the L1 interconnect when the VRF (L0) allows
+for better data reuse, like in key kernels in AI such as matrix
+multiplication. Given the slowdown of wiring and SRAM
+technology scaling, this reduction simplifies the cluster’s low-
+latency interconnect, the typical factor limiting the physical
+implementation in current and future technologies.
+ACKNOWLEDGMENT
+This work was supported in part through the TRISTAN
+(#101095947) and the ISOLDE (#101112274) projects, both
+funded through the Chips Joint Undertaking (CHIPS JU) of the
+European Union’s Horizon Europe’s research and innovation
+programme and its members.
+Matteo Perotti received his M.Sc. degree in Elec-
+tronic Engineering from the Polytechnic University
+of Turin, Italy, in 2019. He is currently pursuing a
+Ph.D. degree at the Integrated Systems Laboratory
+of ETH Zurich, Switzerland. His research interests
+include highly efficient computing architectures and
+computation with high dynamic-range data types.
+Samuel Riedel received the B.Sc. and M.Sc. degree
+in Electrical Engineering and Information Technology
+at ETH Zurich in 2017 and 2019, respectively. He
+is currently pursuing a Ph.D. degree with the Digital
+Circuits and Systems group of ETH Zurich, under
+the supervision of Prof. Luca Benini. His research
+interests include computer architecture, focusing on
+many-core systems and their programming model.
+Matheus Cavalcante received his M.Sc. degree in
+Integrated Electronic Systems from the Grenoble
+Institute of Technology (Phelma) in 2018, and his
+Ph.D. from ETH Zurich in 2023. During his Ph.D.
+studies, Matheus worked with the Digital Circuits and
+Systems Group under the supervision of Prof. Luca
+Benini. Matheus’ research interests include vector
+processing, large-scale high-performance computer
+architectures, and emerging VLSI technologies.
+14
+Luca Benini holds the chair of Digital Circuits and
+Systems at ETH Zurich and is a Full Professor at
+the Università di Bologna. He received a Ph.D. from
+Stanford University. He is a Fellow of the ACM
+and a member of the Academia Europaea. He is
+the recipient of the 2023 IEEE CS E. J. McCluskey
+Award.
+REFERENCES
+[1] S. Naffziger, “Cross-disciplinary innovations required for the future
+of computing,” 2021, 58th Design Automation Conference. [Online].
+Available: https://www.youtube.com/watch?v=QlsXecH YsY
+[2] J. Wuu, “Memory solutions for HPC & AI,” in Proceedings of the 2022
+International Electron Devices Meeting. IEEE, 2022.
+[3] GreenWaves Technologies Corp., GAP9 Datasheet, Grenoble, France,
+2024, version 1.1. [Online]. Available: https://greenwaves-technologies.
+com/wp-content/uploads/2024/07/gap9datasheet v1.1.pdf
+[4] T. Adegbija, A. Rogacs, C. Patel, and A. Gordon-Ross, “Microprocessor
+optimizations for the internet of things: A survey,” IEEE Transactions
+on Computer-Aided Design of Integrated Circuits and Systems, vol. 37,
+no. 1, pp. 7–20, 2018.
+[5] S. Pagani, P. D. S. Manoj, A. Jantsch, and J. Henkel, “Machine learning
+for power, energy, and thermal management on multicore processors:
+A survey,” IEEE Transactions on Computer-Aided Design of Integrated
+Circuits and Systems, vol. 39, no. 1, pp. 101–116, 2020.
+[6] N. Verma, “Future prospects of in- and near-memory computing,” in
+Proceedings of the 2022 International Electron Devices Meeting. IEEE,
+2022.
+[7] J. Backus, “Can programming be liberated from the von Neumann style?:
+A functional style and its algebra of programs,” Commun. ACM, vol. 21,
+no. 8, pp. 613–641, Aug. 1978.
+[8] R. Brain, “Interconnect scaling: Challenges and opportunities,” in
+Proceedings of the 2016 International Electron Devices Meeting. IEEE,
+2016.
+[9] RISC-V International, The RISC-V Instruction Set Manual: Unprivileged
+ISA, CS Division, EECS Department, University of California, Berkeley,
+CA, USA, Dec. 2019, version 20191213.
+[10] P. Vizcaino et al., “Short reasons for long vectors in HPC CPUs: A
+study based on RISC-V,” in Proceedings of the SC ’23 Workshops of
+The International Conference on High Performance Computing, Network,
+Storage, and Analysis. ACM, 2023.
+[11] RISC-V Corp., “RISC-V ‘V’ Vector Extension, version 1.0,” 2022.
+[Online]. Available: https://github.com/riscv/riscv-v-spec
+[12] F. Zaruba, F. Schuiki, T. Hoefler, and L. Benini, “Snitch: A tiny pseudo
+dual-issue processor for area and energy efficient execution of floating-
+point intensive workloads,” IEEE Transactions on Computers, vol. 70,
+no. 11, pp. 1845–1860, 2020.
+[13] M. Cavalcante et al., “Spatz: A compact vector processing unit for high-
+performance and energy-efficient shared-L1 clusters,” in Proceedings of
+the 41st IEEE/ACM International Conference on Computer-Aided Design
+(ICCAD ’22). ACM, 2022.
+[14] F. Zaruba and L. Benini, “The cost of application-class processing: Energy
+and performance analysis of a Linux-ready 1.7-GHz 64-Bit RISC-V core
+in 22-nm FDSOI technology,” IEEE Transactions on Very Large Scale
+Integration (VLSI) Systems, vol. 27, no. 11, pp. 2629–2640, 2019.
+[15] F. Minervini et al., “Vitruvius+: An area-efficient RISC-V decoupled
+vector coprocessor for high performance computing applications,” ACM
+Trans. Archit. Code Optim., vol. 20, no. 2, pp. 1–25, mar 2023.
+[16] M. Perotti et al., “Ara2: Exploring single- and multi-core vector
+processing with an efficient RVV 1.0 compliant open-source processor,”
+IEEE Transactions on Computers, vol. 73, no. 7, pp. 1822–1836, 2024.
+[17] G. Paulin et al., “Soft tiles: Capturing physical implementation flexibility
+for tightly-coupled parallel processing clusters,” in 2022 IEEE Computer
+Society Annual Symposium on VLSI (ISVLSI). IEEE, 2022.
+[18] N. Stephens et al., “The ARM scalable vector extension,” IEEE Micro,
+vol. 37, no. 2, pp. 26–39, 2017.
+[19] Nvidia H100 Tensor Core GPU Architecture, 1st ed., NVIDIA Corp.,
+2022. [Online]. Available: https://resources.nvidia.com/en-us-tensor-core
+[20] H. T. Kung, “Memory requirements for balanced computer architectures,”
+SIGARCH Comput. Archit. News, vol. 14, no. 2, p. 49–54, May 1986.
+[21] M. Scherer, G. Rutishauser, L. Cavigelli, and L. Benini, “CUTIE: Beyond
+PetaOp/s/W ternary DNN inference acceleration with better-than-binary
+energy efficiency,” IEEE Transactions on Computer-Aided Design of
+Integrated Circuits and Systems, vol. 41, no. 4, pp. 1020–1033, 2022.
+[22] A. Teman et al., “Power, area, and performance optimization of standard
+cell memory arrays through controlled placement,” ACM Trans. Des.
+Autom. Electron. Syst., vol. 21, no. 4, pp. 1–25, may 2016.
+[23] J. Shiomi, T. Ishihara, and H. Onodera, “Fully digital on-chip memory
+using minimum height standard cells for near-threshold voltage com-
+puting,” in 2016 26th International Workshop on Power and Timing
+Modeling, Optimization and Simulation (PATMOS). IEEE, 2016.
+[24] J. W. Choi, D. Bedard, R. Fowler, and R. Vuduc, “A roofline model of
+energy,” in 2013 IEEE 27th International Symposium on Parallel and
+Distributed Processing. IEEE, 2013.
+[25] R.-J. Zhu et al., “Scalable MatMul-free language modeling,” arXiv
+preprint arXiv:2406.02528, 2024.
+[26] K. Czechowski et al., “Balance principles for algorithm-architecture co-
+design,” in Proc. of the 3rd USENIX Conf. on Hot Topic in Parallelism,
+ser. HotPar’11. USENIX Association, 2011.
+[27] G. Gobieski et al., “MANIC: A vector-dataflow architecture for ultra-low-
+power embedded systems,” in Proceedings of the 52nd Annual IEEE/ACM
+International Symposium on Microarchitecture (MICRO ’52). ACM,
+2019.
+[28] OpenHW Group eXtension Interface, OpenHW Corp., Apr. 2022,
+revision a3bcdd76. [Online]. Available: https://docs.openhwgroup.org/
+projects/openhw-group-core-v-xif
+[29] S. Mach, F. Schuiki, F. Zaruba, and L. Benini, “FPnew: An open-
+source multiformat floating-point unit architecture for energy-proportional
+transprecision computing,” IEEE Transactions on Very Large Scale
+Integration (VLSI) Systems, vol. 29, no. 4, pp. 774–787, 2021.
+[30] L. Bertaccini et al., “MiniFloat-NN and ExSdotp: An ISA extension
+and a modular open hardware unit for low-precision training on RISC-V
+cores,” in 2022 IEEE 29th Symposium on Computer Arithmetic (ARITH).
+IEEE, 2022.
+[31] S. Mittal, “A survey of techniques for architecting and managing GPU
+register file,” IEEE Transactions on Parallel and Distributed Systems,
+vol. 28, pp. 16–28, 2017.
+[32] A. Garofalo et al., “A 1.15 TOPS/W, 16-cores parallel ultra-low power
+cluster with 2b-to-32b fully flexible bit-precision and vector lockstep
+execution mode,” in IEEE 47th European Solid State Circuits Conference
+(ESSCIRC). IEEE, 2021.
+[33] J. Reinders, “Intel AVX-512 instructions,” Intel Software Developer Zone,
+Jun. 2017.
+[34] Intel Corp., The Converged Vector ISA: Intel®
+Advanced Vector Extensions
+10, Santa Clara, CA, Jul. 2023, Revision 1.0.
+[35] C. Kozyrakis and D. Patterson, “Overcoming the limitations of conven-
+tional vector processors,” in 30th Annual International Symposium on
+Computer Architecture, 2003. Proceedings. IEEE, 2003.
+[36] Arm Corp., Introduction to Armv8.1-M architecture, Arm Corp., Cam-
+bridge, UK, Feb. 2019, revision r1p1.
+[37] SiFive Performance P270, SiFive Corp., San Mateo, CA, USA, 2022,
+revision 21G3. [Online]. Available: https://sifive.cdn.prismic.io/sifive/
+859c28c0-8bd5-4fc4-9113-a25a2a89bf9c P270+Data+Sheet.pdf
+[38] SiFive, “P870 high-performance RISC-V processor,” in Hot Chips: A
+Symposium on High-Perf. Chips. IEEE, Aug. 2023.
+[39] SiFive Intelligence X280, SiFive Corp., San Mateo, CA, USA, 2022,
+revision 21G3. [Online]. Available: https://sifive.cdn.prismic.io/sifive/
+62e0df53-be02-4b50-b211-aa55b7042fc8 x280-datasheet-21G3.pdf
+[40] R. M. Russell, “The CRAY-1 computer system,” Commun. ACM, vol. 21,
+no. 1, pp. 63–72, Jan. 1978.
+[41] T. Yoshida, “Fujitsu high performance CPU for the Post-K computer,”
+in Hot Chips: A Symposium on High Performance Chips. IEEE, 2018.
+[42] Green500, “Green500 list - November 2022,” Nov. 2022. [Online].
+Available: https://www.top500.org/green500/lists/2022/11/
+[43] Arm Cortex-M55 Processor Datasheet, Arm, Cambridge, UK, 2020.
+[44] M. Platzer and P. Puschner, “Vicuna: A timing-predictable RISC-V
+vector coprocessor for scalable parallel computation,” in 33rd Euromicro
+Conference on Real-Time Systems (ECRTS 2021). Schloss Dagstuhl –
+Leibniz-Zentrum für Informatik, 2021.
+[45] I. Al Assir, M. El Iskandarani, H. Al Sandid, and M. Saghir, “Arrow:
+A RISC-V vector accelerator for machine learning inference,” arXiv
+preprint arXiv:2107.07169, 2021.
+[46] M. Johns and T. J. Kazmierski, “A minimal RISC-V vector processor
+for embedded systems,” in 2020 Forum for Specification and Design
+Languages (FDL). IEEE, 2020.
+15
+[47] M. A. Islam and K. Kise, “Resource-efficient RISC-V vector extension
+architecture for FPGA-based accelerators,” in Proceedings of the 13th
+International Symposium on Highly Efficient Accelerators and Reconfig-
+urable Technologies (HEART ’23). ACM, 2023.
+

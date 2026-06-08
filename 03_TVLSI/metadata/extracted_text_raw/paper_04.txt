@@ -1,0 +1,453 @@
+                                                                                                                                                                                                                                1
+
+
+
+
+                                            A Scalable FPGA Architecture With Adaptive
+                                           Memory Utilization for GEMM-Based Operations
+                                                                                    Anastasios Petropoulos                    and Theodore Antonakopoulos
+
+
+
+
+                                           Abstract—Deep neural network (DNN) inference relies increas-
+
+
+
+
+                                                                                                                                     SLR1
+                                        ingly on specialized hardware for high computational efficiency.                                                                                                           PU2x
+
+                                        This work introduces a field-programmable gate array (FPGA)-                                                                                                               PU1x
+                                                                                                                                                            SLR crossing registers
+                                        based dynamically configurable accelerator featuring systolic                                                       SLR crossing registers                              PU AXI
+                                        arrays, high-bandwidth memory, and UltraRAMs. We present                                                                                                   sync
+                                                                                                                                                                                                                channels
+arXiv:2510.08137v1 [cs.AR] 9 Oct 2025
+
+
+
+
+                                        two processing unit (PU) configurations with different computing                                                                                                        PU AXI channels
+
+
+
+
+                                                                                                                                                                                                      PCIe
+                                        capabilities using the same interfaces and peripheral blocks.                                                                                                           crossing SLR
+                                        By instantiating multiple PUs and employing a heuristic weight
+
+
+
+
+                                                                                                                                     SLR0
+                                                                                                                                                                                                                PCIe AXI channel
+                                        transfer schedule, the architecture achieves notable throughput                                                             AXI interconnects
+                                        efficiency over prior works. Moreover, we outline how the archi-                                                                                                         Coordination
+                                        tecture can be extended to emulate analog in-memory computing                                                                                                            bus
+                                                                                                                                                               HBM Memory & Controller
+                                        (AIMC) devices to aid next-generation heterogeneous AIMC chip
+                                        designs and investigate device-level noise behavior. Overall, this                           Fig. 1. The system architecture of multiple PUs on an Alveo U50 FPGA.
+                                        brief presents a versatile DNN inference acceleration architecture
+                                        adaptable to various models and future FPGA designs.                                         with URAM and HBM resources. For improved resources
+                                                                                                                                     utilization, we implemented two PU configurations—one with
+                                          Index Terms—Deep neural networks (DNNs), field-
+                                        programmable gate array (FPGA), General Matrix-Matrix                                        high DSP usage and another with half of this capacity—using
+                                        Multiplication (GEMM), hardware accelerator, systolic array.                                 the same interfaces and peripheral blocks. Also, we integrated
+                                                                                                                                     multiple PUs on an Alveo FPGA, achieving higher throughput
+                                                               I. I NTRODUCTION                                                      and energy efficiency on ResNet models over prior works.
+                                                                                                                                     Finally, we devise how the architecture can be extended to
+                                        D     EEP neural network (DNN) inference demanded the
+                                              design of specialized hardware platforms, with numerous
+                                        architectures optimized for high throughput and/or low latency
+                                                                                                                                     emulate analog in-memory computing (AIMC) devices.
+                                                                                                                                                    II. H ARDWARE A RCHITECTURE
+                                        [1]–[5]. Field-programmable gate arrays (FPGAs), due to their
+                                                                                                                                        Our architecture prioritizes scalability and computational
+                                        reconfigurable nature, enable domain-specific accelerators that
+                                                                                                                                     efficiency to support convolutional (Conv) and fully connected
+                                        can be adapted to the requirements of different network
+                                                                                                                                     (FC) layers within the same PU. This design is intended to
+                                        architectures. Many FPGA-based designs employ systolic ar-
+                                                                                                                                     accommodate evolving DNN workloads for high-throughput
+                                        rays (SAs) for core multiply-accumulate operations, whether
+                                                                                                                                     computations rather than minimizing metrics such as energy
+                                        implemented via high-level synthesis [6] or register-transfer
+                                                                                                                                     consumption. To achieve that, fast off-chip HBM is crucial to
+                                        level (RTL) approaches [7]. Despite notable performance
+                                                                                                                                     sustain a high-throughput dataflow within a single PU and/or
+                                        achievements, some solutions overlook the physical layout of
+                                                                                                                                     among multiple PUs and to support rapid weight updates to
+                                        the FPGA resources and their interconnect structure, resulting
+                                                                                                                                     on-chip memories. The system architecture with multiple PUs
+                                        in limited performance and non-optimal clock frequencies.
+                                                                                                                                     in two configurations, along with their AXI channel interfaces
+                                        Others utilize architectural features such as cascade paths, DSP
+                                                                                                                                     to the HBM and a coordination bus for synchronization is
+                                        packing strategies, and clock-domains separation techniques to
+                                                                                                                                     shown in Fig. 1. This bus is responsible for loading instructions
+                                        harness more of the FPGA capabilities, delivering higher per-
+                                                                                                                                     into each PU’s queue and managing flow control signals for
+                                        formance [4], [7], [8]. However, on-chip memory constraints,
+                                                                                                                                     independent or cooperative operations among PUs. The PUs
+                                        bandwidth limitations, and variations in resources availability
+                                                                                                                                     can process multiple DNN layers in parallel and exchange
+                                        across FPGAs can restrict portability and design reusability.
+                                                                                                                                     inter-layer activations between different PUs or within the
+                                           In this work, we propose a highly adaptable systolic-array-
+                                                                                                                                     same PU via the shared HBM. This work focuses on the PU
+                                        based processing unit (PU), which leverages high-bandwidth
+                                                                                                                                     architecture and its performance, omitting the description of
+                                        memory (HBM) for high sustained data transfer rates and
+                                                                                                                                     the instruction controllers and the flow control mechanisms.
+                                        UltraRAM (URAM) for large-scale weights storage. The PU is
+                                        parameterized for versatility, supporting diverse FPGA devices                               A. Processing Unit
+                                                                                                                                        The PU architecture illustrated in Fig. 2 consists of three
+                                           This work was supported by the European Union (Horizon Europe) Project
+                                        NeuroSoC under Grant 101070634. (Corresponding author: Anastasios                            functional blocks primarily outlined as: (a) the pre-processing
+                                        Petropoulos.)                                                                                block containing two AXI DataMover (ADMs) modules in-
+                                           The authors are with the Department of Electrical and Computer                            terfacing with the HBM, and the Block RAM (BRAM)-
+                                        Engineering, University of Patras, 26504 Rio-Patras, Greece (e-mail:
+                                        a.petropoulos@ece.upatras.gr; antonako@upatras.gr).                                          based activations buffer, (b) the SA of DSP48E2 units op-
+                                                                                                                                     erating with INT8 multiply-accumulate arithmetic alongside a
+                                                  © 2025 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including
+                                            reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists, or reuse of any
+                                                                                      copyrighted component of this work in other works. DOI: 10.1109/TVLSI.2025.3571677
+                                                                                                                                                                                                              2
+
+
+
+        (a)                                                 (b)                                        𝐶SA                                                                        Wave
+                                                                                                                                                                              Reorder Buffer             RA
+                W, B            RA                                                                                                                                               (WRB)
+  AXI                                                                      URAM            DSP     DSP                 DSP
+                              R AXI
+
+
+
+
+                                                                                                                                                  Aggregator shift-up chain
+                                                           𝑅SA Τ2
+                     Queue DataMover                                                                                                                                           Activations
+                                                                                                                                                                                Functions
+                              params                                       URAM                                              PE
+                                                                                                                                                                              DSP            DSP
+                                      BufA
+           Gen.
+          IM2COL                                                                                                                                                                    𝑅g /4
+                                                                           URAM                          PE
+
+
+
+
+                                                   InpSA
+          Addr/Len                    BufB
+                                                                                                                              𝑅g
+                        Inp                                                                                                                                                    Activations
+                                                                           URAM                          PE                                                                     Functions
+                           R/W AXI           Out                                                                       Systolic                                                                    (c)
+  AXI                Queue DataMover                                                                                                   scale/shifts
+                                                                    W, B                         InpSA                 inputs setup
+                           I/O                                                                                                                                                Stream DW
+                                                                                                                                                                                Adapter
+                                                    at 𝐹 MHz                      Memory         DSP      Mult-Add + Acc. (P <- P+A*B+C)
+          Stream Adjuster 256b to 128b
+          Bandwidth matching 𝐹Τ2 to 𝐹 MHz           at 𝐹/2 MHz                        Cascades   DSP      Mult-Add (P <- A*B+C)        DSP    Add (SIMD mode)
+                                                                                                                                                                                       Out
+
+Fig. 2. The processing unit (PU) architecture: (a) the pre-processing block, (b) the systolic array, and (c) the post-processing block.
+
+URAM-based weights and biases memory structure, and (c)                                                      After power-of-two scaling by the scale/shifts module (see
+the post-processing block, i.e., activations functions, residual                                          Fig. 2(b)), the adjusted systolic wave MVM results are merged
+additions. Two synchronous clock domains are employed in                                                  and aligned to form a data chunk of Rg bytes for each
+this architecture: a system clock for AXI data transfers and a                                            of the RSA /Rg row-blocks. This chunk is then pushed to
+faster clock (twice as high) for the SA and on-chip memories,                                             FIFOs that are lane-aligned to the last PE of each row-
+with their domains color-coded in Fig. 2.                                                                 block. These shallow-depth FIFOs stream data, tagged with
+   A ping-pong buffering scheme (among two BRAMs) is                                                      the row-block ID and the wave ID, into the aggregator shift-
+utilized to ensure a continuous stream of activations to the                                              up register chain. In particular, this chain contains multiplexers
+SA, as shown in Fig. 2(a). In essence, while one buffer is                                                and registers in each FIFO lane to coordinate up/downstream
+being read at the fast clock rate with CSA -elements width to                                             data transfers. Since the SA produces RSA bytes with an
+feed the SA, the other is loaded by the ADM I/O module using                                              interval of ⌈M/CSA ⌉ cycles, the aggregator could provide
+a wider data bus at the system clock rate. Besides regular data                                           these chunks to the Wave Reorder Buffer (WRB) in an out-of-
+transfer support, this ADM command interface is coordinated                                               order context, depending on the MVM and the SA dimensions.
+with an Image to Column (IM2COL) transformation module,                                                   Therefore, having each WRB write entry tagged, new waves
+allowing a common input datapath to the activations buffers,                                              can be provided to the buffer, thus minimizing the idle state
+as presented in the following subsection II-B. Moreover, the                                              of the pipeline and exhibiting high computational efficiency.
+weights and bias values are allocated in URAM blocks (placed                                                 On the contrary, the read side of the WRB enforces strict
+in a column, see Fig. 2(b)), where the write ports exploit the                                            ordering of the waves, streaming the MVM results to the post-
+cascades for data, addresses, and control signals [9]. The same                                           processing modules that direct the results to the non-linear
+strategy is used in [8] for the weights in their Matrix-Vector                                            activation functions first (if applicable), i.e., rectified linear
+Multiplication (MVM) tiles. This URAM cascade structure is                                                unit (ReLU), as shown in Fig. 2(c). An element-wise addition
+updated through the ADM params module, which transfers                                                    unit is used when the output is fused with a residual path from
+the weights to the appropriate locations in each URAM block.                                              a prior convolutional layer, as in ResNet architectures, hence
+Also, it is used to load the bias elements in the spare byte of                                           avoiding extra off-chip memory transfers [3]. For this purpose,
+each URAM block when ECC configuration is not utilized.                                                   we utilized the DSP48E2 SIMD mode and implemented Rg /4
+These bias values remain unaltered at runtime.                                                            such units. Then, the results are passed again by the required
+   Figure 2(b) depicts the SA, which contains RSA rows                                                    activation function. Finally, the resulting data are adapted with
+and CSA columns of DSP48E2 instances. In the steady-state                                                 a width upsizing module and a clock conversion unit to match
+pipeline, each row computes a CSA -length dot-product in                                                  the ADM I/O width before being written to HBM.
+parallel, denoted as processing element (PE), as all rows share                                           B. Computational Dataflow
+a common activation input, which varies on each column.                                                      According to the PU architecture, which supports MVM
+These inputs enter from the bottom of each column and                                                     operations, it is desirable to incorporate a dataflow wrapper
+propagate upwards via the DSP48E2 input cascade paths. To                                                 that performs General Matrix-Matrix Multiplication (GEMM)
+allow PEs to fetch weight matrix rows and bias elements in                                                operations and transforms Conv layers into GEMM operations.
+parallel, each URAM read port operates independently and is                                               To achieve this, we placed a hardware unit to realize the
+enabled in an aligned systolic fashion as the inputs advance                                              IM2COL procedure (see Fig. 2(a)), which is a transformation
+through the SA, providing CSA weight elements in each PE                                                  of Conv weights and activations from 4D to 2D format in spe-
+and a bias value in its first column DSP C-port. Subsequently,                                            cific ordering layouts, as shown in Fig. 3 (left-part). This dedi-
+the partial products flow horizontally, with each DSP passing                                             cated unit generates address and length bundles provided to the
+intermediate dot-product results to its neighbor DSP C-port                                               ADM I/O command interface according to the input feature
+[10] from left to right. In the last column of SA, the partial                                            map (IFM) dimensions and Conv characteristics. Hence, the
+products are accumulated for ⌈M/CSA ⌉ rounds to complete                                                  ADM transfers feature-map segments from HBM, which are
+an MVM with an RSA ×M weight matrix.                                                                      in height-width-channel (HWC) order, and reshapes them into
+                                                                                                                                                                                                                           3
+
+
+
+     Weights Matrix                                                                                                                                                 URAM Weights storage          Input Memory – IM2COL
+                                                                                                                                             URAM       8B                                        matrix columns storage
+        𝑘 × 𝑘 × 𝐶𝑖 = 𝑀                                           𝐻𝑜 × 𝑊𝑜 = 𝑃
+
+
+
+
+                                                    𝑘 × 𝑘 × 𝐶𝑖
+
+
+
+
+                                                                                                                                   𝑅SA
+                                      𝑅SA
+                                            ×                                                                                                URAM
+          𝐶𝑜 = 𝑁
+
+
+                                                                                                                                                             𝐵𝑊 =
+                                                                                                                                                                    𝑁
+                                                                                                                                                                          depth-wise sections              𝐶SA 𝑒𝑙𝑒𝑚𝑒𝑛𝑡𝑠
+                                                                                                                                             URAM                   𝑅SA
+
+                                                                 IM2COL Matrix
+                                                                  *ℎ, 𝑤, 𝑐 𝑠𝑡𝑜𝑟𝑎𝑔𝑒 𝑙𝑎𝑦𝑜𝑢𝑡                                                      𝑀              𝑀                   𝑀             BufA      BufB
+
+
+
+
+                                                                                                                                    𝐶SA
+        0,0,0          0,0,1       0,1,0    0,1,1            1,0,0         1,0,1     1,1,0       *1,1,1                                       𝐶SA            𝐶SA                 𝐶SA
+                           C
+                                                                                                                                                                                                  32B
+                               W                                     1                                      Gen. IM2COL
+                           2                                                                                      Addr/Len               IM2COL algorithm off-chip memory accesses
+                   3                                             0
+                       H
+                                                                0,1
+                                                          0,0 0,1
+                                                         0,0                               𝐻𝑖                                        Load the first im2col column into BufA              Computation Dataflow
+                                                          1,0 1,1
+                                                         1,0    1,1                                                          𝐻𝑜      for each column in IM2COL Matrix:
+                                                                                                                                       in parallel:
+    𝑘
+                                            ∗                                                      =                                     Load next im2col column into BufB or BufA (ping-pong switch)
+                                                                                                                  𝑊𝑜                   for each block in 𝐵𝑊 :
+            𝑘              kernels                                   𝑊𝑖               IFM                                    OFM
+                                                                                                                                         parallel for each row in systolic array (𝑅SA rows):
+                                                                                                                                           # Weights are already cached
+        0,0,0          0,0,1       0,1,0    0,1,1                        1,0,0     1,0,1        1,1,0     1,1,1                            Load weights for row from URAM
+                                                                                                                                           Load activations from BufA/BufB
+    IFM off-chip memory storage HWC-layout order                                                                    Memory                 Compute dot-product over M (parallel 𝐶SA elements per row)
+
+Fig. 3. The transformation of a convolutional layer to matrix multiplication and the computational dataflow pseudocode.
+
+IM2COL patches, effectively forming the IM2COL matrix. As
+a result, it supports arbitrary kernel sizes, strides, and padding
+configurations. The decoupling of the IM2COL technique
+from the activation buffer, by moving its complexity as ADM
+commands, simplifies the inter-layer activations management.
+Specifically, we implemented a common PU input datapath
+                                                                                                                                             Fig. 4. Example of two-phase scheduling: (a) baseline, and (b) adaptive.
+that supports both linear and stride-patterned data transfers for
+FC and Conv layers with parameters k = 1, p = 0, s ∈ {1, 2}                                                                                  tile’s execution time (ℓi ≤ ei−1 ) and enough URAM memory
+(kernel size, padding, and stride, respectively), while enabling                                                                             is available, exhibit zero pipeline stall. Otherwise, they are
+IM2COL-based transfers for other convolution configurations.                                                                                 identified as stall sources, and the pipeline waits for ℓi −ei−1 ,
+This unification allows the PU to operate without benchmark-                                                                                 or ℓi if the memory space is the limiting factor instead.
+dependent FPGA reconfiguration, compared to [8], where a                                                                                        A two-phase heuristic (baseline and adaptive) approach is
+Space-Division multiplexing is used to select the ratio between                                                                              proposed to reduce these stalls, as shown in Fig. 4. In the
+MVM and Conv tiles, according to the DNN model, and also                                                                                     baseline phase, loading the next tile’s weights is attempted
+the Conv tile re-implementation for layers with k ̸= 3.                                                                                      while the preceding tile operates. Then, the adaptive phase
+   Assuming GEMM or Conv execution in the PU, for a                                                                                          examines potential stalls from the first phase to determine
+N × M weight matrix and an M × P activation matrix, we                                                                                       if they can be shifted into earlier processing windows, each
+have a sequence of P ×⌈N/RSA ⌉ input rounds to the SA. The                                                                                   corresponding to a tile’s execution time and serving to conceal
+weight matrix is stored in ⌈N/RSA ⌉ depth-wise sections in                                                                                   the weights load time of subsequent tile(s). For each stalled
+each URAM of ⌈M/CSA ⌉ entries (CSA elements each). The                                                                                       (j−1)-tile (in descending order of stall duration), the method
+SA reuses the same input buffer ⌈N/RSA ⌉ times to compute                                                                                    searches for a prior tile k with processing time ek and adequate
+all rows of the weight matrix for an MVM. Meanwhile,                                                                                         memory space to conceal ℓj . If ℓj can be relocated fully, the
+the alternate buffer is filled with the next IM2COL column,                                                                                  (j−1)-tile no longer exhibits a stall. Any relocation that reduces
+enabling a seamless pipeline when the loading time is less                                                                                   the overall stall time is retained, otherwise it is reversed,
+than the computation time. As shown in Fig. 3, this approach                                                                                 and the method proceeds to examine earlier tiles. The same
+is common to Conv and FC layers, which run as GEMMs.                                                                                         procedure is applied to the next stalled tiles.
+      III. W EIGHT T RANSFER S CHEDULING S TRATEGY                                                                                                              IV. I MPLEMENTATION
+   We consider the inference of a model in each PU, layer by                                                                                    The proposed design was prototyped in RTL on an AMD
+layer, with every layer v partitioned into weight matrix tiles                                                                               Alveo U50 (XCU50) FPGA by placing multiple PUs, as shown
+of size RSA ×Mv . The weights are stored in the HBM region                                                                                   in Fig. 1, without crossing the Super Logic Regions (SLRs)
+during initialization, and a weight transfer scheduler moves                                                                                 to meet timing constraints. Each PU utilizes one column
+them on-chip while inference is running, intending to minimize                                                                               of maximum URAM blocks (64) and a subset of the total
+tile loading stalls. Since each tile matches the URAM row                                                                                    DSP48E2 columns (32). Since the device provides five URAM
+dimension, only their column entry capacity is tracked.                                                                                      columns per SLR, three PU2x (RSA = 64, CSA = 8) and two
+   The i-tile is associated with weights load time ℓi (HBM to                                                                                PU1x (RSA = 64, CSA = 4) were placed in the upper SLR,
+URAM), execution time ei (once loaded), and URAM usage.                                                                                      with the row-block parameter (Rg ) set to 8 on both. In contrast,
+During inference, the sum of allocated URAM entries cannot                                                                                   three PU1x and two PU2x were implemented in the lower SLR
+exceed its capacity, and once a tile completes its execution,                                                                                to accommodate also a PCIe Gen3 ×8 subsystem. In addition,
+its allocated URAM region can be utilized by next tiles. Tiles                                                                               in PU1x instances, each URAM is partitioned into two sub-
+for which the weights load time does not exceed the previous                                                                                 regions, matching the 32-bit (CSA ) weight read data path.
+                                                                                                                                                 4
+
+
+
+   Each PU is connected to two 256-bit AXI ports, which
+interface with the HBM controller operating at 450 MHz
+and bridging transactions into the 300 MHz AXI domain.
+One port handles input/output streams, while the other fetches
+weights, biases, and residual inputs. A stream-width adapter
+for the latter converts the 256-bit interface at 300 MHz (system
+clock) to 128 bits at 600 MHz (fast clock), aligned with
+the URAM data widths, when splitting each PU’s URAM
+weight structure to two components of URAM blocks cascades
+of RSA /2 length each (see Fig. 2(b)). Each PU type uses
+20 BRAMs, 64 URAMs, and distinct counts of LUT and
+DSP48E2 resources: 15.5K and 258 for PU1x , and 16.5K and
+514 for PU2x , respectively. The design with the maximum
+number of PUs (5 PU1x and 5 PU2x ) occupies 100.0% of the
+                                                                      Fig. 5. (a) ResNet-50 individual layers latencies for both PU configurations.
+available URAMs, 64.8% of DSP48E2s, 25.6% of BRAMs,                   Two-phase method (b) time and (c) memory ratios for ResNet-18 on PU2x .
+and 23.4% of LUTs. The above resources utilization includes
+additional logic for the PCIe subsystem, the HBM controller,          weights and reducing their loading stalls. In contrast, prior
+the AXI interconnects, and the instruction controllers.               works [4], [8], [12] provide only a high-level description of
+                                                                      weight transfers without detailing an approach for cases where
+               V. P ERFORMANCE E VALUATION                            the weight footprint exceeds on-chip storage.
+   We evaluated our design on ResNet-18 and ResNet-50 Ima-               In our throughput experiments, each PU independently
+geNet models [11], using 8-bit quantization with power-of-two         processes one frame per inference pass, using its own three
+scaling factors for activations, weights, and biases. Figure 5(a)     HBM channel regions, one for weights and two for activations.
+presents latencies for both PU configurations, measured by            The activation channels, arranged under the same HBM mini-
+hardware counters, for the ResNet-50 convolutional layers.            switch, are statically configured so that residual shortcut acti-
+These latencies were measured when the weights of all layers          vations reside separately from regular activations, eliminating
+were in the on-chip memory, incurring no tile-loading stalls,         memory congestion and minimizing latency [13]. The average-
+and represent the entire pipeline, from fetching activations          pooling layer was executed as a Conv layer, consistent with the
+from HBM to storing outputs back to HBM. Additionally,                approach described in [2], while the max-pooling layer was not
+in these measurements, the WRB buffer read rate (Rg bytes            included, as it could be fused into each PU’s post-processing
+per cycle) exceeds the SA write rate Rg ≥ RSA /⌈M/CSA ⌉ ,             block without compromising the achieved rate. Since the
+leading to near-optimal per layer throughput efficiency. Conv         IM2COL unit utilizes ADM transfers from HBM, a 32-byte
+layers fused with residual additions perform similarly to non-        minimum transfer size is required due to alignment constraints.
+fused ones as the ADM bandwidth sustains weights and                  Consequently, we operated the first Conv layer as GEMM by
+residual input transfers of tile execution for our experiments.       preconfiguring the IFMs on the host into IM2COL matrices
+   To illustrate the efficacy of the two-phase scheduling ap-         and padding each patch to 160 bytes (from 147 bytes to meet
+proach, we report the time and memory ratios for ResNet-18            alignment) before storing them in the HBM for each PU. This
+on PU2x , as the PU1x scheduling is relatively more straight-         3-channel layer configuration imposes a modest computational
+forward due to larger execution times. In the baseline phase,         trade-off on inference throughput when using the hardware
+the time ratio compares i-tile execution time against (i+1)-tile      unit instead, as presented in Table I. However, this compromise
+load time, where a ratio > 1 implies complete overlap of load         is acceptable, given that our IM2COL architecture is optimized
+and execution, while a ratio < 1 indicates partial overlap. The       for high performance in the subsequent layers.
+time ratios are considered in conjunction with the memory                Table I compares our accelerator with prior designs for the
+ratios, which indicate whether the current and the next tile          processing rate in frames per second (FPS) and FPS normal-
+can fit simultaneously into URAMs. Then, the adaptive phase           ized by Tera Operations per Second (TOPS). Since the im-
+relocates the remaining stalls into earlier compute intervals. In     plemented DSP48E2-based TOPS of SAs varies across FPGA
+Fig. 5(b), we show that the blue-colored tiles are successfully       devices and architectures, the normalized metric reflects each
+relocated to earlier tile indexes, effectively hiding their loading   accelerator’s efficiency in utilizing the used DSP resources for
+times in the adaptive phase, while Fig. 5(c) confirms that            the benchmark targets. On ResNet-18, our accelerator reaches
+the schedule’s memory constraints are satisfied for all tiles.        0.88× the throughput-optimized Vitis AI DPU’s rate [14], [15]
+For the initial inference pass, the first tile is pre-loaded to       but attains a 1.40× improvement in FPS/TOPS. On ResNet-
+avoid an initial delay, and for subsequent passes, its weights        50, our design achieves 1.34× to 1.95× gains in FPS/TOPS
+are transferred during the execution of one of the next tiles.        compared to the architectures from top to bottom in Table I,
+Similar ratio measurements were observed for ResNet-50,               demonstrating its effective utilization of DSP resources while
+omitted in this brief due to space limitations. Since the models      maintaining high overall throughput. Although the design’s
+evaluated here exceed the PU’s URAM capacity when the                 RTL and the computational dataflow were not optimized for
+weights are statically allocated, our weight transfer scheduling      energy efficiency, we measured the power consumption on
+naturally supports larger models by dynamically allocating            ResNet-50 using the on-board sensors. The FPGA consumed
+                                                                                                                                                                5
+
+
+
+                                TABLE I                                                                  VII. C ONCLUSION
+                       P ERFORMANCE C OMPARISON .
+                                                                                      This paper presented a configurable FPGA-based accel-
+Architecture                       FPS                      FPS/TOPS1
+                                                                                   erator incorporating systolic arrays, HBM, and URAMs to
+Ultrascale+ FPGAs      ResNet-18         ResNet-50    ResNet-18      ResNet-50
+                                                                                   deliver high-throughput DNN inference. One PU configuration
+                              2                2
+XCU50 - Ours            1237.7            584.9         268.6           126.9      leverages higher DSP counts, while the other halves that,
+XCKU15P - [12]             -               242.1          -              94.6
+XCU50 - [14], [15]      1410.3            572.7         191.3            77.7      using replicated interfaces and peripheral blocks. By instan-
+XCVU37P - [8]              -               766.0          -              68.8      tiating multiple PUs and utilizing a heuristic weight transfer
+XCU250 - [4]               -              1281.0          -              65.2
+1
+                                                                                   scheduling approach, the accelerator achieves notable gains in
+  Ours: 4.608, [12]: 2.560, [14]: 7.373, [8]: 11.140, [4]: 19.660 DSP48E2 TOPS,
+calculated from the reported numbers of each work, focusing solely on the SAs.     throughput and energy efficiency over prior works on ResNet
+2
+  When first conv. layer IM2COL in FPGA: ResNet-18: 767.9, ResNet-50: 453.7 FPS.   models. Integrating AIMC noise models could seamlessly
+                                                                                   extend this architecture to a versatile emulation testbed.
+on average 46 W (peak 50 W), with 8% used by the HBM,
+yielding 12.7 FPS/W (1.28× higher than [4]) and up to 98%                                                   R EFERENCES
+performance efficiency, defined as the ratio of measured to                         [1] Y. Yu, C. Wu, T. Zhao, K. Wang, and L. He, “OPU: An FPGA-Based
+                                                                                        Overlay Processor for Convolutional Neural Networks,” IEEE Trans.
+available TOPS in the SAs. The latter reflects the efficacy                             VLSI Syst., vol. 28, no. 1, pp. 35–47, Jan. 2020.
+of WRB’s out-of-order systolic wave support and the weight                          [2] M. S. Abdelfattah et al., “DLA: Compiler and FPGA Overlay for Neural
+transfer scheduling in reducing stalls. The accelerator’s latency                       Network Inference Acceleration,” in Proc. 28th Int. Conf. Field Program.
+                                                                                        Log. Appl. (FPL), Aug. 2018, pp. 411–4117.
+for ResNet-50 is 25.3 and 12.9 ms for PU1x and PU2x                                 [3] Y. Xing et al., “DNNVM: End-to-End Compiler Leveraging Heteroge-
+respectively, and it remains constant for batch sizes 1–5 since                         neous Optimizations on FPGA-Based CNN Accelerators,” IEEE Trans.
+it utilizes five instances of each PU type in parallel.                                 Comput.-Aided Design Integr. Circuits Syst., vol. 39, no. 10, pp. 2668–
+                                                                                        2681, Oct. 2020.
+        VI. A PPLICABILITY ON AN AIMC E MULATOR                                     [4] P. D’Alberto, V. Wu, A. Ng, R. Nimaiyar, E. Delaye, and A. Sirasao,
+                                                                                        “xDNN: Inference for Deep Convolutional Neural Networks,” ACM
+   In this section, we outline how the proposed FPGA-based                              Trans. Reconfigurable Technol. Syst., vol. 15, no. 2, pp. 1–29, Jan. 2022.
+accelerator can be extended to emulate the noise characteristics                    [5] X. Wu, M. Wang, J. Lin, and Z. Wang, “Amoeba: An Efficient and
+                                                                                        Flexible FPGA-Based Accelerator for Arbitrary-Kernel CNNs,” IEEE
+of AIMC devices [16], enabling system accuracy assessment                               Trans. VLSI Syst., vol. 32, no. 6, pp. 1086–1099, Jun. 2024.
+in DNNs. To emulate AIMC noise, the targeted layers’ weights                        [6] J. Wang, L. Guo, and J. Cong, “AutoSA: A Polyhedral Compiler for
+must be embedded with new noise instances at each inference                             High-Performance Systolic Arrays on FPGA,” in Proc. ACM/SIGDA Int.
+                                                                                        Symp. Field-Program. Gate Arrays (FPGA), Feb. 2021, pp. 93–104.
+round to capture device-level variations [17], [18]. In our                         [7] J. Li, T. Li, G. Shen, D. Zhao, Q. Zhang, and Y. Zeng, “Revealing
+architecture, a PU can be substituted with a specialized noise                          Untapped DSP Optimization Potentials for FPGA-Based Systolic Matrix
+injection unit (NIU) that integrates AIMC noise models, as                              Engines,” in Proc. 34th Int. Conf. Field Program. Log. Appl. (FPL), Sep.
+                                                                                        2024, pp. 197–203.
+[18], and uses the same HBM interface as its PU counterpart.                        [8] A. Samajdar, T. Garg, T. Krishna, and N. Kapre, “Scaling the Cascades:
+The resources required for this module are fewer than those                             Interconnect-Aware FPGA Implementation of Machine Learning Prob-
+in the PU it replaces, and the data transfer rate is the same to                        lems,” in Proc. 29th Int. Conf. Field Program. Log. Appl. (FPL), Sep.
+                                                                                        2019, pp. 342–349.
+a single HBM channel for reading, modifying, and writing the                        [9] AMD, Inc., Santa Clara, CA, USA, “UltraRAM Breakthrough
+updated weights. Each PU executes inference on its assigned                             (WP477),” 2016. [Online]. Available: https://docs.amd.com/v/u/en-US/
+tiles independently of the activation of AIMC emulation. Dur-                           wp477-ultraram
+                                                                                   [10] ——, “UltraScale Architecture DSP Slice (UG579),” 2021. [Online].
+ing inference with noise emulation, the NIU reads noiseless                             Available: https://docs.amd.com/v/u/en-US/ug579-ultrascale-dsp
+weights of all AIMC tiles from a separate HBM region, injects                      [11] K. He, X. Zhang, S. Ren, and J. Sun, “Deep Residual Learning for
+noise, and overwrites the areas used by the PU. As a result,                            Image Recognition,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit.
+                                                                                        (CVPR), Jun. 2016, pp. 770–778.
+the PU uses updated noisy weights in each inference round.                         [12] X. Fan, G. Xie, Z. Huang, W. Cao, and L. Wang, “Acceleration of
+   In cases where only a subset of weights is dynamically                               Rotated Object Detection on FPGA,” IEEE Trans. Circuits Syst. II,
+loaded while others remain statically allocated on-chip, an                             vol. 69, no. 4, pp. 2296–2300, Apr. 2022.
+                                                                                   [13] H. Huang et al., “Shuhai: A Tool for Benchmarking High Bandwidth
+additional mechanism is required to transfer updated noisy                              Memory on FPGAs,” IEEE Trans. Comput., vol. 71, no. 5, pp. 1133–
+weights. However, our weight transfer scheduling fetches                                1144, May 2022.
+weights from HBM in every inference round, ensuring updated                        [14] AMD, Inc., Santa Clara, CA, USA, “DPUCAHX8H Performance
+                                                                                        (PG367),” 2024. [Online]. Available: https://docs.amd.com/r/en-US/
+weights are inherently incorporated regardless of AIMC emu-                             pg367-dpucahx8h/Performance
+lation. Also, our activations dataflow path to/from HBM allows                     [15] ——,         “Vitis       AI       (UG1354),”         2021.       [Online].
+the storage of output activations for subsequent noise analysis                         Available: https://docs.amd.com/r/1.4.1-English/ug1354-xilinx-ai-sdk/
+                                                                                        Alveo-U50/U50LV-Data-Accelerator-Card
+per emulated layer, a capability often unavailable in designs                      [16] M. Le Gallo et al., “A 64-core mixed-signal in-memory compute chip
+relying solely on on-chip memories for inter-layer activations.                         based on phase-change memory for deep neural network inference,”
+   This approach can offer insights for next-generation hetero-                         Nature Electron., vol. 6, no. 9, pp. 680–693, Aug. 2023.
+                                                                                   [17] A. Petropoulos, I. Boybat, M. Le Gallo, E. Eleftheriou, A. Sebastian,
+geneous AIMC chips [19], exploring hybrid mapping schemes,                              and T. Antonakopoulos, “Accurate Emulation of Memristive Crossbar
+where only specific model layers are AIMC-emulated while                                Arrays for In-Memory Computing,” in Proc. IEEE Int. Symp. Circuits
+others remain on conventional PUs. Additional substitutions                             Syst. (ISCAS), Oct. 2020, pp. 1–5.
+                                                                                   [18] M. Le Gallo et al., “Using the IBM analog in-memory hardware
+can be formed depending on the model and how many                                       acceleration kit for neural network training and inference,” APL Mach.
+emulated PUs are required. In the worst case, pairing an NIU                            Learn., vol. 1, no. 4, p. 041102, Nov. 2023.
+with each PU halves the number of available PUs relative                           [19] I. Boybat et al., “Heterogeneous Embedded Neural Processing Units
+                                                                                        Utilizing PCM-Based Analog In-Memory Computing,” in Proc. IEEE
+to the original design, whereas if performance requirements                             Int. Electron Devices Meeting (IEDM), Dec. 2024, pp. 1–4.
+allow, a single NIU can be shared by multiple PUs.
+

@@ -1,0 +1,1103 @@
+1
+ESSR: An 8K@30FPS Super-Resolution
+Accelerator With Edge Selective Network
+Chih-Chia Hsu, and Tian-Sheuan Chang, Senior Member, IEEE
+Abstract—Deep learning-based super-resolution (SR) is chal-
+lenging to implement in resource-constrained edge devices for
+resolutions beyond full HD due to its high computational
+complexity and memory bandwidth requirements. This paper
+introduces an 8K@30FPS SR accelerator with edge-selective
+dynamic input processing. Dynamic processing chooses the ap-
+propriate subnets for different patches based on simple input
+edge criteria, achieving a 50% MAC reduction with only a
+0.1dB PSNR decrease. The quality of reconstruction images is
+guaranteed and maximized its potential with resource adaptive
+model switching even under resource constraints. In conjunction
+with hardware-specific refinements, the model size is reduced
+by 84% to 51K, but with a decrease of less than 0.6dB PSNR.
+Additionally, to support dynamic processing with high utilization,
+this design incorporates a configurable group of layer mapping
+that synergizes with the structure-friendly fusion block, resulting
+in 77% hardware utilization and up to 79% reduction in
+feature SRAM access. The implementation, using the TSMC
+28nm process, can achieve 8K@30FPS throughput at 800MHz
+with a gate count of 2749K, 0.2075W power consumption, and
+4797Mpixels/J energy efficiency, exceeding previous work.
+Keywords : convolution neural network, super-resolution, dy-
+namic processing, boundary processing, AI accelerator
+I. INTRODUCTION
+Deep learning-based super-resolution (SR) has gained
+prominence in recent years due to its exceptional performance.
+The growing demand for high-resolution (HD), ultra-HD or
+even 8K images in various edge device applications, includ-
+ing surveillance, medical imaging, virtual reality and digital
+entertainment, underscores its importance. However, the com-
+putational demands and memory bandwidth requirements of
+these SR methods present significant challenges for resource-
+constrained edge devices aiming for real-time SR execution.
+Consequently, there is a pressing need for efficient hardware
+accelerators.
+Various hardware accelerators have been proposed in recent
+years [1]–[5] for HD applications. However, due to the ex-
+tensive computational demands and significant memory band-
+width requirements, many existing super-resolution accelera-
+tors opt for simplistic and extremely lightweight models, such
+as FSRCNN [6] or 1-D convolution [2], as their backbone.
+This often results in a compromise in both performance and
+perceptual quality. The only exception is eCNN [1], which
+This work was supported by the National Science and Technology Council,
+Taiwan, under Grant 111-2622-8-A49-018-SB, 110-2221-E-A49-148-MY3,
+and 110-2218-E-A49-015-MBK. The authors are affiliated with the Institute
+of Electronics, National Yang Ming Chiao Tung University, Taiwan. (e-mail:
+hsu880105@gmail.com, tschang@nycu.edu.tw)
+Manuscript received XXXX XX, 2023; revised XXXX XX, XXXX.
+employs a heavy, yet simple structure that consumes a sub-
+stantial area but fails to deliver superior quality. Besides, these
+designs only consider PSNR-oriented methods that maximize
+the output PSNR to be close to the ground truth. This weights
+all pixel differences equally and could become blurry on the
+highly textured part. None have considered perceptual-oriented
+methods like GAN [7]–[10] that prioritize the enhancement of
+reconstructed images based on human perception. This will
+lead to sharper and more textured images, but could introduce
+artifacts and noise not present in the original image.
+To enable real-time execution, various lightweight meth-
+ods have been introduced. These include techniques such as
+asymmetric convolution [5], [11], depthwise convolution [12],
+parameter sharing strategies [13], and knowledge distillation
+mechanisms [14]. Nevertheless, only a handful of lightweight
+super-resolution networks take hardware design considerations
+into account [2], [3], [5].
+Moving beyond traditional methods, dynamic processing
+techniques [3], [15]–[18] have emerged as a promising strategy
+to strike a balance between complexity and performance. Such
+methods deploy lightweight networks for simpler inputs and
+more resource-intensive networks for challenging inputs [15].
+For example, SRNPU [3] incorporates a classification network
+to select a subnet; however, its decision-making is not adaptive
+to the constraints of available hardware resources. Further-
+more, its hardware utilization is only 31.2% for the smaller
+network. CDNSR [18] also needs a classification network
+to select three different sizes of SR networks. In contrast,
+ARM [16] uses edge-to-PSNR lookup tables to choose one of
+its four subnets. Unlike SRNPU and ClassSR [15], which are
+burdened with a high parameter count due to their multiple
+independent subnets, ARM utilizes shared weights between
+subnets. However, the edge-to-PSNR table in ARM demands
+extra area and proves challenging to adapt within the confines
+of available hardware resources. [17] allocates bits adaptively
+based on the local contents of an input image, which is not
+friendly for hardware design. In summary, existing works need
+complex subnet decisions, have no quality guarantee under
+limited resources, and often lead to low hardware utilization.
+Briefly, existing SR designs face three challenges: simple
+yet effective dynamic processing, improved perceptual quality
+with extremely lightweight models (approximately 50K in
+model size), and efficient hardware that supports 8K outputs.
+Motivated by these challenges, this paper proposes an edge
+selective SR network (ESSR) and its design. To address the
+first challenge, we introduce an input edge threshold that
+adaptively selects a proper subnet. This approach saves 50%
+of multiply-accumulate (MAC) operations with only a 0.1dB
+arXiv:2503.20245v1
+[cs.AR]
+26
+Mar
+2025
+2
+drop. All subnets share the same weights, resulting in a smaller
+model size and a consistent hardware structure. For the second
+challenge, we suggest hardware-oriented modifications to a
+heavy but high PSNR model, preserving its quality while
+reducing its parameters by 84% to 51K and its MACs by
+83%. We further enhance the model with perceptual-oriented
+training to emphasize texture and details. To tackle the third
+challenge, we introduce resource adaptive model switching,
+ensuring minimum image quality while maximizing potential
+quality under resource constraints. Furthermore, we employ a
+configurable group of layer mapping, which works in tandem
+with the proposed Structure-Friendly Fusion Block, achieving
+77% hardware utilization and reducing feature SRAM accesses
+by up to 79%. The final hardware implementation can achieve
+8K@30FPS with an energy efficiency of 4797Mpixels/J for
+x4 scaling.
+The remainder of the paper is organized as follows. Section
+II first introduces the proposed edge-selective dynamic input
+processing. Section III reviews the adopted network and its
+hardware-oriented modifications. The hardware design is pre-
+sented in Section IV. The experimental results are provided in
+Section V. Finally, the paper is concluded in Section VI.
+II. EDGE SELECTIVE DYNAMIC INPUT PROCESSING
+A. Inference of edge selective dynamic input processing
+As depicted in Fig. 1, we detail the proposed dynamic
+inference procedure. Initially, the LR image is segmented into
+overlapping patches. Subsequently, an edge score is computed
+for each patch, guiding the selection of the appropriate subnet
+based on this score. We have a trio of subnets to choose from:
+bilinear, C27, and C54 (Cxx is the channel number of the
+model). Notably, C54 leverages the full channel capacity of
+ESSR (shown in the next Section), whereas C27 employs just
+half. For the illustrated inference scenario, the choice falls
+on C27, into which the LR patch is inputted to generate the
+super-resolution counterpart. In the final stage, these super-
+resolution patches are seamlessly fused to render the complete
+super-resolution image.
+To compute the edge score, we begin by extracting the
+luminance component from an LR patch. Edges are then
+detected using a 3 × 3 Laplacian filter, with the output’s
+absolute value clamped within the range of 0 to 255. The
+average value of this output serves as the edge score.
+B. Proposed subnet decision: subnet types
+Edge information serves as a valuable metric for selecting
+a network of varying complexity. ARM [16] employs an
+edge-to-PSNR table to predict the PSNR for each subnet
+and then chooses the appropriate subnet based on a balance
+between predicted PSNR and MAC operations. However, this
+strategy demands extra storage for the edge-to-PSNR table and
+introduces additional computational overhead for the tradeoff
+function. In particular, while ARM integrates four subnets,
+Bilinear, C16, C36, and C56, our experiments reveal that only
+three are actively employed in real-world scenarios.
+Drawing from these observations, we advocate for the
+use of three subnets over four, as depicted in Fig. 2. This
+Fig. 1: Inference of the edge selective dynamic input process-
+ing. Green patch: Bilinear interpolation. Yellow patch: C27.
+Red patch: C54.
+Fig. 2: The subnet types of the ESSR when compared to ARM.
+streamlined approach simplifies decision making and improves
+performance. In terms of subnet depth:
+• The simplest, bilinear interpolation, is our preferred
+method for processing patches with plain backgrounds.
+• For the most complex subnet, we favor C54 over C56.
+This choice is rooted in the fact that 54 is a multiple
+of 9, corresponding to the count of 3×3 depth-wise
+convolution processing elements (PEs). This alignment
+eases hardware design, particularly in critical path timing
+and modularization.
+• As for the intermediate subnet, we gravitate towards
+C27, positioned between C16 and C36 in ARM. This
+preference arises due to the sub-par performance of C16
+within our ESSR model, evident from pronounced 4×4
+blocks in the C16 output. In stark contrast, C27 is devoid
+of this issue, as illustrated in Fig. 3. Moreover, the value
+27, being half of 54 and also divisible by nine, is optimal
+for hardware deployment.
+C. Proposed subnet decision: input edge threshold
+While ARM employs the edge-to-PSNR metric to determine
+the appropriate subnet, it’s worth noting that a higher PSNR
+(a) C16 output. (b) C27 output.
+Fig. 3: The comparison of the C16 and C27. The image is
+from Set5 butterfly.
+3
+(a) PSNR vs edge score. (b) SSIM vs edge score. (c) LPIPS vs edge score.
+Fig. 4: The relation between edge score and bilinear, C27, C54, GAN-based C27, and GAN-based C54. Higher values of
+PSNR and SSIM indicate better performance, while lower values of LPIPS indicate better performance in terms of perceptual
+similarity.
+Fig. 5: Proposed subnet decision with the input edge threshold
+.
+doesn’t always correlate with better perceptual quality. Conse-
+quently, we also evaluate the edge-to-SSIM and edge-to-LPIPS
+metrics. An analysis of the results, as shown in Fig. 4, reveals
+that the five models exhibit comparable performance with
+respect to PSNR and SSIM. However, there are pronounced
+disparities in LPIPS scores, particularly between perceptual-
+based models and bilinear interpolation. Given these ob-
+servations, coupled with the objective of conserving MAC
+operations, we introduce an optimized strategy termed the
+subnet decision with the input edge threshold, illustrated in
+Fig. 5.
+In our proposed method, we define two thresholds:
+threshold1, set between bilinear interpolation and C27, and
+threshold2, situated between C27 and C54. By assigning
+values threshold1 = 8 and threshold2 = 40, we manage
+to achieve an approximate savings of 50% in MAC operations
+in the Test8K dataset, with a marginal 0.1dB PSNR decrease
+relative to the non-edge selective approach. The introduction of
+these input edge thresholds obviates the need for three edge-to-
+PSNR lookup tables, thereby simplifying the decision-making
+mechanism and eliminating the computation associated with
+the trade-off function. This is also easily adjusted according
+to the available resources, as indicated below.
+III. HARDWARE FRIENDLY APPROACHES BASED ON
+RLFN
+A. Reference model
+We have chosen RLFN [19] as our reference model, given
+its commendable achievement of securing first place in the
+NTIRE 2022 efficient super-resolution challenge [20]. The
+network architecture of RLFN is illustrated in Fig. 6. While
+RLFN has a structured and intuitive network design, it presents
+certain complications for hardware implementation. These
+challenges include a substantial count of MAC operations,
+the inclusion of attention blocks, and an excessive amount
+of shortcuts.
+B. Hardware friendly modifications
+In our pursuit of a more hardware-friendly design, we
+applied several modifications to the original model:
+1) Global Shortcut Removal: The global shortcut requires
+storing feature maps for later use. By eliminating this,
+we save 33% of the feature SRAM sizes. This removal
+will result in performance loss, 0.36dB drop. This drop
+will be reduced with the following proposed approaches.
+2) Elimination of Enhanced Spatial Attention (ESA):
+While RLFN incorporates ESA (denoted as ESA in the
+figure) to improve its modeling capabilities, its impact
+is limited—a mere 0.04dB increase in PSNR for the
+B100 dataset. Furthermore, ESA’s integration of pooling
+layers, dual shortcuts, sigmoid function, and element-
+wise multiplication is not good for efficient hardware
+implementation. Consequently, we decided to remove
+this block.
+3) Convolution Modifications: To reduce the number of
+MAC operations, we substituted the standard 3×3 con-
+volutions in RLFN with depthwise convolution varia-
+tions, specifically BSConv or DSConv, as depicted in
+Fig. 8. Fig. 7 contrasts various convolution techniques
+in relation to their parameters and MAC counts. An
+initial strategy involved replacing conv-3 with BSConv,
+excluding the final upsampling convolution, to avoid
+substantial performance degradation. However, the up-
+sampling convolution still represented a large amount
+of 31% of total MACs. The replacement of upsampling
+with BSConv still led to a significant decline in PSNR
+and induced a checkerboard pattern in the output visuals.
+This anomaly is attributed to BSConv’s structure: a
+preceding 1×1 convolution followed by a 3×3 depth-wise
+4
+Fig. 6: The network architecture of the RLFN. The conv-k is
+kxk convolution.
+Fig. 7: The comparison of different convolution methods.
+convolution. This latter convolution layer inadvertently
+introduced anomalous pixels, after pixel-shuffling, man-
+ifested as the checkerboard pattern. Our solution utilizes
+DSConv for upsampling, which sequences a 3×3 depth-
+wise convolution ahead of a 1×1 convolution, resulting
+in commendable PSNR scores, a compact model, and
+reduced MAC operations.
+4) structure-friendly fusion blocks (SFBs): This is tai-
+lored to align with our hardware specifications, which
+will be elaborated upon in the next Section.
+C. Proposed Network: ESSR
+The overall architecture of the ESSR is shown in Fig. 8.
+The ESSR architecture consists of three main parts: the first
+feature extraction convolution, SFBs, and the reconstruction
+module. This network can achieve good performance and is
+easy to implement in hardware. Compared to a pruned RLFN
+(RLFB numbers from 6 to 4, channel number from 52 to 46)
+for fair comparison, ESSR reduces 84% of parameters and
+83% of MACs with a PSNR drop of less than 0.6dB.
+IV. PROPOSED HARDWARE
+While the ESSR network is tailored to ease hardware
+design, the introduction of dynamic processing presents certain
+challenges. Specifically, it can lead to inconsistent image
+quality due to constrained hardware resources and diminished
+hardware utilization as a result of switching between various
+subnets.
+Fig. 8: Proposed Edge Selective Super-Resolution network
+(ESSR) architecture. Conv 1×1 denotes 1×1 point-wise convo-
+lution and DWConv 3×3 denotes 3×3 depth-wise convolution.
+To avoid the quality issue, we introduce resource adap-
+tive model switching. This approach dynamically adjusts the
+threshold in line with the available computational resources
+in additional to the input edge. The goal is to ensure both
+baseline image quality and the highest feasible quality, all
+while adhering to real-time processing requirements.
+To increase hardware utilization, we present the group
+of layer neural processing unit (GLNPU). Unlike traditional
+layer-by-layer mapping, GLNPU concurrently maps groups
+of layers to the hardware. This design allows parallel layer
+execution, enhancing hardware parallelism. Additionally, it
+mitigates memory access demands between layers. The ef-
+ficacy of this approach is further amplified when combined
+with SFBs, especially for C27.
+A. Resource adaptive model switching
+To achieve the specification of 8K@30FPS and accommo-
+date fluctuating image attributes, Algorithm 1 explains the
+resource adaptive model switching mechanism. This approach
+ensures fluid transitions between the bilinear, C27, and C54
+models, all while adhering to defined temporal and computa-
+tional complexity boundaries. The parameters in the algorithm
+are decided based on Test8K.
+In the proposed algorithm:
+• The initial condition, wherein the number of C54 patches
+per second exceeds 25,500, establishes a computational
+ceiling, guaranteeing a steady 30FPS frame rate. Even
+with this constraint in place, the algorithm ensures a
+baseline quality by resorting to the C27 model for any
+residual patches. This dual constraint system facilitates
+the attainment of the desired throughput without com-
+promising image quality.
+• The subsequent condition supervises the allocation of
+C54 patches within individual frames and dynamically
+modulates the values of threshold1 and threshold2. If
+a frame utilizes a significant number of C54 patches, we
+increase the probability of assigning subsequent patches
+5
+Algorithm 1 Resource adaptive model switching
+Target: 8K@30FPS
+threshold1 ← 8
+threshold2 ← 40
+while not finish do
+if #C54 per second > 25500 then
+Rest of the patches run with C27
+else
+if #C54 per frame > 1000 then
+threshold1 ← threshold1 + 1
+threshold2 ← threshold2 + 5
+else if #C54 per frame < 700 then
+threshold1 ← threshold1 − 1
+threshold2 ← threshold2 − 5
+end if
+end if
+end while
+TABLE I: The ablation study of the patch size with
+threshold1 = 8 and threshold2 = 40 for the ×4 scale.
+Patch Size Test8K PSNR
+(dB)
+Line Buffer
+(KB)
+Feature SRAM
+(KB)
+16×16 34.63 2.36 17
+32×32 34.69 4.52 69
+48×48 34.70 6.68 156
+64×64 34.70 8.84 276
+to the bilinear or C27 models by adjusting the values
+of threshold1 and threshold2 for complexity and real-
+time constraints. On the contrary, if the allocation of C54
+patches is sparse for a frame, the thresholds are lowered to
+favor superior quality. This adaptive thresholding enables
+optimal hardware resource utilization, ensuring consistent
+throughput, and culminating in enhanced overall system
+performance.
+B. Overview of GLNPU
+Fig. 9 shows the proposed GLNPU that includes three
+SRAM buffers and group-of-layer PEs. This design dynam-
+ically maps groups of convolutional layers to PEs instead of
+the commonly used layer-by-layer processing method. This
+enables near-full hardware utilization and facilitates easy layer
+fusion processing, thus reducing feature SRAM accesses.
+The input is a 32x32 patch according to Table I. This
+size offers similar PSNR to larger patch sizes but incurs
+significantly smaller hardware area costs. In this design, to
+further minimize the DRAM bandwidth, we store the entire
+model weight and feature on-chip. This necessitates a 67KB
+weight SRAM, and three 69KB feature SRAMs with two for a
+ping-pong buffer and one for the shortcut. The boundary data
+between patches is stored in a 114KB boundary SRAM.
+Each blue rectangle on the right-hand side of Fig. 9 repre-
+sents a block consisting of 27x9 PEs. The detailed architec-
+tures of the 1×1 PE and 3×3 PE will be discussed in the later
+subsection.
+C. Configurable group of layer mapping
+Due to the significant variations in the number of MACs
+among the bilinear, C27, and C54 models used for dynamic
+processing, achieving efficient processing in the PE array
+becomes challenging. The MACs of the C27 model amount
+to only 29.1% of the MACs in the C54 model. Moreover, the
+bilinear model requires only 0.4% of the MACs needed by the
+C54 model. To address this issue, we propose configurable
+group of layer mapping, enabling high PE utilization when
+employing these three models in the same PE array.
+PE arrays are allocated to process 54 channels of 1×1
+point-wise convolution and 54 channels of 3×3 depth-wise
+convolution based on the model configuration and tradeoff of
+hardware cost and throughput requirement. With this config-
+uration, we divide our ESSR model into three components:
+BSConv fusion, adding a shortcut with 1×1 convolution, and
+DSConv fusion.
+Fig. 10 to 12 show the dataflow to map C54. Fig. 15
+shows the dataflow for C27. In these figures, (a) is the desired
+function, and (b) is the detailed function sequence with its
+corresponding physical dataflow in (c).
+D. C54 PE mapping
+The dataflow for the BSConv fusion component is depicted
+in Fig. 10 that executes 1x1 and 3x3 layers concurrently to
+save feature SRAM access by 43%. Initially, the feature is
+loaded from the feature SRAM into the 1×1 PE array. It
+then passes through an adder tree to accumulate partial sums.
+Subsequently, the feature is fed into the 3×3 PE array to
+complete the BSConv operation. Finally, the resulting feature
+is stored back into the feature SRAM.
+Following above, Fig. 11 shows the dataflow of adding a
+shortcut with 1×1 convolution. The feature and the shortcut
+are first added together in the shortcut adder. The combined
+feature is then entered into the 1×1 PE array. After passing
+through the adder tree to accumulate partial sums, the result
+is stored back into the feature SRAM.
+Finally, the dataflow for the DSConv fusion component, as
+shown in Fig. 12, involves directing the feature into the 3×3
+PE array, followed by entering it into the 1×1 PE array. Once
+again, the adder tree is employed to accumulate partial sums.
+Since this layer represents the last convolution layer of the
+entire model, the final result undergoes boundary processing
+before being outputted to DRAM.
+E. C27 PE mapping
+1) SFB: Structure-Friendly Fusion Block: In the original
+RLFB of RLFN, the structure is composed of three con-
+volutions, succeeded by the integration of shortcuts and a
+1×1 point-wise convolution. Given our PE array’s capability,
+it can accommodate one 1×1 point-wise convolution and a
+singular 3×3 depth-wise convolution during each iteration for
+the C54 model. For the C27 model, the identical PE allocation
+can process four 1×1 point-wise convolutions and a pair of
+3×3 depth-wise convolutions within the same iteration span.
+This infers that approximately one and a third iterations are
+6
+Fig. 9: The proposed system architecture.
+Fig. 10: The dataflow of the BSConv in the C54 model. Best
+viewed in colors.
+Fig. 11: The dataflow of the adding shortcut with 1×1
+convolution in the C54 model. Best viewed in colors.
+Fig. 12: The dataflow of the DSConv in the C54 model. Best
+viewed in colors.
+mandated to execute a singular BSConv variant of RLFB.
+Implementing this in hardware would need six iterations to
+process four such blocks, leading to complex and varying PE
+controls across iterations. Fig. 13 provides a visual representa-
+tion of its hardware scheduling across iterations, highlighting
+its irregularity and suboptimal hardware utilization.
+To alleviate these complexities and uphold efficiency, we
+introduce SFBs. An SFB is architecturally defined by a pair
+of BSConv layers, which are succeeded by the incorporation
+of shortcuts and a 1×1 point-wise convolution. Furthermore,
+we integrate a ReLU activation at the end of the SFB,
+enabling zero gating in the subsequent BSConv layer. Fig. 14
+shows its hardware scheduling across various iterations. The
+configuration is tailored to process the complete block within
+a single iteration, thereby maximizing hardware utilization.
+Taking advantage of the above modifications, to maintain
+the performance of the original model, we use five SFBs
+in our design, as detailed in the ablation study encapsulated
+in Table II. This configuration requires five iterations, which
+saves one iteration compared to the four-RLFB version.
+2) SFB mapping: With the above modifications, our PE
+array can handle the entire SFB block of the C27 model.
+TABLE II: The ablation study of the number of the SFB. w/o
+Bias is without the bias of convolution.
+#SFBs Params(K) Set5 PSNR(dB)
+4 43.9 31.46
+5 53.9 31.51
+5-w/o Bias 53.6 31.46
+6 63.9 31.49
+Fig. 15 shows its dataflow that executes the whole SFB layers
+concurrently to save 79 % of feature SRAM access. In each
+iteration, the feature is initially loaded into the 1×1-B PE array.
+After the adder tree sums up the three partial sums, the feature
+is directed to the 3×3-B PE array, completing the first BSConv
+operation. The second BSConv operation is conducted using
+the 1×1-C PE array and the 3×3-C PE array, following the
+same flow as the first BSConv. Finally, the feature and the
+shortcut are combined in the shortcut adder. The resultant
+combined feature is then inputted into the 1×1-A PE array.
+After passing through the adder tree to accumulate partial
+sums, the final result is stored back into the feature SRAM.
+7
+Fig. 13: The BSConv in the RLFB and its scheduling. Fig. 14: Proposed SFB and its scheduling.
+Fig. 15: The dataflow of the SFB in the C27 model. Best
+viewed in colors.
+F. Blininear interpolation mapping
+The bilinear interpolation is mapped to the 3×3 PE arrays
+that load its corresponding source pixels from the feature
+SRAM and undergo boundary processing and store output to
+the DRAM.
+G. Detailed architecture of the 1×1 and 3x3 blocks
+Fig. 16 shows the detailed design of a 1x1 block that
+contains 27x9 PEs. Weights are preloaded to each PE at
+the beginning in a pipeline way. This occurs when the last
+1×1 convolution is finished while the 3×3 convolution is still
+processing, which can save long loading cycles. Then the
+weights remain stationary during computing to save power.
+The feature inputs are broadcast to all PEs. Each PE then
+multiplies the weights with the feature. In each cycle, the
+adder tree sums the nine products from each column of PEs
+and saves the partial sum in the output buffer. The 3x3 block
+shown in Fig. 17 also contains 27x9 PEs and uses a similar
+operation flow.
+H. Quantization
+The proposed model is quantized with PAMS [21]. PAMS
+quantizes both weights and activations to 8-bit fixed-point, but
+excludes the first and last convolutions to avoid performance
+impact. However, this approach requires hardware for both
+floating-point (FP) PE and fixed-point (FXP) PE, thereby
+increasing complexity and area. Thus, we quantize the whole
+ESSR with PAMS but with 10-bit FXP, resulting in a 0.03dB
+decrease in PSNR.
+I. Boundary Processing
+For patch-based processing, a critical challenge is managing
+the boundary data interspersing the patches. Ideally, lossless
+boundary processing can be achieved by preserving the bound-
+ary feature and recalculating it in adjacent patches, essentially
+converting block convolution back to its conventional form.
+Various storage solutions exist for these boundary data: they
+can be retained in SRAM as discussed in [5], stored in DRAM,
+or managed using a hybrid approach as highlighted in [4].
+Nonetheless, these methods can be resource-intensive due to
+the voluminous input and the complexity of models.
+Another strategy involves computing the patch with overlap-
+ping boundaries and subsequently averaging the results from
+these overlaps. While this approach is straightforward, it leads
+to significant computational overhead. A more cost-efficient
+alternative involves non-overlapped patch convolution, coupled
+with post-processing techniques designed to rehabilitate the
+boundary pixels. This method, despite its efficiency, often
+results in pronounced quality degradation and introduces arti-
+facts.
+A comprehensive cost analysis of various boundary pro-
+cessing solutions is provided in Table III. To replicate the
+performance observed with software-based whole image in-
+put, one would either need to allocate 9.02GB of DRAM
+bandwidth or 1672KB for boundary SRAM. Unfortunately,
+both options require substantial hardware resources, increasing
+implementation costs. The results derived from the naive
+interpolation strategy are unsatisfactory.
+Consequently, in the pursuit of a balanced solution, we
+opt for the ’overlap and average’ technique. As illustrated in
+Table IV, an overlap of 8 pixels can yield nearly the same
+performance as an overlap of 16 pixels, with only a 14%
+increase in MACs. Furthermore, the boundary SRAM footprint
+of this method proves to be more acceptable when compared
+to the ’save SRAM and recompute’ approach. Taking into
+account these factors, we chose the overlap and average
+method with an 8-pixel overlap, which incurs a reasonable
+hardware cost and results in only a 0.03dB PSNR drop on
+Set14.
+Following our detailed analysis, we adopt a method termed
+as the slim overlap block convolution and thick overlap bound-
+8
+Fig. 16: The details of the 1×1 PE block. Fig. 17: The details of the 3×3 PE block.
+TABLE III: The comparison of boundary processing solutions.
+Urban: Urban100, Manga: Manga109
+Method SRAM
+(KB)
+BW
+(GB/s)
+Set5 Urban Manga
+Interpol. 13 3.17 31.41 25.14 29.02
+DRAM+Recomp. 48 9.02 31.51 25.28 29.34
+SRAM+Recomp 1672 3.17 31.51 25.28 29.34
+Overlap+Avg. 114 3.61 31.46 25.23 29.23
+TABLE IV: The effect of the overlapped pixels. Urban:
+Urban100, Manga: Manga109
+Overlap SRAM
+(KB)
+BW
+(GB/s)
+MACs Set5 Urban Manga
+16 243 4.14 131% 31.46 25.24 29.23
+12 176 3.86 122% 31.45 25.24 23.24
+8 114 3.61 114% 31.46 25.23 29.23
+4 55 3.38 107% 31.44 25.21 29.19
+0 0 3.17 100% 31.41 25.14 29.02
+ary processing. In this approach, we introduce an overlap of
+2 pixels within the LR patches during the block convolution
+phase. Once we execute a ×4 scale upsampling, this results in
+patches that feature an overlap of 8 pixels.
+V. EXPERIMENTAL RESULTS
+A. Setup
+The proposed model is trained on Flickr2K [22] and
+DIV2K [23]. Evaluation metrics include the commonly used
+peak signal-to-noise ratio (PSNR) and the structural similarity
+(SSIM) on the Y-channel as well as the perceptual one, LPIPS,
+on the RGB channels.
+The training for the PSNR-oriented model adopts the L1
+loss with the batch size set to 256, the Lamb optimizer, and
+the initial learning rate set to 3e-3 with cosine learning rate
+decay. The model is trained for 200,000 iterations. To improve
+perceptual quality, we also apply perceptual-oriented training.
+For the perceptual-oriented model, we load the trained PSNR-
+oriented model as an initial model, set the batch size to 16 and
+Fig. 18: Performance and model complexity comparison on
+the Set5 dataset for the ×4 scale.
+use Adam optimizer with the initial learning rates set to 1e-4
+with MultiStepLR. To optimize this model, we employ L1 loss,
+artifact loss, perceptual loss, and adversarial loss from [24]
+for a total of 300,000 iterations. The weighted combination of
+each loss is set to 0.01, 1, 1, and 0.005, respectively.
+The training methodology for the supernet that includes C27
+and C54 follows that proposed by ARM [16]. Subnet selection
+is chosen based on the probability proportional to the MACs of
+each subnet. In each iteration, only one subnet is chosen and
+the parameters of that selected subnet are updated. Both types
+of models use an exponential moving average (EMA) with a
+decay of 0.999 to update weights and improve training stability
+and overall performance. Our model implementation is based
+on PyTorch and runs on a single NVIDIA DGX Station A100.
+B. Simulation Results
+Fig. 18 shows a comparison of PSNR, MACs, and pa-
+rameters. Our model demonstrates a notable improvement of
+0.39dB above the trendline in terms of PSNR. Moreover, it
+stands out as one of the most outstanding models within the
+less than 10G MACs region.
+1) Comparison with other SR networks: Table V and
+Table VI show the quantitative performance comparison,
+sorted by Set5 PSNR. Remarkably, ESSR outperforms other
+state-of-the-art models in terms of PSNR, specifically in the
+under 100K parameter region, while employing nearly the
+9
+TABLE V: The ×2 scale quantitative results of some PSNR-
+oriented light weight models. The MACs is calculated with
+a 1920x1080 GT image. ∗
+This model has its own hardware
+design. The units for size and MAC are K and G, respectively.
+Urban: Urban100, Manga: Manga109
+Model Size MAC Set5 Set14 B100 Urban Manga
+Bicubic 1 - 33.66 30.24 29.56 26.88 30.8
+FSRCNN-s 4 6 36.57 32.28 31.23 - -
+SRCNN 57 119 36.66 32.45 31.36 29.50 35.60
+FSRCNN 13 14 37.00 32.63 31.53 29.88 36.67
+SRNPU∗ 183 7 37.06 32.62 31.47 - -
+ACNet∗ 17 9 37.34 32.78 31.64 30.21 36.88
+HPAN 26 17 37.38 32.91 31.69 30.29 37.00
+LapSRN 813 67 37.52 33.08 31.80 30.41 -
+CARN-M 412 182 37.53 33.26 31.92 31.23 -
+eCNN∗ 202 106 37.62 33.17 31.93 30.60 -
+ESSR 51 26 37.64 33.18 31.90 30.92 37.89
+PAN 261 160 38.00 33.59 32.18 32.01 38.70
+RFDN 534 284 38.05 33.68 32.16 32.12 38.88
+RLFN 527 260 38.07 33.72 32.22 32.33 -
+BSRN 332 164 38.10 33.74 32.24 32.34 39.14
+fewest MACs. Furthermore, ESSR achieves comparable or
+even superior performance compared to LapSRN [25], with
+the advantage of using 760K fewer parameters. This signi-
+fies the effectiveness and efficiency of our proposed ESSR
+model, highlighting its competitive advantage over existing
+approaches.
+Compared to other SR accelerators like SRNPU, ACNet,
+and eCNN, ESSR shows the best performance in the ×2 scale
+category and the second best performance in the ×4 scale
+category. However, it is worth noting that eCNN achieves the
+highest PSNR in the ×4 scale category, but has 10 times more
+parameters and more than 13 times more MACs compared to
+ESSR.
+When comparing ESSR with the other dynamic processing
+method like SRNPU, ESSR has 130K fewer parameters.
+This reduction is attributed to the absence of an additional
+prediction network in ESSR and the sharing of parameters
+among its subnets. Regarding MACs and PSNR, ESSR has
+slightly higher MACs but with 1dB gain. This indicates that
+despite the slightly higher computational cost, ESSR provides
+superior image quality enhancement, making it a favorable
+choice in terms of performance.
+The reconstruction results of our proposed ESSR model
+are depicted in Fig. 19 to Fig. 21. At a ×2 scale, ESSR
+offers clearer image quality and sharper edges than FSRCNN,
+ACNet, and HPAN. Compared to larger models like BSRN and
+RLFN-S, our model provides almost the same image quality,
+even though BSRN and RLFN-S employ more complex meth-
+ods and larger model sizes. Similar results can be found at a
+×4 scale. The advantage of using ESSR becomes even more
+pronounced. ESSR is capable of reconstructing straight lines,
+a task that FSRCNN, ACNet, and HPAN struggle with. This
+inability results in a significant degree of blur and aliasing in
+their results. This clear distinction highlights the effectiveness
+of the ESSR model in SR tasks, providing high-quality image
+reconstructions even at higher scales.
+TABLE VI: The ×4 scale quantitative results of some PSNR-
+oriented light weight models. The MACs is calculated with
+a 1920x1080 GT image. ∗
+This model has its own hardware
+design. The units for size and MAC are K and G, respectively.
+Urban: Urban100, Manga: Manga109
+Model Size MAC Set5 Set14 B100 Urban Manga
+Bicubic - - 28.42 26.00 25.96 23.14 24.89
+FSRCNN-s 4 6 30.11 27.19 26.84 - -
+SRNPU∗ 183 1 30.41 27.37 26.86 - -
+SRCNN 57 119 30.48 27.49 26.90 24.52 27.66
+FSRCNN 13 10 30.71 27.59 26.98 24.62 27.90
+ACNet∗ 18 2 30.78 27.62 27.00 24.63 27.82
+HPAN 26 8 30.88 27.68 27.03 24.69 28.04
+ESSR 53 7 31.51 28.22 27.31 25.28 29.34
+LapSRN 813 336 31.54 28.19 27.32 25.21 29.09
+CARN-M 412 73 31.92 28.42 27.44 25.62 -
+eCNN∗ 620 96 31.97 28.61 27.59 26.11 -
+PAN 272 64 32.13 28.61 27.59 26.11 30.51
+RLFN 543 67 32.24 28.62 27.60 26.17 -
+2) GAN-based ESSR results: The results of our GAN-
+based method are presented in Table VII. Due to our ESSR-
+GAN being the lightest model, there exists a gap in terms
+of LPIPS performance between ESSR-GAN and the state-of-
+the-art methods with parameters in the millions. However, as
+indicated by the PSNR and SSIM, we are still able to maintain
+a significant structural similarity with the ground truth.
+Fig. 23 offers a visual comparison between PSNR-oriented
+ESSR and perceptual-oriented ESSR. The images produced by
+ESSR-GAN are crisper than those from ESSR, with the edges
+appearing significantly sharper and exhibiting more textures.
+3) Comparison with other dynamic methods: Table VIII
+offers a comparison of various dynamic methods and their re-
+spective costs. In terms of the decision method, unlike SRNPU
+[3], CDNSR [18] and ClassSR [15], which use an additional
+neural network for prediction, our input edge threshold method
+is the simplest. For each subnet, both the ARM [16] and our
+method share the same model weight. Overall, we have the
+lowest hardware cost and are the only ones implementing
+the whole model on hardware. SRNPU only implements the
+subnet without the decision network. Meanwhile, CDNSR,
+ClassSR and ARM propose only software algorithms.
+We present the experimental results comparing our ESSR
+approach with SRNPU in Table IX. In our case, we showcase
+two results for ESSR, each employing a different combination
+of thresholds. The upper result demonstrates nearly identical
+MACs saving with a lower drop in PSNR. On the other
+hand, the lower result exhibits almost the same PSNR drop
+as SRNPU but achieves significantly higher MACs saving. It
+is worth noting that in the Manga109 dataset, SRNPU achieves
+only 5.3% MACs saving but experiences a PSNR drop of
+0.93dB. On the contrary, our ESSR approach can achieve 14%
+MACs saving with a mere 0.03dB PSNR drop, or a PSNR
+drop of 0.94dB with 50.4% MACs saving. This is due to our
+effective decision method.
+Table X shows the comparison with ARM [16] and
+CDNSR [18] with different backbones. We can achieve better
+quality across different MACs savings, even for ARM and
+10
+Fig. 19: Visual comparison of the PSNR-oriented ESSR with the state-of-the-art methods. (Parameter/MACs). (left) ×2 B100
+45096. (right) ×2 Set5 bird.
+Fig. 20: Visual comparison of the PSNR-oriented ESSR with the state-of-the-art methods. (Parameter/MACs). (left) ×2
+Urban100 img002. (right) ×2 Urban100 img059.
+Fig. 21: Visual comparison of the PSNR-oriented ESSR with the state-of-the-art methods. (Parameter/MACs). (left) ×4 Set14
+ppt3. (right) ×4 Manga109 AppareKappore.
+Fig. 22: Visual comparison of the PSNR-oriented ESSR with the state-of-the-art methods. (Parameter/MACs). (left) ×4
+Urban100 img015. (right) ×4 Urban100 img073.
+Fig. 23: Visual comparison of PSNR-oriented ESSR with perceptual-oriented ESSR. (Parameter/MACs). (left) ×4 Urban100
+img018. (right) ×4 Urban100 img091.
+11
+TABLE VII: Quantitative comparison of different methods for the perceptual-oriented ×4 upsampling. ↑: higher is better, ↓:
+lower is better.
+Model Size
+Set5 Set14 B100 Urban100
+PSNR↑ SSIM↑ LPIPS↓ PSNR↑ SSIM↑ LPIPS↓ PSNR↑ SSIM↑ LPIPS↓ PSNR↑ SSIM↑ LPIPS↓
+SRGAN 1.5 29.182 0.842 0.094 26.171 0.701 0.172 25.447 0.648 0.206 24.393 0.728 0.158
+ESRGAN 16.7 30.459 0.852 0.083 26.283 0.698 0.139 25.288 0.649 0.168 24.350 0.733 0.125
+Real-
+ESRGAN
+16.7 26.617 0.807 0.169 25.421 0.696 0.234 25.089 0.653 0.282 22.671 0.686 0.214
+AGD 0.42 30.432 0.861 0.097 27.276 0.739 0.160 26.219 0.688 0.214 24.732 0.743 0.170
+EdgeSRGAN 0.66 29.487 0.837 0.095 26.814 0.715 0.176 25.543 0.644 0.210 24.268 0.716 0.170
+EdgeSRGAN-
+tiny
+0.09 28.074 0.803 0.146 26.001 0.702 0.242 25.526 0.658 0.292 23.332 0.672 0.269
+ESSR-GAN 0.05 30.512 0.861 0.181 27.454 0.745 0.263 26.552 0.696 0.289 24.642 0.735 0.276
+TABLE VIII: Comparison of the dynamic methods.
+Model SRNPU [3] ClassSR
+[15]
+ARM
+[16]
+ESSR
+Decision
+method
+Decision
+Net
+Class
+Module
+Lookup
+table
+Edge
+threshold
+Subnet Individual Individual Shared Shared
+Decision cost High High Middle Low
+HW
+design
+Yes(w/o
+DecisionNet)
+No No Yes
+TABLE IX: The comparison of ESSR vs SRNPU on the
+×2 scale. ESSR X+Y is ESSR with threshold1 = X and
+threshold2 = Y
+Dataset Model MACs Saving PSNR Drop
+B100
+SRNPU 36.0% -0.26
+ESSR 15+60 34.2% -0.20
+ESSR 8+80 46.7% -0.29
+Urban100
+SRNPU 25.6% -0.62
+ESSR 8+60 27.6% -0.27
+ESSR 15+80 39.5% -0.57
+Manga109
+SRNPU 5.3% -0.93
+ESSR 8+20 14.0% -0.03
+ESSR 8+80 50.4% -0.94
+DIV2K Validation
+SRNPU 34.1% -0.38
+ESSR 8+40 36.2% -0.11
+ESSR 8+80 56.8% -0.42
+CDNSR with much larger models.
+C. Hardware Implementation and Comparison
+The proposed design was developed using Verilog and syn-
+thesized with the Synopsys Design Compiler using the TSMC
+28nm CMOS technology. Power consumption was measured
+using Synopsys PrimeTime PX. With the proposed approach,
+this design can achieve 8K@30FPS using an 800MHz work-
+ing frequency with a gate count of 2749K, which includes
+edge threshold computing as well. Our approach also keeps
+the average power consumption low at just 0.2075W, while
+energy efficiency peaks at 4797Mpixels/J. Table XI shows the
+implementation result and comparisons. Overall, our GLNPU
+shows the highest PSNR on Set5 ×2 scale and the highest
+throughput among the compared works.
+Compared to non-dynamic processing approaches,
+eCNN [1], with its computationally demanding model and
+TABLE X: The ×4 scale comparison between ARM, CDNSR,
+and ESSR on Test8K for different MAC reduction rates.
+Model Test8K PSNR(dB)
+Model Parameters 40% 50% 60%
+ARM FSRCNN 25K 32.75 32.73 32.66
+ARM CARN 295K 33.31 33.27 33.18
+ARM SRResNet 1.5M 33.52 33.50 33.46
+CDNSR FSRCNN 25K 32.74 32.74 32.69
+CDNSR CARN 295K 33.15 33.15 33.15
+CDNSR SRResNet 1.5M 33.51 33.50 33.49
+CDNSR RCAN 15.6M 33.74 33.73 33.72
+Threshold ESSR 53K 34.61 34.56 34.50
+substantial SRAM requirement for weight storage, lags
+behind our lightweight and dynamic processing strategy.
+Specifically, we offer a 24-fold smaller PE count, a seven-fold
+smaller SRAM, and a marginally superior PSNR. Compared
+to ACNPU, although GLNPU has nearly three times the
+number of PEs, GLNPU has a similar gate count due to
+FXP10 instead of floating points in ACNPU [5]. Furthermore,
+our GLNPU achieves four times throughput and improves
+performance by 0.3dB.
+Compared to dynamic processing methods, SRNPU [3] and
+SRSoC [4] use the much simpler model, FSRCNN, as the
+backbone. While this translates to reduced complexity and
+power consumption, it also results in a diminished PSNR.
+Their focus on FHD output further conserves power. Addi-
+tionally, hardware utilization of SRNPU is low, particularly for
+the small model branch (31.2%). In contrast, our configurable
+group of layer mapping can synergize with the SFB, ensuring
+high PE utilization even while running smaller models.
+D. Hardware analysis
+1) Area and power analysis: Fig. 24 illustrates the power
+analysis. The power usage for the Bilinear, C27, and C54
+models is 0.1290W, 0.1812W, and 0.2178W, respectively. The
+cycle percentages of the respective models are 5.6%, 20.7%,
+and 73.8% for bilinear, C27, and C54. These values were
+calculated using threshold1 = 8 and threshold2 = 40 on
+the Test8K dataset on the ×4 scale. Considering the cycle
+percentage of each model, the average power consumption is
+0.2075W.
+12
+TABLE XI: Performance comparison of super-resolution accelerators
+GLNPU ACNPU [5] eCNN [1] SRNPU [3] SRSoC [4]
+Process 28nm 40nm 40nm 65nm 65nm
+Supply Voltage 0.9V 0.9V 0.9V 1.1V 1.0V
+Algorithm ESSR Asymmetric SR ERNet Tile-based Selective FSRCNN FSRCNN/ClassSR
+Precision(W/A)(bits) FXP10 FP10 / FP13 FXP8 FXP8 / FXP16 FXP8 / FXP8 + 5% FP8
+×2 Set5 PSNR(dB) 37.64 37.30 37.62 37.06 36.80
+Parameter(K) 51 17 202 183 -
+Supported Scale ×2, ×4 ×2, ×4 ×2, ×4 ×2, ×3, ×4 ×2, ×4
+Frequency(MHz) 800 270 250 200 200
+Gate Count(K) 2749 2332 - - -
+#PE 3402 1248 81920 1152 -
+SRAM(KB) 388 198 2864 572 177
+Frame Rate(FPS)
+30(×2, 4K)
+30(×4, 8K)
+31.7(×2, FHD)
+124.4(×4, FHD)
+30/60(×2/×4, HD)
+30(×2/×4, 4K)
+31.8(×2, FHD)
+88.3(×4, FHD)
+55(×2, FHD)
+107(×4, FHD)
+Power(W) 0.2075 0.1318 7.23∼7.46 0.211 0.098
+SR Throughput
+(Mpixels/s)
+248.8(×2)
+995.3(×4)
+65.7(×2)
+258.0(×4)
+248.8(×2)
+248.8(×4)
+65.9(×2)
+183.1(×4)
+114.0(×2)
+221.9(×4)
+Power Efficiency
+(Mpixels/s/W)
+1199.0(×2)
+4796.6(×4)
+498.5(×2)
+1957.5(×4)
+33.4(×2)
+33.4(×4)
+312.3(×2)
+867.8(×4)
+1163.3(×2)
+2264.3(×4)
+∗Power Efficiency
+(Mpixels/s/W)
+1199.0(×2)
+4796.6(×4)
+712.1(×2)
+2796.4(×4)
+49.2(×2)
+47.6(×4)
+1083.1(×2)
+3009.3(×4)
+3333.9(×2)
+6489.4(×4)
+∗Process normalized to 28nm 0.9V.
+Fig. 24: The power analysis of the GLNPU.
+Fig. 25: The area breakdown of the GLNPU.
+Fig. 25 presents the area analysis of our GLNPU. With
+FXP10 instead of floating points for weight and activation, the
+PE array and control components account for approximately
+59% of the total area. The SRAM buffers occupy 41%. The
+boundary buffer only occupies 13% due to Slim overlap block
+convolution and thick overlap boundary processing method.
+2) Boundary processing: Fig. 26 presents images generated
+by ESSR and GAN-based ESSR using the slim overlap block
+convolution and thick overlap boundary processing method.
+The mask indicates which patch employs which subnet: green
+represents bilinear, yellow is for C27, and red signifies C54.
+After boundary processing, the discontinuity between pixels
+in each patch at the ×4 scale is negligible.
+Fig. 26: Visual results of our boundary solution on the PSNR-
+oriented ESSR and the perceptual-oriented ESSR for the ×4
+Test8K 1410.
+tb
+TABLE XII: PE utilization of each model for the ×4 scale.
+Layer 1x1-A 1x1-B 1x1-C 1x1-D 3x3-B 3x3-C
+C54
+BSConv(3,54) 11% 0% 0% 11% 96% 96%
+BSConv(54,54) 95% 95% 95% 95% 95% 95%
+BSConv(54,54) 95% 95% 95% 95% 95% 95%
+1x1(54,54) 95% 95% 95% 95% 0% 0%
+DSConv(54,48) 96% 96% 75% 75% 96% 96%
+C27
+BSConv(3,27) 11% 0% 0% 0% 96% 0%
+SFB 93% 93% 93% 0% 93% 93%
+DSConv(27,48) 0% 96% 75% 0% 96% 0%
+Bilinear
+Bilinear 0% 0% 0% 0% 97% 75%
+3) PE utilization: The PE utilization for each model as
+shown in Table XII is 15. 3%, 64. 4%, and 86. 2% for bilinear,
+C27 and C54, respectively. Taking into account the use of the
+model on the Test8K dataset on the ×4 scale as in Fig. 24,
+13
+the average PE utilization is 77.1%. For the C54 model,
+utilization of most PEs is 95% or greater with some idle time
+due to data loading. The first (BSConv(3, 54) and BSConv(3,
+27)) and the last layer (DSConv) have lower utilization due
+to smaller channel numbers. Bilinear interpolation has the
+lowest utilization due to smaller channel numbers and simple
+operations but occupies only 5.6% cycles.
+VI. CONCLUSION
+This paper introduces an 8K@30FPS SR accelerator
+with edge-selective dynamic input processing for resource-
+constrained edge devices. The proposed dynamic processing
+employs an edge threshold to select subnets for different
+input complexity, and resource adaptive model switching to
+ensure a balance between minimum and optimal image quality
+under constraints. The hardware-optimized model, with 51K
+parameters, achieves a PSNR of 37.64dB on Set5. This rep-
+resents a 84% reduction in parameters and a 83% decrease in
+MACs, maintaining quality comparable to the baseline model.
+To maximize hardware efficiency during dynamic processing,
+this design adopts a configurable group of layer mapping.
+This, in combination with the structure-friendly fusion block,
+achieves 77% hardware utilization and up to 79% reduction
+in SRAM accesses for features. Implemented with the TSMC
+28nm process, the design achieves an 8K@30FPS throughput
+at 800MHz, with an energy efficiency of 4797M pixels/J.
+The proposed methodology is extendable to other SR network
+designs.
+REFERENCES
+[1] C.-T. Huang et al., “eCNN: A block-based and highly-parallel CNN
+accelerator for edge inference,” in Proceedings of the 52nd Annual
+IEEE/ACM International Symposium on Microarchitecture, 2019, pp.
+182–195.
+[2] D.-H. Yang and T.-S. Chang, “BSRA: Block-based Super Resolution
+Accelerator with Hardware Efficient Pixel Attention,” in 2022 IEEE
+International Symposium on Circuits and Systems (ISCAS). IEEE, 2022,
+pp. 2821–2825.
+[3] J. Lee, J. Lee, and H.-J. Yoo, “SRNPU: An energy-efficient CNN-based
+super-resolution processor with tile-based selective super-resolution in
+mobile devices,” IEEE Journal on Emerging and Selected Topics in
+Circuits and Systems, vol. 10, no. 3, pp. 320–334, 2020.
+[4] Z. Li et al., “An Efficient Deep-Learning-Based Super-Resolution Accel-
+erating SoC With Heterogeneous Accelerating and Hierarchical Cache,”
+IEEE Journal of Solid-State Circuits, vol. 58, no. 3, pp. 614–623, 2022.
+[5] T.-H. Yang and T. S. Chang, “ACNPU: A 4.75tops/w 1080p@30fps
+super resolution accelerator with decoupled asymmetric convolution,”
+arXiv preprint arxiv:2308.15807, 2023.
+[6] C. Dong, C. C. Loy, and X. Tang, “Accelerating the super-resolution
+convolutional neural network,” in Proc. ECCV. Springer, 2016, pp.
+391–407.
+[7] C. Ledig et al., “Photo-realistic single image super-resolution using a
+generative adversarial network,” in Proc. CVPR, 2017, pp. 4681–4690.
+[8] X. Wang et al., “ESRGAN: Enhanced super-resolution generative ad-
+versarial networks,” in Proc. ECCVW, 2018, pp. 0–0.
+[9] ——, “Real-ESRGAN: Training real-world blind super-resolution with
+pure synthetic data,” in Proc. CVPR, 2021, pp. 1905–1914.
+[10] S. Angarano et al., “Generative adversarial super-resolution at the
+edge with knowledge distillation,” Engineering Applications of Artificial
+Intelligence, vol. 123, p. 106407, 2023.
+[11] C. Tian et al., “Asymmetric CNN for image superresolution,” IEEE
+Transactions on Systems, Man, and Cybernetics: Systems, vol. 52, no. 6,
+pp. 3718–3730, 2021.
+[12] A. G. Howard et al., “Mobilenets: efficient convolutional neural net-
+works for mobile vision applications,” arXiv preprint arXiv:1704.04861,
+2017.
+[13] W.-S. Lai et al., “Fast and accurate image super-resolution with deep
+Laplacian pyramid networks,” IEEE transactions on pattern analysis
+and machine intelligence, vol. 41, no. 11, pp. 2599–2613, 2018.
+[14] J. Liu, J. Tang, and G. Wu, “Residual feature distillation network for
+lightweight image super-resolution,” in Computer Vision–ECCV 2020
+Workshops: Glasgow, UK, August 23–28, 2020, Proceedings, Part III
+16. Springer, 2020, pp. 41–55.
+[15] X. Kong et al., “ClassSR: A general framework to accelerate super-
+resolution networks by data characteristic,” in Proc. CVPR, 2021, pp.
+12 016–12 025.
+[16] B. Chen et al., “ARM: Any-time super-resolution method,” in Proc.
+ECCV. Springer, 2022, pp. 254–270.
+[17] C. Hong et al., “CADyQ: Content-aware dynamic quantization for image
+super-resolution,” in Proc. ECCV. Springer, 2022, pp. 367–383.
+[18] Q. Wang et al., “Classification-based dynamic network for efficient
+super-resolution,” in ICASSP 2023-2023 IEEE International Conference
+on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2023,
+pp. 1–5.
+[19] F. Kong et al., “Residual local feature network for efficient super-
+resolution,” in Proc. CVPR, 2022, pp. 766–776.
+[20] F. S. Khan, “NTIRE 2022 challenge on efficient super-resolution:
+Methods and results,” in Proc. CVPRW, 2022.
+[21] H. Li et al., “PAMS: Quantized super-resolution via parameterized max
+scale,” in Proc. ECCV. Springer, 2020, pp. 564–580.
+[22] B. Lim et al., “Enhanced deep residual networks for single image super-
+resolution,” in Proc. CVPRW, 2017, pp. 136–144.
+[23] E. Agustsson and R. Timofte, “NTIRE 2017 challenge on single image
+super-resolution: Dataset and study,” in Proc. CVPRW, 2017, pp. 126–
+135.
+[24] J. Liang, H. Zeng, and L. Zhang, “Details or artifacts: A locally
+discriminative learning approach to realistic image super-resolution,” in
+Proc. CVPR, 2022, pp. 5657–5666.
+[25] W.-S. Lai et al., “Deep Laplacian pyramid networks for fast and accurate
+super-resolution,” in Proc. CVPR, 2017, pp. 624–632.
+Chih-Chia Hsu received the M.S. degree in
+electronics engineering from the National Yang
+Ming Chiao Tung University, Hsinchu, Taiwan, in
+2023. He is currently working in the MediaTek,
+Hsinchu, Taiwan. His research interest includes
+super-resolution neural network and VLSI design.
+Tian-Sheuan Chang (S’93–M’06–SM’07) received
+the B.S., M.S., and Ph.D. degrees in electronic
+engineering from National Chiao-Tung University
+(NCTU), Hsinchu, Taiwan, in 1993, 1995, and 1999,
+respectively.
+From 2000 to 2004, he was a Deputy Manager
+with Global Unichip Corporation, Hsinchu, Taiwan.
+In 2004, he joined the Department of Electronics
+Engineering, NCTU (as National Yang Ming Chiao
+Tung University (NYCU) in 2021), where he is
+currently a Professor. In 2009, he was a visiting
+scholar in IMEC, Belgium. His current research interests include system-
+on-a-chip design, VLSI signal processing, and computer architecture.
+Dr. Chang has received the Excellent Young Electrical Engineer from
+Chinese Institute of Electrical Engineering in 2007, and the Outstanding
+Young Scholar from Taiwan IC Design Society in 2010. He has been actively
+involved in many international conferences as an organizing committee or
+technical program committee member.
+

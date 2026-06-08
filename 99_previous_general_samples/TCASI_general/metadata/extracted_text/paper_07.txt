@@ -1,0 +1,816 @@
+                                                                                 eprints@whiterose.ac.uk
+                                                                            https://eprints.whiterose.ac.uk
+                                                      Universities of Leeds, Sheffield and York
+
+
+Deposited via The University of Sheffield.
+
+White Rose Research Online URL for this paper:
+https://eprints.whiterose.ac.uk/id/eprint/214995/
+
+Version: Accepted Version
+
+Article:
+Alhassani, A. and Benaissa, M. (2024) High-speed polynomials multiplication HW
+accelerator for CRYSTALS-Kyber. IEEE Transactions on Circuits and Systems I: Regular
+Papers, 71 (12). pp. 6105-6113. ISSN: 1549-8328
+
+https://doi.org/10.1109/tcsi.2024.3427011
+
+
+
+© 2024 The Authors. Except as otherwise noted, this author-accepted version of a journal
+article published in IEEE Transactions on Circuits and Systems I: Regular Papers is made
+available via the University of Sheffield Research Publications and Copyright Policy under
+the terms of the Creative Commons Attribution 4.0 International License (CC-BY 4.0),
+which permits unrestricted use, distribution and reproduction in any medium, provided the
+original work is properly cited. To view a copy of this licence, visit
+http://creativecommons.org/licenses/by/4.0/
+
+
+
+
+Reuse
+This article is distributed under the terms of the Creative Commons Attribution (CC BY) licence. This licence
+allows you to distribute, remix, tweak, and build upon the work, even commercially, as long as you credit the
+authors for the original work. More information and the full terms of the licence here:
+https://creativecommons.org/licenses/
+
+Takedown
+If you consider content in White Rose Research Online to be in breach of UK law, please notify us by
+emailing eprints@whiterose.ac.uk including the URL of the record and the reason for the withdrawal request.
+                                                                                                                                               1
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+
+             High-Speed Polynomials Multiplication HW
+                 accelerator for CRYSTALS-Kyber
+               Abdullah Alhassani, Student Member, IEEE, and Mohammed Benaissa, Senior Member, IEEE
+
+
+ Abstract— NIST has selected CRYSTALS-Kyber as the primary                         Hardware accelerators play a crucial role in cryptography as
+Key Encapsulation Mechanism (KEM) algorithm for the                            they offer high-speed operations compared to software
+standardization process of post-quantum cryptography. This                     implementation and aim for practical deployment of post-
+paper proposes a high-speed hardware accelerator targeting the                 quantum cryptography schemes for real-life applications.
+polynomial multiplication of Kyber. The NTT-based algorithm is
+                                                                               Kyber adopted the NTT-based algorithm to perform polynomial
+employed in Kyber to perform polynomial multiplication, where
+modular multiplication is the most time-consuming operation in
+                                                                               multiplication instead of the classical time domain techniques.
+the computation of the NTT. This paper proposes a new Residue                      Several NTT architectures have been reported in the
+Number System (RNS) methodology to perform the modular                         literature often trading-off hardware complexity and
+multiplication in Kyber based on fast look-up tables with a novel              throughput. For example, a highly pipelined hardware
+sub-moduli RNS decomposition of the operation into smaller                     architecture based on the systolic array technique is adopted to
+tables. A high-speed polynomial multiplier FPGA accelerator is                 accelerate the Coefficient Wise Multiplication (CWM)
+developed based on the proposed RNS modular multiplier for both                operation at the expense of increased hardware resources [6].
+single and double butterfly modes. The resulting designs were                  Similarly, memory-based iterative NTT designs based on a
+implemented on Xilinx Artix-7 FPGA, and post-place and route
+                                                                               small hardware module for performing the NTT operations are
+hardware results obtained confirmed the significant
+improvements over state-of-art.
+                                                                               deployed to reduce hardware usage [7, 8].
+                                                                                   The intrinsic operation in the hardware structure of NTT is
+Index Terms— CRYSTALS-Kyber, Post-Quantum Cryptography                         the butterfly unit, which involves modular multiplication,
+(PQC), Number Theoretic Transform (NTT), Lattice-Based                         modular addition, and modular subtraction. While modular
+Cryptography (LBC), FPGA, Hardware, RNS, High-Speed                            addition and subtraction can be easily implemented, modular
+                                                                               multiplication is the most complex operation in the butterfly
+                         I. INTRODUCTION                                       and, therefore, received attention in most of the previous works.
+
+
+T
+        HE recent development of quantum computing poses a                         The modular multiplication is computed in two steps:
+        severe threat to the current public key cryptography                   multiplication of two numbers followed by a reduction to keep
+        primitives such as RSA and ECC. These primitives rely                  the result in the same ring. The state-of-the-art works associated
+on mathematically hard problems to secure communication                        with the hardware implementation of Kyber polynomial
+between two parties, and with the future availability of a                     multiplication involve both Montgomery reduction[9] and
+powerful quantum computer running Shor’s algorithm,                            Barret reduction[10]. The authors in [11] used Montgomery to
+breaking these schemes will be accomplished in polynomial                      implement the modular reduction. A variant of Montgomery
+time[1]. For this reason, in 2016[2], the National Institute of                reduction that includes KRED and KRED-2X functions was
+Standards and Technology (NIST) started a competition for                      presented in [12] and further improved in [13] to optimize the
+Post-Quantum Cryptography (PQC) algorithms, which resist                       reduction further for Kyber. However, most other works
+quantum and classical attacks, and went on three rounds to                     focussed on Barrett reduction and its variants. In [14, 15],
+select the best candidates. NIST selected four schemes for the                 Barret reduction is utilized directly for the modular reduction,
+standard in July 2022[3], and the competition will continue for                whereas [16-18] derived improved versions from the original
+a fourth round to select from another four candidates.                         Barrett.
+    CRYSTALS-Kyber[4] was chosen by NIST for                                       Most reported hardware implementations for Kyber have
+standardization as the primary key encapsulation mechanism                     been targeted at FPGA technology, where DSP slices were
+(KEM), which is a lattice-based cryptography scheme where its                  favoured for the implementation of the modular multiplication
+security is based on solving the Module Learning With Errors                   during the NTT/INTT computations and the CWM operation.
+(MLWE) hard problem[5]. The scheme consists of three                           FPGA is a platform that allows hardware acceleration as well
+algorithms: key generation, encryption, and decryption, where                  as flexibility. It also allows hardware performance evaluation.
+polynomial multiplication dominates the computations in these                      In this work, we first consider modular multiplication and
+algorithms.                                                                    propose a new Residue Number System (RNS) methodology
+
+   Abdullah Alhassani and Mohammed Benaissa are with the Department of
+Electronic and Electrical Engineering, University of Sheffield, Sheffield S1
+3JD, UK (e-mail: ahmalhassani1@sheffield.ac.uk;
+m.benaissa@sheffield.ac.uk).
+                                                                                                                                       2
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+based on look-up tables to compute the 𝑎. 𝑏 𝑚𝑜𝑑 𝑞 operation         * where · indicates integer multiplication and matrix
+that is optimized for Kyber. A ROM array architecture is            multiplication is represented as °.
+proposed based on judicious isomorphic mapping, optimal sub-        B. CRYSTALS-Kyber (Kyber)
+moduli decomposition, and efficient memory addressing. The               Kyber[4] is the primary KEM selected by NIST for the
+architecture exploits the use of BRAMs on FPGAs to accelerate       PQC standard. The scheme first encrypts a 32-bytes message
+computations. The use of BRAMs to support computations can          using the conventional method to build an indistinguishability
+free up the FPGA logic blocks and DSP resources for further         under the Chosen-Plaintext Attack (IND-CPA) secure public-
+computational tasks thus enabling trade-offs to be made             key encryption scheme. Next, a modified Fujisaki-Okamoto
+between computation logic and memory resources.                     (FO) transform[22] is used to construct an indistinguishability
+    A single butterfly unit (SBU) and a dual butterfly unit         under adaptive Chosen Ciphertext Attack (IND CCA2) secure
+(DBU) are proposed using the proposed modular multiplier in         KEM.
+single and dual mode, respectively, to build an NTT-based                Elements in Kyber are represented as polynomials in ℝ𝑞 =
+polynomial multiplier for Kyber that is capable of computing         ℤ𝑞 [𝑥]/(𝑥 𝑛 + 1). The degree of the polynomials 𝑛 = 256 and
+the whole operation without using DSP slices.                       𝑞 = 3329. Kyber provides three NIST security levels: 1, 3, and
+                                                                    5 as Kyber-512, Kyber-768, and Kyber-1024, respectively. This
+    The resulting hardware accelerator performs the complete
+                                                                    can be adjusted according to the module lattice dimension 𝑘,
+polynomial multiplication, including computing NTT, INTT
+                                                                    which can take the values of 2, 3, and 4 for the three security
+and CWM. The implementation results on the NIST-                    levels in order. The Kyber IND-CPA consists of three
+recommended FPGA Xilinx Artix-7 show that the proposed              algorithms: key generation, encryption, and decryption. The
+design can compute the entire polynomial multiplication in          simplified version of these algorithms is presented as follows,
+9.6 µ𝑠 with one SBU, 5 𝜇𝑠 with one DBU, and in 2.6 𝜇𝑠 with          and for further details, please refer to the protocol specification
+two DBUs hence outperforming similar previous works by              in[4]:
+46%, 17%, and 36% respectively.                                          • Keygen(): at Allice’s side, firstly, a public matrix 𝑨   ̂ ∈
+                                                                                𝑘×𝑘
+    Research in Side Channel and Fault injection Analysis                     ℝ𝑞 is sampled from a uniform distribution in the
+countermeasures in NTT designs has received increasing                       NTT domain using a random seed 𝜌. Then, a secret 𝒔
+interest in recent years due to their importance in securing                 and an error 𝒆 ∈ ℝ𝑘𝑞 are sampled from a cantered
+lattice-based PQC implementations such as the error detection                binomial distribution (CBD) and computing 𝒔̂ =
+schemes introduced in [19, 20]. The use of look-up tables in this            𝑁𝑇𝑇(𝒔) and 𝒆̂ = 𝑁𝑇𝑇(𝒆). Finally, the public key is
+work can offer the advantage of constant time implementation                 generated as 𝑝𝑘 = (𝜌, 𝒕̂) where 𝒕̂ = 𝑨  ̂ ° 𝒔̂ + 𝒆̂, and the
+and, hence, better resistance to timing attacks [21].                        secret key as 𝑠𝑘 = 𝒔̂.
+      The rest of the paper is organized as follows: Section II          • Encryption(𝑝𝑘, 𝑚): at Bob’s side again, the public
+provides background on the Kyber protocol and the NTT-based                  matrix 𝑨̂ is sampled from uniform distribution using
+polynomial multiplication algorithm. Section III details our                 the same seed 𝜌. Then, 𝒓, 𝒆𝟏 ∈ ℝ𝑘𝑞 and 𝑒2 ∈ ℝ𝑞 are
+contributions in this paper, including our design methodology                sampled from CBD and computing 𝒓̂ = 𝑁𝑇𝑇(𝒓). The
+and the proposed designs. The implementation results and                     message 𝑚 is encoded, and then the ciphertext is
+comparisons with the existing work are presented in section IV.              constructed       as     𝑐𝑡 = (𝒖, 𝑣)       where        𝒖=
+Finally, the conclusion is given in section V.                                𝐼𝑁𝑇𝑇(𝑨 ̂ 𝑇 ° 𝒓̂) + 𝒆𝟏 and 𝑣 = 𝐼𝑁𝑇𝑇(𝒕̂𝑇 ° 𝒓̂) + 𝑒2 +
+                                                                             𝑚.
+                       II. BACKGROUND                                    •    Decryption(𝑐𝑡, 𝑠𝑘): Allice recovers the message from
+A. Notation                                                                  the      received       ciphertext       as       𝑚=𝑣−
+     Let ℤ𝑞 denotes the ring of integers {0, 1, … , 𝑞 − 1} with              𝐼𝑁𝑇𝑇(𝒔̂𝑇 ° 𝑁𝑇𝑇(𝒖)).
+the modulus 𝑞, and ℝ𝑞 = ℤ𝑞 [𝑥]/(𝑥 𝑛 + 1) represents the
+quotient ring of polynomials where the polynomials are reduced      C. Polynomials multiplication based on NTT
+by cyclotomic polynomial 𝑥 𝑛 + 1, and the coefficients are                The bottleneck operation in Kyber is polynomial
+integers in ℤ𝑞 . The degree of a polynomial 𝑓 ∈ ℝ𝑞 is at most       multiplication, where the NTT-based algorithm is used in the
+𝑛 − 1.                                                              scheme instead of the traditional time domain approach.
+     A polynomial in the normal domain is written with regular      Multiplication using the NTT can perform the operation in
+lower-case letters as 𝑎, and its transformation to the NTT          𝑂(𝑛(log 𝑛)) time complexity. The NTT transform is a
+domain is defined as 𝑎̂ ← 𝑁𝑇𝑇(𝑎) where 𝑎̂ represents the            generalization of the Discrete Fourier Transform and is defined
+polynomial in the NTT domain. The inverse of the NTT                over the ring ℤ𝑞 . Let a polynomial 𝑎(𝑥) = 𝑎0 + 𝑎1 𝑥 +
+transform is defined as 𝑎 ← 𝐼𝑁𝑇𝑇(𝑎̂).                                𝑎2 𝑥 2 … . . 𝑎𝑛−1 𝑥 𝑛−1 , its forward NTT transformation into 𝑎̂(𝑥)
+     A 𝑘-dimensional polynomial vector is written with bold         can be written as [23]:
+lower-case letters, e.g., 𝒔 and a 𝑘 × 𝑘 dimensional polynomial
+                                                                                 𝑛−1
+matrix is written with bold upper-case letters, e.g., 𝑨. The                              𝑖𝑗
+transpose of a vector 𝐚 (or matrix 𝐀) is represented as 𝒂𝑇 (or          𝑎̂(𝑥) = ∑ 𝑎𝑗 𝜔𝑛 𝑚𝑜𝑑 𝑞, 𝑖 ∈ [0, 𝑛 − 1]                        (1)
+𝑨𝑇 ). Multiplication in the NTT domain, i.e., CWM denoted as                     𝑗=0
+                                                                                                                                         3
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+Where 𝜔, i.e., the twiddle factor constant represents the 𝑛-th       multiplying the two 128 degree-1 polynomials in the ring
+root of unity satisfying the two conditions: 𝜔𝑛 ≡ 1(𝑚𝑜𝑑 𝑞)           ℤ𝑞 [𝑥]/(𝑥 2 − 𝜔 2𝑏𝑟7(𝑖)+1 ) for 𝑖 = 0, … ,127. For example, for
+and 𝜔𝑛 ≠ 1(𝑚𝑜𝑑 𝑞) ∀𝑖 < 𝑛. The modulus 𝑞 also must be a               two polynomials 𝑎̂ and 𝑏̂, their CWM is computed as:
+prime number that satisfies the condition 𝑞 ≡ 1 (𝑚𝑜𝑑 𝑛).
+Converting a polynomial back to the normal domain is                 𝑐̂ = 𝐶𝑊𝑀(𝑎̂ , 𝑏̂)
+accomplished using INTT transform, where 𝜔−1 (𝑚𝑜𝑑 𝑞)
+                                                                        = 𝑎̂ ∗ 𝑏̂
+utilized as twiddle factors instead of 𝜔, and scaling the result
+                                                                        = (𝑎̂2𝑖+1 𝑋 + 𝑎̂2𝑖 ) · (𝑏̂2𝑖+1 𝑋 + 𝑏̂2𝑖 ) 𝑀𝑜𝑑 (𝑥 2 − 𝜔 2𝑏𝑟7(𝑖)+1 )
+with 𝑛−1 .
+                                                                        = (𝑎̂2𝑖+1 · 𝑏̂2𝑖 + 𝑎̂2𝑖 · 𝑏̂2𝑖+1 )𝑋 +
+ Algorithm 1: Forward NTT based on CT butterfly                             𝑎̂2𝑖 · 𝑏2𝑖 + 𝑎̂2𝑖+1 · 𝑏̂2𝑖+1 · 𝜔 2𝑏𝑟7(𝑖)+1                 (2)
+
+ Input        𝑎(𝑥) ∈ ℝ𝑞 in normal order, 𝜔 ∈ ℤ𝑞 and 𝑛 = 2𝑙             This requires five modular multiplications and two modular
+ Output       𝑎̂(𝑥) ∈ ℝ𝑞 in bit-reversed order                       additions for each pair of coefficients, and for the 128 pairs, it
+                                                                     costs 640 modular multiplications and 256 modular additions.
+         1:   𝑘=1
+         2:   for (𝑖 = 1; 𝑖 < 𝑙 − 1; 𝑖 = 𝑖 + 1) do                    Algorithm 2: Inverse NTT based on GS butterfly
+         3:      𝑚 = 2𝑙−𝑖                                             Input        𝑎̂(𝑥) ∈ ℝ𝑞 in bit-reversed order, 𝜔−1 ∈ ℤ𝑞 and
+         4:      for (𝑠 = 0; 𝑠 = 𝑛; 𝑠 = 𝑠 + 𝑚) do                                  𝑛 = 2𝑙
+                                                                      Output       𝑎(𝑥) ∈ ℝ𝑞 normal in order
+         5:         for (𝑗 = 𝑠; 𝑠 = 𝑠 + 𝑚; 𝑗 = 𝑗 + 1) do
+                                                                              1:   𝑘=0
+         6:             𝑊 = 𝜔 𝑏𝑟7(𝑘) 𝑚𝑜𝑑 𝑞
+                                                                              2:   for (𝑖 = 𝑙 − 1; 𝑖 < 1; 𝑖 = 𝑖 − 1) do
+         7:             𝑋 = 𝑎[𝑗], 𝑌 = 𝑎[𝑗 + 𝑚]
+                                                                              3:      𝑚 = 2𝑙−𝑖
+         8:             𝑇 = (𝑊 · 𝑌)𝑚𝑜𝑑 𝑞
+                                                                              4:      for (𝑠 = 0; 𝑠 = 𝑛; 𝑠 = 𝑠 + 2𝑚) do
+         9:             𝑎[𝑗]     = (𝑋 + 𝑇) 𝑚𝑜𝑑 𝑞
+                                                                              5:         for (𝑗 = 𝑠; 𝑠 = 𝑠 + 𝑚; 𝑗 = 𝑗 + 1) do
+      10:               𝑎[𝑗 + 𝑚] = (𝑋 − 𝑇) 𝑚𝑜𝑑 𝑞
+                                                                              6:             𝑊 = 𝜔 𝑏𝑟7(𝑘)+1 𝑚𝑜𝑑 𝑞
+      11:           end for
+                                                                              7:             𝑋 = 𝑎̂[𝑗], 𝑌 = 𝑎̂[𝑗 + 𝑚]
+      12:           𝑘 =𝑘+1
+                                                                              8:             𝑎̂[𝑗]      = (𝑋 + 𝑌)       ÷ 2 𝑚𝑜𝑑 𝑞
+      13:        end for
+                                                                              9:             𝑎̂[𝑗 + 𝑚] = (𝑋 − 𝑌) · 𝑊 ÷ 2 𝑚𝑜𝑑 𝑞
+      14:     end for
+                                                                            10:          end for
+   Since polynomials multiplication in Kyber is performed                   11:          𝑘 =𝑘+1
+over the ring ℝ𝑞 = ℤ𝑞 [𝑥]/(𝑥 𝑛 + 1), the negative wrapped                   12:       end for
+convolution can be utilized to eliminate the need for doubling
+the inputs and the extra polynomial reduction by 𝑥 𝑛 + 1. If this           13:    end for
+case is considered, inputs need pre-processing by scaling the
+coefficients with powers of the 2𝑛-th root of unity. Similarly,
+the outputs require post-processing operation by scaling the                             III. THE PROPOSED DESIGN
+coefficients with powers of the inverse 2𝑛-th root of unity.            A. Modular multiplier
+However, in [24], a new method is presented to perform                  The proposed multiplier adopts an RNS methodology based
+polynomial multiplication using the NTT without the pre-
+                                                                     on a look-up tables approach. This requires the design of an
+processing and post-processing operations. The new method
+                                                                     efficient ROM array architecture based on judicious isomorphic
+only restricts the modulus to have the 𝑛-th root of unity 𝑞 ≡
+                                                                     mapping, sub-moduli decomposition, and memory addressing,
+1 (𝑚𝑜𝑑 𝑛) without requiring the 2𝑛-th root of unity to exist.
+This variant is called incomplete-NTT and produces 𝑛⁄2               as explained below.
+                                                                        The operation of multiplication modulo 𝑞 can be computed
+polynomials of degree 1 and the definitions of NTT and INTT
+                                                                     using look-up tables, and for Kyber, the modulus is 3329, which
+have been modified accordingly as presented in algorithms 1
+                                                                     can be represented as a 12-bit unsigned number. However,
+and 2, respectively, where 𝑏𝑟7 (𝑘) is the bit reversal function of
+                                                                     direct implementation is not efficient as it requires storing 224
+an unsigned 7-bit integer 𝑘. Furthermore, the Cooley-Tukey
+                                                                     of 12-bit records in the look-up tables, which consumes large
+(CT) [25] butterfly structure for NTT and Gentleman-Sande
+                                                                     memory. The isomorphism between a multiplicative group 𝑔
+(GS) [26] butterfly for the INTT are proposed to avoid bit-
+                                                                     having elements 𝑔𝑛 = {1, 2, … , 𝑞 − 1}with the multiplication
+reversal operations [18].
+                                                                     modulo 𝑞, and the additive group 𝑘 having elements 𝑘𝑛 =
+   In the incomplete-NTT, Coefficients Wise Multiplication
+                                                                     {0, 1, … , 𝑞 − 2} with the addition, modulo 𝑞 − 1 can be used
+(CWM) is performed differently. The operation is performed by
+                                                                     to improve modular multiplication using the mapping 𝑔𝑛 =∝𝑘𝑛
+                                                                                                                                                                                     4
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+where ∝ is a primitive root of 𝑞. In this case, the multiplication               concatenating the two to be added sub-modulo residues.
+is replaced by addition and can be computed as follows[27]:
+                                                                                      3- Reconstruction table
+                                           |𝑘𝑛 +𝑘𝑗 |                             This table is represented in a three-dimensional way to recover
+                         |𝑔𝑛 · 𝑔𝑗 |𝑞 = 𝛼            𝑞−1                    (3)
+                                                                                 the correct result of the modular multiplication given the use of
+                                                                                 three sub-moduli. The addresses of this table are formed by
+Where |𝑎|𝑞 represents the least positive residue of 𝑎 modulo
+                                                                                 concatenating the output from the previous three submodular
+𝑞.                                                                               addition tables; 𝑞1 determines the page address and 𝑞2 and 𝑞3
+    The modular multiplication can be performed by finding the                   both give the column and row addresses, respectively. The
+index 𝑘𝑖 for the two multiplied numbers. Then, performing the                    contents of this table are calculated in the following three steps:
+addition of the two indexes modulo 𝑞 − 1 and, finally,
+inversing the index operation to find the correct result. The                    i-       Submodular reconstruction:
+merit of replacing multiplication with addition is that addition                 For our sub-moduli system 𝑞1 , 𝑞2 and 𝑞3 , the corresponding
+can be computed in a modulus other than the prime modulo of                      residues are 𝑟1 , 𝑟2 and 𝑟3 , and using the Chinese Remainder
+Kyber, i.e., 3329, with only restricting the new modulus to be                   Theorem (CRT), a number can be constructed back as follows:
+at least twice as the original one.
+    Since the only restriction on the new modulus is its
+                                                                                                           𝑟𝑗
+minimum size, a composite modulus with an adder tree can be                      𝑟 = |∑3𝑗=1 𝑞̂𝑗 · | ̂ | |                                                                      (4)
+                                                                                                           𝑞𝑗
+used to improve the implementation efficiency. In this work, an                                                 𝑞𝑗
+                                                                                                                     𝑞1 · 𝑞2 ·𝑞3
+RNS submodular ROM array adder is proposed where the
+modulus is decomposed into three relatively prime moduli and                                       𝑞 ·𝑞 ·𝑞
+                                                                                 where 𝑞̂𝑗 = 1 2 3
+the addition is performed in these three submodules. Finally,                                         𝑞𝑗
+
+the result is reconstructed using a look-up table, and it involves
+submodular reconstruction, modulus overflow correction and                       This can be written as:
+inverse index look-up.
+                                                                                                           1                               1
+     Now we explain how to generate look-up tables ROM                                    𝑟1 · 𝑞̂1 · | ̂ |           + 𝑟2 · 𝑞̂2 · | ̂ |               +
+                                                                                                       𝑞1 𝑞                                𝑞2 𝑞
+entries.                                                                         𝑟=|                             1                                2
+                                                                                                                                                             |                 (5)
+                                                                                                                              1
+                                                                                                               𝑟3 · 𝑞̂3 · | ̂ |
+                                                                                                                              𝑞3 𝑞
+      1- Submodular index tables:                                                                                                      3                         𝑞1 · 𝑞2 ·𝑞3
+      The primitive root ∝= 3 is selected considering the
+modulus of Kyber 𝑞 = 3329, and {7, 31 𝑎𝑛𝑑 32} as our three                       This can be simplified further as follows:
+submodular system satisfying the following condition: 2𝑞 <
+                                                                                                                          1
+ 7 · 31 · 32. Firstly, the following table is generated from the                             𝑟1 · 𝑞2 · 𝑞3 · |                 |        +
+                                                                                                                        𝑞2 ·𝑞3 𝑞
+mapping: 𝑔 = |3𝑘 |3329 for 𝑘 = 0, 1, … , 𝑞 − 2                                        |
+                                                                                                                                   1
+                                                                                                                                           |
+                                                                                                                          1
+                                                                                 𝑟=           𝑟2 · 𝑞1 · 𝑞3 · |                |        +                                       (6)
+                                                                                                                        𝑞1 ·𝑞3 𝑞
+ 𝑘      0       1    2   3    …     200        201        ..   3326   3327            |                                            2       |
+                                                                                                                          1
+                                                                                                 𝑟3 · 𝑞1 · 𝑞2 · |             |
+ 𝑔      1       3    9   27   …    1242        397        ..   370    1110                                              𝑞1 ·𝑞2 𝑞
+                                                                                                                                   3           𝑞1 · 𝑞2 ·𝑞3
+
+
+Then, the contents and the addresses of the table are                            Given our chosen sub-moduli system and computing the
+interchanged and then taking the modulo of the three sub-                        following modular inverse:
+moduli to generate the index table for each sub-moduli as in the
+following table:                                                                      1         1
+                                                                                 |        | =|    | =3
+                                                                                   𝑞2 · 𝑞3 𝑞   992 7
+                                                                                             1
+  𝑔         1       2    3    …    370        371      … 3327         3328            1         1
+                                                                                 |        | =|    | =9
+  𝑘         0 1134       1    … 3326 2306 … 2798                      1664         𝑞1 · 𝑞3 𝑞   224 31
+                                                                                            2
+                                                                                      1         1
+ |𝑘|7       0       0    0    …     1           3      …        5      5         |        | =|    | =9                                                                         (7)
+                                                                                   𝑞1 · 𝑞2 𝑞   217 32
+                                                                                             3
+ |𝑘|31 0            18   1    ..    9          12      …        8      21
+ |𝑘|32 0            14   1    …     30          2      …       14      0         The equation now is written as:
+
+     2- Submodular addition tables:                                              𝑟 = |𝑟1 · 2976 + 𝑟2 · 2016 + 𝑟3 · 1953|6944                                                   (8)
+For each of the sub-moduli, a table is generated that contains
+the sub-modulo residue of the addition of the two input                          ii-     Modulus overflow correction:
+residues. The addresses of these tables are determined by                        The sub-moduli 𝑞1 , 𝑞2 and 𝑞3 have no overflow, and only the
+                                                                                 modulus 𝑞 − 1 needs overflow correction as follows:
+                                                                                                                                                         5
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+   𝑟𝑖 = |𝑟|𝑞−1                                                                    (9)    Algorithm 3: The proposed Modular multiplication
+                                                                                         Input        Two integers 𝑥 𝑎𝑛𝑑 𝑦
+iii-     Inverse index look-up:
+                                                                                                       Modulus 𝑞 , Primitive root of the modulus ∝
+The following mapping is used to inverse the operation and                                            Sub-moduli set 𝑞1 , 𝑞2 , 𝑞3
+recover the modular multiplication result:                                               Output       𝑧 = |𝑥 ∙ 𝑦|𝑞
+   𝑥𝑖 = |∝𝑟𝑖 |𝑞                                                                   (10)           1:   Find index 𝑘 𝑓𝑜𝑟 𝑥 𝑎𝑛𝑑 𝑦 using 𝑔 = |∝𝑘 |𝑞
+                                                                                                 2:   Compute submodular residues for 𝑘(𝑥), 𝑘(𝑦):
+  Following these three steps, the whole reconstruction table
+contents are generated.                                                                          3:      𝑥1 = |𝑘(𝑥)|𝑞1 , 𝑥2 = |𝑘(𝑥)|𝑞2 , 𝑥3 = |𝑘(𝑥)|𝑞3
+  Algorithm 3 summarises the proposed modular
+                                                                                                 4:      𝑦1 = |𝑘(𝑦)|𝑞1 , 𝑦2 = |𝑘(𝑦)|𝑞2 , 𝑦3 = |𝑘(𝑦)|𝑞3
+multiplication procedure.
+                                                                                                 5:   Compute residues additions:
+   B. Modular multiplier interconnections and architecture
+                                                                                                 6:      𝑟1 = |𝑥1 + 𝑦1 |𝑞1
+   The proposed architecture of the modular multiplier is shown
+in Fig. 1. It shows the interconnections of the ROMs with some                                   7:      𝑟2 = |𝑥2 + 𝑦2 |𝑞2
+of the table’s content. In theory, multiplication by zero is not                                 8:      𝑟3 = |𝑥3 + 𝑦3 |𝑞3
+allowed; therefore, this particular case is coded manually. The
+sub-moduli 𝑞2 = 31 route is chosen to detect the multiplication                                  9:   Compute CRT: 𝑟 = 𝐶𝑅𝑇(𝑟1 , 𝑟2 , 𝑟3)
+by zero by storing 31 in index zero as this number is not a valid                            10:      Correct modulus overflow: 𝑟𝑖 = |𝑟|𝑞−1
+result of sub-modulo 31. Then, the addition table corresponding
+to the row and column of 31 will also contain 31, and this will                              11:      Inverse index look-up: 𝑧 = |∝𝑟𝑖 |𝑞
+lead to the result of zero output from the reconstruction table as
+column address 31 contains all zeros.
+
+
+
+                                -
+                                                               ...
+                                                               ...          -
+                                                               ...          -
+                                                               ...          -
+                                        ...
+
+
+
+
+                                                               ...
+                                              ...
+
+
+                                                         ...
+
+
+
+
+                                                                      ...
+                                                                            ...
+                                                  ...
+
+
+
+
+                                                               ...
+                                                               ...
+                        ...
+                              ...
+
+
+
+
+                                                               ...          -
+                                              -     -    -     ...    -     -
+
+
+
+
+                                                               ...
+                                                               ...
+                                                               ...
+                                                               ...    -
+                                       ...
+
+
+
+
+                                                               ...
+                                              ...
+
+
+                                                        ...
+
+
+
+
+                                                                      ...
+                                                                            ...
+                                                  ...
+
+
+
+
+                                                               ...
+                        ...
+                              ...
+
+
+
+
+                                                               ...
+                                                               ...
+                                                               ...
+
+
+
+
+                                -                              ...
+                                                               ...
+                                                               ...
+                                                               ...
+                                       ...
+
+
+
+
+                                                               ...
+                                              ...
+
+
+                                                        ...
+
+
+
+
+                                                                      ...
+                                                                            ...
+                                                  ...
+
+
+
+
+                                                               ...
+                                                                                                         Reconstruction table
+                                                               ...
+                        ...
+                              ...
+
+
+
+
+                                                               ...
+                                                               ...
+
+
+                  Inde tables                       Addition tables
+
+
+
+
+                                                        Fig. 1: Multiplier tables interconnections
+                                                                                                                                     6
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+   The sub-moduli systems have been carefully selected as this        implemented by only shifting the input right by one if the input
+will lead to an efficient implementation. Sub-moduli 7 is             is even. In case the input is odd, then the shifting right of the
+represented with 3-bit, and both sub-moduli 31 and 32 are             input by one followed by addition with the precomputed
+represented with 5-bit. There is an unused address pattern in the     constant 𝑞 + 1⁄2.
+addition tables of these sub-moduli and the reconstruction table;
+however, we believe this is the minimal for Kyber modulus.
+   Implementing the multiplier on FPGA requires only storing
+the tables in Read Only Memory (ROM). In this work, we chose
+to implement the tables in the FPGA BRAMs configured as
+ROM. Multiplying two numbers requires 3 ROMs for each
+input to store the index tables. The size of the first ROM is 3-
+bit × 3329, while the other two are 5-bit × 3329. These three
+ROMs are concatenated together to form a 13-bit × 3329 ROM
+for an efficient FPGA BRAM utilization, which is equivalent to
+1.5 36K BRAM. Then, addition tables are stored in 3 ROMs
+where the first one is 3-bit × 64, and the other two are 5-bit ×
+1024. These small tables are equivalent to half of a 36k BRAM.
+Finally, a 12-bit × 7168 ROM is required to store the
+reconstruction table and is taking 2.5 36k BRAM. In total, a 6
+36k BRAMs are needed to perform the modular multiplication
+of two numbers. A dual-port ROM is available in most FPGAs,
+which can be utilized to implement two modular multiplications
+with the same resources, and in this work, we call it a dual
+modular multiplier (DMM). The operation is completed in three
+clock cycles for both single and dual modes.
+
+   C. Dual butterfly
+   The proposed dual butterfly unit is shown in Fig. 2. It
+employs our dual modular multiplier to perform two butterfly
+operations simultaneously with the same modular multiplier
+resources. The butterfly is designed to be configurable to
+perform NTT, INTT or CWM butterfly operations. As                                     Fig. 2: Dual Butterfly Unit (DBU)
+presented in algorithm 1, the NTT utilizes CT butterfly, while
+GS butterfly architecture is used for the INTT operations, as            D. Top-level design
+shown in algorithm 2. INTT requires multiplying the                      The top-level design of the proposed accelerator with one
+coefficients by 𝑛−1 , which results in an extra 256 modular           dual butterfly unit is shown in Fig. 3. The engine consists of 4
+multiplication for each polynomial. However, a method                 main components: BRAMs, ROM, DBU, and control unit. The
+presented in[28] eliminates this extra multiplication by dividing     twiddle factors are precomputed and stored in the ROM. The
+by two the outputs of the GS butterfly operation at each INTT         control logic generates the appropriate read-and-write
+stage. This work follows this approach and creates a special          addresses and initiates the desired state machine for NTT, INTT
+hardware unit for modular division by 2 for each output. The          or CWM operations.
+butterfly also performs the CWM as in (2), which needs five              Memory access is a challenging aspect of designing NTT
+modular multiplications and two modular additions. The                accelerators. A flexible design presented in[16] which requires
+butterfly comprises of one dual modular multiplier, two               4 BRAMs for each butterfly, resulting in a total of 8 BRAMs
+modular additions, two modular subtractions, and four modular         used to store the two multiplied polynomials. In this work an
+divisions by two.                                                     efficient memory organization is proposed as shown in Fig. 4
+   The single butterfly unit is similar to the dual one except that   where only a single memory bank is used for both operands but
+it processes one pair of the input coefficients at a time instead     with opposite orders to allow efficient access during the CWM
+of two pairs and uses the proposed multiplier in single mode.         process. This lowers the BRAM usage to by half in comparison
+Both butterfly structures require 6 clock cycles to execute the       with the work in [16]. Second, for multiple PE configurations
+butterfly operations. The delay registers are placed to               as in the one DBU and two DBU cases, the coefficients are
+synchronize the operations and allow pipeline execution.              packed together to form a 24-bit and 48-bit data paths,
+Modular addition is implemented by addition followed by               respectively, and stored in one memory bank. As a result, 2
+reduction and is implemented in two clock cycles to minimize          BRAMs are enough to store the two polynomials for the three
+the critical delay path—similarly, modular subtraction is             versions of the accelerator which is equivalent to one 36k
+implemented. Modular division by 2, i.e., (𝑎⁄2 𝑚𝑜𝑑 𝑞) is              BRAM.
+                                                                                                                                                                                                                                                                                         7
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+                                                                                                                                                                                                            Clock Cycles
+
+                                                                                                                                      1   2           3           4           5           6        7            8           9           10           11         12   13       14       15
+
+                                                                                                                                              𝑎1 𝑏1
+
+                                                                                                                                                          𝑎0 𝑏1
+
+                                                                                                                                                                      𝑎1 𝑏0                                 𝑎1 𝑏0 + 𝑎0 𝑏1
+                                                                  M M
+                                                                                                                                                                                  𝑎0 𝑏0
+
+                                                                                                                                                                                              𝑎1 𝑏1 𝜔                  𝑎1 𝑏1 𝜔 + 𝑎0 𝑏0
+
+                                                                                                                                                                                                        𝑎1 𝑏1
+
+
+                                                                              y                                                                                                                                     𝑎0 𝑏1
+
+                                                                              y                                                                                                                                                 𝑎1 𝑏0                                𝑎1 𝑏0 + 𝑎0 𝑏1
+                                    Twiddle                 w                                                             Control                                                                                                            𝑎0 𝑏0
+                                     actors
+                                                            w                                                               nit                                                                                                                       𝑎1 𝑏1 𝜔               𝑎1 𝑏1 𝜔 + 𝑎0 𝑏0
+
+                                     R M
+                                                                              y
+                                                                              y                                                                                   Fig. 5: The CWM operations schedule
+
+
+                                                                                                                                       IV. RESULTS AND COMPARISON
+                                                                  M M                                                                  In this section, we present the results of the FPGA
+                                                                                                                                    implementation of the proposed design. The design is written in
+                                                                                                                                    VHDL language, and we used Xilinx Artix-7 XC7A200 FPGA
+                                                                                                                                    to allow a fair comparison with the existing works. We used
+                                                                                                                                    the Xilinx Vivado 2022 tool to synthesize and implement the
+                                                                                                                                    design, and we recorded the result after place and route for a
+   Fig. 3: Top-level design with one Dual Butterfly Unit                                                                            more accurate result. To explore the performance of our design,
+                             (DBU)                                                                                                  we implemented three versions of our NTT-based polynomial
+                                                                                                                                    multiplier: SBU design, one DBU-based design, and two DBU-
+                                                                                                                                    based. For a fair comparison, we compare each version with its
+                                                                                                                                    counterpart in the literature, as shown in Table I.
+          Mem Mem                           Mem            Mem                         Mem                     Mem                     The proposed modular multiplier shortens the critical data
+              a             a                   a a        a a                         a a a a                 a a a a
+                                                                                                                                    path to compute the modular multiplication into FPGA routing
+              a             a                   a a        a a                        a a   a     a           a a a        a
+st Poly                           st Poly                               st Poly                                                     between the device BRAMs, as the entire modular
+              ...           ...                  ...        ...                             ...                     ...             multiplication is now performed in look-up tables, reducing the
+          a             a                   a     a    a     a                    a    a     a        a   a    a     a         a    time complexity significantly. Therefore, the accelerator
+              b             b                   b b        b b                         b b b b                 b b b b              performance of our three versions outperforms the related
+              b             b                   b b        b b                        b b b       b           b b   b      b        existing works. The proposed multiplier is evaluated with
+nd Poly                           nd Poly                           nd Poly
+              ...           ...                  ...        ...                             ...                     ...
+                                                                                                                                    complete polynomial multiplication, which comprises two NTT
+                                                                                                                                    operations, one CWM and one INTT. The SBU design
+          b             b                   b     b    b     b                    b    b     b        b   b    b     b         b
+                                                                                                                                    computes the polynomial multiplication in 9.6 µ𝑠,
+                    S
+                                                                                                                                    outperforming the work in[16] by 46%, while our design with
+                                                                                                                                    one DBU achieves 17% improvement compared to the work
+                                    Fig. 4: Memory Organization                                                                     in[29] to compute the multiplication in 5 𝜇𝑠. Finally, with a
+                                                                                                                                    36% improvement compared to the design in[30], the 2 DBU
+   The CWM operations schedule is shown in Fig. 5. The                                                                              design computes the NTT in 2.6 𝜇𝑠.
+schedule starts with 𝑎1 𝑏1 multiplication since it is the longest                                                                       To investigate the design efficiency, the Area-Time Product
+path to calculate the term 𝑎1 𝑏1 𝜔 and allows an efficient use of                                                                   with relation to LUT (ATP-LUT) and with relation to the
+the modular multiplier. The first result of the CWM is available                                                                    Equivalent Number of Slices (ATP-ENS) are compared against
+after 9 clock cycles, and then it takes 5 clock cycles after filling                                                                previous works.         The ATP-LUT shows a significant
+the pipeline. The proposed accelerator first computes the NTT                                                                       improvement compared to previous works with the SBU and
+for both input polynomials, then executes coefficient-wise                                                                          two DBU cases. Our design with SBU is 71 % better than the
+multiplication and finally, inverses the NTT to obtain the                                                                          work in[31], while the two DBU gives a 61% improvement in
+multiplication result. Since the NTT in Kyber is incomplete, it                                                                     comparison with the work in[30]. With one DBU design, our
+requires 7 stages to perform both the NTT and INTT. This                                                                            proposed design contributes to nearly 37% improvement in
+requires 128 operations in each stage, and with one DBU                                                                             comparison with the work in[29]. Although the proposed
+design, the NTT and INTT can be computed in 458 clock                                                                               methodology consumes higher BRAM usage, the ATP-ENS
+cycles. The CWM is performed in 328 clock cycles with the                                                                           points to the efficiency of the proposed methodology with SBU
+same butterfly configuration.                                                                                                       and two DBU designs showing a slight improvement against
+                                                                                                                                  8
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+
+                                                               TABLE I
+
+                       FPGA IMPLEMENTATION RESULTS WITH COMPARISON TO RELATED WORK
+
+                                       AREA                     Freq.        Latency (CC)          PMUL         ATP-      ATP-
+      Work       BU†
+                         LUT     FF    Slices DSP BRAM          (MHz)      NTT/INTT/CWM            Time‡        LUT§      ENS¶
+
+      [16]               948    352     281      1      2.5         190        904/904/647           17.7        16.8      15.8
+      [31]         1     360    145     187      3       2          115      940/1203/1289            38         13.7      35.7
+ This Work -                                                                                          9.6         3.9     15.6
+                         407    411     153      0      7.5         350        906/906/649
+   1 SBU                                                                                            (46%)       (71%)     (1%)
+      [29]               784    441      259     2       3          200        313/313/256           6.0         4.7        6.5
+      [31]               737    290      371     6       4          115       474/602/1289           24.7        18.2      46.3
+      [17]         2     1579   1058     527     2       3          161        448/448/256           9.9         15.7      13.5
+      [18]               880    999      345     2      1.5         229        448/448/256           7.0         6.1        6.1
+ This Work -                                                                                          5.0         2.9       8.4
+                         590    671      210     0      7.5         342        458/458/328
+   1 DBU                                                                                            (17%)       (37%)    (-28%)
+      [16]               2543   792      735     4       9          182        232/233/167           4.7         12.1      14.1
+      [32]               1549   788      635     4      16          159        457/457/140           6.61        10.3      28.2
+                   4
+      [30]               1740   643      575     4       5          200        225/225/140           4.1         7.1        8.3
+ This Work -                                                                                          2.6         2.7      7.9
+                         1052   1058     395     0      13.5        334        234/235/169
+   2 DBU                                                                                            (36%)       (61%)     (4%)
+
+  †
+    The number of butterflies in the design
+  ‡
+    The time in µs of complete polynomial multiplication i.e., INTT(NTT(X) * NTT(Y)).
+  §
+    Area-Time Product (ATP-LUT) = Total Time of computing polynomial multiplication in 𝑚𝑠 × number of LUT.
+  ¶
+    Area-Time Product (ATP-ENS) = Total Time of computing polynomial multiplication in 𝑚𝑠 × Equivalent Number of Slices
+  (ENS). ENS = Slices + DSP × 120 + BRAM × 196
+  1
+    1 NTT operation is considered in total time instead of 2 because 2 polynomials are computed in parallel.
+
+ the previous work in[16] and[30] by 1% and 4%, respectively
+and the one DBU design has ATP-ENS lower than the work
+in[18] by 28%.
+    Fig. 6 compares the three proposed accelerators in terms of
+time required to compute the polynomial multiplication (delay),
+ATP-LUT and ATP-ENS. As expected, more resources (from
+one SBU towards 2 DBUs) result in a shorter delay, but
+interestingly, the ATP-LUT and ATP-ENS improve gradually
+and then remain almost steady from one DBU to 2 DBUs
+designs. This is because, in the SBU design, the modular
+multiplier is used with single mode configuration, whereas in
+the other two designs, the multiplier is used efficiently in dual
+mode.
+    Our design does not consume any DSP slices as we                      Fig. 6: Performance comparison of the three proposed
+implemented the entire modular multiplication in ROM look-                                     accelerator
+up tables using BRAMs instead of the device-distributed
+memory. This enables reduced LUT resource usage on the
+FPGA while still achieving high clock frequencies of 350 MHz,                                V. CONCLUSION
+342 MHz, and 330 MHz for the three design versions,
+                                                                         This paper presented a high-speed hardware accelerator for
+respectively, the highest in the literature to date to our best
+                                                                      the polynomial multiplication of CRYSTALS-Kyber based on
+knowledge.
+                                                                      NTT. A new look-up tables approach is proposed with
+                                                                                                                                                              9
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+corresponding hardware architecture to compute the modular                             the Proceedings on Advances in cryptology---CRYPTO '86, Santa
+                                                                                       Barbara, California, USA, 1986.
+multiplication efficiently. A new sub-moduli system is                            [11] Y. Huang, M. Huang, Z. Lei, and J. Wu, "A pure hardware implementation
+developed to decompose the operation in the Kyber modulus                              of CRYSTALS-KYBER PQC algorithm through resource reuse," IEICE
+into smaller sub-moduli for efficient implementation. On top of                        Electron. Express, vol. 17, 2020.
+                                                                                  [12] P. Longa and M. Naehrig, "Speeding up the Number Theoretic Transform
+this modular multiplier, single and dual butterfly NTT units are
+                                                                                       for Faster Ideal Lattice-Based Cryptography," in International Conference
+built to evaluate the performance of the proposed design. The                          on Cryptology and Network Security, 2016: Springer, pp. 124-139.
+designs were implemented, placed, and routed on Xilinx Artix-                     [13] M. Bisheh-Niasar, R. Azarderakhsh, and M. Mozaffari-Kermani, "High-
+7 FPGA. The accelerator with SBU computes the entire                                   Speed NTT-based Polynomial Multiplication Accelerator for Post-
+                                                                                       Quantum Cryptography," in 2021 IEEE 28th Symposium on Computer
+polynomial multiplication in 9.6 µ𝑠 faster than the previous                           Arithmetic (ARITH), June 2021, pp. 94-101.
+works by 46%.                                                                     [14] Z. Chen, Y. Ma, T. Chen, J. Lin, and J. Jing, "High-performance area-
+   The methodology presented enables trade-off to be made                              efficient polynomial ring processor for CRYSTALS-Kyber on FPGAs,"
+                                                                                       Integration, vol. 78, pp. 25-35, 2021.
+between computing logic and memory resources. Although the                        [15] L. Ma, X. Wu, and G. Bai, "Parallel polynomial multiplication optimized
+presented designs were targeted to FPGA fabrics, it is expected                        scheme for CRYSTALS-KYBER Post-Quantum Cryptosystem based on
+that similar conclusions to be drawn in terms of results for ASIC                      FPGA," in 2021 International Conference on Communications,
+implementation as demonstrated with the presented Area-Time                            Information System and Computer Engineering (CISCE), 2021: IEEE, pp.
+                                                                                       361-365.
+Product (ATP) metric. Furthermore, the ATP results could be                       [16] F. Yaman, A. C. Mert, E. Ozturk, and E. Savas, "A Hardware Accelerator
+used as indicative of energy performance, however, further                             for Polynomial Multiplication Operation of CRYSTALS-KYBER PQC
+investigation would be required for power/energy optimization.                         Scheme," in 2021 Design, Automation & Test in Europe Conference &
+   Finally, further research is required into understanding issues                     Exhibition (DATE), Grenoble, France, 2021: IEEE, pp. 1020-1025.
+                                                                                  [17] X. Yufei and L. Shuguo, "A Compact Hardware Implementation of CCA-
+around compatibility of current hardware technologies for post-                        Secure Key Exchange Mechanism CRYSTALS-KYBER on FPGA,"
+quantum cryptography with potential future quantum                                     IACR Transactions on Cryptographic Hardware and Embedded Systems,
+computing hardware platforms to ensure that the advances                               vol. 2021, no. 2, pp. 328–356, 2021.
+made maintain their efficiencies when deployed in practice in                     [18] V. B. Dang, K. Mohajerani, and K. Gaj, "High-Speed Hardware
+                                                                                       Architectures and FPGA Benchmarking of CRYSTALS-Kyber, NTRU,
+future. There are already ongoing efforts into the challenges                          and Saber," IEEE transactions on computers, vol. 72, no. 2, pp. 306-320,
+involved in migrating to PQC for cybersecurity in the quantum                          2023.
+era as exemplified by the ongoing work under the National                         [19] A. Sarker, M. Mozaffari-Kermani, and R. Azarderakhsh, "Hardware
+Cybersecurity Centre of Excellence (NCCo )’s Migration to                              Constructions for Error Detection of Number-Theoretic Transform
+                                                                                       Utilized in Secure Cryptographic Architectures," IEEE Transactions on
+PQC project [33].                                                                      Very Large Scale Integration (VLSI) Systems, vol. 27, no. 3, pp. 738-741,
+                                                                                       2019.
+                                                                                  [20] A. Sarker, A. C. Canto, M. M. Kermani, and R. Azarderakhsh, "Error
+                                                                                       Detection Architectures for Hardware/Software Co-Design Approaches of
+                               REFERENCES                                              Number-Theoretic Transform," IEEE Transactions on Computer-Aided
+[1] P. W. Shor, "Polynomial-Time Algorithms for Prime Factorization and                Design of Integrated Circuits and Systems, vol. 42, no. 7, pp. 2418-2422,
+     Discrete Logarithms on a Quantum Computer," SIAM J. Comput., vol. 26,             2023.
+     no. 5, pp. 1484–1509, 1997.                                                  [21] T. Pöppelmann and T. Güneysu, "Towards Practical Lattice-Based Public-
+[2] L. Chen et al., "Report on post-quantum cryptography," The National                Key Encryption on Reconfigurable Hardware," in 20th International
+     Institute of Standards and Technology, 2016. [Online]. Available:                 Conference on Selected Areas in Cryptography, SAC 2013, 2013, pp. 68-
+     https://nvlpubs.nist.gov/nistpubs/ir/2016/NIST.IR.8105.pdf                        85.
+[3] G. Alagic et al., "Status Report on the Third Round of the NIST Post-         [22] E. Fujisaki and T. Okamoto, "Secure Integration of Asymmetric and
+     Quantum Cryptography Standardization Process," The National Institute             Symmetric Encryption Schemes," in 19th Annual International
+     of Standards and Technology, July 2022. [Online]. Available:                      Cryptology Conference, 1999, vol. 1666: Springer, pp. 537-554.
+     https://nvlpubs.nist.gov/nistpubs/ir/2022/NIST.IR.8413-upd1.pdf              [23] H. J. Nussbaumer, Fast Fourier transform and convolution algorithms, 2
+[4] R. Avanzi et al., "CRYSTALS-Kyber: Algorithm Specifications And                    ed. Springer, 1982.
+     Supporting Documentation," 2021. [Online]. Available: https://pq-            [24] V. Lyubashevsky and G. Seiler, "NTTRU: Truly Fast NTRU Using NTT,"
+     crystals.org/kyber/data/kyber-specification-round3-20210131.pdf.                  IACR Transactions on Cryptographic Hardware and Embedded Systems,
+[5] A. Langlois and D. Stehle, "Worst-case to average-case reductions for              no. 3, pp. 180-201, 2019.
+     module lattices," Designs, Codes and Cryptography, vol. 75, no. 3, pp.       [25] J. W. Cooley and J. W. Tukey, "An algorithm for the machine calculation
+     565-599, 2015.                                                                    of complex fourier series," Mathematics of computation, vol. 19, no. 90,
+[6] W. Tan, Y. Lao, and K. K. Parhi, "KyberMat: Efficient Accelerator for              pp. 249-259, 1965.
+     Matrix-Vector Polynomial Multiplication in CRYSTALS-Kyber Scheme             [26] W. M. Gentleman and G. Sande, "Fast fourier transforms—For fun and
+     via NTT and Polyphase Decomposition," in 2023 IEEE/ACM                            profit," in AFIPS Conference Proceedings - 1966 Fall Joint Computer
+     International Conference on Computer Aided Design (ICCAD), 2023, pp.              Conference, AFIPS 1966, 1966, pp. 563-578.
+     1-9.                                                                         [27] G. A. Jullien, "Implementation of Multiplication, Modulo a Prime
+[7] M. Li, J. Tian, X. Hu, and Z. Wang, "Reconfigurable and High-Efficiency            Number, with Applications to Number Theoretic Transforms," IEEE
+     Polynomial Multiplication Accelerator for CRYSTALS-Kyber," IEEE                   Transactions on Computers, vol. C-29, no. 10, pp. 899-905, 1980.
+     Transactions on Computer-Aided Design of Integrated Circuits and             [28] N. Zhang, B. Yang, C. Chen, S. Yin, S. Wei, and L. Liu, "Highly Efficient
+     Systems, vol. 42, pp. 2540-2551, 2023.                                            Architecture of NewHope-NIST on FPGA using Low-Complexity
+[8] J. Mu et al., "Scalable and Conflict-Free NTT Hardware Accelerator                 NTT/INTT," IACR transactions on cryptographic hardware and
+     Design: Methodology, Proof, and Implementation," IEEE Transactions on             embedded systems, pp. 49-72, 2020.
+     Computer-Aided Design of Integrated Circuits and Systems, vol. 42, no.       [29] W. Guo and S. Li, "Split-Radix Based Compact Hardware Architecture
+     5, pp. 1504-1517, 2023.                                                           for CRYSTALS-Kyber," IEEE Transactions on Computers, vol. 73, no.
+[9] P. L. Montgomery, "Modular Multiplication Without Trial Division,"                 1, pp. 97-108, 2024.
+     Mathematics of computation, vol. 44, no. 170, pp. 519-521, 1985.             [30] W. Guo and S. Li, "Highly-Efficient Hardware Architecture for
+[10] P. Barrett, "Implementing the Rivest Shamir and Adleman public key                CRYSTALS-Kyber With a Novel Conflict-Free Memory Access Pattern,"
+     encryption algorithm on a standard digital signal processor," presented at        IEEE Transactions on Circuits and Systems I: Regular Papers, vol. 70,
+                                                                                       no. 11, pp. 4505-4515, 2023.
+                                                                                   10
+> REPLACE THIS LINE WITH YOUR MANUSCRIPT ID NUMBER (DOUBLE-CLICK HERE TO EDIT) <
+
+[31] M. Bisheh-Niasar, R. Azarderakhsh, and M. Mozaffari-Kermani,
+     "Instruction-Set Accelerated Implementation of CRYSTALS-Kyber,"
+     IEEE transactions on circuits and systems. I, Regular papers, vol. 68, no.
+     11, pp. 4648-4659, 2021.
+[32] W. Guo, S. Li, and L. Kong, "An Efficient Implementation of KYBER,"
+     IEEE Transactions on Circuits and Systems II: Express Briefs, vol. 69, no.
+     3, pp. 1562-1566, 2022.
+[33] C. Paquin, J. Goodman, J. Gray, and V. Krummel, "PANEL: NIST SP
+     1800-38C, Quantum Readiness: Testing Draft Standards for
+     Interoperability and Performance," presented at the 5th NIST PQC
+     Standardization Conference, Rockville, USA, April 2024. [Online].
+     Available:      https://csrc.nist.gov/csrc/media/Presentations/2024/panel-
+     nccoe-interoperability-and-performance/images-media/panel-nccoe-
+     interoperability-pqc2024.pdf.
+
+
+                         Abdullah Alhassani received his bachelor's degree in
+                         computer engineering from Umm Al-Qura
+                         University, Saudi Arabia, in 2008 and his master's
+                         degree in computer engineering from RMIT
+                         University, Australia, in 2011. He is currently
+                         pursuing his Ph.D. with the Department of Electronic
+                         and Electrical Engineering at University of Sheffield,
+                         UK. His research interests include post-quantum
+                         cryptography and the secure design and efficient
+                         implementation of cryptographic algorithms.
+
+
+
+                         Mohammed Benaissa is currently a Professor of
+                         information engineering in the Department of
+                         Electronic and Electrical Engineering, University of
+                         Sheffield, Sheffield, UK. His research interests
+                         include finite number systems, signal processing and
+                         electronic system design. He has published over 200
+                         papers on contributions in these areas and their
+                         application to security, communications and
+                         healthcare.
+

@@ -1,0 +1,1556 @@
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS I: REGULAR PAPERS 1
+A Low-Latency Power Series Approximate
+Computing and Architecture for Co-Calculation of
+Division and Square Root
+Dian Tian1,2, Ningmei Yu1,∗, Minghui Xie1, Jiahao Tang1, Zhuang Feng1, Álvaro Hernández2 Senior Member,
+IEEE, Jesús Ureña2 Senior Member, IEEE
+Abstract—The calculation of division and square root is widely
+used in edge computing related to image processing, clustering,
+recognition, and reconstruction, among others. Their common
+multi-stage serial calculation takes longer, and requires a higher
+latency, and more redundant hardware resources for multi-
+dimensional parallel computations. This work proposes a low-
+latency power series approximate digital computing (PSADIC)
+paradigm and architecture, which achieves a fast low-latency cal-
+culation of multi-dimensional mathematical expressions, focusing
+on the co-calculation of division and square root. This approach
+allows to compute not only the division and the square root, but
+also the inverse and the inverse square root. Moreover, serial
+and pipelined architectures have been designed here to achieve
+smaller areas and lower latencies, respectively. Compared to
+the multi-stage calculation with CORDIC (COordinate Rotation
+DIgital Computer), the mean relative error distance (MRED)
+is reduced by 67% in PSADIC. Under TSMC (Taiwan Semi-
+conductor Manufacturing Company) 40nm CMOS technology,
+the proposed serial and pipelined architectures achieve a 66.67%
+overall latency reduction compared to the CORDIC when using
+both its own maximum clock frequency, and a 75% cycle latency
+reduction. Meanwhile, both the ADP (Area Delay Product) and
+PDP (Power Delay Product) are also optimized.
+Index Terms—Edge computing, image processing, power series
+approximate digital computing, calculation of division and square
+root.
+I. INTRODUCTION
+NOWADAYS centralized computing puts more pressure on
+cloud servers, as well as more cost and carbon emissions,
+whereas edge computing at local or remote devices, such
+as cloud-edge-terminal architecture, has recently become a
+research trending field. In this context, the computation of
+digital signals for artificial intelligence, image processing or
+communications, among others [1]–[5], is gradually shifting
+to an edge approach, as in IIoT (Industrial Internet of Things)
+[6], IoMT (Internet of Medical Things) [1], [7], or AIoT
+(Artificial Intelligence of Things) [2]. In all these domains
+of application, randomly distributed data often require nor-
+malization or standardization to enhance the robustness of the
+1School of Automation and Information Engineering, Xi’an University of
+Technology, Xi’an, China
+2Electronics Department, University of Alcalá, Alcalá de Henares (Madrid),
+Spain.
+∗ Corresponding author. E-mail address: yunm@xaut.edu.cn
+This paper was produced by the IEEE Publication Technology Group. They
+are in Piscataway, NJ.
+Manuscript received Sept. 26, 2023.
+algorithms, where division, square root, inverse square root,
+or a combination of those, are frequently used, thus extremely
+consuming resources at edge-computing devices. Hence, it
+becomes necessary and meaningful to research simple and
+fast computation methods for the aforementioned operations:
+division, square root, and inverse square root.
+For that purpose, there are five widely spread methods
+applied for division [8]: digit recurrence, functional iteration
+[9], high-radix [10], [11], variable latency, and look-up tables
+(LUT). All of them should consider a suitable tradeoff between
+the computational accuracy at the remote devices and the
+resource consumption. Fitting a curve or a surface is a suitable
+way to achieve this balance in hardware implementations.
+In [12], the quotient is modeled as a surface composed of
+multiple small rectangular planes, then requiring only adders
+and LUT. The maximum absolute error percentage (MAEP)
+ranges from 0.44% to 0.11%. In [13] the Mitchell-based
+logarithmic division computation method is optimized, which
+is improved 45.4% and 34.8% in terms of computational speed
+and area delay product (ADP), respectively. Also, in [14] a
+first pipelined approximate multiplier and divider architecture
+is proposed, which efficiently utilizes 6-input look-up tables
+(6-LUTs) and fast carry chains to implement Mitchell’s ap-
+proximate algorithms, customized for FPGAs.
+Furthermore, stochastic computing (SC), approximate com-
+puting, and CORDIC (COordinate Rotation DIgital Computer)
+systems are addressed for fault-tolerant computing. SC is
+a probability-based computing paradigm that provides lower
+area and power consumption. The SC-based division and
+square root achieve 2.4× and 30× energy efficiency gains at 8-
+bit (256-bit input stream) and 4-bit (16-bit input stream) fixed-
+point calculation, respectively [15]. However, beyond 8 bits,
+the energy efficiency of the SC circuit is lower than that from
+the binary circuit, although the speed is actually lower, since
+it is proportional to the bitstream length [16]. Interestingly,
+in [17] a type of evolutionary algorithm, cartesian genetic
+programming (CGP), is used to develop a library of square
+root circuits ranging from 2-bits to 8-bits.
+Approximate computing is considered a promising approach
+in fault-tolerant computation. The technique allows substan-
+tially improved energy efficiency by relaxing the need for
+full precision [18]–[21]. In [20] a logarithmic approximate
+divider is proposed that computes with adders, subtractors,
+0000–0000/00$00.00 © 2023 IEEE
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS I: REGULAR PAPERS 2
+TABLE I
+PERFORMANCE ACHIEVED BY PREVIOUS WORKS IN THE CALCULATION OF
+DIVISION OR SQUARE ROOT.
+Design
+CPD1
+(ns)
+ADP2
+(µm2 · ns)
+PDP2
+(pJ)
+MRED
+(%)
+Cycles
+[9]-DP 0.93 32295.48 25.57 0 18
+[9]-DPDSP 0.98 40013.23 27.97 0 14
+[11]-HR-AXD 4 39506.17 4.27 - 1
+[12]-FP16 2.52 2730.31 - 0.44 1
+[13] 2.85 6012.44 - 0.2 1
+[15]-SC-DIV 0.9 71.92 0.005 - 255
+[15]-SC-SQR 0.85 48.73 0.003 - 255
+[17]-Digit-FP-SQR 4.32 598.03 34.29 0.46 1
+[18]-AXRD-M1 4.51 1256.69 0.924 0.23 1
+[18]-AXRD-M2 2.53 403.17 0.24 4.25 1
+[20]-LEAD 2.75 6342.52 0.23 4.85 1
+[20]-S-LEAD 3.01 7020.66 0.30 2.26 1
+[24]-SAADI-EC 1.57 7573.22 2.94 0.006 15
+[25]-READ 4.53 6789.86 0.17 1.47 1
+[26]-AASR A-12 3.34 1363.27 0.31 0.69 1
+[26]-AXSR-11 4.13 1601.43 0.40 1.13 1
+[27]-CORDIC-SQR 0.67 8971.16 3.78 0.008 15
+[28]-CORDIC-Nth-Root 0.51 441163.9 16.27 0.0008 73
+[29]-CORDIC-Nth-Root 0.53 20627.1 4.96 0.0013 65
+1 Critical path delay. 2 Standardized to 40 nm technology node.
+and shifters. With an unsigned 16-bit calculation, 70% energy
+efficiency is achieved compared to the exact array divider
+in ASIC, and 50% energy saving compared to a divider IP
+in FPGA. In [22] the regular subtractor unit is replaced by
+an inaccurate one to optimize the approximate non-restoring
+divider (AXDnr) proposed in [23]. Lower power consumption
+and smaller circuit complexity are obtained at the cost of a
+small accuracy degradation. Furthermore, in [11] an approxi-
+mate high base divider (HR-AXD) is defined to reduce power
+consumption and circuit complexity by approximate adders,
+cell truncation, and error compensation. In addition, accuracy-
+configurable approximate dividers have been researched pre-
+viously [24], [25]. The scalable accuracy approximate divider
+with error compensation (SAADI-EC) [24] supports dynamic
+energy-quality scalability by the incremental approximation of
+the reciprocal of the divisor, based on the Taylor series expan-
+sion. The results for 32-bit division with 8-bit approximation
+has an average accuracy between 94.2% and 99.6% with a
+latency between one and seven cycles.
+In particular, a low-power unsigned divider and square root
+(SQRT) circuit is proposed in [26] based on adaptive ap-
+proximation. The effective bits of the operands are adaptively
+selected to reduce the bit-width for the approximate compu-
+tation of the divider and the square root. The approximate
+divider achieves more than 60% improvement in speed and
+power consumption compared to the exact design. The 16/8
+approximate divider is 2.5 times faster than the exact divider,
+whereas it consumes only 34.42% of the power. The 16-bit
+SQRT circuits are from 22.69% to 74.54% faster and save
+from 30.75% to 79.34% power over the exact design.
+It is obvious that approximate division computation provides
+a large advantage for edge computing. As for nonlinear
+functions such as SQRT, sine or cosine, CORDIC systems
+with radix-4, radix-8 and hybrid radix, can be adopted [27]–
+[39]. In [6] an RDP-CORDIC algorithm is proposed for the
+real-time operation of edge computing devices in smart grids.
+It employs a three-stage and multi-stage combined iterative
+structure to achieve fast computation and low resource con-
+sumption for nonlinear functions, by predicting all the micro-
+rotational directions. Mopuri and Acharryya [34] used two
+circular CORDICs to compute the square root of complex
+numbers, avoiding hyperbolic CORDICs and reducing the
+area. CORDIC systems have also been used to compute the
+Nth root of an arbitrary number but with a long delay [27]–
+[29]. In [35] normalized preprocessing and parabolic synthesis
+methods were involved to reduce the delay. Mahdavi and
+Timarchi [33], [36] optimized the CORDIC systems by using
+appropriate data gating techniques and BSD (Binary Signed
+Digit) coding.
+Summing it up, the aforementioned works have made differ-
+ent contributions to division and/or square root computation,
+where Table I summarizes the performance of the most signif-
+icant ones for comparison’s sake. However, the simultaneous
+calculation (co-calculation) of the square root and the division
+is still required for normalization, standardization, and imaging
+applications [40]. Generally, they are computed in multiple
+stages using the respective algorithms with a delay, area, and
+power that are the compilation from every individual stage. In
+this context, this work proposes a power series approximate
+digital computing (PSADIC) and architecture, including a
+paradigm of division with coefficients αx0
+z0
+(PSADIC-c) and
+another paradigm of division with coefficients and square root
+α x0
+√
+z0
+(PSADIC-cs). The co-calculation of the division and
+the square root is designed to achieve low latency, whereas
+the inverse and inverse square root can also be computed in
+the proposal. Moreover, the integer, fixed-point, and floating-
+point representations, signed or unsigned, can be achieved by
+word length setting and sign calculation. To accelerate the
+iteration process, the radix-4 PSADIC is further derived as
+well. Monte Carlo simulations have allowed the verification
+of the algorithm’s effectiveness, accuracy, and robustness, by
+comparing it with CORDIC. On the other hand, the serial and
+pipelined architectures of the dual-mode PSADIC (suitable
+for both PSADIC-c and PSADIC-cs) are designed, optimized,
+and evaluated at TSMC (Taiwan Semiconductor Manufactur-
+ing Company) 40nm CMOS technology. Finally, the Z-score
+standardization algorithm is given as an example to analyze the
+features of the PSADIC architectures. Consequently, the main
+contributions of this work may be summarized as follows:
+1) A low-latency power series approximate digital comput-
+ing (PSADIC), including two paradigms, is proposed
+for co-calculating division and square root. Furthermore,
+some other computable mathematical expressions from
+PSADIC are obtained.
+2) The radix-4 PSADIC is derived to accelerate the iter-
+ation process, and the corresponding radix-4 serial and
+pipelined architectures are defined and analyzed in terms
+of word length, area, delay and power.
+3) Error figures, number of iterations, and required ap-
+pended bits for PSADIC are discussed by using Monte
+Carlo simulations, whereas a case of Z-score standard-
+ization is also used to test and discuss the architecture
+performance.
+The rest of the manuscript is organized as follows: Section
+II derives the two PSADIC’s paradigms, as well as all the
+computable expressions, analyzing the computing range and
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS I: REGULAR PAPERS 3
+errors; Section III designs and optimizes the architectures, and
+analyzes the critical path and word length settings; Section
+IV discusses PSADIC performance using Monte Carlo sim-
+ulations, and compares resulting figures with other previous
+proposals; Section V provides some experimental results about
+the Z-score standardization; and, finally, conclusions are drawn
+in Section VI.
+II. POWER SERIES APPROXIMATE DIGITAL COMPUTING
+PRINCIPLES
+The main idea of the PSADIC method is to approximate the
+denominator of the division to 1 by multiplying by a power
+series. Then, the quotient is approximated as the product of
+the power series and the original numerator. Based on this
+principle, the PSADIC-c paradigm emerges when multiplying
+by a particular set of coefficients ci. Additionally, by trans-
+forming the denominator into a square root, the PSADIC-cs
+paradigm can also be defined. Both, PSADIC-c and PSADIC-
+cs, are described hereinafter, summarizing their expressions
+and evaluating the resulting errors.
+A. Division with Coefficients (PSADIC-c)
+The division paradigm with coefficients can be obtained
+by multiplying with the coefficient α. Following the PSADIC
+principle, the numerator and denominator are then multiplied
+by the same power series s(r), as shown in Eq. (1).
+f = α ·
+x0
+z0
+= α ·
+x0 · s(r)
+z0 · s(r)
+= α ·
+x0 ·
+N
+P
+i=0
+cir−i
+z0 ·
+N
+P
+i=0
+cir−i
+(1)
+Assuming that a radix r = 2 and ci = −1, 0, +1, the
+numerator and denominator can be calculated iteratively using
+only adders and shifters. The coefficients ci+1 can be deter-
+mined by comparing the denominator of the i-th series with the
+coefficient α. Note that if the denominator z0 · s(2) converges
+to α, the numerator does to f. If ci = 1, a maximum value
+exists for s(2), hence a boundary condition for the coefficient
+α can defined as:
+α < z0 ·
+N
+X
+i=0
+ci2−i
+= z0 · (2 − 2−N
+). (2)
+We define this paradigm as radix-2 PSADIC-c. Similarly,
+the radix-4 PSADIC-c paradigm is shown in Eq. (3). At the
+i-th iteration, the step of the denominator ∆zi is z0 · 4−i
+, and
+the step of the numerator ∆xi is x0 · 4−i
+.
+f = α ·
+x0
+z0
+=
+x0 ·
+N
+P
+i=0
+ci · 4−i
+1
+α · z0 ·
+N
+P
+i=0
+ci · 4−i
+, ci = {±3, ±2, ±1, 0} (3)
+For the i-th iteration, the distance dzi between the current
+denominator zi and the target α is computed first. When dzi is
+lower than ∆zi
+2 , the denominator zi+1 is assigned to zi ± ∆zi
+4 ,
+and xi+1 equals to xi ± ∆xi
+4 . Conversely, as the distance dzi
+exceeds ∆zi
+2 , zi+1 is zi ±3∆zi
+4 , and xi+1 is xi ±3∆xi
+4 . If they
+are the same, zi+1 is set to zi ±2∆zi
+4 , and xi+1 to xi ±2∆xi
+4 .
+The sign is positive for zi greater than zero, and negative
+otherwise. The final iterative body is as follows:
+
+
+
+
+
+
+
+zi+1 = zi + ci+1 · ∆zi
+4
+xi+1 = xi + ci+1 · ∆xi
+4
+∆zi = z0 · 4−i
+∆xi = x0 · 4−i
+. (4)
+Let ci = ai · bi, then we obtain:
+ai =
+
+
+
+1, zi < α
+−1, zi > α
+0, zi = α
+, bi =
+
+
+
+1, dzi
+< ∆zi
+2
+2, dzi
+= ∆zi
+2
+3, dzi
+> ∆zi
+2
+. (5)
+Whether zi and α are equal (ai = 0), the process has
+converged and the iteration process can be ended, since f ap-
+proximates to xi. Otherwise, the iteration process is completed
+when i = N, and f approximates to xN .
+B. Division with Coefficients and Square Root (PSADIC-cs)
+The PSADIC-cs paradigm is obtained by replacing the
+denominator in Eq. (3) with the square root. As shown in
+Eq. (6), the radix-4 power series s(4) makes
+√
+zi approximate
+to the coefficient α.
+f = α ·
+x0
+√
+z0
+= α ·
+x0 ·
+N
+P
+i=0
+ci · 4−i
+√
+z0 ·
+N
+P
+i=0
+ci · 4−i
+(6)
+Similarly, the boundary condition can be defined for α as:
+α <
+√
+z0 ·
+N
+X
+i=0
+ci · 4−i
+=
+√
+z0 · (2 − 4−N
+) (7)
+It is worth noting that, while the calculation of the square
+root is still required when using the previous PSADIC-c
+algorithm, the PSADIC-cs described hereinafter allows to
+obtain it directly in the iterative process. Let z′
+i =
+√
+zi, then
+z0 = z′
+0
+2
+and f = α x0
+z′
+0
+. After that, the iterative body is the
+same as that from the PSADIC-c paradigm:
+
+
+
+
+
+
+
+
+
+z
+′
+i+1 = z
+′
+i + ci+1 ·
+∆z
+′
+i
+4
+xi+1 = xi + ci+1 · ∆xi
+4
+∆z
+′
+i = z
+′
+0 · 4−i
+∆xi = x0 · 4−i
+. (8)
+Thus, the term zi+1 can be expressed and organized as
+follows:
+zi+1 = z′
+i+1
+2
+= zi + c2
+i+1 · ∆zi+1 +
+ci+1
+2
+· pi · 4−i
+, (9)
+where
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS I: REGULAR PAPERS 4
+
+
+
+
+
+
+
+p0 = z0
+pi+1 = pi + ci+1 · ∆pi+1
+∆pi = z0 · 4−i
+∆zi = z0 · 4−2·i
+.
+As can be observed, the square root has been discarded. For
+the coefficient ci, the condition dzi
+< ∆zi
+2 in Eq. (5) can be
+reorganized into:
+
+zi + ∆zi
+4 − pi · 4−i
+< α2
+,
+√
+zi > α
+zi + ∆zi
+4 + pi · 4−i
+> α2
+,
+√
+zi < α
+. (10)
+After being completely reorganized, the final coefficient ci
+is:
+ci =
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1, zi < α2
+and zi + ∆zi
+4
++ pi · 4−i
+> α2
+3, zi < α2
+and zi + ∆zi
+4
++ pi · 4−i
+< α2
+−1, zi > α2
+and zi + ∆zi
+4
+− pi · 4−i
+< α2
+−3, zi > α2
+and zi + ∆zi
+4
+− pi · 4−i
+> α2
+2, zi < α2
+and zi + ∆zi
+4
++ pi · 4−i
+= α2
+−2, zi > α2
+and zi + ∆zi
+4
+− pi · 4−i
+= α2
+0, zi = α2
+. (11)
+Unlike the PSADIC-c, the variable zi should be approxi-
+mated to α2
+in PSADIC-cs, thereby ensuring the convergence
+of the numerator to the quotient f. If α2
+is known a priori,
+the multiplication of coefficients can be computed within the
+iteration process. If not, an additional multiplier is required.
+C. Error Analysis
+The comparative evaluation of the proposed PSADIC and
+the well-known CORDIC has been performed, taking into
+account the similarity of the calculations (basically additions
+and shifting in both approaches). Firstly, the mean relative
+error distance (MRED) is obtained to evaluate PSADIC with
+a double floating-point representation (full precision), as
+(
+RED = |ft−fa|
+ft
+MRED = mean(RED)
+, (12)
+where ft is the floating-point value, and fa is the approximated
+result provided by the PSADIC algorithm. Then, the MRED
+of the radix-2 PSADIC-c paradigm can be expressed as
+REDc =
+x0 ·
+N
+P
+i=0
+ci · 2−i
+− α · x0
+z0
+α · x0
+z0
+=
+z0
+α
+·
+N
+X
+i=0
+ci · 2−i
+− 1 .
+(13)
+As can be observed, the MRED for the PSADIC-c paradigm
+is independent of x0, inversely proportional to α, and propor-
+tional to z0. On the other hand, the MRED for the radix-4
+PSADIC-cs paradigm is proportional to
+√
+z0, as
+REDcs =
+√
+z0
+α
+·
+N
+X
+i=0
+ci · 4−i
+− 1 . (14)
+A Monte Carlo simulation with 100,000 realizations has
+been carried out for verification, and two different CORDIC
+schemes have been designed for comparison’s sake. The
+scheme 1 is a single CORDIC that calculates the square
+Fig. 1. Error evaluation for PSADIC-cs with 16 iterations, with 100,000
+Monte Carlo realizations: (a) RED for CORDIC scheme 1; (b) and (c) REDs
+for CORDIC scheme 2; (d) RED for PSADIC-cs. Note that the input sampling
+range in (a) and (b) is 1 < z0 < 9, and it is 0 < z0 < 1000, 0 < x0 < 1000
+in (c) and (d); (e) error CDF comparison for (a), (b), (c), and (d).
+root (note that division and multiplication are still computed
+with double floating-point representation in this scheme). On
+the other hand, the scheme 2 consists of three CORDIC
+modules that separately calculate the square root, division, and
+multiplication.
+The input sampling range in the CORDIC approach is
+1 < z0 < 9 with the boundary condition
+√
+z0 > x0, whereas,
+for PSADIC, it is 0 < z0 < 1000, 0 < x0 < 1000 with this
+boundary condition α <
+√
+z0. As shown in Fig. 1, the sampled
+points are plotted in a three-dimensional space, according to
+x0, z0, and α. The color of the points indicates the magnitude
+of the RED; the closer to red, the larger the RED, whereas
+the closer to blue, the smaller the RED. In Fig. 1(a), the RED
+for the CORDIC scheme 1 is at an order of magnitude of
+−9 and it shows a random distribution, implying a lack of a
+significant relationship with the input data. After propagating
+errors through the successive CORDIC modules in scheme 2,
+the RED increases by five orders of magnitude to −4 and it is
+relatively larger at low x0 values and high z0 ones, as shown in
+Fig. 1(b). The input sampling range for CORDIC is expanded
+to that from PSADIC in Fig. 1(c), but it still satisfies the
+CORDIC’s boundary conditions. In this case, the RED error
+in the CORDIC scheme 2 rapidly increases outside the range
+constraint. Fig. 1(d) depicts that the RED for PSADIC-cs is
+in the same range as that from the CORDIC scheme 1. That
+means that the total iterations of PSADIC are reduced by 2/3,
+and the error is similar, compared with the CORDIC scheme 1,
+when the division, square root, and coefficients are combined.
+For the comparison with the CORDIC scheme 2, the RED of
+PSADIC is reduced by five orders of magnitude. In addition,
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS I: REGULAR PAPERS 5
+TABLE II
+COMPUTABLE EXPRESSIONS RESULTING FROM BOTH PSADIC PARADIGMS CONSIDERING UNSIGNED REPRESENTATION.
+Paradigm α x0 z0 f Boundary
+α A B f = α · A
+B
+α A(m) B f(m) = α ·
+A(m)
+B
+α ≤ B · (2 − 2−N )
+α A1, A2
+q
+A2
+1 + A2
+2 f1 = α · A1
+q
+A2
+1+A2
+2
+, f2 = α · A2
+q
+A2
+1+A2
+2
+α ≤
+q
+A2
+1 + A2
+2 · (2 − 2−N )
+A 1 B f = A
+B
+A ≤ B · (2 − 2−N )
+PSADIC-c
+1 1 B f = 1
+B
+1 ≤ B · (2 − 2−N )
+α2 A B f = α · A
+√
+B
+= A
+√
+B/α α2 ≤ B · (2 − 4−N )2
+α2 A(m) B f(m) = α ·
+A(m)
+√
+B
+α2 A1, A2 A2
+1 + A2
+2 f1 = α · A1
+q
+A2
+1+A2
+2
+, f2 = α · A2
+q
+A2
+1+A2
+2
+α2 ≤ A2
+1 + A2
+2
+
+· (2 − 4−N )2
+1 1 B f = 1
+√
+B 1 ≤
+√
+B · (2 − 4−N )
+PSADIC-cs
+1 B B f =
+√
+B
+the PSADIC RED increases as α decreases or z0 increases,
+accordingly to the theoretical results. Finally, Fig. 1(e) shows
+the RED cumulative distribution function (CDF) for Figs. 1(a),
+(b), (c) and (d), where it is possible to observe that the
+PASDIC-cs in Fig. 1(d) achieves a lower RED.
+D. Other Possible Calculations
+Based on both PSADIC-c and PSADIC-cs paradigms, their
+expressions may be adapted to be applied in more scenarios.
+Firstly, assuming that x0 is an M-dimensional vector [x0(0),
+x0(1), ..., x0(m), ..., x0(M − 1)], then f(m) = α · x0(m)
+z0
+can
+be computed. The adapted iterative body is then as:
+
+zi+1 = zi + ci+1 · ∆zi
+4
+xi+1(m) = xi(m) + ci+1 · ∆xi(m)
+4
+. (15)
+Due to the x iteration’s independence, the function’s solu-
+tion can be obtained in parallel for every element in the vector
+by only increasing M times the number of iteration blocks for
+x. Similarly, the iterative body for solving f(m) = α · x0(m)
+√
+z0
+with PSADIC-cs is:
+
+
+
+zi+1 = zi + c2
+i+1 · ∆zi+1 + ci+1
+2 · pi · 4−i
+xi+1(m) = xi(m) + ci+1 · ∆xi+1(m)
+pi+1 = pi + ci+1 · ∆pi+1
+. (16)
+In addition, the square root, the inverse square root, and the
+inverse, among others, can be computed by controlling the
+values α, x0, and z0, as shown in Table II. It can be observed
+that the computation of PSADIC remains relatively flexible
+with the same iteration structure.
+III. PROPOSED ARCHITECTURE AND HARDWARE
+IMPLEMENTATION
+Section II has provided a detailed description of the pro-
+posed PSADIC paradigms, where it is possible to verify
+that all the calculations involved may be easily implemented
+with shifters, adders, and multiplexers. Furthermore, since
+the PSADIC-cs paradigm actually includes all the operations
+necessary for the PSADIC-c as well, a single serial architec-
+ture for both PSADIC approaches (denoted dual-mode) can
+be designed to perform calculations, whereas the proposed
+pipelined architecture is only for the PSADIC-cs and can be
+optimized for low latency. In addition, the determination of a
+suitable word length for integer, fixed-point, and floating-point
+representations is studied hereinafter.
+A. Description of the Proposed Serial Architecture
+When dealing with any mathematical expression to be
+implemented, it often needs to be adapted for a better fitting
+in a hardware implementation. In this way, as for the PSADIC
+algorithm, firstly, the comparison is replaced by a subtraction,
+as the sign bit of the difference between two values accurately
+indicates their relative magnitudes. Thus, the right part of the
+condition in Eq. (11) can be moved to the left side, so the
+common term z0 − α2
+is extracted as a new z0 input. The
+adjusted ci is shown in Eq. (17), and the coefficient α = 3
+is transformed into (1 + 2), which can be implemented by
+a shifter and an adder. Similarly, the coefficient α2
+= 9 is
+converted into (1 + 8).
+ci =
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1, zi < 0 and tmp > 0
+(1 + 2), zi < 0 and tmp < 0
+−1, zi > 0 and tmp < 0
+−(1 + 2), zi > 0 and tmp > 0
+2, zi < 0 and tmp = 0
+−2, zi > 0 and tmp = 0
+, (17)
+where 
+
+
+tmp = zi + tmpz ± tmpp
+tmpz = ∆zi >> 2
+tmpp = pi · 4−i
+.
+On the other hand, the sum of three values required in
+Eq. (9) and Eq. (10) can be computed by using a 3-2 carry-
+save adder (CSA) to reduce the path delay. The term pi ·4−i
+in
+Eq. (9) can be implemented with a dynamic shifter, as shown
+in Fig. 2, which requires the parameter i to be a binary-
+coded count. Using T2−mux to denote the delay of the 2-1
+multiplexer, the delay of the counting module for the iterations
+ranging from 9 to 15 is 4 · T2−mux.
+After adjustment, the serial architecture for the dual-mode
+PSADIC is shown in Fig. 3(a). The two counting modes,
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS I: REGULAR PAPERS 6
+PSADIC-cs and PSADIC-c, can be switched by setting up the
+variable m. The architecture mainly consists of iteration blocks
+and control signal generation blocks (CS). On one hand, the
+iteration blocks can be divided into four sub-blocks, which are
+the flag signal generation block (red region), and the iteration
+blocks for zi (yellow region), pi (green region), and xi (blue
+region). The CS block is used to control the iteration and to
+enable the output. It is worth noting that the MSB is the most
+significant bit, CPL is the complement circuit, and Eq is the
+equality comparator.
+In the flag signal generation block, the value ci is deter-
+mined by the flag signals s1, s2, and s3. When s3 or e1 are
+valid, the iteration ends, and the output is enabled. The blocks
+A1 and A2 are three-input adders consisting of a 3-2 CSA and
+a full adder. The difference between them is that a multiplexer
+in the block A1 is used to switch modes. The full-adder delay
+is Tadd, and the 3-2 CSA delay is T3/2−CSA. Then, the delay
+for block A1 is Tadd + T3/2−CSA + T2−mux, whereas for A2
+it is Tadd + T3/2−CSA.
+The critical path in the flag signal generation block is
+marked in red; note that all the calculations in the iterative
+architecture depend on this flag signal generation block. There-
+fore, the critical path in the z iteration is the sum of the red
+and yellow zones, in the p iteration it is the sum of the red
+and green zones, and in the x iteration it is the sum of the
+red and blue ones. The CPL and the XOR gate delays are
+TCP L and Txor, respectively, so the final critical path delay
+is 2 · Tadd + 2 · T3/2−CSA + 8 · T2−mux + 2 · TCP L + Txor.
+As for the sign of f, the signal values for α and z0 can be
+obtained separately using an XOR gate in Fig. 4(a), due to
+the independence of the x iteration block. The first result is
+then calculated with the MSB from the variable xi to obtain
+the sign of the quotient f. On the other hand, in PSADIC-cs,
+z0 is unsigned, so only the signed α is entered. As shown in
+Fig. 4(b), the signed α and xi are calculated with XOR gate.
+Moreover, the computational logic and the proposed archi-
+tecture are adapted to reduce the path delay, as shown in
+Fig. 3(b). Firstly, the mux for control s1 is moved backwards in
+the datapath, so that the critical path is reduced by one mux de-
+lay. Besides, the two sign selectors from the variable tmpp are
+pruned to one. However, in the z iteration block, the mux for
+control s1 is increased to two. Secondly, the CPL is a reverse
+and adds an operation with a delay of a carry-in. Thus, only the
+inverse is retained to reduce the path delay, and the value 1 is
+added at the later full adder. Finally, the critical path delay can
+be defined as 2·Tadd +2·T3/2−CSA +7·T2−mux +Tinv +Txor.
+B. Description of the Proposed Pipelined Architecture
+For low-latency computation, a pipelined architecture of
+PSADIC can be defined by means of multiple iterative blocks
+connected with registers in between. However, the required
+area may become too large if only a few registers are inserted,
+Fig. 2. Dynamic shifter for computing pi · 4−i.
+due to too many redundant calculations. The mathematical
+expressions can be rearranged then in order to achieve a
+smaller area. Based on the previous optimization, the term
+∆xi is brought into Eq. (8) and xi+1 is expanded as:
+xi+1 = xi + ci+1x04−i+1
+=
+
+
+
+xi + ai+1∆xi+1 bi+1 = 1
+xi + 2ai+1∆xi+1 bi+1 = 2
+xi + ai+1∆x′
+i+1 bi+1 = 3
+,
+(18)
+where 
+∆xi = x0 · 4−i
+∆x′
+i = (x0 + 2x0) · 4−i .
+It can be verified that the number of adders for every itera-
+tion can be reduced by placing a mux before each iteration. In
+this way, the variables zi+1 and pi+1 are adjusted separately.
+Note that the variable pi+1 after rearranging is essentially the
+same as xi+1, whereas zi+1 is:
+zi+1 = zi + c2
+i+1 · z0 · 4−2·(i+1)
++
+ci+1
+2
+· pi · 4−i
+=
+
+zi + ∆zi+1 +
+ai+1
+2
+· pi · 2−2·i
+bi+1 = 1
+zi + ∆z′′
+i+1 +
+ai+1
+2
+· pi · 2−2·i
+· (1 + 2) bi+1 = 3
+,
+(19)
+where 
+∆zi = z0 · 4−2·i
+∆z′′
+i = (z0 + 8z0) · 4−2·i .
+Fig. 5 shows the corresponding pipelined architecture,
+where ∆z′′
+0 , ∆x′
+0, z′
+0, and ∆p′
+0 are calculated firstly to reduce
+redundant computations at each level of the pipeline. In the
+pipelined architecture, the term pi ·4−i
+is no longer computed
+by a dynamic shifter but by a static shifter at every stage.
+With regard to the N iterations (N-stage pipeline), the iteration
+blocks are identical for the iterations from 0 to N−2. However,
+only the flag signal generation block (red area) and the x
+iteration block (blue area) are involved for the last stage N −1,
+hence the smaller area of this last stage block. The critical
+path in the iteration block is denoted in red, and the delay is
+2 · Tadd + 2 · T3/2−CSA + 2 · T2−mux + Tinv + Txor.
+C. Word Length Analysis
+Whereas common two’s complement divisions or square
+roots only require one or two operands, respectively, the co-
+calculation of division and square root in PSADIC actually
+implies three operands x, z, and α, so that the output word
+length in this case is not simply two times the input one. As
+an example for the integer representation, the bit widths of the
+inputs x, z, and α are set to Lx, Lz, and Lα, respectively, and
+the output f is set to Lf . In PSADIC-c, since Lα < Lz + 1,
+it is possible to state Lf = Lx − Lz + Lα < Lx + 1.
+Similarly, in PSADIC-cs, since Lα < Lz/2 + 1, then it is
+met Lf = Lx − Lz/2 + Lα < Lx + 1. Therefore, the word
+length Lf of the PSADIC output f is the same as the width
+Lx. The floating-point representation complies with the IEEE
+754 standard, so the output width Lf remains the same as the
+input one.
+On the other hand, the input requires a certain number of
+bits to be appended, and then preserve accuracy, due to the
+shifting involved in the iteration process. Fig. 6(a) shows the
+word length in the case of an integer precision with L bits
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS I: REGULAR PAPERS 7
+Fig. 3. (a) Serial architecture for the dual-mode PSADIC; and (b) serial architecture optimized for the critical path.
+input, where the decimal part is extended with the lower bits
+for accuracy preservation. Fig. 6(b) shows the fixed-point case,
+where the fractional part is expanded by more bits. Finally,
+Fig. 6(c) shows the floating-point situation, where the mantissa
+is expanded by more bits. At the end, the final resulting output
+for all types of calculations requires some bits to be truncated.
+IV. DISCUSSION AND COMPARISON
+The iterative process of PSADIC is similar to CORDIC’s
+one, and some computable expressions are shared by both.
+Hereinafter, the relationship between the accuracy, the number
+of iterations, and the appended bits in PSADIC is discussed
+and compared with CORDIC. The PSADIC serial dual-mode
+architecture and the PSADIC-cs pipelined architecture are syn-
+thesized under TSMC 40nm CMOS technology @ VDD=0.9V.
+The advantages of PSADIC are assessed with the application
+of the Z-score standardization.
+A. Analysis of Accuracy, Iterations, and Appended Bits
+Both PSADIC and CORDIC can calculate the square root,
+division, and inverse for simple arithmetic. The proposed
+PSADIC can additionally calculate the inverse square root. For
+the analysis of the co-calculation of division and square root in
+PSADIC, CORDIC employs the schemes 1 and 2 described in
+Section II.C. Additionally, for further comparison, a CORDIC
+scheme 3 is considered, based on two modules that separately
+calculate the square root and the division.
+The input range is constrained to meet the conditions of
+CORDIC. The input and output are 16-bit fixed-point data,
+with 12 bits for the fractional part. The number of iterations
+is varied from 1 to 32, and the appended bits ranges from
+0 to 15. Ten thousand Monte Carlo realizations have been
+carried out, whereas the same number of iterations is set for
+Fig. 4. Sign evaluation for PSADIC-c (a) and PSADIC-cs (b).
+Fig. 5. Proposed pipelined architecture for the PSADIC-cs.
+all the CORDIC schemes. Fig. 7 shows the MRED obtained
+for different CORDIC and PSADIC configurations, where
+Figs. 7(a), (b) and (c) correspond to the schemes 2, 3 and
+1, respectively. As the number of CORDIC blocks increases
+in schemes (no. 1 with one block, no. 2 with three blocks and
+no. 3 with two blocks), the MRED is higher, and the turning
+point of the surface in the corresponding Figs. (intersection
+of blue and green areas) corresponds to a higher number
+of iterations. Fig. 7(f) shows the MRED of PSADIC when
+calculating Eq. (6). It is possible to check that the turning
+point of MRED is closer to a lower number of iterations,
+where PSADIC presents a smaller MRED than Fig. 7(a).
+Figs. 7(g) and (h) show the MRED for the inverse square
+Fig. 6. Word length analysis for: (a) integer representation; (b) fixed-point
+representation; (c) and floating-point representation.
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS I: REGULAR PAPERS 8
+Fig. 7. MRED obtained for CORDIC (a)-(e), as well as for PSADIC (f)-(j), with the different considered calculations, according to the number of iterations,
+and appended bits. (a), (b), (c), (f) and (g) are the co-calculation of the division and the square root for the three CORDIC schemes and the PSADIC solution,
+whereas the rest of the plots represent other basic operations, also computed by PSADIC.
+TABLE III
+COMPARISON OF MRED AND NUMBER ITERATIONS FOR CORDIC AND
+PSADIC CONFIGURATIONS WITH 4 BITS APPENDED AND THE SAME
+INPUT RANGE FOR BOTH.
+Scheme 21 Scheme 32 Scheme 13 PSADIC-cs
+MRED 0.012% 0.009% 0.003% 0.003%
+Iterations 42 28 14 7
+1 Triple CORDIC. 2 Double CORDIC. 3 Single CORDIC.
+root and the square root computed by PSADIC-cs. Compared
+with Fig. 7(c), the convergence of PSADIC is relatively fast;
+however, the inverse square root is obtained with a higher
+error and more appended bits. The MRED from the division
+and the inverse are shown in Figs. 7(d) and (e) for CORDIC,
+and in Figs. 7(i) and 7(j) for PSADIC-c. In general terms, the
+convergence of the division is poor, and the MRED remains
+high, particularly for the inverse. In contrast, the PSADIC
+requires fewer appended bits and a lower number of iterations.
+For clarity’s sake, the MRED when computing Eq. (6)
+is compared throughout the CORDIC input range for 16-bit
+fixed-point representation with four appended bits. Table III
+shows that the MRED for PSADIC-cs is 75.00% lower than
+the one for the CORDIC scheme 2, and 66.67% lower than
+scheme 3. Also, the number of iterations is reduced by 83%
+compared with the CORDIC scheme 2.
+B. Performance Comparison
+The mathematical expressions, computable through the
+PSADIC algorithm, overlap with those computable through
+CORDIC. The division and square root architectures from
+PSADIC are simplified, discarding those modules not nec-
+essary for a better comparison with CORDIC. Both serial
+and pipelined PSADIC architectures are evaluated for radix-
+2 and radix-4. Also, the 32-bit floating-point square root and
+division from the Synopsys DesignWare (DW) are used for the
+comparison. In addition, all the aforementioned architectures
+are synthesized under TSMC 40nm CMOS technology. The
+word length, library, delay (critical path delay or determined
+by the maximum frequency), area, power consumption, and
+the number of pipelines or iterations are recorded. Moreover,
+the power-delay product (PDP), area-delay product (ADP),
+and the MRED are obtained. Note that the power estimates
+are obtained by means of PrimeTime-PX (PTPX) under the
+time-based mode, using the switching activity simulated with
+512×512 random test vectors. The MRED is the mean value
+of the particular MRED for each random test vector. The
+cycle latency can be obtained by Pipelines×Iterations, and the
+overall latency by Delay×Pipelines×Iterations.
+The comparison of the division is shown in Table IV.
+In previous studies, the accuracy of LEAD [20] has been
+TABLE IV
+COMPARISON OF THE ARCHITECTURES CONSIDERED FOR DIVISION (∗ IS THE 40NM TECHNOLOGY NORMALIZATION).
+Design
+Word
+Length
+Library
+Delay
+(ns)
+Area
+(µm2)
+Power
+(mW)
+ADP
+(µm2 · ns)
+PDP
+(pJ)
+MRED
+(%)
+Pipelines×
+Iterations
+DW Fp32bits TSMC-40nm-0.9V 7.5 13171 1 98782 1∗ 7.5 1∗ 0 1×1
+DW [24] 16bits Nangate-45nm 50.53 3206 1.89 161999 1.296∗ 95.5 11.319∗ 0 1×1
+DW [12] 16bits STM-90nm 18.14 3911 - 70946 0.142∗ - - 0 1×1
+LEAD [20] u16/8 Nangate-45nm-1V 2.75 2919 0.093 8027 0.064∗ 0.254 0.030∗ 4.85 1×1
+S-LEAD [20] u16/8 Nangate-45nm-1V 3.01 2952 0.114 8886 0.071∗ 0.34 0.040∗ 4.86 1×1
+AXRD M1 [18] u16/8 TSMC-65nm-1V 4.51 735.8 0.333 3319 0.013∗ 1.5 0.123∗ 0.23 1×1
+AXRD M2 [18] 32/16 TSMC-65nm-1V 2.53 420.8 0.153 1055 0.004∗ 0.386 0.032∗ 4.25 1×1
+SAADI-EC [24] 16bits Nangate-45nm 1.57 6105 2.11 9585 0.077∗ 3.31 0.392∗ 0.006 1×15
+In [12] Fp16+4 STM-90nm 2.52 5485 - 13821 0.028∗ - - 0.44 1×1
+Radix2-CORDIC Fp16+4 TSMC-40nm-0.9V 1 981.1 0.54 971 0.010∗ 0.54 0.072∗ 0.03 1×14
+Radix2-CORDIC-pp Fp16+4 TSMC-40nm-0.9V 1 4469 1.71 4469 0.045∗ 1.76 0.235∗ 0.03 14×1
+Radix2-PSADIC Fp16+4 TSMC-40nm-0.9V 1 1037 0.5 1037 0.010∗ 0.5 0.067∗ 0.02 1×14
+Radix4-PSADIC Fp16+4 TSMC-40nm-0.9V 2 1330 0.28 2660 0.023∗ 0.56 0.075∗ 0.02 1×7
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS I: REGULAR PAPERS 9
+TABLE V
+COMPARISON OF THE ARCHITECTURES CONSIDERED FOR THE SQUARE ROOT (∗ IS THE 40NM TECHNOLOGY NORMALIZATION).
+Design
+Word
+Length
+Library
+Delay
+(ns)
+Area
+(µm2)
+Power
+(mW)
+ADP
+(µm2 · ns)
+PDP
+(pJ)
+MRED
+(%)
+Pipelines×
+Iterations
+DW Fp32bits TSMC-40nm-0.9V 10 5432 0.32 54320 1∗ 3.2 1∗ 0 1×1
+AASR A-12 [26] 16bits STM-28nm-1V 3.34 200 0.065 669 0.025∗ 0.217 0.097∗ 0.69 1×1
+AXSR3-11 [26] 16bits STM-28nm-1V 4.13 190 0.067 783 0.029∗ 0.278 0.124∗ 1.13 1×1
+CORDIC-based [29] Nth Root TSMC-45nm-1.08V 0.51 109598 35.9 58087 0.845∗ 19.0 5.278∗ 0.0008 1×73
+CORDIC-based [35] Nth Root TSMC-40nm-0.81V 0.53 38919 9.36 20627 0.380∗ 4.96 1.550∗ 0.0013 1×65
+Radix2-CORDIC Fp16+4 TSMC-40nm-0.9V 2 1646 0.62 3292 0.061∗ 1.24 0.388∗ 0.003 1×14
+Radix2-CORDIC-pp Fp16+4 TSMC-40nm -0.9V 2 7000 2.47 14000 0.258∗ 4.94 1.544∗ 0.003 14×1
+Radix2-PSADIC Fp16+4 TSMC-40nm-0.9V 1.1 1446 0.59 1590 0.029∗ 0.65 0.203∗ 0.007 1×14
+Radix4-PSADIC Fp16+4 TSMC-40nm-0.9V 2 1815 0.41 3630 0.067∗ 0.82 0.256∗ 0.007 1×7
+sacrificed to achieve smaller power consumption. The errors
+from AXRD [18] and SAADI [24] have been reduced at
+the cost of larger ADP and PDP. Nevertheless, since the
+performance varies greatly from one implementation process
+to another, it can only be used as a rough evaluation. With
+the same process and latency, the area of the radix-2 PSADIC
+is 5.7% larger than that from the radix-2 CORDIC, but the
+power consumption is reduced by 7.4%. Thus, the performance
+of PSADIC is similar to that from CORDIC in the division
+calculation. Compared with the radix-2 PSADIC, the cycle
+latency of radix-4 PSADIC for division is reduced by 50%,
+while increasing the ADP and PDP by 156% and 12%,
+respectively.
+On the other hand, the comparison of the square root archi-
+tectures is shown in Table V. The AASR A-12 and AXSR3-
+11 solutions have a smaller area and power consumption, but
+the delay is longer for a 28nm process, and the MRED is
+two orders of magnitude larger than the others. Furthermore,
+previous works [29], [35], based on CORDIC to compute the
+Nth root, require more iterations as well. Compared with
+the radix-2 CORDIC, the ADP and PDP from the radix-
+2 PSADIC, in the same process and latency, are reduced
+by 51.7% and 47.7%, thus significantly improved. The cycle
+latency of the radix-4 PSADIC for square root is reduced by
+50%, with respect to the radix-2 PSADIC, while increasing
+the ADP and PDP by 128% and 26%, respectively.
+The whole operation, consisting of coefficients, division,
+and square root, is the main object of this assessment. The
+16-bit fixed-point serial and 7-stage pipelined architectures are
+implemented with four appended bits and a constraint of 2ns
+for the clock period. As shown in Table VI, the MRED for
+this co-calculation is 0.058% for the input range of PSADIC.
+The 2-input NAND equivalent gate counts (NANDs) for the
+pipelined one is 3.3 times larger than the serial one, under the
+7 iterations and 7-stage pipeline. The comparison of scheme
+3 from CORDIC with both serial and pipelined architectures
+for division and square root are provided in Table IV and
+Table V, respectively. The iterations of the radix-4 PSADIC
+are reduced by 75% (see Table III), and the overall latency is
+TABLE VI
+PERFORMANCE OF THE 16-BIT FIXED-POINT CO-CALCULATION RADIX-4
+PSADIC ARCHITECTURES WITH 4 BITS APPENDED.
+Design NANDs
+Area
+(µm2)
+Power
+(mW)
+ADP
+(µm2 · ns)
+PDP
+(pJ)
+MRED
+(%)
+Serial 4303 3036.4 0.65 6072.7 1.3 0.058
+Pipelined 14145 9980.5 3.75 19961.1 7.5 0.058
+Iteration Body 1359 959.1 0.23 1918.2 0.46 0.058
+reduced by 66.67%. For the serial architecture, the ADP and
+PDP are also reduced by 28.78% and 26.97%, whereas in the
+pipeline one, since the coefficient α is additional calculated,
+ADP is increased just by 8.08% and PDP by 11.94%. The area
+of the iteration blocks is 67.27% of the global area, whereas
+the power consumption is 42.93%.
+V. EVALUATION WITH THE Z-SCORE STANDARDIZATION
+The Z-score standardization is a common method in image
+processing, applied to transform data from different mag-
+nitudes into an uniform measure for comparison. For that
+purpose, hereinafter, the corresponding Z-score architectures,
+implemented using both CORDIC and PSADIC, are tested
+with six well-known 512 × 512 images as inputs to assess
+the performance of the proposed PSADIC architectures. The
+mathematical expression of the Z-score standardization is as
+follows:
+f(m) =
+x(m) − µ
+qP
+(x(m) − µ)2
+M
+, m = 0, 1, 2, ..., M − 1, (20)
+where µ is the mean value of the image; and M is the
+number of pixels. In the PSADIC-cs paradigm, the division
+within the square root can be converted into the corresponding
+coefficients, as shown in Eq. (21). Assuming that the inputs
+are α2
+= M, x0(m) = x(m) − µ, and z0 =
+P
+(xi − µ)
+2
+,
+then it is possible to obtain:
+fi =
+√
+M
+xi − µ
+q
+P
+(xi − µ)
+2
+. (21)
+The Z-score block diagram for the CORDIC approach in
+Fig. 8(a) is a two-stage serial architecture, with one stage
+dedicated to the square root and the other to the division.
+The square root block operates only once, whereas the sixteen
+division blocks compute the corresponding sixteen input data
+Fig. 8. Block diagrams for the Z-score assessment based on: (a) CORDIC;
+(b) PSADIC-1 in Eq. (20); and (c) PSADIC-2 in Eq. (21).
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS I: REGULAR PAPERS 10
+TABLE VII
+COMPARISON OF CORDIC AND PSADIC ARCHITECTURES WITH A 2NS DELAY AT TSMC 40NM PROCESS (∗ MEANS NORMALIZATION).
+Design
+Total
+Cycles
+Cycle
+Latency
+NANDs
+Area
+(µm2)
+Power
+(mW)
+ADP
+(µm2 · ns)
+PDP
+(pJ)
+MRED
+(%)
+Throughtput/Area
+(Word/(ms · mm2))
+CORDIC-se 229390 28 18291 12906 2.99 25811 1∗ 5.98 1∗ 0.23 1 22.14
+PSADIC-se1 114688 7 22487 15867 3.12 31735 1.2295∗ 6.24 1.0435∗ 0.09 0.391 72.03
+PSADIC-se2 114688 7 22487 15867 3.43 31735 1.2295∗ 6.86 1.0435∗ 0.10 0.435 72.03
+CORDIC-pp 16412 28 89544 63182 20.0 126362 1∗ 40.0 1∗ 0.23 1 126.62
+PSADIC-pp1 16391 7 76457 53948 15.5 107896 0.8539∗ 31.0 0.7750∗ 0.09 0.391 148.29
+PSADIC-pp2 16391 7 76457 53948 15.7 107896 0.8539∗ 31.4 0.7850∗ 0.10 0.435 148.29
+in parallel. On the other hand, the block diagrams depicted
+in Fig. 8(b) and Fig. 8(c) compute Eq. (20) and Eq. (21),
+respectively, according to the Z-score architectures of the
+PSADIC. Note that the last solution saves one divider by
+M, and 16 sets of data are calculated at the same time. The
+x iteration blocks in the PSADICx are parallel, and the z
+iteration block in the PSADICz is computed only once. Unlike,
+the lower s bits are discarded at the input data in Fig. 8(c);
+note that the value s is related to the image size.
+The resulting errors, MED (Mean Error Distance) and
+MRED, for the six test images are plotted in Fig. 9 for every
+approach considered. Especially, the results from the Lenna
+image are shown in detail. It is worth mentioning that the
+MRED for PSADIC is reduced by a minimun of 60.87% in
+the six images, compared to CORDIC. Also, it is possible to
+observe that the calculation of the expression simplified in (21)
+has a lower MED, but a larger error variance. Furthermore, the
+histograms of the resulting images from Lenna present similar
+distributions.
+The serial and pipelined architectures for each one of the
+three aforementioned architectures have been implemented in
+TSMC 40nm process with a 2 ns clock. As shown in Table VII,
+both architectures for PSADIC have a 21 cycles reduction
+(75%) in latency compared to CORDIC. The serial architecture
+for PSADIC improves the speed by 50% and reduces the
+MRED by 60.9%, just at the cost of 22.95% higher ADP
+Fig. 9. Resulting errors for the six test images involved in the Z-score
+standardization and histograms for Lenna, considering the three studied
+solutions for CORDIC and PSADIC. Note that the top graphs detailed the
+results obtained for the Lenna image.
+and 4.35% higher PDP. The hardware efficiency for PSADIC-
+se, defined by the ratio between throughput and area, is 3.25
+times higher than that for CORDIC-se. As for the pipelined
+architecture, the ADP and PDP for PSADIC-1 are also reduced
+by 14.61% and 22.50%, respectively, compared with CORDIC.
+In addition, the two architectures for PSADIC-2 (see Fig. 8(c))
+save a division before the input, and the power only increases
+0.31mW and 0.2mW compared to PSADIC-1.
+VI. CONCLUSIONS
+This work has presented a low-latency power series approx-
+imate digital computing (PSADIC), including two paradigms,
+PSADIC-c and PSADIC-cs, in order to co-calculate the di-
+vision and the square root. This method avoids a multi-
+stage computation and implements the co-calculation with a
+one-stage iteration. The division, square root, inverse, and
+inverse square root can also be computed. The M-dimensional
+computation was derived to minimize hardware redundancy
+in parallel. The feasibility, accuracy, and robustness of the
+PSADIC have been verified through Monte Carlo simulations.
+The radix-4 serial and pipelined architectures have been de-
+signed for smaller areas and lower latencies. Compared with
+a three-stage CORDIC, the MRED of the proposed PSADIC
+approach is reduced by five orders of magnitude, and the
+required number of iterations is reduced by 2/3. In the 4-bit
+appended architecture, the iterations of PSADIC are further
+reduced by 83%, and the MRED is improved by 75%.
+Under TSMC 40nm CMOS technology, both architectures
+achieve a 75% cycle latency reduction compared to CORDIC,
+and the ADP and PDP are also reduced by 28.78% and 26.97%
+for the serial architecture. When using its own maximum
+clock frequency for CORDIC, both architectures for PSADIC
+achieve a 66.67% overall latency reduction, and the coefficient
+is additionally calculated with smaller ADP and PDP for the
+pipeline one. Two 16-dimension PSADIC architectures have
+been designed for applying the Z-score standardization, and
+they have achieved a 75% overall latency reduction and 3.25
+times higher hardware efficiency. Meanwhile, the ADP and
+the PDP are still more optimized than those from CORDIC,
+even saving a divider in PSADIC.
+In general terms, the proposed PSADIC presents relevant
+flexibility and advantages, thus dealing with some short-
+comings of CORDIC in partial co-calculation. In particular,
+the proposed paradigm present advantages for applications
+that include normalization, standardization, L2 norm, complex
+number normalization and others, such as holographic imag-
+ing, pulse modulation, clustering, or path optimization.
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS I: REGULAR PAPERS 11
+ACKNOWLEDGMENTS
+This work was supported by the National Natural Science
+Foundation of China (no. 62271388 and no. 61771388), and by
+the Spanish MCIN/AEI/10.13039/501100011033 (grants no.
+TED2021-131773B-I00 and no. PID2021-122642OB-C41).
+REFERENCES
+[1] D. Tian, N. Yu, J. Yu, H. Zhang, J. Sun, and X. Bai, “Research on dual-
+line array subpixel scanning imaging for IoMT-based blood cell analysis
+system,” IEEE Internet of Things Journal, vol. 10, no. 1, pp. 367–377,
+Jan. 2022.
+[2] Y. Liao, N. Yu, G. Zhou, Y. Wu, and C. Wang, “A wireless multi-channel
+low-cost lab-on-chip algae culture monitor AIoT system for algae farm,”
+Computers and Electronics in Agriculture, vol. 193, p. 106647, Jan.
+2022.
+[3] Y. Liao, N. Yu, D. Tian, Y. Wang, S. Li, and Z. Li, “Toward embedded
+sensing automation and miniaturization for portable smart cost-effective
+algae monitor,” IEEE Sensors Journal, vol. 21, no. 4, pp. 5230–5239,
+Feb. 2020.
+[4] S. A. Lee, R. Leitao, G. Zheng, S. Yang, A. Rodriguez, and C. Yang,
+“Color capable sub-pixel resolving optofluidic microscope and its ap-
+plication to blood cell imaging for malaria diagnosis,” PloS one, vol. 6,
+no. 10, p. e26127, Oct. 2011.
+[5] H. P. R. Gurram, A. S. Galande, and R. John, “Nanometric depth phase
+imaging using low-cost on-chip lensless inline holographic microscopy,”
+Optical Engineering, vol. 59, no. 10, pp. 104 105–104 105, Oct. 2020.
+[6] M. Qin, T. Liu, B. Hou, Y. Gao, Y. Yao, and H. Sun, “A low-
+latency RDP-CORDIC algorithm for real-time signal processing of
+edge computing devices in smart grid cyber-physical systems,” Sensors,
+vol. 22, no. 19, p. 7489, Oct. 2022.
+[7] J. Liu, F. Miao, L. Yin, Z. Pang, and Y. Li, “A noncontact
+ballistocardiography-based IoMT system for cardiopulmonary health
+monitoring of discharged COVID-19 patients,” IEEE Internet of Things
+Journal, vol. 8, no. 21, pp. 15 807–15 817, Nov. 2021.
+[8] S. F. Obermann and M. J. Flynn, “Division algorithms and implemen-
+tations,” IEEE Transactions on computers, vol. 46, no. 8, pp. 833–854,
+Aug. 1997.
+[9] M. K. Jaiswal and H. K.-H. So, “Area-efficient architecture for dual-
+mode double precision floating point division,” IEEE Transactions on
+Circuits and Systems I: Regular Papers, vol. 64, no. 2, pp. 386–398,
+Feb. 2016.
+[10] J. Fandrianto, “Algorithm for high speed shared radix 4 division and
+radix 4 square-root,” in 1987 IEEE 8th Symposium on Computer
+Arithmetic (ARITH). IEEE, Mar. 1987, pp. 73–79.
+[11] L. Chen, J. Han, W. Liu, P. Montuschi, and F. Lombardi, “Design,
+evaluation and application of approximate high-radix dividers,” IEEE
+Transactions on Multi-Scale Computing Systems, vol. 4, no. 3, pp. 299–
+312, Sept. 2018.
+[12] L. Wu and C. C. Jong, “Non-iterative division circuit design with
+accuracy and performance trade-off based on mixed integer linear
+programming approach,” Microelectronics Journal, vol. 127, p. 105508,
+Jul. 2022.
+[13] J. Y. L. Low and C. C. Jong, “Non-iterative high speed division
+computation based on Mitchell logarithmic method,” in 2013 IEEE
+International Symposium on Circuits and Systems (ISCAS). IEEE, Aug.
+2013, pp. 2219–2222.
+[14] Z. Ebrahimi, M. Zaid, M. Wijtvliet, and A. Kumar, “RAPID: Approx-
+imate pipelined soft multipliers and dividers for high throughput and
+energy efficiency,” IEEE Transactions on Computer-Aided Design of
+Integrated Circuits and Systems, vol. 42, no. 3, pp. 712–725, Mar. 2023.
+[15] S. Wang, G. Xie, J. Han, and Y. Zhang, “Highly accurate division
+and square root circuits by exploiting signal correlation in stochastic
+computing,” International Journal of Circuit Theory and Applications,
+vol. 50, no. 4, pp. 1375–1385, Jan. 2022.
+[16] V. T. Lee, A. Alaghi, R. Pamula, V. S. Sathe, L. Ceze, and M. Os-
+kin, “Architecture considerations for stochastic computing accelerators,”
+IEEE Transactions on Computer-Aided Design of Integrated Circuits
+and Systems, vol. 37, no. 11, pp. 2277–2289, Nov. 2018.
+[17] H. Prashanth, S. Sriniketh, S. Hebbar, R. Chinmaye, and M. Rao,
+“SQRTLIB: Library of Hardware Square Root Designs,” in 2023 24th
+International Symposium on Quality Electronic Design (ISQED). IEEE,
+May. 2023, pp. 1–5.
+[18] E. Adams, S. Venkatachalam, and S.-B. Ko, “Approximate restoring
+dividers using inexact cells and estimation from partial remainders,”
+IEEE Transactions on Computers, vol. 69, no. 4, pp. 468–474, Apr.
+2019.
+[19] J. Han and M. Orshansky, “Approximate computing: An emerging
+paradigm for energy-efficient design,” in 2013 18th IEEE European Test
+Symposium (ETS). IEEE, Jul. 2013, pp. 1–6.
+[20] “Energy efficient logarithmic-based approximate divider for ASIC and
+FPGA-based implementations, author=Arya, Neelam and Soni, Teena
+and Pattanaik, Manisha and Sharma, GK,” Microprocessors and Mi-
+crosystems, vol. 90, p. 104498, Mar. 2022.
+[21] Z. Hajduk and G. R. Dec, “Very high accuracy hyperbolic tangent
+function implementation in FPGAs,” IEEE Access, vol. 11, pp. 23 701–
+23 713, Mar. 2023.
+[22] L. Chen, J. Han, W. Liu, and F. Lombardi, “On the design of approximate
+restoring dividers for error-tolerant applications,” IEEE Transactions on
+Computers, vol. 65, no. 8, pp. 2522–2533, Aug. 2015.
+[23] L. Chen, J. Han, W. Liu, and F. Lombardi, “Design of approximate
+unsigned integer non-restoring divider for inexact computing,” in Pro-
+ceedings of the 25th edition on Great Lakes Symposium on VLSI.
+Association for Computing Machinery, May. 2015, pp. 51–56.
+[24] J. Melchert, S. Behroozi, J. Li, and Y. Kim, “SAADI-EC: A quality-
+configurable approximate divider for energy efficiency,” IEEE Transac-
+tions on Very Large Scale Integration (VLSI) Systems, vol. 27, no. 11,
+pp. 2680–2692, Nov. 2019.
+[25] N. Arya, T. Soni, M. Pattanaik, and G. Sharma, “READ: A fixed
+restoring array based accuracy-configurable approximate divider for
+energy efficiency,” Integration, vol. 76, pp. 1–12, Sept. 2021.
+[26] H. Jiang, F. Lombardi, J. Han et al., “Low-power unsigned divider
+and square root circuit designs using adaptive approximation,” IEEE
+Transactions on Computers, vol. 68, no. 11, pp. 1635–1646, Nov. 2019.
+[27] H. Chen, R. Wu, Z. Lu, Y. Fu, L. Li, and Z. Yu, “A general methodology
+and architecture for arbitrary complex number Nth root computation,”
+in 2021 IEEE international symposium on circuits and systems (ISCAS).
+IEEE, Apr. 2021, pp. 1–5.
+[28] Y. Luo, Y. Wang, H. Sun, Y. Zha, Z. Wang, and H. Pan, “CORDIC-
+based architecture for computing Nth root and its implementation,” IEEE
+Transactions on Circuits and Systems I: Regular Papers, vol. 65, no. 12,
+pp. 4183–4195, Dec. 2018.
+[29] S. Mopuri and A. Acharyya, “Low complexity generic vlsi architecture
+design methodology for Nth root and Nth power computations,” IEEE
+Transactions on Circuits and Systems I: Regular Papers, vol. 66, no. 12,
+pp. 4673–4686, Dec. 2019.
+[30] H. Chen, Z. Yu, Y. Zhang, Z. Lu, Y. Fu, and L. Li, “Low-complexity
+high-precision method and architecture for computing the logarithm
+of complex numbers,” IEEE Transactions on Circuits and Systems I:
+Regular Papers, vol. 68, no. 8, pp. 3293–3304, Aug. 2021.
+[31] S. M. Mohamed, W. S. Sayed, A. G. Radwan, and L. A. Said, “FPGA
+implementation of reconfigurable CORDIC algorithm and a memristive
+chaotic system with transcendental nonlinearities,” IEEE Transactions
+on Circuits and Systems I: Regular Papers, vol. 69, no. 7, pp. 2885–
+2892, Jul. 2022.
+[32] F. J. Jaime, M. A. Sánchez, J. Hormigo, J. Villalba, and E. L. Zapata,
+“Enhanced scaling-free CORDIC,” IEEE Transactions on Circuits and
+Systems I: Regular Papers, vol. 57, no. 7, pp. 1654–1662, Jul. 2010.
+[33] H. Mahdavi and S. Timarchi, “Improving architectures of binary signed-
+digit CORDIC with generic/specific initial angles,” IEEE Transactions
+on Circuits and Systems I: Regular Papers, vol. 67, no. 7, pp. 2297–
+2304, Jul. 2020.
+[34] S. Mopuri and A. Acharyya, “Low-complexity methodology for complex
+square-root computation,” IEEE Transactions on Very Large Scale
+Integration (VLSI) Systems, vol. 25, no. 11, pp. 3255–3259, Nov. 2017.
+[35] R. Wu, H. Chen, G. He, Y. Fu, and L. Li, “Low-latency low-complexity
+method and architecture for computing arbitrary Nth root of complex
+numbers,” IEEE Transactions on Circuits and Systems I: Regular Papers,
+vol. 69, no. 6, pp. 2529–2541, Jun. 2022.
+[36] H. Mahdavi and S. Timarchi, “Area–time–power efficient FFT archi-
+tectures based on binary-signed-digit CORDIC,” IEEE Transactions on
+Circuits and Systems I: Regular Papers, vol. 66, no. 10, pp. 3874–3881,
+Oct. 2019.
+[37] A. Changela, M. Zaveri, and D. Verma, “A comparative study on
+CORDIC algorithms and applications,” Journal of Circuits, Systems and
+Computers, vol. 32, no. 05, p. 2330002, Oct. 2023.
+[38] Y. Zhang, L. Peng, L. Quan, Y. Zhang, S. Zheng, and H. Chen, “High-
+precision method and architecture for base-2 softmax function in DNN
+training,” IEEE Transactions on Circuits and Systems I: Regular Papers,
+vol. 70, no. 8, pp. 3268–3279, May. 2023.
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS I: REGULAR PAPERS 12
+[39] A. Verma, K. Kiyawat, B. P. Das, and P. K. Meher, “An efficient scaling-
+free folded hyperbolic CORDIC design using a novel low-complexity
+power-of-2 taylor series approximation,” IEEE Transactions on Very
+Large Scale Integration (VLSI) Systems, vol. 31, no. 8, pp. 1167–1177,
+Jun. 2023.
+[40] M. Xie, N. Yu, D. Tian, W. Jin, J. Tang, and K. Wang, “A novel
+computing method for image normalization and standardization on edge
+equipment chips,” in 2023 6th International Conference on Electronics
+Technology (ICET). IEEE, May. 2023, pp. 495–500.
+Dian Tian received his B.Sc. degree from Xi’an
+University of Technology, Xi’an, China, in 2018,
+and the M.Sc degree from Xi’an University of Tech-
+nology, Xi’an, China, in 2021. Now he is currently
+pursuing a Ph.D. degree in the Xi’an University of
+Technology, China, and the University of Alcalá,
+Spain.
+Ningmei Yu received her B.Sc. degree in 1986 from
+Xi’an University of Technology, received her M.Sc.
+and Ph.D. degree in 1996 and 1999 from Tohoku
+University, respectively. Now she is peofessor in
+Xi’an University of Technology, a leader in Elec-
+tronic Science and Technology, and a doctoral tutor.
+Her main research interests include VLSI design
+and technology. From 1999 to 2001, she was an IC
+design engineer at the OKI Corporation in Japan.
+From 2008 to 2009, she was a visiting researcher
+at the University of Tokyo. She is the author of
+one books, more than 100 articles, and holds ten patents. Dr.Author has
+presided over 7 national and provincial-level projects of the NSFC, Shaanxi
+Provincial Natural Science Fund, and the Ministry of Education Scholarship
+Fund, 6 international cooperation projects, 3 enterprise cooperation projects.
+Undertake 4 teaching reform projects.
+Minghui Xie received his B.Sc. degree from Xi’an
+University of Technology in 2022. Now he s cur-
+rently pursuing an M.Sc degree in Xi’an University
+of Technology.
+Jiahao Tang received his B.Sc. degree from Xi’an
+University of Technology in 2022. Now he is cur-
+rently pursuing an M.Sc. degree in the Xi’an Uni-
+versity of Technology.
+Zhuang Feng received the B.Sc. degree in Elec-
+tronic and Information Engineering from Hunan
+Univerisity of Technology in 2019 and worked on
+industrial automation related work for two years
+after graduation. Now he is currently pursuing an
+M.Sc. degree in the Xi’an University of Technology.
+Álvaro Hernández (M’06, SM’15) received the
+Ph.D. degree from the University of Alcalá, Spain,
+and Blaise Pascal University, France, in 2003. He
+is currently a Professor of Digital Systems and
+Electronic Design with the Electronics Department,
+University of Alcalá. His research areas are mul-
+tisensor integration, electronic systems for mobile
+robots, and digital and embedded systems.
+Jesús Ureña (M’06-SM’15) received the B.S. de-
+gree in Electronics Eng. and the M.S. degree in
+Telecom. Engineering from Universidad Politécnica
+de Madrid, Madrid, Spain, in 1986 and 1992, respec-
+tively; and the Ph.D. degree in Telecom. from the
+Universidad de Alcalá, Alcalá de Henares, Spain, in
+1998. Since 1986, he has been with the Department
+of Electronics, Univ. of Alcalá, currently as Profes-
+sor. His current research interests are in the areas
+of ultrasonic signal processing, local positioning
+systems (LPSs) and distributed sensory systems for
+smart spaces and intelligent transportation.
+

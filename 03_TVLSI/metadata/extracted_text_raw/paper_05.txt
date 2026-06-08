@@ -1,0 +1,827 @@
+                                                                                                                                                                                                                             1
+
+
+
+
+                                         Strassen Multisystolic Array Hardware Architectures
+                                                                               Trevor E. Pogue                 and Nicola Nicolici                , Senior Member, IEEE
+
+
+
+
+                                            Abstract—While Strassen’s matrix multiplication algorithm                                   The Strassen matrix multiplication algorithm [7] can also
+                                         reduces the complexity of naive matrix multiplication, general-                             theoretically be used to reduce the complexity of naive ma-
+                                         purpose hardware is not suitable for achieving the algorithm’s                              trix multiplication. However, its execution on general-purpose
+                                         promised theoretical speedups. This leaves the question of if
+                                                                                                                                     central processing units (CPU)s and graphics processing units
+arXiv:2502.10063v1 [cs.AR] 14 Feb 2025
+
+
+
+
+                                         it could be better exploited in custom hardware architectures
+                                         designed specifically for executing the algorithm. However, there                           (GPU)s has been shown to be not suitable for achieving
+                                         is limited prior work on this and it is not immediately clear how                           the algorithm’s promised theoretical speedups [8], [9], [10],
+                                         to derive such architectures or if they can ultimately lead to real                         [11], [12], [13], [14], [15]. Strassen’s algorithm even in-
+                                         improvements. We bridge this gap, presenting and evaluating                                 creases execution time on CPUs/GPUs unless the matrix
+                                         new systolic array architectures that efficiently translate the
+                                         theoretical complexity reductions of Strassen’s algorithm directly                          widths/heights are in the range of at least 1024 elements
+                                         into hardware resource savings. Furthermore, the architectures                              or larger. This limits the benefits of using the algorithm on
+                                         are multisystolic array designs that can multiply smaller matrices                          these devices for modern workloads that do not decompose
+                                         with higher utilization than single-systolic array designs. The pro-                        to such large matrix multiplications. Strassen’s algorithm con-
+                                         posed designs implemented on FPGA reduce DSP requirements                                   tains hidden overheads such as extra data accesses required
+                                         by a factor of 1.14r for r implemented Strassen recursion levels,
+                                         and otherwise require overall similar soft logic resources when                             for reading/computing/storing additional intermediate matrices
+                                         instantiated to support matrix sizes down to 32×32 and 24×24                                before/after the matrix multiplication steps. These extra steps
+                                         at 1-2 levels of Strassen recursion, respectively. We evaluate the                          all add to the overall execution time beyond what is expected
+                                         proposed designs both in isolation and in an end-to-end machine                             from a theoretical analysis based on the number of arithmetic
+                                         learning accelerator compared to baseline designs and prior                                 operations performed alone.
+                                         works, achieving state-of-the-art performance.
+                                            Index Terms—Hardware architecture, machine learning, ma-                                    This then leaves questions surrounding if the promised theo-
+                                         trix multiplication, performance, Strassen, systolic arrays.                                retical complexity reductions can be more efficiently achieved
+                                                                                                                                     in custom hardware architectures designed specifically for
+                                                                       I. I NTRODUCTION                                              executing Strassen’s algorithm. However, prior work on this
+                                                                                                                                     topic is limited and it is not immediately clear how to
+                                                                                                                                     design such architectures or if they can truly lead to real
+                                               UE to the rising demand for optimized hardware ac-
+                                         D     celeration of general matrix multiplication (GEMM),
+                                         the field of hardware design continues to see innovation for
+                                                                                                                                     improvements. In this work, we bridge this gap by presenting
+                                                                                                                                     and evaluating new systolic array hardware architectures for
+                                                                                                                                     efficiently exploiting Strassen’s algorithm. The proposed archi-
+                                         ways of better exploiting the inherent parallelism to speed                                 tectures achieve a more efficient implementation of Strassen’s
+                                         up computation. However, at a certain point, after technology                               algorithm compared to what is possible through execution on
+                                         scaling slows to a halt and the system-level optimizations and                              CPUs and GPUs by pipelining and performing the extra data
+                                         known parallelism are exhausted, an accelerator wall exists                                 movement and addition steps at all levels of recursion in paral-
+                                         which limits further progress on the implementation side [1]. A                             lel with the matrix multiplications. The Strassen architectures
+                                         less-explored path for advancement beyond this wall is through                              are functionally equivalent to conventional multisystolic array
+                                         reducing the computation at the algebraic level, by computing                               designs while allowing the theoretical complexity reductions
+                                         the same output from a re-arranged compute pattern requiring                                of Strassen’s algorithm to be translated directly into hardware
+                                         fewer or cheaper operations to be executed in hardware.                                     resource savings, even for multiplication of small matrices.
+                                            One of the area-dominant computational resources in                                      Furthermore, the architectures are multisystolic array designs,
+                                         GEMM and deep learning accelerators can commonly be                                         which is a type of design that can multiply smaller matrices
+                                         the multiply-accumulate (MAC) units [2], [3], [4], and an                                   with higher utilization than a single-systolic array design.
+                                         accelerator’s throughput can be directly limited by how many
+                                         MAC units can be afforded in its hardware budget. As a                                         Compared to a conventional multisystolic array design, the
+                                         result, surpassing this performance per MAC limit has been                                  proposed architecture implemented on FPGA uses 1.3× fewer
+                                         focused on recently with minimal filtering algorithms applied                               DSP units and a similar amount of soft logic resources when
+                                         to convolutional neural networks [2], [5] and with application                              instantiated for multiplying matrix sizes down to 24×24 at 2
+                                         of fast inner-product algorithms for speeding up deep learning                              levels of Strassen recursion. We demonstrate how the proposed
+                                         and GEMM workloads [6].                                                                     systolic array architectures are able to increase conventional
+                                                                                                                                     multiplications/multiplier/clock cycle limits while also allow-
+                                           T. E. Pogue and N. Nicolici are with the Department of Electrical and Com-
+                                         puter Engineering, McMaster University, Hamilton, ON, L8S 4L8, Canada                       ing the design to scale up in size without increasing the
+                                         Email: poguete@mcmaster.ca; nicolici@mcmaster.ca                                            minimum supported matrix sizes.
+
+                                         ©2025 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including reprinting/republishing
+                                         this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists, or reuse of any copyrighted component of this
+                                         work in other works. Accepted for publication in IEEE Transactions on Very Large Scale Integration (VLSI) Systems. DOI: 10.1109/TVLSI.2025.3530785
+                                                                                                                                    2
+
+
+
+          II. BACKGROUND AND R ELATED W ORK                         C. Prior Work on Multisystolic Array Systems
+A. Conventional Matrix Multiplication                                  Systolic arrays, which we also refer to as matrix multipli-
+  A conventional matrix multiplication algorithm computes           cation units (MXU)s for convenience, are an effective choice
+C = AB for A of size M ×K and B of size K×N , where                 for use in GEMM accelerators as they significantly reduce the
+each element ci,j of C is calculated as follows:                    required memory traffic and can reach high clock frequencies
+                               K
+                                                                    due to their short and regular interconnects. Systolic array
+                                                                    architectures have been used in state-of-the-art GEMM and
+                               X
+                      ci,j =         ai,k bk,j .             (1)
+                               k=1
+                                                                    deep learning accelerators such as the Tensor Processing Unit
+                                                                    (TPU) [3], [4], [17], among others [6], [18]. However, a
+   Alternatively, C can also be computed by dividing A and
+                                                                    systolic array can only be fully utilized when the input matrix
+B into 4 matrix blocks, where C is then computed by carrying
+                                                                    sizes at minimum match the dimensions of the systolic array
+out 8 matrix block multiplications and 4 matrix block additions     or are larger, and real workloads have limits to the matrix sizes
+between the A and B blocks as follows:
+                                                                being multiplied.
+  C11 C12          A11 B11 +A12 B21 A11 B12 +A12 B22                   There is then a limit to how fast the workload can be
+               =                                               .
+  C21 C22          A21 B11 +A22 B21 A21 B12 +A22 B22                accelerated on a single-systolic array design. This is because,
+                                                            (2)     even if more compute resources are instantiated to scale up
+This process can then be carried out recursively again for each     the size of the systolic array, the systolic array will begin
+matrix block product by splitting the matrix blocks again into      to be underutilized after its size surpasses the workload’s
+smaller blocks and repeating the same process.                      matrix sizes, and the workload will not be able to execute
+                                                                    any faster. This is particularly true in modern workloads such
+B. Strassen Matrix Multiplication                                   as deep learning acceleration, where the matrix sizes that the
+                                                                    workloads break down to can be smaller than the maximum
+  Strassen’s fast matrix multiplication algorithm [7] provides      systolic array size that could be instantiated in an accelerator
+a way to carry out (2) instead using 7 matrix block multipli-       [4], [17], [19], [20].
+cations and 18 matrix block additions as follows:                      To combat this, multiple smaller systolic arrays can be used
+    T1 = A11 + A22                         S1 = B11 + B22           in parallel, which allows for the total compute power in the
+    T2 = A21 + A22                         S2 = B11                 systolic array system to increase while the minimum supported
+    T3 = A11                               S3 = B12 − B22           matrix sizes remain the same. Prior works [19], [20] achieve
+                                                                    this by implementing variations of (2) by dividing larger ma-
+    T4 = A22                               S4 = B21 − B11    (3)    trices into smaller matrix blocks, executing the smaller matrix
+    T5 = A11 + A12                         S5 = B22                 block multiplications on multiple smaller systolic arrays. The
+    T6 = A21 − A11                         S6 = B11 + B12           block products are then later summed up to form the final
+    T7 = A12 − A22                         S7 = B21 + B22           larger matrix multiplication product. In this work, we show
+                                                                    how to efficiently implement (3)-(4) in hardware to achieve
+                                                                    this same goal with less hardware resources.
+  Q1 = T1 · S1
+  Q2 = T2 · S2
+                               C11 = Q1 + Q4 − Q5 + Q7
+  Q3 = T3 · S3                                                      D. Prior Work on Executing Strassen on CPUs and GPUs
+                               C12 = Q3 + Q5
+  Q4 = T4 · S4                                                .        Strassen’s algorithm has been well explored in prior work
+                               C21 = Q2 + Q4                        for execution on general-purpose CPUs and GPUs [8], [9],
+  Q5 = T5 · S5
+                               C22 = Q1 − Q2 + Q3 + Q6              [10], [11], [12], [13], [14], [15]. However, its execution on
+  Q6 = T6 · S6
+                                                                    CPUs and GPUs in these prior works is unable to efficiently
+  Q7 = T7 · S7                                                      achieve the algorithm’s promised theoretical speedups unless
+                                                             (4)    the widths/heights of the matrices being multiplied are in the
+Similarly to (2), this algorithm can also be repeated recursively   range of at least 1024 elements or even much larger.
+for each matrix block multiplication, leading to an asymptotic         This non-optimal execution of Strassen’s algorithm in
+complexity reduction compared to conventional matrix multi-         CPUs and GPUs stems from irregularities introduced in the
+plication algorithms such as (1) and (2).                           algorithm such as extra data accesses required for read-
+   1) Winograd Form: The Winograd form of the Strassen              ing/computing/storing additional intermediate matrices be-
+algorithm [16] has the same asymptotic complexity but re-           fore/after the matrix multiplication steps. These irregularities
+quires 15 matrix block additions at each level of recursion         all add to the overall execution time beyond what would be
+rather than 18. However, for fixed-point data types, this form      expected purely from a theoretical analysis of only the number
+increases the multiplier input datapath bitwidth by up to 2 bits    of required arithmetic operations [10], [14].
+for each recursion level implemented rather than 1 bit, which          1) Theoretical Complexity Reductions of Strassen’s Algo-
+reduces the implementation benefits. Due to this, we focus on       rithm: In this subsection, we establish what the expected
+the original form of the Strassen algorithm from (3)-(4) in our     theoretical complexity reductions of Strassen’s algorithm are
+work instead.                                                       based on number of operations, and how the achieved speedups
+                                                                                                                                  3
+
+
+
+in prior works on CPU/GPU Strassen implementations fall           design concept for implementing Strassen’s algorithm for one
+short of achieving these theoretical complexity reductions.       level of recursion on 2×2 matrices has been proposed in
+   Letting M = N = K = n, the complexity of Strassen’s           the work by Elfimova et al. [21] without evaluation of an
+algorithm in number of arithmetic operations is O n2.8074         implementation. Another hardware design for implementing
+[7]. Conventional matrix multiplication (1) requires n3 multi-    Strassen’s algorithm for one level of recursion on 2×2 matrices
+plications and n2 (n − 1) additions for the following number      has also been proposed in the work by León-Vega et al. [22],
+of total operations:                                              where the Strassen architecture reduced FPGA DSP usage
+                                                                  by up to 12.5% at the expense of 25-40% increase in LUT
+                      n3 + n2 (n − 1) .                     (5)
+                                                                  resources to implement the additional adders.
+In contrast, Strassen’s algorithm (3) for 1 recursion level re-      Unlike the only two prior works on custom hardware
+quires 7n3 /8 multiplications and 7 n2 (n/2 − 1) /4+18 n3 /8      designs for executing the Strassen algorithm, we propose
+additions for the following number of total operations:           architectures in this work that allow for Strassen’s algorithm to
+                                                                  be implemented on matrices larger than 2×2. This is essential
+           7n3 /8 + 7 n2 (n/2 − 1) /4 + 18 n3 /8 .          (6)
+                                                                  for minimizing the complexity penalty of the additional adders.
+The Winograd form of Strassen’s algorithm [16] for                Additionally, the architectures are capable of implementing
+1 recursion level requires 7n3 /8 multiplications and             multiple levels of Strassen recursion to achieve greater hard-
+7 n2 (n/2 − 1) /4 + 15 n3 /8 additions for the following num-     ware resource savings. Furthermore, the proposed architectures
+ber of total operations:                                          allow proven traditional systolic arrays to be still used at the
+                                                                  core. Alternatively, they can allow Strassen’s algorithm to be
+           7n3 /8 + 7 n2 (n/2 − 1) /4 + 15 n3 /8 .          (7)   used in combination with other hardware designs that can
+By comparing (5) to (6) and (7) for different values of n         efficiently perform further algebraic optimizations on matrices
+we can then see that Strassen’s algorithm requires fewer          after the Strassen portion is carried out, such as techniques
+operations than conventional matrix multiplication for matrix     from our prior work [6]. Finally, the proposed Strassen ar-
+sizes of n ≥ 16, and n ≥ 13 for the Winograd form of              chitectures are multisystolic array designs, meaning they can
+Strassen’s algorithm.                                             multiply smaller matrices with higher utilization than single-
+   However, Strassen’s algorithm on CPUs and GPUs in prior        systolic array designs with the same computational strength.
+works only starts providing some speedups over traditional
+matrix multiplication for matrix sizes n of at least 20000
+[8], 16384 [9], 896 [10], 5000 [11], 1536 [12], 1006 [13],        F. Notation
+and 1000 [14] [15]. This limits the applicability of Strassen’s
+algorithm on CPUs and GPUs for modern workloads such as              The following notation is used throughput the remainder
+deep learning that do not always decompose to such large          this work for describing different systolic array architectures
+matrix multiplications.                                           or their workloads:
+   As derived above, prior works on CPU/GPU implementa-
+tions require matrix sizes of at least 896-16384 before having      • r: The number of recursion levels in (2) or (3)-(4) that
+benefits rather than the much lower theoretical threshold of 13       are implemented in a hardware architecture.
+                                                                    • MM: A traditional single-systolic array implementing
+or 16. In contrast, the custom Strassen hardware architectures
+presented in this work translate the benefits of Strassen’s al-       conventional matrix multiplication (1) in hardware.
+                                                                    • MMr : A traditional multisystolic array implementing
+gorithm into hardware resource savings rather than reductions
+in execution time. The proposed designs more closely achieve          conventional blocked matrix multiplication (2) in hard-
+the theoretical complexity reductions of Strassen’s algorithm         ware for r levels of recursion.
+                                                                    • SMMr : The proposed Strassen multisystolic array imple-
+compared to prior works on CPU/GPU implementations. This
+is demonstrated in our results through the fact that the pro-         menting (3)-(4) in hardware for r levels of recursion.
+                                                                    • MXU: In this work, systolic arrays may also be referred
+posed architectures present area savings while achieving the
+same throughput/clock cycle as traditional designs even when          to as matrix multiplication units (MXU)s for convenience.
+                                                                    • (S)MM(r) X×Y : An MM, MMr , or SMMr architecture
+instantiated for multiplying matrices down to size 24×24.
+Additionally, for r Strassen recursion levels implemented, the        may also be referred to with two numbers X×Y specified
+proposed designs achieve (8/7)r times reduction in multipliers        beside it. Here, X and Y represent the width and height,
+as expected from (3)-(4) compared to conventional designs             respectively, in number of MAC units of each MM
+without significant increase in other hardware components or          systolic array instantiated at the lowest level of recursion
+any increase in throughput/clock cycle.                               in the architecture. For example, an MM 64×64 MXU
+                                                                      (meaning X = Y = 64) would contain 642 MAC units,
+                                                                      an MM1 32×32 MXU (meaning r = 1 and X = Y = 32)
+E. Prior Work on Custom Strassen Hardware Architectures               would contain 81 × 322 MAC units, and an SMM2 8×8
+   While software implementations of Strassen’s algorithm on          MXU (meaning r = 2 and X = Y = 8) would contain
+CPUs and GPUs have been well explored in prior work,                  72 × 82 multipliers.
+custom hardware designs for efficiently exploiting the algo-        • n: The width/height of the matrices that are being fed as
+rithm in hardware remain under-explored. A systolic array             inputs to a systolic array to be multiplied.
+                                                                                                                                                                   4
+
+
+
+    Address 0
+     Address 1                                                                                                        SMMr MXU
+     Address 2
+                                                                                                            Ai:m:,:                        B:,j:n:
+Address m − 1
+                               A11                            A12                    A11 i:m:,: A12 i:m:,: A21 i:m:,:
+    Address 0
+     Address 1                                                                                                 B11 :,j:n:       B12 :,j:n: B21 :,j:n: B22 :,j:n:
+     Address 2
+Address m − 1
+    Address 0
+                                                                                                          A/B Addition Vectors
+     Address 1                                                                        T1 i:m:,: T2 i:m:,: T3 i:m:,: T4 i:m:,: T5 i:m:,: T6 i:m:,: T7 i:m:,:
+     Address 2                                                                        S1 :,j:n: S2 :,j:n: S3 :,j:n: S4 :,j:n: S5 :,j:n: S6 :,j:n: S7 :,j:n:
+Address m − 1
+                               A21                            A22                    SMMr−1 SMMr−1 SMMr−1 SMMr−1 SMMr−1 SMMr−1 SMMr−1
+    Address 0
+                                                                                      MXU    MXU    MXU    MXU    MXU    MXU    MXU
+     Address 1
+     Address 2                                                                        Q1 i:m:,: Q2 i:m:,: Q3 i:m:,: Q4 i:m:,: Q5 i:m:,: Q6 i:m:,: Q7 i:m:,:
+Address m − 1
+                                                                                                            Q Addition Vectors
+Fig. 1. Example data layout for the A matrix in memory for an architecture
+implementing Strassen matrix multiplication for 2 levels of recursion (SMM2 ).
+Each address i contains every mth row of A concatenated together starting at                                          Ci:m:,:
+row i (notated as A i:m:,: ). To help illustrate this, the gray coloured rows are
+all elements of A belonging to address 0, which forms A 0:m:,: containing
+row 0 of every A sub-block from the lowest level of recursion in (3). The           Fig. 2. Top-level diagram of the proposed SMMr multisystolic array
+organization for the B matrices in memory are the same, except that the order       architecture for implementing Strassen matrix multiplication (3)-(4) for r
+of the elements is transposed compared to the A matrix layout shown here.           levels of recursion in hardware.
+
+
+                                                                                    together (notated as A i:m:,: ), and each B memory location j is
+                  III. S TRASSEN A RCHITECTURE
+                                                                                    a vector containing every nth column of B starting at column
+   The proposed architectures achieve a more efficient im-                          j concatenated together (notated as B :,j:n: ). This allows one
+plementation of Strassen’s algorithm than what is possible                          row or column of all 4r A/B sub-blocks from the lowest level
+through execution on CPUs and GPUs by pipelining and                                of recursion in (3) to all be read at once from a single memory
+performing the extra additions and data movement steps at all                       location and fed into the MXU each clock cycle. A i:m:,: and
+levels of recursion in parallel with the matrix multiplications.                    B :,j:n: rows/columns are then read consecutively when feeding
+The architectures are functionally equivalent to conventional                       the A and B blocks into the MXU.
+multisystolic array designs while allowing the theoretical                             As shown in (3), the input A and B matrices at each level
+complexity reductions of Strassen’s algorithm to be translated                      of recursion are divided into four block quadrants labelled Aij
+directly into hardware resource savings.                                            and Bji of size M ×K for Aij quadrants and of size K×N for
+                                                                                    Bji quadrants. The portions of each A i:m:,: and B :,j:n: vector
+A. Memory Layout and Access Algorithm                                               belonging to quadrant Aij and Bji are notated as Aij i:m:,: and
+                                                                                    Bji :,j:n: . The MXU then computes and returns row i of all C
+   In order to perform the extra Strassen data movement and
+                                                                                    sub-blocks from the lowest level of recursion in (4) in every
+addition steps at all levels of recursion in parallel with the
+                                                                                    clock cycle i, allowing C i:m:,: to be stored in the same format
+matrix multiplications, the architecture reads one row/column
+                                                                                    as A in memory for if C will later be taken as an A input
+at a time of the A and B input matrix sub-blocks from the
+                                                                                    for a later matrix multiplication.
+lowest level of recursion in (3) simultaneously. This generates
+and provides all T and S sub-blocks one row/column at a
+time for performing all the matrix multiplications in (4) at                        B. Strassen Multisystolic Array Design
+the lowest level of recursion in parallel. The T and S sub-                            Fig. 2 shows the proposed SMMr multisystolic array archi-
+blocks are all immediately generated from the A and B input                         tecture. Rather than having one X×Y MXU with X columns
+sub-blocks and consumed in parallel like this to eliminate any                      and Y rows of MAC units for efficiently multiplying matrices
+additional execution time or hardware resources needed for                          down to size X×Y , this architecture consists of 7r smaller
+storing/re-accessing them for later use.                                            X/2r ×Y /2r MXUs that together efficiently multiply matrices
+   To achieve this, each A and B matrix fed into the MXU                            down to the same size but at a higher throughput. Furthermore,
+is divided into 4r equal sub-blocks of size m×k for A and                           it achieves this with fewer MAC units than a conventional
+of size k×n for B, where each row/column i/j of each A/B                            multisystolic array design. This both allows smaller matrices
+sub-block is stored in the accelerator’s A and B memories at                        to be multiplied at a higher utilization and increases the
+location i/j plus an offset. An example of this memory layout                       throughput per MAC unit.
+for implementing 2 levels of Strassen recursion is shown in                            The A i:m:,: and B :,j:n: vectors read into the MXU are
+Fig. 1. This means that each A memory location i is a vector                        first divided into their four Aij i:m:,: and Bji :,j:n: portions
+containing every mth row of A starting at row i concatenated                        depending on which quadrant of A/B each element belongs to
+                                                                                                                                                                                       5
+
+
+
+(a)                             A Addition Vectors                                                                 bk,j ...bk+X−1,j+X−1
+               A11 i:m:,:       A12 i:m:,:       A21 i:m:,:       A22 i:m:,:                                                                              MM MXU
+                                                                                                       ai,k ...ai−X+1,k+X−1
+
+
+
+
+                                                                                                        PE             PE                   PE            ci−X−3,j
+      +           +                                           +           −          −
+
+                                                                                                        PE             PE                   PE            ci−X−4,j+1
+ T1 i:m:,: T2 i:m:,: T3 i:m:,: T4 i:m:,: T5 i:m:,: T6 i:m:,: T7 i:m:,:
+
+(b)                             B Addition Vectors
+               B11 :,j:n:       B12 :,j:n:       B21 :,j:n:       B22 :,j:n:
+
+
+                                                                                                        PE             PE                   PE
+                                                                                                                                                    ci−X−Y −2,j+Y −1
+
+
+      +                            −           −                          +          +
+                                                                                               Fig. 4. Baseline MM single-systolic array architecture that implements
+                                                                                               conventional matrix multiplication (1) in hardware, provided for completeness
+ S1 :,j:n:     S2 :,j:n:       S3 :,j:n:     S4 :,j:n:   S5 :,j:n:     S6 :,j:n:   S7 :,j:n:   and clarity. It is instantiated at the lowest level of recursion in the SMMr and
+                                                                                               MMr MXU architectures. X here represents the width of the a and b vectors
+                                                                                               entering the MM MXU, and Y represents the width of the c vectors exiting
+(c)                             Q Addition Vectors                                             the MXU.
+ Q1 i:m:,: Q2 i:m:,: Q3 i:m:,: Q4 i:m:,: Q5 i:m:,: Q6 i:m:,: Q7 i:m:,:
+                                                     0
+                           0
+                               −                   −
+                                                                                                                        Ai:m:,:     MMr MXU                        B:,j:n:
+
+                                                                                                A11 i:m:,: A12 i:m:,: A21 i:m:,: A22 i:m:,: B11 :,j:n: B21 :,j:n: B12 :,j:n: B22 :,j:n:
+                  +                +           +              +
+
+
+             C11 i:m:,:        C12 i:m:,:      C21 i:m:,: C22 i:m:,:
+                                                                                                MMr−1 MMr−1 MMr−1 MMr−1 MMr−1 MMr−1 MMr−1 MMr−1
+Fig. 3. Internal structure of the SMMr MXU addition vectors from Fig. 2.                        MXU   MXU   MXU   MXU   MXU   MXU   MXU   MXU
+
+                                                                                                         +                     +                     +                       +
+as shown in Fig. 2. They then pass through the A/B addition                                               C11 i:m:,:                C21 i:m:,:        C12 i:m:,:              C22 i:m:,:
+vectors shown in Fig. 3 (a) and (b) to form the T i:m:,: /S :,j:n:
+matrices. The A/B addition vectors both contain 5 addition
+                                                                                                                                       Ci:m:,:
+vectors each consisting of K scalar adders or subtractors,
+where K is the width of the four Aij blocks and the height
+                                                                                               Fig. 5. Baseline MMr multisystolic array architecture for implementing
+of the four Bji blocks as defined in Section III-A. The 7                                      conventional blocked matrix multiplication (2) for r levels of recursion in
+T i:m:,: /S :,j:n: vectors then pass into the next level of SMMr−1                             hardware.
+MXUs to perform the 7 matrix block multiplications. The
+Q i:m:,: vectors of the matrix block multiplication outputs then
+pass through the Q i:m:,: addition vectors shown in Fig. 3                                     be reduced by a factor of 2 at each level of recursion.
+(c) consisting of 8 addition vectors each containing N scalar                                  For fixed-point implementations, the T i:m:,: /S :,j:n: inputs to
+adders or subtractors. This forms the final C product, where                                   each SMMr−1 MXU that were formed from an addition or
+N is the width of the four Bji blocks as defined in Section                                    subtraction in the A or B vector addition units will have an
+III-A.                                                                                         increased bitwidth by 1 bit.
+   Each of the 7 SMMr−1 MXUs can contain 7 more SMMr−2
+MXUs for implementing another level of Strassen recursion
+                                                                                               C. Baseline Designs
+and repeating the process above, or they can be instantiated
+as a baseline MM MXU shown in Fig. 4. For implementing                                           We later compare the SMMr architectures with baseline
+the next level of SMMr−2 MXUs inside each SMMr−1 MXU,                                          MMr multisystolic array architectures shown in Fig. 5 which
+each T i:m:,: /S :,j:n: input passed into an SMMr−1 MXU will                                   execute (2) in parallel for r levels of recursion. The baseline
+then be considered as the full A i:m:,: /B :,j:n: inputs within                                MMr architectures are functionally identical to the SMMr
+that MXU and are split again into the next level of four                                       architectures, but they consist of 8r smaller X/2r ×Y /2r
+Aij i:m:,: /Bji :,j:n: vectors. The dimensions of the matrix blocks                            MXUs rather than 7r . Fig. 4 also shows the internal structure
+being read/computed and the number of scalar adders in                                         of each baseline MM MXU present at the lowest level of
+the addition vectors within each SMMr−1 MXU will then                                          recursion in each SMMr and MMr architecture, and Fig. 6
+                                                                                                                                            6
+
+
+
+                ai+1,k    bk,j−1       ai+1,k+1 bk+1,j−1                     B GEMM tile into the MXU as the current GEMM tile is
+                w         w load        w        w load                      being multiplied.
+                ai,k      bk,j          ai,k+1   bk+1,j                         Each A, B, and C sub-block entering or exiting the top-
+                                                                             level MXU for the SMMr and baseline MXUs first pass
+                      PEk                    PEk+1
+                                                                             through triangular-shaped register arrays each containing X
+                       ×                      ×
+                     2w                     2w                               shift registers of varying depths. Here, each shift register SRk
+      ci,j             +  ci−1,j              +    ci−2,j                    has a depth of k and loads one ai,k or bk,j element per clock
+     (partial sum)                                          2w+wa            cycle. These triangular buffers are explained further in our
+                                                                             prior work [6] and they allow the vector elements to enter the
+                                                                             MXU in the necessary order as depicted in the element indices
+Fig. 6. The internal PE structure of each MM MXU from Fig. 4, provided       in Figs. 4 and 6.
+for completeness. Here, wa is the additional bitwidth added to account for
+accumulation, equal to ⌈log2 (X)⌉, where X is the width of the a and b
+vectors entering the MM MXU.                                                 B. Multiplier Compute Efficiency
+                                                                                In this subsection, we define an efficiency metric called
+                                                                             the multiplier compute efficiency (MCE) in (8) which we use
+shows the internal structure of the processing elements (PE)s
+                                                                             to compare the SMMr architectures against baseline designs
+inside the MM MXUs.
+                                                                             and prior works. This is used to quantify how much the
+                                                                             algebraic optimizations exploited in an architecture reduce
+                            IV. R ESULTS                                     the computational complexity. Reductions in computational
+   In this section, we evaluate example implementations of the               complexity allow an architecture to utilize its multipliers
+proposed SMMr architectures. In Section IV-D, we compare                     more effectively than conventional designs using no algebraic
+the SMMr MXU architectures in isolation against our base-                    optimizations. The multiplier compute efficiency is defined as
+line MXU designs in Table I. In Section IV-E we evaluate                     follows:
+the SMMr MXU architectures in Tables II-III compared to                                   mults/multiplier   (mults/s)/#multipliers
+                                                                                 MCE =                     =                        . (8)
+prior work when integrated into an end-to-end deep learning                                 clock cycle                f
+accelerator system based on the system from our previous                     Here, mults/s above is measured by taking the number of mul-
+work [6], which has open-source code [23]. We first describe                 tiplications required to carry out an execution using conven-
+the integration of our proposed systolic arrays into the deep                tional algebra and dividing it by the measured execution time.
+learning system in Section IV-A, and in Sections IV-B and                    Finally, #multipliers is the number of instantiated multipliers
+IV-C, we define performance metrics used to compare the                      in the design, and f is the clock frequency that the hardware
+SMMr architectures against baseline designs and prior works.                 design is operating at.
+                                                                                Conventional matrix multiplication algorithms such as (2)
+A. System Integration                                                        have no algebraic optimizations for reducing the computational
+                                                                             complexity. Therefore, the limit/maximum achievable value
+   We were able to integrate the SMMr architectures into a                   (also referred to as the roof) of the metric in (8) is the
+system based on our previous work [6], which has open-source                 following when using conventional matrix multiplication in
+code [23], by swapping the SMMr MXU architectures from                       hardware:
+Fig. 2 into our system design [6] in place of the free-pipeline
+fast inner-product (FFIP) MXU.                                                                   roof (MCEMMr ) = 1 .                    (9)
+   In order to perform GEMM on the proposed MXUs and                         In contrast, Strassen’s algorithm requires 8r /7r times fewer
+multiply matrices of arbitrary sizes that can be larger than                 multiplications than a conventional matrix multiplication al-
+the MXU dimensions, the full A and B matrices are first                      gorithm, where r is the number of levels of recursion im-
+divided into GEMM tiles prior to being divided further into                  plemented in Strassen’s algorithm. Therefore, the multiplier
+smaller blocks for executing (2) or (3)-(4). The GEMM tiles                  compute efficiency can reach the following limit in SMMr
+are then fed into the MXU one-by-one. Each GEMM tile is                      architectures:
+then considered as the full A and B matrix from (2) or (3)-(4)                                                     r
+                                                                                                                    8
+while being fed into the MXU and gets further divided into                                    roof (MCESMMr ) =          .             (10)
+smaller Aij /Bji blocks within the MXU.                                                                             7
+   Following each GEMM tile multiplication, the partial                         As discussed in Section II, Strassen’s algorithm reduces the
+GEMM tile products are accumulated outside of the MXU to                     overall number of operations in matrix multiplication. Further-
+generate each final GEMM tile product. Prior to each GEMM                    more, any additions required before the matrix multiplications
+tile multiplication, a B GEMM tile is loaded into the MXU.                   in the algorithm are even less of a concern in fixed-point
+It then remains in place as the A GEMM tile flows through                    implementations. This is because the hardware complexity of
+the MXU producing the GEMM tile product, during which                        fixed-point multipliers typically scale quadratically with the
+a new A i:m:,: vector is fed into the MXU each clock cycle.                  input bitwidth compared to linearly for adders and registers
+Additionally, to hide the latency of loading B GEMM tiles,                   [24], [25], [26], causing the hardware footprint of multipliers
+the MXU PEs each contain one extra b buffer to load the next                 to dominate that of adders and registers.
+                                                                                                                                     7
+
+
+
+   However, one of the impediments of using Strassen’s al-          able throughput on real-life workloads. Even if more compute
+gorithm for fixed-point implementations is that the bitwidths       resources are instantiated to scale up the size of the systolic
+of the multiplication inputs increase by r bits for r levels        array, the systolic array will begin to be underutilized after its
+of Strassen recursion that are implemented, reducing its po-        size surpasses the workload’s matrix sizes. This is particularly
+tential area savings for custom fixed-point hardware designs.       true in modern workloads such as deep learning acceleration,
+Nonetheless, this impediment for fixed-point designs can be         where the matrix sizes that the workloads break down to can
+inherently mitigated in FPGA implementations so long as r           be smaller than the maximum systolic array size that could be
+plus the initial input width is not larger than the maximum         instantiated in an accelerator [4], [17], [19], [20]. In Section
+input width supported by the FPGA’s DSP units. For ex-              IV-E, we demonstrate how this property allowed us to scale
+ample, each DSP in common Intel/Altera FPGAs instantiate            up our deep learning accelerator design without compromising
+two 18×19-bit multipliers [27], and common input bitwidths          utilization to achieve state-of-the-art ResNet [28] throughput.
+for applications such as deep learning are 16 bits or less.
+This leaves room for at least 2 or more levels of Strassen
+                                                                    D. Comparison to Baseline Designs
+recursion to be implemented before surpassing the bitwidth
+limit supported by the DSPs.                                           Table I shows the resource usage and performance compar-
+   Furthermore, due to the flexible nature of custom hardware       ison between the proposed SMMr and baseline MM/MMr
+design, the SMMr architectures can be efficiently mapped onto       systolic array architectures in isolation (without integration
+other DSP units in general which support input bitwidths up         into a deep learning accelerator system). The SMM1 and
+to n bits by customizing the input datapath bitwidth w and          SMM2 architectures overall have a similar amount of soft logic
+value of r as necessary to ensure that w + r ≤ n. So long as        resources and the same throughput per clock cycle roof as the
+the accuracy requirements of the application are still met, this    MM1 and MM2 architectures, respectively, but they require
+will allow the SMMr designs and their increase in multiplier        1.14-1.31× fewer DSP units. Compared to the multisystolic
+bitwidth to still be efficiently mapped onto DSP units of any       array MM1 and MM2 designs, the SMM1 and SMM2 architec-
+bitwidth in a general way.                                          tures are also functionally equivalent, respectively, other than
+                                                                    having a lower clock frequency. To help mitigate the limitation
+                                                                    of having a lower frequency, we added an extra SMM2 design
+C. Supporting Smaller Matrices with the Same Performance
+                                                                    (which had the biggest issue with clock frequency) on the far
+   Multisystolic array designs such as the SMMr and baseline        right of Table I containing additional pipelining registers in
+MMr architectures have the ability to efficiently multiply          the addition logic of each Q Addition Vectors unit from Fig.
+smaller matrices than a single-systolic array design with the       3 (c). This extra design demonstrates how a trade-off can be
+same performance capability. By executing (2) or (3)-(4) fully      optionally made to increase the design’s clock frequency at
+in parallel for r levels of recursion, matrix products of size      the cost of some extra soft logic resources.
+as small as n × n can be computed up to once every n/2r                Nonetheless, the lower clock frequencies of the SMMr
+clock cycles in an MMr or SMMr multisystolic array design.          designs in Table I are compensated by the fact that the SMMr
+Furthermore, these matrix products require n3 multiplications       designs achieve more effective operations from the same
+to calculate using conventional algebra. Therefore, the ratio of    number DSP units. Since the reduction in DSP units is greater
+an architecture’s throughput per clock cycle versus its smallest    than the reduction in clock frequency in the SMM1 design
+supported matrix sizes it can multiply, which we refer to as        and SMM2 design with extra registers relative to their MMr
+the matrix size efficiency (MSE), is the following:                 counterparts, they would be able to achieve a higher overall
+                         mults/clock cycle                          throughput if scaled up in size to use the same number of
+               MSE =                         ,              (11)    DSPs. This is shown by the Throughput/DSP metric in Table I,
+                        min. mat. size (h×w)
+                                                                    which shows that the SMMr designs achieve up to 22% more
+which has the following roof for multisystolic arrays:
+                                                                    throughput per DSP than their MMr counterparts. Finally,
+                                n3 /(n/2r )                        if the frequency-limiting critical path is in external control or
+            roof MSE(S)MMr =                    = 2r .      (12)
+                                       n×n                          other logic outside of the systolic array after integrating it
+   In contrast, a single-systolic array design can produce matrix   into an end-to-end accelerator system, as was the case in our
+products of size as small as n × n up to once every n clock         full-system accelerators from Tables II-III, this limitation of a
+cycles, making this ratio the following for a single-systolic       lower frequency is further mitigated.
+array design:                                                          The throughput per clock cycle roof of the MM and MM2
+                                                                    baseline designs in Table I are equal and they consume the
+                                    n3 /n                           same number of DSP resources, but the MM design requires
+                roof (MSEMM ) =            = 1.            (13)
+                                    n×n                             slightly fewer ALM and register resources. However, this
+This shows that the SMMr and baseline MMr multisystolic             penalty may be justified in the MM2 design when considering
+array designs can efficiently multiply matrices 2r times smaller    that the minimum matrix size (height×width) that can be
+than a single-systolic array architecture with the same perfor-     multiplied while fully utilizing the MXU is 4× smaller in
+mance capability.                                                   the MM2 design compared to the MM design. This increases
+   As discussed in Section II-C, this is an important property      its performance scalability for accelerating modern workloads
+for increasing a systolic array accelerator’s maximum achiev-       such as deep learning as discussed in Section II-C and IV-C.
+                                                                                                                                                                                   8
+
+
+
+                                                          TABLE I
+C OMPARING SMMr MULTISYSTOLIC ARRAY ARCHITECTURES AGAINST THE BASELINE MM SINGLE - SYSTOLIC ARRAY ARCHITECTURE AND BASELINE
+     MMr MULTISYSTOLIC ARRAY ARCHITECTURES IN ISOLATION ( WITHOUT INTEGRATION INTO A DEEP LEARNING ACCELERATOR SYSTEM ).
+
+                                          MM 48×48               MM1 16×16               SMM1 16×16               MM2 6×6                SMM2 6×6               SMM2 6×6
+                                                                                                                                                              (with extra regs.)
+                             DSPs             1,152                   1,024                   896                    1,152                    882                    882
+                             ALMs            34,890                  30,872                  30,265                  36,397                 35,863                 38,485
+                          Registers         130,262                 118,049                 115,830                 138,219                 133,511               147,750
+                  Frequency (MHz)              399                    398                     380                     388                     291                    361
+                                    1
+        roof (Throughput) (GOPS)              1839                    1630                    1556                   1788                    1341                   1663
+
+                 Throughput/DSP 2             1.60                    1.59                    1.74                    1.55                   1.52                   1.89
+               mults/multiplier
+                               
+                                  3
+        roof    clock cycle                     1                       1                     1.14                     1                     1.31                   1.31
+
+        Min. supported matrix size 4         48×48                   32×32                  32×32                   24×24                   24×24                  24×24
+           mults/clock cycle
+                              
+                                   5
+    roof min. mat. size (h×w)                   1                       2                      2                       4                       4                      4
+
+ All designs are synthesized on Arria 10 GX 1150 FPGA for 16-bit fixed-point inputs and consume 0 memory resources.
+1
+  Maximum achievable throughput in giga operations per second, where throughput is equal to the number of operations required to carry out an execution using conventional
+algebra divided by the measured execution time.
+2
+  Shows which designs can achieve the highest throughput for the same number of DSPs.
+3
+  Maximum achievable multiplier compute efficiency, defined in Section IV-B, measures how effectively the architecture can utilize its multipliers. It can surpass 1 in SMMr
+architectures because the observed mults/s is equal to the number of multiplications required to carry out an execution using conventional algebra divided by execution time.
+4
+  Minimum input matrix sizes that can be multiplied at peak throughput/full utilization.
+5
+  Quantifies how much smaller the minimum supported matrix sizes of a multisystolic array design are relative to a single-systolic array design with the same throughput per clock
+cycle roof, definition and relevance provided in Section IV-C.
+
+
+
+                                                                                           been done on an Arria 10 SoC Developement Kit [29] con-
+                                                                                           taining the Arria 10 SX 660 device by measuring throughput
+                                                                                           in real-time. However, this device contains fewer soft logic
+                                                                                           resources than the Arria 10 GX 1150 used in the prior works
+                                                                                           we compare against, and we generate compilation results for
+                                                                                           our design on the same Arria 10 GX 1150 device used in prior
+                                                                                           works for a more fair and consistent comparison. Throughput
+                                                                                           values of our designs on the Arria 10 GX 1150 device are
+                                                                                           then calculated using an accurate throughput estimation model
+                                                                                           based on our highly deterministic and time-predictable system
+                                                                                           implementation, which accurately predicts actual throughputs
+                                                                                           measured on the Arria 10 SX 660 device available to us. Tables
+                                                                                           II-III show throughputs for ResNet [28] neural networks.
+                                                                                              The works from Liu et al. [30] and Fan et al. [31] in
+                                                                                           Table II use a technique to pack two 8-bit multiplications
+                                                                                           onto each 18×19-bit multiplier in the DSPs and additional
+Fig. 7. Plotting the multiplier compute efficiency of the architectures in Table           ALMs, and therefore the number of multipliers is calculated
+I when multiplying different input matrices of size n×n. As shown, the
+minimum matrix size that can be efficiently multiplied gets smaller in the
+                                                                                           as #DSP×4 in those works. The number of multipliers in
+order of the MM, MM1 /SMM1 , and MM2 /SMM2 designs, respectively.                          the works [32], [33] from Table IV is calculated as #DSPs
+                                                                                           since they are implemented on AMD FPGAs where each DSP
+                                                                                           instantiates one 18×27-bit multiplier [34]. In Tables II and IV,
+This ability of the multisystolic array designs to more effi-                              the number of multipliers in the prior works [35], [36] is equal
+ciently multiply smaller matrices is further illustrated in Fig.                           to #DSPs×2, where each DSP in the Altera FPGAs instantiates
+7. This same property is true for the SMM2 design, except                                  two 18×19-bit multipliers [27]. The number of multipliers
+it achieves this with fewer DSP resources. This benefit is                                 used in the MXUs from our architectures in Tables I-II is equal
+demonstrated in Section IV-E, where this property allowed                                  to 8r or 7r times X×Y for the MMr and SMMr MXUs,
+us to scale up our deep learning accelerator design without                                respectively. For example, an MM 64×64 MXU (meaning
+compromising utilization to achieve state-of-the-art ResNet                                r = 0 and X = Y = 64) would contain 80 × 642 multipliers,
+throughput.                                                                                an MM1 32×32 MXU would contain 81 ×322 multipliers, and
+                                                                                           an SMM2 8×8 MXU would contain 72 × 82 multipliers. Due
+                                                                                           to the FFIP reduction in multipliers as described in our prior
+E. Comparison to Prior Work                                                                work [6], the number of multipliers for the FFIP architectures
+  Full system-level validation of the experimental accelerator                             in Table III is equal to 8r or 7r times X × Y /2 + X/2 for the
+as integrated into the system from our previous work [6] has                               FFIP and FFIP+SMMr designs, respectively. Additionally, for
+                                                                                                                                                                                                                   9
+
+
+
+                                                                 TABLE II
+         SMMr MULTISYSTOLIC ARRAY ARCHITECTURES INTEGRATED INTO A DEEP LEARNING ACCELERATOR SYSTEM COMPARED WITH PRIOR
+                                         STATE - OF - THE - ART DEEP LEARNING ACCELERATORS .
+
+
+                                  TNNLS ’22 [30]                TCAD ’22 [31]                   Entropy ’22 [35]                          SMM1 32×32                                       SMM2 8×8
+                    DSPs                 1473                           1473                            1503                                     1518                                            1518
+                   ALMs                  304K                           304K                            303K                                     306K                                            145K
+                 Registers               889K                           890K                              -                                      641K                                            386K
+                Memories                 2334                           2334                            1953                                     2713                                            2036
+        Frequency (MHz)                   200                           220                              172                                     293                                             295
+                   Model        ResNet-         VGG          Bayes              Bayes       R-CNN              R-CNN           ResNet-       ResNet-         ResNet-           ResNet-       ResNet-     ResNet-
+                                  50             16         ResNet-             VGG         (ResNet-           (VGG              50           101             152                50           101         152
+                                                              18                 11           50)                16)
+      Throughput (GOPS) 1        1519           1295            1590            534             719              865             3750            4116            4276            2024            2115     2158
+         mults/multiplier 2
+          clock cycle            0.645          0.550           0.639           0.206           0.696           0.837            0.877           0.963           1.002           1.051           1.098    1.120
+
+   All designs are synthesized on Arria 10 GX 1150 FPGA for 8-bit fixed-point inputs.
+  1
+   Throughput in giga operations per second, equal to the number of operations required to carry out an execution using conventional algebra divided by execution time.
+  2
+   Multiplier compute efficiency, defined in Section IV-B, measures how effectively the architecture utilizes its multipliers. It can surpass 1 in SMMr architectures because the
+  observed mults/s is equal to the number of multiplications required to carry out an execution using conventional algebra divided by the measured execution time. For prior
+  works that did not provide this metric, the value displayed here is reverse engineered based on other provided metrics and design choices as explained further in Section IV-E.
+
+
+                                                               TABLE III
+      C OMPARISON OF AN FFIP [6] SINGLE - SYSTOLIC ARRAY ARCHITECTURE , WHICH DOUBLES PERFORMANCE PER MAC UNIT, WITH COMBINED
+             FFIP+SMMr MULTISYSTOLIC ARRAY ARCHITECTURES WHEN INTEGRATED INTO DEEP LEARNING ACCELERATOR SYSTEMS .
+
+                                                         TC ’24 [6] (FFIP 64×64)                               FFIP+SMM1 32×32                                  FFIP+SMM2 8×8
+                                          DSPs                          1072                                             1518                                            946
+                                         ALMs                           118K                                             216K                                            165K
+                                     Registers                          311K                                             627K                                            463K
+                                    Memories                            1782                                             2713                                            2036
+                             Frequency (MHz)                            388                                              313                                             297
+                                         Model      ResNet-         ResNet-           ResNet-           ResNet-         ResNet-      ResNet-           ResNet-       ResNet-         ResNet-
+                                                      50             101               152                50             101          152                50           101             152
+                          Throughput (GOPS) 1           2529            2752            2838             4006            4397            4568            2038            2130            2172
+                             mults/multiplier 2
+                              clock cycle               1.521           1.655           1.707            1.674           1.837           1.908           1.813           1.895           1.933
+
+                     All designs are synthesized on Arria 10 GX 1150 FPGA for 8-bit fixed-point inputs.
+                    1-2
+                       See the corresponding definitions from Table II.
+
+
+
+our deep learning accelerator implementations in Tables II-III,                                               underutilized for ResNet execution based on the smaller matrix
+there are an additional Y × 4r multipliers located outside the                                                sizes that its workload decomposes to. This causes the effective
+MXU in the Post-GEMM Unit [6] for performing inter-layer                                                      throughput to not increase well despite the design having a
+quantization rescaling functions. For our designs requiring                                                   larger throughput roof.
+more than 3036 multipliers, 3036 are instantiated on 1518                                                        The SMM1 32×32 and FFIP+SMM1 32×32 designs con-
+DSPs, and the remainder are instantiated in soft logic resources                                              sume noticeably more memory resources than the SMM2
+as the DSP resources are fully utilized.                                                                      8×8 and FFIP+SMM2 8×8 designs. However, it is worth
+   Tables II-III show the SMMr architectures integrated into                                                  noting that this is not due to increased memory requirements,
+the deep learning system from our previous work [6] com-                                                      but rather is due to the compiler favouring to swap some
+pared to state-of-the-art accelerators evaluated on the same                                                  register resources for memory resources. This is because the
+FPGA family for the same input bitwidths and similar neural                                                   SMM1 32×32 and FFIP+SMM1 32×32 designs have a higher
+network models. Integrating the SMMr multisystolic array                                                      register (and overall area) overhead than the SMM2 8×8
+design into our deep learning accelerator allowed us to in-                                                   and FFIP+SMM2 8×8 designs in order to achieve higher
+crease the multiplier compute efficiency while also scaling                                                   throughput roofs.
+up the computational resources and throughput roof without                                                       In Table II, the SMMr architectures achieve the highest
+increasing the minimum supported matrix sizes. This allowed                                                   throughput and multiplier compute efficiency compared to the
+it to significantly surpass the throughput in our prior work                                                  prior works. The SMM1 and SMM2 architectures’ multiplier
+[6] and other state-of-the-art prior works evaluated on the                                                   compute efficiencies in Table II approach their limits of 1.14
+same FPGA family as shown in Tables II-III. If the design is                                                  and 1.31 that are derived in (10). This surpasses the limit of
+scaled up using a single-systolic array, the minimum supported                                                1 of the baseline MMr architectures and prior works that is
+matrix size increases and compute resources begin to be                                                       derived in (9), validating SMMr ’s ability to increase multiplier
+                                                                                                                                                                 10
+
+
+
+                                 TABLE IV                                           2 levels of Strassen recursion use 1.14× and 1.31× fewer
+ S TATE - OF - THE - ART DEEP LEARNING ACCELERATORS IMPLEMENTED ON                  DSP units and an overall comparable amount of soft logic
+  OTHER FPGA FAMILIES FOR SIMILAR NEURAL NETWORKS AND INPUT
+BITWIDTHS TO PROVIDE FURTHER COMPARISON WITH TABLES II AND III.                     resources when instantiated for multiplying n×n matrices
+                                                                                    down to sizes n = 32 and n = 24, respectively. The proposed
+                                   TNNLS ’22      TCAS-I ’23       TCAD ’24         systolic array architectures increase conventional multiplica-
+                                     [32]           [33]             [36]
+                                                                                    tions/multiplier/clock cycle limits by a factor of 1.14r for r
+                       FPGA       AMD VX980       AMD XCV             Altera
+                                                    U9P             Stratix 10      implemented levels of Strassen recursion. Furthermore, they
+                                                                     GX650          allow the throughput per clock cycle roof of an accelerator
+             Fixed-point input       8/16 3            8                8           to double for each implemented level of Strassen recursion
+                      bitwidth                                                      without increasing the minimum supported matrix sizes that
+                        DSPs         3121             2048            1024          can be efficiently multiplied.
+        ALMs (Altera) / LUTs         480K               -             152K
+                      (AMD)
+                     Registers         -                -             567K                                         R EFERENCES
+      Memories (20Kb Altera)         1457               -             2056           [1] A. Fuchs and D. Wentzlaff, “The accelerator wall: Limits of chip
+              / (36Kb AMD)                                                               specialization,” in Proc. IEEE Int. Symp. High Perform. Comput. Archit.
+            Frequency (MHz)           100             200              200               (HPCA), 2019, pp. 1–14.
+                                                                                     [2] X. Liu et al., “WinoCNN: Kernel sharing Winograd systolic array for
+                       Model       ResNet-101      ResNet-50       ResNet-152            efficient convolutional neural network acceleration on FPGAs,” in Proc.
+         Throughput (GOPS) 1          600             287              794               IEEE 32nd Int. Conf. Appl.-Specific Syst., Arch. Processors (ASAP),
+                                                                                         2021, pp. 258–265.
+            mults/multiplier 2                                                       [3] N. P. Jouppi et al., “In-datacenter performance analysis of a tensor
+             clock cycle             0.961           0.351            0.969
+  1-2
+                                                                                         processing unit,” in Proc. 44th Annu. Int. Symp. Comput. Archit. (ISCA),
+     See the corresponding definitions from Table II.                                    2017, pp. 1–12.
+  3
+   Weights are quantized to 8 bits and layer input/output is quantized to 8 or 16    [4] T. Norrie et al., “The design process for Google’s training chips: TPUv2
+  bits at different stages.
+                                                                                         and TPUv3,” IEEE Micro, vol. 41, no. 2, pp. 56–63, 2021.
+                                                                                     [5] A. Lavin and S. Gray, “Fast algorithms for convolutional neural net-
+                                                                                         works,” in Proc. IEEE Conf. Comput. Vision Pattern Recognit. (CVPR),
+compute efficiency and reduce computational complexity as                                2016, pp. 4013–4021.
+expected from our analysis.                                                          [6] T. E. Pogue and N. Nicolici, “Fast inner-product algorithms and archi-
+                                                                                         tectures for deep neural network accelerators,” IEEE Trans. Comput.,
+   Table III shows an example of how SMMr can be combined                                vol. 73, no. 2, pp. 495–509, 2024.
+with other algebraic techniques to further increase multiplier                       [7] V. Strassen, “Gaussian elimination is not optimal,” Numer. Math.,
+compute efficiency limits. FFIP [6] provides a way to reduce                             vol. 13, no. 4, pp. 354–356, 1969.
+                                                                                     [8] J. Sun et al., “Accelerate dense matrix multiplication on heterogeneous-
+the number of required multiplications by up to a factor                                 GPUs,” in 2023 IEEE 29th Int. Conf. Parallel and Distrib. Syst.
+of 2, trading half the multiplications for cheap low-bitwidth                            (ICPADS), 2023, pp. 2726–2729.
+additions. Because of this, the limit for the multiplier compute                     [9] C. Misra et al., “Stark: Fast and scalable Strassen’s matrix multiplication
+                                                                                         using apache spark,” IEEE Trans. Big Data, vol. 8, no. 3, pp. 699–710,
+efficiency metric in (8) for an FFIP architecture becomes 2,                             2022.
+and 2 × (8/7)r for a combined FFIP+SMMr architecture. In                            [10] A. G. Krishnan and D. Goswami, “Multi-stage memory efficient
+Table III, we evaluate architectures that combine FFIP+SMMr                              Strassen’s matrix multiplication on GPU,” in 2021 IEEE 28th Int. Conf.
+                                                                                         on High Perform. Comput., Data, and Anal. (HiPC), 2021, pp. 212–221.
+by instantiating SMMr MXUs that use FFIP MXUs at their                              [11] A. Khaled et al., “Applying fast matrix multiplication to neural net-
+lowest level of recursion instead of the conventional MM                                 works,” in Proc. 35th Annu. ACM Symp. on Appl. Comput., 2020, pp.
+MXUs from Fig. 4. This further increases multiplier compute                              1034–1037.
+                                                                                    [12] J. Huang et al., “Strassen’s algorithm reloaded on GPUs,” ACM Trans.
+efficiency compared to a standalone SMMr or standalone FFIP                              on Math. Softw. (TOMS), vol. 46, no. 1, pp. 1–22, 2020.
+MXU as seen in the achieved multiplier compute efficiencies                         [13] P.-W. Lai et al., “Accelerating Strassen-Winograd’s matrix multiplication
+of the FFIP+SMMr architectures listed in Table III.                                      algorithm on GPUs,” in IEEE 20th Annu. Int. Conf. on High Perf.
+                                                                                         Comput, 2013, pp. 139–148.
+                                                                                    [14] B. Lipshitz et al., “Communication-avoiding parallel Strassen: Imple-
+                                 V. C ONCLUSION                                          mentation and performance,” in Proc. Int. Conf. High Perform. Comput.
+                                                                                         Netw. Storage Anal., 2012, pp. 1–11.
+   Strassen’s fast matrix multiplication algorithm reduces the                      [15] G. Ballard et al., “Communication-optimal parallel algorithm for
+complexity of naive matrix multiplication, however, general-                             Strassen’s matrix multiplication,” in Proc. 24th Annu. ACM Symp.
+                                                                                         Parallelism Algorithms Archit., 2012, pp. 193–204.
+purpose hardware is not suitable for achieving the algorithm’s
+                                                                                    [16] S. Winograd, “On multiplication of 2× 2 matrices,” Linear Algebra
+promised theoretical speedups. Furthermore, there is limited                             Appl., vol. 4, no. 4, pp. 381–388, 1971.
+prior work on custom hardware architectures designed specifi-                       [17] N. Jouppi et al., “TPU v4: An optically reconfigurable supercomputer
+cally for executing the algorithm in hardware. We address this                           for machine learning with hardware support for embeddings,” in Proc.
+                                                                                         50th Annu. Int. Symp. Comput. Archit. (ISCA), 2023, pp. 1–14.
+by presenting custom Strassen multisystolic array hardware                          [18] C. Zhang et al., “Caffeine: Toward uniformed representation and ac-
+architectures that are functionally equivalent to conventional                           celeration for deep convolutional neural networks,” IEEE IEEE Trans.
+multisystolic array designs. However, they allow the theo-                               Comput.-Aided Design Integr. Circuits Syst., vol. 38, no. 11, pp. 2072–
+                                                                                         2085, 2019.
+retical complexity reductions of Strassen’s algorithm to be                         [19] H. T. Kung et al., “Maestro: A memory-on-logic architecture for
+translated directly into hardware resource savings, even for                             coordinated parallel use of many systolic arrays,” in Proc. IEEE 32nd
+multiplication of small matrices.                                                        Int. Conf. Appl.-Specific Syst., Arch. Processors (ASAP), vol. 2160-052X,
+                                                                                         2019, pp. 42–50.
+   Compared to a conventional multisystolic array design,                           [20] A. C. Yüzügüler et al., “Scale-out systolic arrays,” ACM Trans. Archit.
+the proposed architectures implemented on FPGA for 1 and                                 Code Optim., vol. 20, no. 2, mar 2023.
+                                                                                                                           11
+
+
+
+[21] L. Elfimova and Y. V. Kapitonova, “A fast algorithm for matrix multi-
+     plication and its efficient realization on systolic arrays,” Cybern. Syst.
+     Anal., vol. 37, no. 1, pp. 109–121, Jan. 2001.
+[22] L. G. León-Vega et al., “Acceleration of fully connected layers on FPGA
+     using the Strassen matrix multiplication,” in Proc. IEEE 5th Int. Conf.
+     BioInspired Processing (BIP), 2023, pp. 1–6.
+[23] T. E. Pogue and N. Nicolici, “FFIP accelerator implementation,” 2024.
+     [Online]. Available: https://github.com/trevorpogue/algebraic-nnhw
+[24] V. Lakshmi et al., “A novel in-memory wallace tree multiplier architec-
+     ture using majority logic,” IEEE Trans. Circuits Syst. I, vol. 69, no. 3,
+     pp. 1148–1158, 2022.
+[25] K. Guo et al., “[DL] a survey of FPGA-based neural network inference
+     accelerators,” ACM Trans. Reconfigurable Technol. Syst., vol. 12, no. 1,
+     pp. 1–26, 2019.
+[26] K. Pekmestzi, “Multiplexer-based array multipliers,” IEEE Trans. Com-
+     put., vol. 48, no. 1, pp. 15–23, 1999.
+[27] “Intel      Arria      10      native      fixed     point     DSP       IP
+     core        user       guide,”        2024.       [Online].      Available:
+     https://www.intel.com/content/www/us/en/docs/programmable/683583/current/intel-arria-native-fixed-point-dsp-ip.html
+[28] K. He et al., “Deep residual learning for image recognition,” in Proc.
+     IEEE Conf. Comput. Vision Pattern Recognit. (CVPR), 2016, pp. 770–
+     778.
+[29] “Intel Arria 10 SoC development kit,” 2024.
+[30] S. Liu et al., “Toward full-stack acceleration of deep convolutional neural
+     networks on FPGAs,” IEEE Trans. Neural Netw. Learn. Syst., vol. 33,
+     no. 8, pp. 3974–3987, 2022.
+[31] H. Fan et al., “FPGA-based acceleration for bayesian convolutional
+     neural networks,” IEEE Trans. Comput.-Aided Design Integr. Circuits
+     Syst., vol. 41, no. 12, pp. 5343–5356, 2022.
+[32] W. Huang et al., “FPGA-based high-throughput CNN hardware acceler-
+     ator with high computing resource utilization ratio,” IEEE Trans. Neural
+     Netw. Learn. Syst., vol. 33, no. 8, pp. 4069–4083, 2022.
+[33] D. Kim et al., “Agamotto: A performance optimization framework for
+     CNN accelerator with row stationary dataflow,” IEEE Trans. Circuits
+     Syst. I, vol. 70, no. 6, pp. 2487–2496, 2023.
+[34] “UltraScale architecture DSP slice,” 2024. [Online]. Available:
+     https://docs.amd.com/v/u/en-US/ug579-ultrascale-dsp
+[35] J. An et al., “An OpenCL-based FPGA accelerator for Faster R-CNN,”
+     Entropy, vol. 24, no. 10, p. 1346, 2022.
+[36] K. Dai et al., “DCP-CNN: Efficient acceleration of CNNs with dynamic
+     computing parallelism on FPGA,” IEEE Trans. Comput.-Aided Design
+     Integr. Circuits Syst., 2024.
+
+
+
+
+                         Trevor E. Pogue Trevor E. Pogue received the
+                         B.Eng. degree in Electrical Engineering and the
+                         M.A.Sc. degree in Electrical and Computer En-
+                         gineering from McMaster University, Hamilton,
+                         Canada, in 2016 and 2019, respectively. He worked
+                         as an intern at Synopsys and AMD in 2018 and
+                         2022-2023, respectively. He is currently a Ph.D.
+                         Candidate in the Department of Electrical and Com-
+                         puter Engineering at McMaster University, Hamil-
+                         ton, Canada. His research interests are in the area of
+                         hardware acceleration.
+
+
+
+
+                          Nicola Nicolici (S’99-M’00-SM’11) Nicola Nicolici
+                          (S99-M00-SM’11) received the Dipl.Ing. degree in
+                          Computer Engineering from the “Politehnica” Uni-
+                          versity of Timisoara, Romania, in 1997 and the
+                          Ph.D. degree in Electronics and Computer Science
+                          from the University of Southampton, U.K., in 2000.
+                          He is currently a Professor with the Department
+                          of Electrical and Computer Engineering, McMaster
+                          University, Hamilton, Canada. His research interests
+                          are in the area of computer-aided design and test.
+                          He has authored a number of papers in this area. Dr.
+Nicolici was the recipient of the IEEE TTTC Beausang Award for the Best
+Student Paper at the International Test Conference in 2000 and the Best Paper
+Award at the IEEE/ACM Design Automation and Test in Europe Conference
+in 2004.
+

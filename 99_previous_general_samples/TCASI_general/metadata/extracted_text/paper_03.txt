@@ -1,0 +1,1116 @@
+                    This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                              content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS, VOL. XX, NO. YY, MONTH YEAR                                                                                                   1
+
+
+
+
+  Frequency-Transformation-Based Co-Designed
+Lowpass-Single/Multi-Passband-Highpass RF Filters
+    Roberto Gómez-Garcı́a, Fellow, IEEE, Li Yang, Senior Member, IEEE, Mohamed Malki, Graduate Student
+                       Member, IEEE, and José-Marı́a Muñoz-Ferreras, Member, IEEE
+
+    Abstract—The theoretical design and practical development of                              RF multi-band filters in terms of underlying RF operational
+RF analog filtering devices with co-integrated lowpass, single/                               principles and circuit structures is very rich, those approaches
+multi-band bandpass, and highpass transfer functions is reported.                             using single-to-multi-band frequency transformations deserve
+For this purpose, two different classes of generalized frequency
+transformation that convert the equivalent normalized lowpass                                 special mention [12], [13], [14], [15], [16]. This is owing to
+filter prototype into the desired RF filter with several co-designed                          their intrinsic simplicity, since they mostly involve the replace-
+filtering actions are proposed. They realize a frequency mapping                              ment of the basic resonators of a pre-designed bandpass filter
+of the reactance of a normalized unitary capacitor into that of                               counterpart—or of the normalized unitary capacitors of an
+a one-port single/multi-resonance cell with added lowpass and                                 equivalent normalized lowpass filter prototype for normalized-
+highpass filtering capabilities. For these devised frequency trans-
+formations, the theoretical foundations and various illustrative                              lowpass-to-multi-band frequency transformations—by sets of
+filter examples designed at the ideal-circuit-model level are pre-                            resonators to shape the distinct bands. Lately, more-evolved
+sented. In addition, higher-selectivity filter architectures based on                         frequency transformations have been devised, such as those in
+the generation of additional out-of-band transmission zeros (TZs)                             [11] and [17] allowing to embed multiple stopbands inside a
+by means of cross-coupling techniques are shown. Afterwards, the                              wide passband range for the design of RF pre-selection broad-
+extension of this design methodology to RF multi-functional fil-
+tering components, such as input-reflectionless/absorptive filters                            band filters with co-integrated multi-interference suppression.
+based on complementary-diplexer circuit networks and two-way                                      Regarding the design of more-advanced RF filters combi-
+filtering power-distribution circuits, is also demonstrated. Fur-                             ning filtering actions of different nature—e.g., lowpass, single/
+thermore, two design examples of distributed-element and invert-                              multi-band bandpass, and highpass ones—in composite trans-
+erless lumped-element RF filters are provided. Besides, for the                               fer functions, much less efforts have been made despite they
+distributed-element circuit, a proof-of-concept microstrip proto-
+type is manufactured and measured as experimental validation.                                 may be suitable for some advanced RF receivers to separate
+                                                                                              different frequency regions—e.g., lowpass part associated to
+    Index Terms—Analog filter, absorptive filter, bandpass filter,                            a down-converted wide-band signal and other exploitable
+co-designed circuit, filtering power divider, frequency trans-
+formation, highpass filter, lowpass filter, lumped-element filter,
+                                                                                              frequency bands. In tunable implementations, such compo-
+microstrip filter, microwave filter, multi-functional circuit, planar                         site filters may also be used to realize variable-coupling-less
+filter, reflectionless filter, RF filter, transmission zero (TZ).                             adaptive multi-bandstop filters for the dynamic suppression
+                                                                                              of multiple jamming/inteference RF signals with narrow-to-
+                           I. I NTRODUCTION                                                   ultra-broad-bandwidth characteristics. For example, in [18],
+                                                                                              [19], and [20], RF planar filters with merged lowpass and
+D      URING the last two decades, a considerable research
+       progress on the development of RF/microwave filters
+with multi-band operational characteristics has been con-
+                                                                                              single/dual-passband functionalities for frequency-static and
+                                                                                              switchable circuit realizations are described. All of them are
+ducted. This has been largely motivated by their potential                                    based on channelized filter banks, which involve high design
+need for emerging multi-purpose RF-wireless-communications                                    complexity in the inter-connection of all channels to properly
+and remote-sensing applications, in which the exploitation of                                 match all the transmission bands and large circuit size as
+several spectral bands at the same time is advantageous [1].                                  incorporating more bands needs for additional channels. As
+In this manner, a vast plurality of multi-band bandpass filters                               an alternative approach, a lowpass-dual-band-bandpass planar
+for the simultaneous acquisition of multiple desired RF signals                               filter unsing metamaterial-inspired cells is proposed in [21].
+corresponding to different services has been reported [2], [3],                               Nevertheless, it suffers from very-narrow stopband bandwidth
+[4], [5], [6], [7], [8]. The same applies to RF multi-band band-                              above the second passband. In [22], a class of multi-stub-
+stop or multi-notched-band filters, as a hardware mechanism                                   loaded-based double-lowpass/bandpass RF planar filters is
+that may allow the implementation of the required protection                                  presented. Whereas these filters have the merits of abrupt cut-
+for RF systems to unwanted jamming/interference RF signals                                    off slopes between transmission and rejection bands owing
+in highly-congested electromagnetic (EM) environments [9],                                    to multi-TZ creation, they are restricted to such specific
+[10], [11]. Note that although the existing variety of prior-art                              transmission-line realizations and to just one passband plus
+                                                                                              the lowpass one—as the upper passbands that are measured
+   Manuscript received December 24, 2023; received March 2, 2024. This                        are treated as spurious ones, which are not targeted in the
+work was supported by the Spanish Ministry of Economy, Industry, and
+Competitiveness (State Research Agency) under Project PID2020-116983RB-                       design process. A super-conductor-technology RF filter with
+I00. (Corresponding authors: Roberto Gómez-Garcı́a; Li Yang.)                                high-selectivity composite-lowpass-bandpass transfer function
+   The authors are with the Department of Signal Theory and Communica-                        is engineered in [23], but using a two-layer configuration
+tions, Polytechnic School, University of Alcalá, 28871 Alcalá de Henares,
+Spain (e-mail: roberto.gomez.garcia@ieee.org; li-yang@ieee.org; mohamed-                      that augments design complexity. Sharp-rejection lowpass-
+malki@ieee.org; jm.munoz@uah.es).                                                             single-passband RF planar filters based on transversal-signal-
+
+
+                    © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                 This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                           content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+
+
+
+interference principles are suggested in [24]. However, their
+design procedure fully relies on optimization and its applica-
+bility is restricted to filtering responses with one single pass-
+band. Note that digital-filter-inspired synthesis techniques have
+also been exploited to realize RF planar filters with transfer
+functions exhibiting lowpass and bandpass terms as one of the
+first solutions as in [25], but suffering from low attenuation
+levels between bands as no inter-band TZs are generated.
+Hence, it is clear from this description that all these approaches
+are constrained by insufficient design generality in terms of
+realizable multi-purpose/co-designed filtering action—none
+of them use generalized frequency transformations—, circuit
+structure, and/or applicable RF technology.
+   This paper presents different types of generalized/multi-
+purpose frequency transformations for the realization of RF fil-
+tering devices with composite-lowpass-single/multi-passband-
+highpass transfer functions. The conceived frequency transfor-
+mations can be understood as more-advanced versions of the
+single-to-multi-band ones presented in the past—e.g., those in
+[12], [13], [14], [15], and [16]—by also incorporating lowpass-
+and highpass-type terms. By means of their application over
+an equivalent normalized lowpass filter prototype to readily
+obtain the co-designed RF filter, they produce a frequency                                 Fig. 1. Circuit detail of the Kth-order equivalent normalized-to-Y0 lowpass
+                                                                                           filter prototype and the resulting co-designed lowpass-single/multi-passband-
+mapping of the reactance of the normalized unitary capacitor                               highpass filter network after the application of the frequency transformation
+into the one of a constituent one-port multi-resonance cell                                Ω → ΩI (f ) (L, C, J, and J variables designate inductances, capaci-
+with co-integrated lowpass and highpass filtering capabili-                                tances, admittance-inversion constants, and normalized admittance-inversion
+                                                                                           constants with regard to the reference admittance Y0 , respectively).
+ties. In this manner, the coupling circuit topology and pre-
+synthesized characteristics of the equivalent normalized low-
+                                                                                           lumped-element circuit models, theoretical design examples,
+pass filter prototype, such as class of filtering response—e.g.,
+                                                                                           and techniques for increased-selectivity RF filter design with
+Butterworth-, Chebyshev-, Bessel-, or elliptic-type—, order,
+                                                                                           cross-coupling for extra TZ creation are presented. The appli-
+and minimum in-band power-matching levels, are directly
+                                                                                           cability of these frequency transformations to more-advanced
+transferred to all the transmission bands of the converted
+                                                                                           RF filtering devices, such as RF multi-functional filtering
+RF filter. Furthermore, the usefulness of these generalized
+                                                                                           circuits consisting of input-reflectionless filters and two-way
+frequency transformations can be extended well beyond basic
+                                                                                           filtering power dividers, is also shown. In Section IV, two
+RF filters as long as their frequency-selective behavior can be
+                                                                                           distributed-element and inverterless lumped-element RF filter
+represented through the referred equivalent normalized circuit
+                                                                                           designs with composite filtering actions are reported. As expe-
+prototype in the lowpass domain; for example, RF multi-
+                                                                                           rimental validation, a proof-of-concept microstrip prototype of
+functional filtering components that merge various RF-analog-
+                                                                                           the distributed-element RF filter is built and tested. Finally, the
+signal-processing actions into the same RF circuit device
+                                                                                           main concluding remarks of this work are set out in Section V.
+for size-reduction and operational-performance advantages,
+such as filtering power-distribution circuits—e.g., filtering
+power dividers and couplers—, filtering phase shifters, filtering                                 II. RF F ILTERS W ITH C O -D ESIGNED L OWPASS ,
+switches, filtering amplifiers, or even filtering antennas [26],                              S INGLE/M ULTI -PASSBAND , AND H IGHPASS R ESPONSE
+[27], [28], [29]. To the best of the authors’ knowledge, a                                    This section reports the basic theoretical foundations of
+theoretical study as the one of this work about multi-purpose                              the two conceived classes of composite lowpass-single/multi-
+frequency transformations combining lowpass, single/multi-                                 passband-highpass RF filter. Specifically, two families of ge-
+band bandpass, and highpass filtering terms has not been                                   neralized frequency transformation for their analytical design
+reported in the past. This paper counteracts this lack as a                                are described, along with illustrative synthesis examples based
+further step for the synthesis of RF filters with co-designed                              on their resulting lumped-element circuit networks. Besides,
+lowpass, single/multi-passband, and highpass terms with re-                                techniques to increase their filtering selectivity by means of the
+gard to the above-referred works in this research area—i.e.,                               exploitation of additional coupling paths aimed at generating
+[18], [19], [20], [21], [22], [23], [24], and [25]—, which are                             an increased number of out-of-band TZs are also presented.
+limited to specific circuit networks, responses—e.g., lowpass-
+single/multi-passband ones—, and/or RF technologies.
+                                                                                           A. Frequency Transformation Type I
+   The rest of the manuscript is organized as follows. In
+Section II, the theoretical foundations of the proposed gene-                                 The analytical formula of the first proposed type of genera-
+ralized frequency transformations for co-designed lowpass-                                 lized normalized-lowpass-to-lowpass-single/multi-passband-
+single/multi-passband-highpass RF filters, their associated                                highpass frequency transformation, Ω → ΩI (f ), is as follows:
+
+
+                 © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                 This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                           content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+
+
+
+                                                    2
+                                               JA
+        Ω → ΩI (f ) =        2     N     2       2
+                                                                                  (1)
+                          JB α X JCi βi f JD f
+                                +             −
+                            f         f2 − f2   γ
+                          | {z } |i=1 {z i} | {z }
+                          Lowpass                               Highpass
+                                           N -passband
+
+where Ω is the normalized—i.e., lowpass-domain—frequency
+variable, f is the denormalized—i.e., bandpass-domain—
+frequency variable, α and γ are frequency-scaling fac-
+tors for the lowpass and highpass terms, respectively, βi
+and fi are the bandwidth-scaling factor and the center
+frequency of the ith passband (i = 1, 2, . . . , N ), and
+JA , JB , JC1 , JC2 , . . . , JCN , JD are normalized admittance-
+inversion constants. The effect of this frequency transforma-
+tion Ω → ΩI (f ) on the equivalent lowpass filter prototype
+normalized with regard to a reference admittance Y0 for a Kth-
+order circuit architecture is depicted in Fig. 1. As can be seen,                          Fig. 2. Effect of the frequency transformation Ω → ΩI (f ) in terms of
+the frequency-variation profile of the reactance of the unitary                            power transmission (|S21 |) and reflection (|S11 |) responses: from a third-
+capacitor in the equivalent normalized lowpass filter prototype                            order equirriple-type equivalent normalized lowpass filter prototype (K = 3,
+                                                                                           J1 = 1.2, J2 = 1.35, J3 = 1.35, and J4 = 1.2) to a converted co-designed
+is converted into the one of a one-port single/multi-resonance                             lowpass-dual-passband-highpass filter for a reference admittance Y0 = 1/Z0
+cell with simultaneous lowpass and highpass behavior in the                                with Z0 = 50 Ω (frequency transformation: N = 2, α = 0.4 GHz,
+transformed co-designed filter. In this manner, the lowpass                                β1 = 0.1 GHz, β2 = 0.2 GHz, f1 = 1.1 GHz, f2 = 1.5 GHz, γ = 2 GHz,
+                                                                                           and JA = JB = JC1 = JC2 = JD = 1; converted co-designed filter:
+filtering response of the equivalent normalized lowpass filter                             CL = 7.9577 pF, L1 = 0.6577 nH, C1 = 31.831 pF, L2 = 0.7074 nH,
+prototype is transformed into the desired composite lowpass-                               C2 = 15.9155 pF, and LH = 3.9789 nH).
+single/multi-passband-highpass filtering function. Note that
+the different terms of the resulting co-designed filtering res-                            filter network with equiripple-type response to obtain a co-
+ponse are shaped by distinct parts of the transformed lumped-                              designed lowpass-dual-passband-highpass filter is depicted in
+element cell—referred to the admittance Y0 after admittance                                Fig. 2. As shown, each term in the composite filtering function
+scaling—through the action of the corresponding admittance                                 is obtained from the mapping of the lowpass filtering response
+inverters as follows: lowpass term by the capacitances CL ,                                through the corresponding mathematical factor in (1). Note
+highpass term by the inductances LH , and ith passband by the                              also that inter-band TZs are produced between each two adja-
+parallel-type resonators Li , Ci . Moreover, any of these terms                            cent transmission bands, which come from the transformation
+can be excluded by disregarding the associated mathematical                                of the TZs at Ωz1,z2 = ±∞ of the normalized lowpass filter.
+factor as indicated in the frequency transformation in (1)                                     Additional theoretical synthesis examples of co-designed
+or, equivalently, by omitting their shaping lumped elements                                third-order filtering responses with the frequency transforma-
+in the converted circuit in Fig. 1. Thus, RF filters with                                  tion Ω → ΩI (f ) are represented in Fig. 3. They correspond
+only two or even one filtering actions—e.g., lowpass-multi-                                to lowpass-triple-passband-highpass—Fig. 3(a)—, lowpass-
+passband or just multi-passband ones—can also be designed                                  single-passband—Fig. 3(b)—, dual-passband-highpass—Fig.
+through (1) after its proper particularization.                                            3(c)—, and quadruple-passband—Fig. 3(d)—designs. The va-
+    By identifying the terms of input admittances of the equi-                             lues of the design parameters for these synthesis examples—
+valent normalized lowpass filter network after applying the                                i.e., for the frequency transformation and the converted co-
+frequency transformation Ω → ΩI (f ) and the Y0 -admittance-                               designed filter—are provided in Table I. This validates the
+scaling operation and the converted co-designed filter circuit,                            generality of this first class of frequency transformation to
+the following design formulas for its lumped elements and                                  obtain arbitrary types of co-designed filtering functionalities.
+admittance-inversion constants can be derived:                                                 It should be remarked upon that the derivation of the
+                                Y0            1                                            analytical expressions for the cut-off frequencies of the trans-
+                   CL =               LH =                    (2)
+                               2πα         2πγY0                                           mission bands of the converted co-designed filter in Fig. 2,
+                                                                                           {fL < f1a < f1b < f2a < f2b < . . . < fN a < fN b < fH }, in-
+                           βi                      Y0
+                Li =                     Ci =                                     (3)      volves solving the following mathematical equation:
+                         2πfi2 Y0                 2πβi
+                                                                                                ΩI (f )|{fL <f1a <f1b <f2a <f2b ...<fN a <fN b <fH } = ±Ωc                           (7)
+               JCi = JCi Y0 ,          i = 1, 2, . . . , N,                       (4)
+                                                                                           where Ωc is the cut-off frequency of the equivalent normalized
+           JA = JA Y0        JB = JB Y0             JD = JD Y0                    (5)      lowpass filter prototype, fL and fH are the cut-off frequencies
+                                                                                           of the lowpass and highpass terms of the co-designed filtering
+             Jk = Jk Y0 ,         k = 1, 2, . . . , K + 1.                        (6)      response, respectively, and fia and fib are the lower and upper
+   For illustration purposes, the action of the frequency trans-                           cut-off frequencies of the ith passband (i = 1, 2, . . . , N ). In
+formation Ω → ΩI (f ) over a normalized third-order lowpass                                general, this is a complex problem since the design parameters
+
+
+                 © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                     This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                               content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+
+
+
+                                                                                       TABLE I
+                       D ESIGN PARAMETERS OF THE CO - DESIGNED THIRD - ORDER (K = 3) FILTER EXAMPLES IN F IG . 3
+
+                 Design example(∗)                       Frequency transformation Ω → ΩI (f )                                   Converted co-designed filter
+          Lowpass-triple-passband-highpass:           N = 3, α = 0.4 GHz, β1 = 0.2 GHz,     CL = 7.9577 pF, L1 = 1.9649 nH, C1 = 15.9155 pF,
+                      Fig. 3(a)                  β2 = 0.07 GHz, β3 = 0.1 GHz, f1 = 0.9 GHz, L2 = 0.3296 nH, C2 = 45.4728 pF, L3 = 0.2754 nH,
+                                                   f2 = 1.3 GHz, f3 = 1.7 GHz, γ = 2.5 GHz          C3 = 31.831 pF, LH = 3.1831 nH
+              Lowpass-single-passband:               N = 1, α = 0.4 GHz, β1 = 0.15 GHz,     CL = 7.9577 pF, L1 = 0.5305 nH, C1 = 21.2207 pF
+                     Fig. 3(b)                              f1 = 1.5 GHz, γ → ∞
+              Dual-passband-highpass:             N = 2, α = 0, β1 = 0.1 GHz, β2 = 0.1 GHz, L1 = 3.1831 nH, C1 = 31.831 pF, L2 = 0.7958 nH,
+                     Fig. 3(c)                      f1 = 0.5 GHz, f2 = 1 GHz, γ = 2.5 GHz           C2 = 31.831 pF, LH = 3.1831 nH
+                Quadruple-passband:               N = 4, α = 0, β1 = 0.1 GHz, β2 = 0.2 GHz, L1 = 3.1831 nH, C1 = 31.831 pF, L2 = 1.5915 nH,
+                     Fig. 3(d)                   β3 = 0.1 GHz, β4 = 0.15 GHz, f1 = 0.5 GHz, C2 = 15.9155 pF, L3 = 0.3108 nH, C3 = 31.831 pF,
+                                                f2 = 1 GHz, f3 = 1.6 GHz, f4 = 2 GHz, γ → ∞         L4 = 0.2984 nH, C4 = 21.2207 pF
+ (∗) In all examples, J = 1.2, J = 1.35, J = 1.35, J = 1.2, and J = J = J
+                       1        2         3         4            A   B    C1 = JC2 = . . . = JCN = JD = 1.
+
+
+
+
+Fig. 3. Theoretical examples of co-designed third-order filters using frequency                Fig. 4. Theoretical example of higher-selectivity co-designed lowpass-
+transformation Ω → ΩI (f ) in terms of power transmission (|S21 |) and                         dual-passband-highpass filter in terms of circuit detail and power transmis-
+reflection (|S11 |) responses for a reference admittance Y0 = 1/Z0 with                        sion (|S21 |) and reflection (|S11 |) responses for a reference admittance
+Z0 = 50 Ω—the design parameters of the frequency transformation and                            Y0 = 1/Z0 with Z0 = 50 Ω: cross couplings (JE = −0.15Y0 ) between
+the converted co-designed filter for all the examples are given in Table I.                    the input and output ports and the third and second admittances YI (f ),
+(a) Lowpass-triple-passband-highpass design. (b) Lowpass-single-passband                       respectively—the design parameters are the same as those listed in the caption
+design. (c) Dual-passband-highpass design. (d) Quadruple-passband design.                      of Fig. 2. For comparison purposes, the |S21 | response without cross couplings
+                                                                                               (i.e., JE = 0) is also included.
+of all the terms of the co-designed filtering function have an
+influence on the others. This is easily confirmed for the simple                               paths for the generation of additional out-of-band TZs can be
+case of a composite lowpass-highpass filtering response—i.e.,                                  synthesized. Two examples of such higher-selectivity filter de-
+no passbands are considered—, for which the formulas of the                                    signs for lowpass-dual-passband-highpass and dual-passband-
+cut-off frequencies fL and fH turn out to be as follows:                                       highpass responses in third-order circuit realizations are shown
+                                 s                                                           in Figs. 4 and 5, respectively. As can be seen, in the case
+                                                   2    2 2
+                γ            2          4    4αJ B   JD  Ω c                                  of Fig. 5, two cross couplings are introduced from the input
+  fL , fH =           ±JA + JA +                             .
+                 2                                 γ                                           and output ports to the connecting nodes of the third and
+             2JB Ωc
+                                                                                               second admittances YI (f ), respectively. On the contrary, in
+                                                                                      (8)      the example of Fig. 4, one additional coupling path is inserted
+Note that as the lowpass-highpass-type response can be re-                                     between each pair of contiguous admittances YI (f ) at specific
+garded as a bandstop one, the above expressions are analogous                                  connecting points inside them. In both cases, more-abrupt cut-
+to those derivable by considering parallel-type resonators in a                                off slopes with the creation of extra out-of-band TZs at both
+                                                2                                              sides of all the transmission bands are obtained, while the in-
+bandstop-filter architecture with LBS = CL /JB     and CBS =
+  2                                                                                            band input-power-matching levels are higher than 20 dB and
+JD LH after applying a normalized-lowpass-to-bandstop fre-
+quency transformation with a normalized admittance-inversion                                   17.5 dB in the examples of Figs. 4 and 5, respectively.
+constant JA and α and γ as the frequency-scaling factors for
+the lower and upper edges of the shaped stopband.                                              B. Frequency Transformations Type II
+   Finally, it must be highlighted that sharper-rejection co-                                    As the second family of generalized normalized-lowpass-to-
+designed filters through the inclusion of multiple coupling                                    lowpass-single/multi-passband-highpass frequency transfor-
+
+
+                     © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                     This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                               content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+
+
+
+                                                                                               Fig. 6. Effect of the frequency transformation Ω → ΩII-A (f ) in terms
+                                                                                               of converted one-port single/multi-resonance cell with added lowpass and
+Fig. 5. Theoretical example of higher-selectivity co-designed dual-passband-                   highpass filtering capabilities after Y0 scaling for N − 1 passbands—i.e.,
+highpass filter in terms of circuit detail and power transmission (|S21 |)                     converted admittance YII-A (f )—and in terms of power transmission (|S21 |)
+and reflection (|S11 |) responses for a reference admittance Y0 = 1/Z0 with                    and reflection (|S11 |) responses: from a third-order equirriple-type equivalent
+Z0 = 50 Ω: additional couplings (JE = −0.05Y0 ) between internal inter-                        normalized lowpass filter prototype (K = 3, J1 = 1.2, J2 = 1.35,
+connection nodes of contiguous admittances YI (f )—the design parameters are                   J3 = 1.35, and J4 = 1.2) to a converted co-designed lowpass-dual-passband-
+the same as those listed in Table I for Fig. 3(c). For comparison purposes, the                highpass filter for a reference admittance Y0 = 1/Z0 with Z0 = 50 Ω
+|S21 | response without additional couplings (i.e., JE = 0) is also included.                  (frequency transformation: N = 3, β1 = 0.15 GHz, β2 = 0.1 GHz,
+                                                                                               β3 = 0.1 GHz, f1 = 0.5 GHz, f2 = 1.1 GHz, f3 = 1.5 GHz, JA1 =
+                                                                                               JA3 = 3, and JA2 = 2.5; converted co-designed filter: L1 = 3.1831 nH,
+mations, three sub-types—i.e., Sub-Type II-A, Sub-Type II-B,                                   C1 = 31.831 pF, L2 = 1.1937 nH, C2 = 21.2207 pF, L3 = 0.3537 nH,
+and Sub-Type II-C—are proposed here. Unlike the generalized                                    and C3 = 31.831 pF).
+frequency transformation Type I presented in Section II-A, in
+which a separated mathematical factor can be identified for                                    1, 2, . . . , N ). Note that this frequency transformation can be
+the lowpass, single/multi-passband, and highpass terms, these                                  equivalently viewed as a normalized-lowpass-to-single/multi-
+sub-types of frequency transformations exploit the embedding                                   stopband one, in which the embedding of N stopbands leads to
+of stopbands within transmission ranges. In this manner, two or                                the creation of N −1 passbands plus the lowpass and highpass
+even the three of the referred lowpass, single/multi-passband,                                 terms. Thus, the particular case N = 1 corresponds to a co-
+and highpass filtering actions are generated together by a                                     designed lowpass-highpass filtering action without passbands.
+single mathematical factor. More detail about these three sub-                                    Fig. 6 depicts the circuit detail of the one-port single/multi-
+types of generalized frequency transformations is given below.                                 resonance cell with added lowpass and highpass filtering
+    1) Sub-Type II-A: In this generalized frequency transforma-                                behavior and associated admittance YII-A (f ) obtained after ap-
+tion, the composite-lowpass-single/multi-passband-highpass                                     plying the generalized frequency transformation Ω → ΩII-A (f )
+filtering response is obtained by splitting an all-pass trans-                                 and Y0 admittance scaling, whose circuit element values can be
+mission range by means of several embedded stopbands. Its                                      calculated by means of (10)–(12). The effect of such frequency
+mathematical expression Ω → ΩII-A (f ) is the following one:                                   transformation over a normalized third-order lowpass filter
+                                              N    2                                           network with equiripple-type response to design a lowpass-
+                                              X JAi βi f                                       dual-passband-highpass filter is also illustrated in this figure.
+                   Ω → ΩII-A (f ) =                                                   (9)
+                                              i=1
+                                                     f 2 − fi2
+                                                                                                                                   βi                       Y0
+                                                                                                                        Li =                      Ci =          ,                      (10)
+                                              |       {z     }
+                                               N -stopband ≡                                                                     2πfi2 Y0                  2πβi
+                                             Lowpass-(N − 1)-
+                                             passband-highpass
+                                                                                                                     JAi = JAi Y0 ,            i = 1, 2, . . . , N,                    (11)
+where βi and fi are here the bandwidth-scaling factor and
+the center frequency of the ith inserted stopband (i =                                                             Jk = Jk Y0 ,          k = 1, 2, . . . , K + 1.                      (12)
+
+
+                     © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                    This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                              content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+
+
+
+                                                                                              its location in the co-designed filtering action also depends on
+                                                                                              the highpass factor in (13). However, if such highpass term
+                                                                                              is omitted, then fi becomes the center frequency of the ith
+                                                                                              stopband in the resulting co-designed lowpass-single/multi-
+                                                                                              passband filtering action. Note also that, in this case, N stop-
+                                                                                              bands create N passbands in the composite transfer function.
+                                                                                                 The circuit detail of the one-port single/multi-resonance cell
+                                                                                              with co-integrated lowpass and highpass filtering capabilities
+                                                                                              and associated admittance YII-B (f ) resulting from the generali-
+                                                                                              zed frequency transformation Ω → ΩII-B (f ) and Y0 admittance
+                                                                                              scaling is shown in Fig. 7. Its effect over a normalized third-
+                                                                                              order lowpass filter network with equiripple-type response to
+                                                                                              design a lowpass-dual-passband-highpass filter is also exem-
+                                                                                              plified. The formulas to compute the lumped-element values
+                                                                                              of the converted admittance YII-B (f ) are given in (14)–(18).
+
+                                                                                                                                   Y0                     1
+                                                                                                                        CL =                  LH =                                    (14)
+                                                                                                                                  2πα                   2πγY0
+                                                                                                                                 βi                       Y0
+                                                                                                                      Li =                      Ci =                                  (15)
+                                                                                                                               2πfi2 Y0                  2πβi
+
+                                                                                                                    JCi = JCi Y0 ,             i = 1, 2, . . . , N,                   (16)
+
+                                                                                                              JA = JA Y0            JB = JB Y0            JD = JD Y0                  (17)
+
+                                                                                                                  Jk = Jk Y0 ,             k = 1, 2, . . . , K + 1.                   (18)
+
+                                                                                                 3) Sub-Type II-C: This generalized frequency transforma-
+                                                                                              tion is the counterpart of the previous one, but with the
+                                                                                              stopband(s) being embedded in the highpass region instead of
+Fig. 7. Effect of the frequency transformation Ω → ΩII-B (f ) in terms of con-                in the lowpass part. Its mathematical formula Ω → ΩII-C (f ) is
+verted one-port single/multi-resonance cell with added lowpass and highpass                                                                              2
+filtering capabilities after Z0 scaling for N passbands—i.e., converted admit-                                                                      JA
+tance YII-B (f )—and in terms of power transmission (|S21 |) and reflection                            Ω → ΩII-C (f ) =                2                       2                      (19)
+(|S11 |) responses: from a third-order equirriple-type equivalent normalized                                                     JD α          JB
+lowpass filter prototype (K = 3, J1 = 1.2, J2 = 1.35, J3 = 1.35,                                                                         −
+                                                                                                                                   f         X JCi 2 βi f
+                                                                                                                                              N
+and J4 = 1.2) to a converted co-designed lowpass-dual-passband-highpass                                                          | {z } γ +
+filter for a reference admittance Y0 = 1/Z0 with Z0 = 50 Ω (frequency                                                            Lowpass   f     f 2 − fi2
+transformation: N = 2, α = 0.85 GHz, β1 = 0.1 GHz, β2 = 0.1 GHz,                                                                             i=1
+γ = 3 GHz, f1 = 0.7 GHz, f2 = 1.3 GHz, JA = JB = JD = 1,
+                                                                                                                                           |    {z       }
+                                                                                                                                                 Highpass/N -stopband ≡
+and JC1 = JC2 = 2; converted co-designed filter: CL = 3.9789 pF,
+                                                                                                                                                  Highpass/N -passband
+L1 = 1.624 nH, C1 = 31.831 pF, L2 = 0.4709 nH, C2 = 31.831 pF, and
+LH = 2.6526 nH).
+                                                                                                 Analogous considerations to those indicated for the fre-
+                                                                                              quency transformation Ω → ΩII-B (f ) can be made in this case.
+   2) Sub-Type II-B: In this generalized frequency transforma-                                Moreover, as for the previous frequency transformations, the
+tion, one or multiple stopbands are inserted within the lowpass                               circuit detail of the converted admittance YII-C (f ), the effect
+transmission range of a composite-lowpass-highpass response.                                  of the frequency transformation Ω → ΩII-C (f ) for a particular
+Its analytical formula Ω → ΩII-B (f ) is provided below:                                      design example, and the design equations for its lumped
+                                                      2                                       elements are provided in Fig. 19 and (20)–(24), respectively.
+                                                 JA
+      Ω → ΩII-B (f ) =                       2                       2    .        (13)
+                                   JB           JD f                                                                               Y0                     1
+                                  N     2
+                                              −                                                                         CL =                  LH =                                    (20)
+                              f X JCi βi f         γ                                                                              2πα                   2πγY0
+                                −               | {z }
+                              α i=1 f 2 − fi2   Highpass
+                                                                                                                                 βi                       Y0
+                              |     {z      }                                                                         Li =                      Ci =                                  (21)
+                               Lowpass/N -stopband ≡                                                                           2πfi2 Y0                  2πβi
+                                Lowpass/N -passband
+                                                                                                                    JCi = JCi Y0 ,             i = 1, 2, . . . , N,                   (22)
+   It should be remarked upon that in this frequency trans-
+formation, whereas βi is the bandwidth-scaling factor of the                                                  JA = JA Y0            JB = JB Y0            JD = JD Y0                  (23)
+ith inserted stopband (i = 1, 2, . . . , N ), fi is related—but it
+does not exactly correspond—with its center frequency since                                                       Jk = Jk Y0 ,             k = 1, 2, . . . , K + 1.                   (24)
+
+
+                    © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                    This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                              content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+
+
+
+                                                                                                   tion Type I are feasible for the frequency transformations
+                                                                                                   Sub-Type II-A, Sub-Type II-B—except single/multi-
+                                                                                                   passband-highpass responses—, and Sub-Type II-C—
+                                                                                                   except lowpass-single/multi-passband responses.
+                                                                                                 • Equation (7) also applies to the generalized frequency
+                                                                                                   transformations Sub-Type II-A, Sub-Type II-B, and Sub-
+                                                                                                   Type II-C with ΩII-A (f ), ΩII-C (f ), and ΩII-C (f ), respec-
+                                                                                                   tively, for the analytical derivation of the expressions of
+                                                                                                   the cut-off frequencies of the transmission bands, which is
+                                                                                                   a complex mathematical problem except for simple cases.
+                                                                                                 • Whereas the generalized frequency transformation Sub-
+                                                                                                   Type II-A inherently introduces lowpass and highpass
+                                                                                                   filtering actions in the co-designed transfer function, addi-
+                                                                                                   tional circuit elements can be added to the converted cir-
+                                                                                                   cuit to eliminate any of them. For example, input/output
+                                                                                                   lowpass filtering cells may be added to suppress the
+                                                                                                   highpass range, so that an overall lowpass-single/multi-
+                                                                                                   passband filtering response is obtained. This technique
+                                                                                                   is exemplified in Section IV-A by means of the de-
+                                                                                                   sign of a distributed-element lowpass-dual-band-bandpass
+                                                                                                   filter, in which transversal-signal-interference lowpass-
+                                                                                                   type filtering cells are inserted to mitigate the highpass
+                                                                                                   range—that, on the other hand, gets distorted by the
+                                                                                                   spurious resonances and frequency-dependent behavior of
+                                                                                                   the resonators and admittance inverters, respectively, in
+                                                                                                   such RF transmission-line-based circuit realization.
+                                                                                                 • For a certain set of specifications that define the targeted
+                                                                                                   attenuation mask, all the presented types of generalized
+                                                                                                   frequency transformations allow to theoretically obtain
+                                                                                                   lowpass-single/multi-passband-highpass filtering respon-
+                                                                                                   ses with comparable characteristics. Thus, the election of
+Fig. 8. Effect of the frequency transformation Ω → ΩII-C (f ) in terms of con-                     one or another of them is mostly determined by practical
+verted one-port single/multi-resonance cell with added lowpass and highpass                        aspects related with the difficulties involved in realizing
+filtering capabilities after Z0 scaling for N passbands—i.e., converted admit-
+tance YII-C (f )—and in terms of power transmission (|S21 |) and reflection                        such transfer function in the adopted RF technology. For
+(|S11 |) responses: from a third-order equirriple-type equivalent normalized                       example, broad spectral spacings between the multiple
+lowpass filter prototype (K = 3, J1 = 1.2, J2 = 1.35, J3 = 1.35,                                   passbands are more feasible in practice with the fre-
+and J4 = 1.2) to a converted co-designed lowpass-dual-passband-highpass
+filter for a reference admittance Y0 = 1/Z0 with Z0 = 50 Ω (frequency                              quency transformation Type I, whereas narrower inter-
+transformation: N = 2, α = 0.3 GHz, β1 = 0.1 GHz, β2 = 0.1 GHz,                                    band separations are better suited for the frequency trans-
+γ = 1.8 GHz, f1 = 1 GHz, f2 = 1.7 GHz, JA = JB = JD = 1,                                           formations Sub-Type II-A, Sub-Type II-B, and Sub-Type
+JC1 = 3, and JC2 = 2; converted co-designed filter: CL = 10.6103 pF,
+L1 = 0.7958 nH, C1 = 31.831 pF, L2 = 0.2754 nH, C2 = 31.831 pF,                                    II-C. This is due to the difficulties involved on producing
+and LH = 0.2984 nH).                                                                               very-strong couplings in RF technologies, as usually
+                                                                                                   required to create wide stopbands—i.e., broad spacings
+                                                                                                   between passbands—in the frequency transformations
+   4) Additional Considerations: In relation with the three
+                                                                                                   Sub-Type II-A, Sub-Type II-B, and Sub-Type II-C.
+sub-types of generalized frequency transformations presented
+                                                                                                 • Similar techniques based on the exploitation of additional
+in this section, as well as the one described in Section II-A,
+                                                                                                   coupling paths as those expounded in Section II-A can be
+the following additional aspects must be taken into account:
+                                                                                                   applied to the generalized frequency transformations Sub-
+   •   The selection of the spectral parameters—i.e., center fre-                                  Type II-A, Sub-Type II-B, and Sub-Type II-C for sharper-
+       quencies and bandwidth-scaling factors—in the suggested                                     rejection co-designed filters with extra out-of-band TZs.
+       generalized frequency transformations must be done in
+       accordance to their meaning. For example, such parame-
+                                                                                              III. A PPLICATION TO RF M ULTI -F UNCTIONAL F ILTERING
+       ters must be chosen so that the embedded stopbands are
+                                                                                                                   C OMPONENTS
+       contained within the lowpass region in the Sub-Type II-B
+       or inside the highpass one in the Sub-Type II-C. Similarly,                               Since the engineered classes of composite-lowpass-single/
+       the passband(s) in the Type I must be located within the                               multi-passband-highpass RF filter are based on generalized
+       stopband region between the lowpass and highpass terms.                                frequency transformations, the same design philosophy can be
+       Besides, note that similar design-flexibility properties as                            extended to RF multi-functional filtering components that co-
+       those exemplified in Fig. 3 for the frequency transforma-                              integrate various RF-analog-signal-processing actions in the
+
+
+                    © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                 This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                           content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+
+
+
+same circuit. This just requires starting from the representation                          derived values for the design parameters of the converted filter
+of the RF multi-functional filtering device in terms of its                                are summarized in its caption, for which the design equations
+equivalent normalized lowpass prototype, from which the final                              (2)–(5) along with those extracted from [33] that are provided
+lumped-element circuit model and associated response can be                                below for the admittance-inversion constants were employed:
+obtained after applying the corresponding frequency transfor-                                            s      √                    2 q
+                                                                                                                                            √
+                                                                                                                               
+mation as detailed in Section II. For illustration purposes, such                                    J13 1 + 2                   J13
+                                                                                               J1 =           √ Y0 J2 =                    2 2Y0      (25)
+capability is demonstrated here for a complementary-diplexer-                                        J14        2                J14
+based input-reflectionless filter and a filtering power divider.
+Note also that although a specific type of the proposed fre-                                                     2                               2 q
+                                                                                                                                                             √
+                                                                                                                                       
+                                                                                                           J13                              J13
+quency transformations is selected in all these examples,                                     J3 =                    2Y0      J4 =                   2(4 + 3 2)Y0                 (26)
+                                                                                                           J14                              J14
+the results are extensible to any of the suggested frequency
+transformations and even to enhanced-selectivity designs by                                                              q
+                                                                                                                                  √
+                                                                                                                J13                                        J8 J12
+using the cross-coupling methods expounded in Section II-A.                                                J5 =              4 + 2 2Y0            J6 =             Y0              (27)
+                                                                                                                J14                                        J10 J14
+
+A. Input-Reflectionless Filter                                                                                            J8 J12 J13
+                                                                                                                 J7 =                 2Y0          J8 = J8 Y0                      (28)
+   Whereas most of prior-art RF filters exhibit a reflective-type                                                         (J14 )2 J10
+behavior, the design of reflectionless/absorptive filters is lately
+attracting a large research interest. By including lossy elements
+                                                                                                                              s       √
+                                                                                                              J10 J13             3+2 2
+in their circuit networks, reflectionless filters dissipate inside                                       J9 =                      √    Y0             J10 = J10 Y0                (29)
+                                                                                                               J12                   2
+themselves the out-of-band/non-transmitted RF-input-signal
+energy instead of reflecting it back to the source. Hence, they
+                                                                                                                                    √
+                                                                                                                                  q
+are less harmful than their reflective counterparts for preceding                                                 J12 J13
+                                                                                                            J11 =                  2 2Y0             J12 = J12 Y0                  (30)
+active stages in a full RF front-end chain, such as mixers of                                                     (J14 )2
+frequency-conversion stages and amplifiers [30]. Moreover, as
+no RF-power reflections are created by these RF filters, the                                                          J13 = J13 Y0          J14 = J14 Y0                           (31)
+use of inter-stage isolators or attenuators—which may increase
+                                                                                           where J8 , J10 , J12 , J13 , and J14 are variables of freedom in
+overall size/volume, DC-power consumption for active-circuit
+                                                                                           the sense of attaining the input-reflectionless behavior and only
+realizations, or in-band insertion-loss levels—can be avoided.
+                                                                                           J13 and J14 have an influence on the total transfer function. As
+   In the past literature, several methods and circuit topologies
+                                                                                           observed in Fig. 9, the expected lowpass-triple-passband res-
+to design reflectionless filters have been reported [31], [32].
+                                                                                           ponse and perfect RF-input-absorptive behavior are obtained.
+One of them consists of the use of complementary networks,
+in which a main channel serves as an approximation to the
+overall filtering response to be attained, whereas the remaining                           B. Filtering Power Divider
+ones—one or several—are loaded by resistors at their output                                    One of the main and first exponents of co-designed RF
+ports and they jointly implement a complementary frequency                                 filtering components with multiple functionalities are power-
+response with regard to the one of the main channel. Thus,                                 distribution networks with simultaneous filtering capabilities,
+the out-of-band RF-signal-power reflections coming from the                                such as filtering power dividers and combiners. This is due to
+main channel are fully dissipated by the loading resistor(s) of                            the simplicity of their design, which mostly consists of the co-
+the other channel(s), so that the total filter becomes fully ab-                           integration of the filtering units in the power-divider/combiner
+sorptive at its input terminal. Design techniques for reflection-                          branches. Despite their realization is relatively straightforward
+less bandpass filters with Butterworth, Chebyshev, and quasi-                              for the case of symmetrical-power-division/combination ac-
+elliptic-type responses and multi-passband filters—e.g., split-                            tions, some aspects need to be considered in asymmetrical-
+type ones—have been detailed [33], [34], [35], [36]. However,                              power-distribution implementations—e.g., differences between
+reflectionless filters with co-designed lowpass-single/multi-                              the frequency-variation profiles of the power transmission res-
+passband-highpass transfer functions have not been discussed.                              ponses from the input port to the different output terminals—
+   The above-referred limitation is counteracted here by means                             and designs with isolated output accesses—e.g., location of
+of the generalized frequency transformations proposed in this                              the isolation resistors—, such as in Wilkinson-type schemes.
+work. Taking a complementary-diplexer network and the first                                    As of today, various filtering power dividers with frequency-
+class of frequency transformation in Section II-A—i.e., Type                               static single- and multi-band bandpass responses using di-
+I—as an example, the synthesis of a fourth-order input-                                    fferent design techniques—e.g., co-integration of transversal-
+reflectionless filter with lowpass-triple-passband response has                            signal-interference cells or coupled-resonator networks in the
+been carried out. To this aim, the normalized equivalent                                   power-divider arms—have been reported [37], [38]. The incor-
+lowpass representation detailed in [33] is adopted, to which                               poration of frequency reconfiguration in such co-designed RF
+the referred frequency transformation is then applied. The re-                             filtering power dividers has also been addressed as in [39] and
+sulting lumped-element circuit and associated transfer function                            [40], as well as the co-integration of additional operational fea-
+for the co-designed fourth-order lowpass-triple-passband filter                            tures, such as the previously-referred reflectionless/absorptive
+after such frequency transformation are drawn in Fig. 9. The                               behavior for one or all ports [41], [42]. Nevertheless, the
+
+
+                 © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                     This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                               content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+
+
+
+                                                                                                                                                      - 3 dB
+
+
+
+                                                                                                                                                          k=1
+
+
+
+
+Fig. 9.      Theoretical example of complementary-diplexer-based input-
+reflectionless co-designed fourth-order lowpass-triple-passband filter in terms
+of circuit detail and power transmission (|S21 |) response for a reference
+                                                                                                                                                                   - 1.761 dB
+admittance Y0 = 1/Z0 with Z0 = 50 Ω (frequency transformation                                                                                         - 4.771 dB
+Type I: N         = 3, α = 0.6 GHz, β1 = 0.1 GHz, β2 = 0.2 GHz,
+β3 = 0.1 GHz, f1 = 1.1 GHz, f2 = 1.5 GHz, f3 = 2 GHz, γ → ∞,
+and JA = JB = JC1 = JC2 = JC3 = 1; converted co-designed filter:
+CL = 5.3052 pF, L1 = 0.6577 nH, C1 = 31.831 pF, L2 = 0.7074 nH,                                                                                                      k= 2
+C2 = 15.9155 pF, L3 = 0.1989 nH, C3 = 31.831 pF, J1 = 0.8088Y0 ,
+J2 = 0.6444Y0 , J3 = 0.7663Y0 , J4 = 1.5557Y0 , J5 = 1.6175Y0 ,
+J 6 = Y0 ,    J7 = 1.238Y0 ,     J 8 = Y0 ,   J9 = 1.2566Y0 ,       J10 = Y0 ,
+J11 = 1.041Y0 , J12 = Y0 , J13 = 0.619Y0 , and J14 = Y0 ).
+
+                                                                                               Fig. 10. Theoretical examples of co-designed third-order triple-passband-
+                                                                                               highpass filtering power divider in terms of circuit detail and power
+design of filtering power dividers with simultaneous lowpass-                                  transmission (|S21 | and |S31 |), input/output-reflection (|S11 |, |S22 |, and
+single/multi-passband-highpass behavior remains unexplored.                                    |S33 |), and output-isolation
+                                                                                                                 √           (|S32 |) responses for equal (k = 1) and
+                                                                                               unequal (k =        2) power-division factors and a reference admittance
+    As an attempt to fill the aforementioned void, the theore-                                 Y0 = 1/Z0 with Z0 = 50 Ω (frequency transformation Type I: N = 3,
+tical design of a two-way filtering power divider with third-                                  α = 0, β1 = 0.1 GHz, β2 = 0.15 GHz, β3 = 0.1 GHz, f1 = 0.5 GHz,
+order triple-passband/highpass response for both symmetrical                                   f2 = 1.1 GHz, f3 = 1.5 GHz, γ = 2.8 GHz, and JA = JB = JC1 =
+                                                                                               JC2 = JC3 = 1; converted co-designed filtering power divider:
+and asymmetrical power-division actions has been conducted.                                    L1 = 3.1831 nH, C1 = 31.831 pF, L2 = 1.1937 nH, C2 = 21.2207 pF,
+Specifically, the first type of generalized frequency transforma-                              L3 = 0.3537 nH, C3 = 31.831 pF, and LH = 0.2984 nH; J1 = J2 =
+tion presented in Section II-A—i.e., Type I—has been again                                     J3 = J4 = 1.35; k = 1: J1 = 0.9546Y0 , J2 = J6 = 1.35Y0 ,
+                                                                                               J3 = J7 = 1.35Y0 , J4 =√1.35Y0 , J5 = 0.9546Y0 , J8 = 1.35Y0 ,
+selected for demonstrative purposes. The resulting lumped-                                     and RD = 1.0974Z0 ; k = 2: J1 = 0.6554Y0 , J2 = J6 = 1.35Y0 ,
+element-based circuit for the filtering power divider after                                    J3 = J7 = 1.35Y0 , J4 = 1.1352Y0 , J5 = 1.3108Y0 , J8 = 1.6054Y0 ,
+applying the referred frequency transformation is depicted in                                  and RD = 1.164Z0 ).
+Fig. 10, along with the power transmission, reflection, and                                                                                                    r
+output-isolation parameters for both design examples. The                                                                                                          1
+                                                                                                                    J3 = J7 = J3 Y0              J4 = J4             Y0                (33)
+values for the design parameters for these two examples are                                                                                                        k
+provided in the caption, in which a power-division ratio of
+k 2 :1—i.e., P3 = k 2 P2 in Fig. 10 where P1 is the input power                                                               r
+                                                                                                                                     k3                     √
+at port 1 and P2 and P3 are√ the output powers at ports 2 and 3,                                                  J5 = J1                 Y0         J8 = J4 kY0                       (34)
+                                                                                                                                   1 + k2
+respectively—with k = 2 was chosen for the asymmetrical
+design. The design formulas (2)–(5) were utilized for their                                                                                  2 
+                                                                                                                                                    1 + k2
+                                                                                                                                                              
+calculation, along with the ones detailed below for the isolation                                                                     J3
+                                                                                                                      RD =                                          Z0                 (35)
+resistor and the admittance-inversion constants in the filtering-                                                                    J2 J4            k
+power-divider branches:
+                                                                                               where Jk (k = 1, 2, . . . , K + 1) are the normalized inversion
+                                                                                               constants of the Kth-order equivalent normalized lowpass
+                    s
+                            1
+           J1 = J1                  Y0 J2 = J6 = J2 Y0        (32)                             filter prototype associated to the filtering action to be incorpo-
+                        k(1 + k 2 )
+                                                                                               rated in the power divider. As can be seen in Fig. 10, the
+
+
+                     © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                    This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                              content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+
+
+
+Fig. 11. Circuit detail and conceptual operational principle of the designed fourth-order lowpass-dual-passband RF filter based on the generalized frequency
+transformation Sub-Type II-A and input/output lowpass filtering (LPF) sections (Z variables denote characteristic impedances and the values of the electrical
+lengths of the transmission-line segments are given at the indicated frequencies f0 , f1 , f2 , f3 , and fL ).
+
+
+intended power-division/composite-triple-passband-highpass-                                     1) Application of the generalized frequency transformation
+filtering functions are obtained in both cases, along with high                                    Sub-Type II-A given in (9) over a pre-designed equivalent
+in-band input/output-power-matching levels and all-frequency                                       normalized lowpass filter prototype with the intended in-
+perfect isolation between the output terminals. Note that                                          band ripple level—i.e., 0.25 dB for this design example—
+spectral asymmetry between branches in terms of bandwidths                                         and Z0 impedance scaling. The ripple-level-referred cut-
+for the transmission bands and input/output-power-matching                                         off frequency of the lowpass transmission range was fixed
+levels is observed in this unequal-power-division design ex-                                       as 0.85 GHz, whereas the center frequencies of the first
+ample, which may be compensated if needed by optimization.                                         and second passbands were selected as 1.4 and 2.2 GHz
+                                                                                                   with absolute bandwidths of 130 and 200 MHz referred to
+  IV. D ESIGN E XAMPLES AND E XPERIMENTAL R ESULTS                                                 the ripple level, respectively. Such specifications were ac-
+                                                                                                   complished after the numerical inspection of (7) with (9)
+    In order to demonstrate the usefulness of the suggested                                        and the composite filtering response of the converted co-
+generalized frequency transformations for the realization of                                       designed filter, whose lumped-element and admittance-
+multi-purpose filters with co-designed lowpass-single/multi-                                       inversion-constant values were obtained with (10)–(12).
+band-bandpass-highpass responses in specific RF technologies,                                   2) Realization of the lumped-element resonators plus their
+two design examples are presented here. They correspond to a                                       adjacent admittance inverters in the converted multi-reso-
+fourth-order lowpass-dual-passband microstrip filter and an in-                                    nant cell as quarter-wavelength open-ended transmission-
+verterless third-order lowpass-dual-passband lumped-element                                        line segments and the admittance inverters of the direct
+filter for a reference impedance Z0 = 50 Ω.                                                        input-output path as quarter-wavelength transmission-line
+    For the distributed-element RF filter, a proof-of-concept                                      segments. To this aim, well-known RF/microwave filter
+microstrip prototype has been constructed and measured as                                          design techniques establishing the referred equivalences
+further practical validation. In the experimental development                                      between these lumped-circuit elements and their transmi-
+of this RF filter, a Rogers RO4003C planar substrate with                                          ssion-line-based counterparts were employed [43], [44].
+the following parameters was used: relative dielectric constant                                 3) Separate design of the input/output sharp-rejection low-
+εr = 3.55, dielectric thickness h = 0.813 mm, metal thickness                                      pass-type filtering cells based on the transversal-signal-
+t = 18 µm, and dielectric loss tangent tan(δD ) = 0.0027. The                                      interference approach presented in [45] to remove the un-
+EM simulations were carried out by means of the commercial                                         desired highpass-type transmission range in the previous
+software package Ansys HFSS, whereas the measurements                                              circuit part, which gets also distorted by the frequency-
+were taken through an Agilent N5230 vector network analyzer.                                       periodic behavior of the transmission-line resonators—
+The description of the design process and the theoretical                                          i.e., spurious resonances—and admittance inverters.
+responses of the two designed RF filters, as well as the EM-                                    4) In-series cascade connection of the designed input/output
+simulated and measured results of the manufactured microstrip                                      lowpass filtering sections to shape the overall RF filter as
+prototype associated to the first of them, are provided below.                                     shown in Fig. 11 and fine optimization to maximize the
+                                                                                                   in-band power-matching levels for its lowpass and dual-
+A. Design I: Distributed-Element Filter                                                            passband transmission regions along with the power-re-
+                                                                                                   jection levels and bandwidth of its upper-stopband range.
+   The first validation example consists of an RF filter with
+                                                                                                5) Dimensioning of the filter layout with its final EM opti-
+co-integrated fourth-order lowpass and dual-passband filter-
+                                                                                                   mization using commercial computer-aided-design tools.
+ing actions developed in microstrip technology. Its ideal
+transmission-line-based circuit scheme and conceptual opera-                                     The power transmission and input-reflection responses of
+tional principle is detailed in Fig. 11. Owing to design simplic-                             the theoretically-designed overall filter with composite low-
+ity for this technology, the generalized frequency transforma-                                pass and dual-passband response given in Fig. 11 are depicted
+tion Sub-Type II-A was adopted in this example. Specifically,                                 in Fig. 12. The values for the design parameters are listed in
+the steps described below were followed for its design process:                               its caption. For comparison purposes, the transfer functions of
+
+
+                    © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                     This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                               content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+
+
+
+                                                                                               Note that if required by the intended application, higher
+                                                                                               levels of circuit-size reduction can be obtained through the
+                                                                                               meandering or fractal-shape patterning of the transmission-
+                                                                                               line segments of the prototype as reported in [47] and [48].
+                                                                                               In such case, an additional fine optimization step of the total
+                                                                                               filter circuit to counteract the extra spurious couplings that may
+                                                                                               be generated owing to the closer physical spacings resulting
+                                                                                               among transmission-line segments may be necessary. As can
+                                                                                               be seen in Fig. 13, a fairly-close agreement between predicted
+                                                                                               and experimental results is attained. Higher minimum in-band
+Fig. 12. Power transmission (|S21 |) and input-reflection (|S11 |) responses of                power-insertion-loss levels are visible in the measurements
+the theoretically-designed overall transmission-line-based RF filter in Fig. 11                with regard to the simulations, which is attributed to higher-
+and |S21 | responses of the same filter without the input/output lowpass
+filtering (LPF) sections and of the separate LPF section (design parameters:
+                                                                                               than-expected substrate and radiation losses. Note also that,
+Z1 = 72 Ω, Z2 = 115 Ω, Z3 = 145 Ω, ZA1 = ZA2 = ZA3 = 130 Ω,                                    as design trade-off, such insertion-loss levels are augmented
+ZL1 = ZL2 = 112 Ω, ZS = 145 Ω, f0 = 1.65 GHz, f1 = 2.3 GHz,                                    in the overall filter—i.e., with regard to those inherent to
+f2 = 3.67 GHz, f3 = 6.07 GHz, and fL = 5 GHz).
+                                                                                               the in-series cascade connection of the three triple-open-
+                                                                                               ended-stub cells—by the extra input/output transversal-signal-
+                                                                                               interference lowpass-type filtering units that were incorporated
+                                                                                               to further enlarge the upper-stopband bandwidth. The mea-
+                                                                                               sured lowpass transmission range has a 3-dB cut-off frequency
+                                                                                               of 0.85 GHz and a minimum in-band power-matching level of
+                                                                                               12 dB. The measured first and second passbands exhibit center
+                                                                                               frequencies of 1.4 and 2.31 GHz, 3-dB absolute bandwidths
+                                                                                               equal to 163 and 212 MHz—i.e., 11.6% and 9.2% in relative
+                                                                                               terms—, minimum in-band power-insertions-loss levels of
+                                                                                               3.9 and 4.1 dB, and in-band power-matching levels higher
+                                                                                               than 11.5 and 20.9 dB, respectively. The measured upper-
+                                                                                               stopband range extends from 2.58 to 6.79 GHz for a minimum
+                                                                                               attenuation level of 26.9 dB. Note also that, due to the substrate
+                                                                                               loss, the effect of spurious spikes in the measured upper
+                                                                                               stopband when compared to the theoretical response depicted
+                                                                                               in Fig. 12 is largely reduced. The measured maximum in-band
+                                                                                               group-delay variations for the lowpass-type band and the first
+                                                                                               and second passbands are 3.9, 2.9, and 2.5 ns, respectively.
+                                                                                                   A qualitative comparison of the manufactured lowpass-dual-
+                                                                                               passband filter prototype in Fig. 13 with other related prior-art
+                                                                                               filters is provided in Table II. As can be seen, the co-designed
+                                                                                               filter developed in this work exhibits all the desired features in
+                                                                                               terms of TZ generation at both sides of all transmission bands,
+                                                                                               extended upper stopband with extra TZ creation, and low
+                                                                                               circuit complexity that results in ease of scalability to higher-
+Fig. 13. Photograph (core dimensions: 158.6 mm × 43.6 mm) and EM-                              order realizations with increased number of passbands. Be-
+simulated and measured power transmission (|S21 |), input-reflection (|S11 |),                 sides, it is the only one whose design is based on a generalized
+and group-delay (τg ) responses of the manufactured microstrip prototype of
+lowpass-dual-passband RF filter.
+                                                                                               frequency transformation—i.e., Sub-Type II-A in this case.
+
+
+this filter without the input/output lowpass filtering sections                                B. Design II: Inverterless Lumped-Element Filter
+and the separate lowpass filtering section are also represented.                                  As the second example, a third-order lowpass-dual-passband
+As can be seen, the bandwidth and power-attenuation levels of                                  RF filter in lumped-element technology for the VHF/UHF
+the upper stopband are considerably increased in the overall                                   range has been designed. In this case, the generalized fre-
+filter due to the action of the lowpass filtering sections. The                                quency transformation Sub-Type II-B was employed to derive
+presence of spurious narrow-band spikes throughout the entire                                  the converted co-designed filter network. Afterwards, circuit
+upper-stopband range is also observed, which is an intrinsic                                   transformations were applied to this circuit network to remove
+phenomenon to the cascading process as it was studied in [46].                                 the admittance inverters. In this manner, the negative effects
+    The photograph of the constructed microstrip prototype of                                  associated to the frequency dependency of the admittance
+lowpass-dual-passband RF filter is shown in Fig. 13. Its EM-                                   inverters in a lumped-element realization in terms of distortion
+simulated and measured power transmission, input-reflection,                                   of the overall filtering response are avoided. It also results in an
+and in-transmission group-delay responses are also drawn.                                      implementation with minimum number of lumped elements.
+
+
+                     © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                    This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+
+
+
+                                                                                         TABLE II
+                                   C OMPARISON W ITH P RIOR -A RT RF L OWPASS -S INGLE/M ULTI -PASSBAND F ILTERS
+
+                              [18]: Fig. 3   [19]: Fig. 5   [21]: Fig. 7    [22]: Fig. 9       [24]: Fig. 2        [25]: Fig. 6      This work: Fig. 13
+                                              Microstrip     Microstrip      Microstrip    Microstrip stepped-  Microstrip stepped- Microstrip multi-open-
+      Circuit structure     Microstrip        in-parallel  metamaterial- double-shunted- impedance transversal-     impedance         ended-stub stages
+       and technology       filter bank         sets of       inspired    open-ended-line  signal-interference    sections with      with input/output
+                                              resonators   resonant cells      stages      multi-band sections     etched slots      lowpass-type cells
+      Type of response       Lowpass-         Lowpass-       Lowpass-        Lowpass-           Lowpass-             Lowpass-             Lowpass-
+       (frequencies(†)   single-passband    dual-passband dual-passband single-passband      single-passband     single-passband        dual-passband
+           in GHz)          (1.5/2.4)    (0.66/1.57/2.45) (1.05/1.9/3)     (1.5/2.42)           (1/2.25)          (1(∗) /4.75)       (0.85/1.4/2.31)
+        Multiple TZs             ✓                ✓              ✓               ✓                  ✓                   ×                     ✓
+     Extended stopband           ✓                ✓              ×               ×                  ✓                   ×                     ✓
+     Ease of scalability     Medium            Medium         Unclear           High             Medium                High                  High
+            (†) : 3-dB cut-off frequency for lowpass-type band and center frequencies for passbands; (∗) : specified value at ripple-referred level.
+
+
+
+
+Fig. 14. Circuit detail and power transmission (|S21 |) and input-reflection (|S11 |) responses of the theoretically-designed overall lumped-element-based RF
+filter along with the |S21 | response of its multi-resonant cell 1—the theoretical/exact values for the design parameters are provided in Table III.
+
+
+                                                                                                     The circuit detail of the inverterless lumped-element third-
+                                      TABLE III                                                  order lowpass-dual-passband filter is shown in Fig. 14. The
+             L UMPED -E LEMENT VALUES OF D ESIGN II                                              formulas for its inductance and capacitance elements, along
+                            Element∗                             Value
+                                                                                                 with their exact values for the selected design, are given in
+                                2                                                            Table III. Steps 1)—but with the design equations (13)–(18)—,
+                        JC1 JA            β1
+           LP 1 =        JB J1          2πf12 Y0
+                                                              13.816 nH                          2) and 5) described in Section IV-A were followed in its design
+                                   2 
+                                                                                                 process. Note that the realization of more-complex filtering
+                                              
+           CP 1 = JJ1 JJB             Y0
+                                    2πβ1 
+                                                  11.459 pF
+                  C1 A2                                                                       transfer functions, such as those also including a highpass
+                    JC2 JA            β2
+          LP 2 = J J              2πf 2 Y0
+                                                   4.511 nH                                      term or more passbands, would lead to constituent lumped-
+                      B 1
+                              2  2 
+                                                                                                 element cells with more inductive and capacitive elements—
+                   
+           CP 2 = JJB JJ1             Y0
+                                    2πβ2
+                                                  11.459 pF
+                      C2 A 2                                                                 to be derived in each case using an analogous methodology.
+                         JA          Y0
+            LH1 = J J                             27.631 nH
+                        B 1       2πα
+                                2                                                             The power transmission and input-reflection responses of
+                       JB J2           Y0
+          LS1 = J J J
+                      1 C1 A  2πβ1 
+                                                  25.179 nH                                      this theoretically-designed third-order lowpass-dual-passband
+                
+                  J1 JC1 JA 2
+                              
+                                       β1                                                        filter, along with the power transmission response of its first
+         CS1 =       JB J2         2πf 2 Y0
+                                                   6.288 pF
+                               2  1                                                          multi-resonance cell for selectivity-comparison purposes, are
+          LS2 = J JJB J2J              Y0
+                                                  25.179 nH                                      also depicted in Fig. 14. The in-band ripple level for all
+                      1 C2 A  2πβ2 
+
+         CS2 =
+                
+                  J1 JC2 JA
+                              2
+                                       β2
+                                                   2.053 pF
+                                                                                                 transmission bands is 0.1 dB, whereas the ripple-level-referred
+                     JB J2         2πf22 Y0
+                             2                                                               cut-off frequency of the lowpass-type transmission range is
+            CH1 = JJA JJ1            Y0
+                                   2πα
+                                                  12.575 pF                                      165 MHz. The center frequencies of the first and second
+                         B 2
+                              2            
+                
+                  J2 JC1 JA
+         LP 3 = J J J                  β1
+                                                  13.816 nH
+                                                                                                 passbands are 470 and 770 MHz, respectively, and their ripple-
+                                    2πf 2 Y0
+                  
+                     B 1 3
+                                2  1                                                          level-referred absolute bandwidths are 62 MHz.
+          CP 3 = JJBJ J1 JJ3           Y0
+                                                  11.459 pF
+                      2 C1 A  2πβ1 
+                             2
+                  J2 JC2 JA            β2                                                                                         V. C ONCLUSION
+         LP 4 = J J J               2πf 2 Y0
+                                                   4.511 nH
+                     B 1 3
+                                2  2 
+                                                                                                    Various types of generalized frequency transformations
+                  
+          CP 4 = JJBJ J1 JJ3           Y0
+                                      2πβ2
+                                                  11.459 pF
+                    2 C2 A 2                                                                 for co-designed RF filtering devices have been presented.
+                        JA J2         Y0
+           LH2 = J J J                            27.631 nH
+                       B 1 3
+                               2
+                                     2πα                                                         They allow the direct realization of arbitrary filtering respon-
+                 ′       J2 J4
+               Z0 = J J
+                               1 3
+                                   Z0          50 Ω (output port)                                ses with composite-lowpass-single/multi-passband/highpass
+∗ Design parameters: f
+                    1 = 0.4 GHz, f2 = 0.7 GHz, α = 0.2 GHz, β1 =
+                                                                                                 terms. For these frequency transformations, the resulting co-
+0.1 GHz, β2 = 0.1 GHz, Y0 = 1/Z0 with Z0 = 50 Ω, J1 = J4 = 1.2Y0 ,                               designed filtering networks after their application over the
+J2 = J3 = 1.35Y0 , JA = JB = Y0 , and JC1 = JC2 = 1.3Y0 .                                        normalized equivalent lowpass filter prototype in terms of
+                                                                                                 lumped-element models have been detailed. Besides, tech-
+
+
+                    © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                    This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                              content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+
+
+
+niques for sharper-rejection/increased-selectivity RF filter de-                              [17] R. Gómez-Garcı́a, L. Yang, and D. Psychogiou, “A frequency trans-
+sign based on the inclusion of additional coupling paths in di-                                    formation for co-designed multi-passband/multi-embedded-notch RF
+                                                                                                   filters,” IEEE Trans. Circuits Syst. II, Exp. Briefs, vol. 68, no. 7, pp.
+fferent ways to create extra stopband TZs have been described.                                     2429–2433, Jul. 2021.
+The usefulness of such generalized frequency transformations                                  [18] P.-H. Deng, J.-T. Tsai, and R.-C. Liu, “Design of a switchable microstrip
+also extends to RF multi-functional filtering components, as                                       dual-band lowpass-bandpass filter,” IEEE Microw. Wireless Compon.
+                                                                                                   Lett., vol. 24, no. 9, pp. 599–601, Sep. 2014.
+it has been validated by means of theoretical design examples                                 [19] J. Xu, “Compact microstrip tri-band lowpass-bandpass filter,” Electron.
+consisting of an input-reflectionless filter and two-way filtering                                 Lett., vol. 51, no. 19, pp. 1509–1510, Sep. 2015.
+power dividers with equal and unequal power-splitting factors.                                [20] J. Xu, Z. Y. Chen, and Q. H. Cai, “Design of miniaturized dual-band
+                                                                                                   low-pass-bandpass and bandpass filters,” IEEE Trans. Compon., Packag.,
+Moreover, two examples of RF filters designed in distributed-                                      Manuf. Technol., vol. 8, no. 1, pp. 132–139, Jan. 2018.
+element and inverterless lumped-element circuits have been                                    [21] D. K. Choudhary and R. K. Chaudhary, “Compact lowpass and
+presented, along with the measured results of a manufactured                                       dual-band bandpass filter with controllable transmission zero/center
+                                                                                                   frequencies/passband bandwidth,” IEEE Trans. Circuits Syst. II, Exp.
+proof-of-concept microstrip prototype corresponding to the                                         Briefs, vol. 67, no. 6, pp. 1044–1048, Jun. 2020.
+first RF filter design for experimental-demonstration purposes.                               [22] P.-H. Deng, K.-L. Sun, J.-H. Hsu, and K.-J. Xu, “Improved designs for
+                                                                                                   highly integrated lowpass-bandpass filters,” IEEE Access, vol. 11, pp.
+                               R EFERENCES                                                         7237–7246, 2023.
+                                                                                              [23] Y. Yuan, W. Xie, J. Dai, C. Zhang, R. Jiang, J. Wang, C. Li, Y. Wu,
+ [1] R. Gómez-Garcı́a, J. P. Magalhães, J. M. Muñoz-Ferreras, J. M. N.                          X. Wang, and L. Sun, “High-selectivity lowpass-bandpass filters with
+     Vieira, N. B. Carvalho, and J. Pawlan, “Filling the spectral holes:                           flexible passband allocation,” IEEE Microw. Wireless Technol. Lett., vol.
+     Novel/future wireless communications and radar receiver architectures,”                       33, no. 7, pp. 987–990, Jul. 2023.
+     IEEE Microw. Mag., vol. 15, no. 2, pp. 45–56, Mar./Apr. 2014.                            [24] M. Malki, L. Yang, and R. Gómez-Garcı́a, “RF transversal planar filters
+ [2] V. Crnojevic-Bengin, Advances in Multi-Band Microstrip Filters. Cam-                          with dual-lowpass/bandpass response,” accepted for presentation at the
+     bridge University Press, 2015.                                                                SBMO/IEEE MTT-S Int. Microw. Optoelectron. Conf., Castelldefels,
+ [3] J. A. Ruiz-Cruz, M. M. Fahmi, and R. R. Mansour, “Triple-conductor                            Barcelona, Spain, Nov. 5-9, 2023, pp. 1–3.
+     combline resonators for dual-band filters with enhanced guard-band                       [25] I. Arnedo, A. Lujambio, T. Lopetegi, and M.A.G. Laso, “Design of
+     selectivity,” IEEE Trans. Microw. Theory Techn., vol. 60, no. 12, pp.                         microwave filters with arbitrary frequency response based on digital
+     3969–3979, Dec. 2012.                                                                         methods,” IEEE Microw. Wireless Compon. Lett., vol. 17, no. 9, pp.
+ [4] E. J. Naglich, J. Lee, H. H. Sigmarsson, D. Peroulis, and W. J. Chappell,                     634–636, Sep. 2007.
+     “Intersecting parallel-plate waveguide loaded cavities for dual-mode and
+                                                                                              [26] R. Gómez-Garcı́a, L. Yang, J.-M. Muñoz-Ferreras, and D. Psychogiou,
+     dual-band filters,” IEEE Trans. Microw. Theory Techn., vol. 61, no. 5,
+                                                                                                   “Single/multi-band coupled-multi-line filtering section and its applica-
+     pp. 1829–1838, May 2013.
+                                                                                                   tion to RF diplexers, bandpass/bandstop filters, and filtering couplers,”
+ [5] D. Psychogiou, B. Vaughn, R. Gómez-Garcı́a, and D. Peroulis, “Recon-
+                                                                                                   IEEE Trans. Microw. Theory Techn., vol. 67, no. 10, pp. 3959–3972,
+     figurable multiband bandpass filters in evanescent-mode-cavity-resonator
+                                                                                                   Oct. 2019.
+     technology,” IEEE Microw. Wireless Compon. Lett., vol. 27, no. 3, pp.
+                                                                                              [27] H.-Y. Li, J.-X. Xu, L. Gao, Q. Xue, and X. Y. Zhang, “24-35 GHz
+     248–250, Mar. 2017.
+                                                                                                   filtering LNA and filtering switch using compact mixed magnetic-
+ [6] M. A. Addou, J. Lintignat, R. Gómez-Garcı́a, B. Barelaud, F. Torres,
+                                                                                                   electric coupling circuit in 28-nm bulk CMOS,” IEEE Trans. Circuits
+     S. Bila, and B. Jarry, “Silicon-integrated signal-interference dual-band
+                                                                                                   Syst. I, Reg. Papers, vol. 70, no. 3, pp. 1071–1082, Mar. 2023
+     bandpass filter for GNSS application,” in 2017 IEEE MTT-S Int. Microw.
+                                                                                              [28] H. Li, X. Guo, L. Zhu, and W. Wu, “Design of wideband tunable
+     Symp. Dig., Honolulu, HI, USA, Jun. 4–9, 2017, pp. 1675–1678.
+                                                                                                   filtering phase shifter with switchable TTD or CPD phase mode,” IEEE
+ [7] M. Pal and R. Ghatak, “A distinctive resonance: Multiband bandpass
+                                                                                                   Trans. Circuits Syst. II, Exp. Briefs, early access, pp. 1–5, 2023, doi:
+     filter design techniques using multimode resonators,” IEEE Microw.
+                                                                                                   10.1109/TCSII.2023.3305317.
+     Mag., vol. 16, no. 11, pp. 35–55, Dec. 2015.
+ [8] M. Malki, L. Yang, and R. Gómez-Garcı́a, “Input-reflectionless quasi-                   [29] D. Zhao, F. Lin, Z. Zhai, H. Sun, and X. Y. Zhang, “Design of
+     elliptic-type single- and dual-band bandpass filters based on passive                         nonreciprocal filtering antenna using spatio-temporal modulated SIW
+     channelized principles,” IEEE Trans. Circuits Syst. I, Reg. Papers, vol.                      resonators,” IEEE Trans. Microw. Theory Techn., vol. 71, no. 10, pp.
+     70, no. 1, pp. 190–202, Jan. 2023.                                                            4505–4518, Oct. 2023
+ [9] K. Lee, T. H. Lee, C. S. Ahn, Y. S. Kim, and J. Lee, “Reconfigurable                     [30] Mini-Circuits, Brooklyn, NY., “Reflectionless filters improve linearity
+     dual-stopband filters with reduced number of couplings between a                              and dynamic range,” Microw. J., vol. 58, no. 8, pp. 42–50, Aug. 2015.
+     transmission line and resonators,” IEEE Microw. Wireless Compon. Lett.,                  [31] M. A. Morgan, “Think outside the band: Design and miniaturization
+     vol. 25, no. 2, pp. 106–108, Feb. 2015.                                                       of absorptive filters,” IEEE Microw. Mag., vol. 19, no. 7, pp. 54–62,
+[10] Y.-H. Cho and G. M. Rebeiz, “Tunable 4-pole dual-notch filters for                            Nov.–Dec. 2019.
+     cognitive radios and carrier aggregation systems,” IEEE Trans. Microw.                   [32] R. Gómez-Garcı́a, D. Psychogiou, J.-M. Muñoz-Ferreras, and L. Yang,
+     Theory Techn., vol. 63, no. 4, pp. 1308–1314, Apr. 2015.                                      “Avoiding RF isolators: Reflectionless microwave bandpass filtering
+[11] D. Psychogiou, R. Gómez-Garcı́a, and D. Peroulis, “Fully adaptive                            components for advanced RF front ends,” IEEE Microw. Mag., vol. 21,
+     multiband bandstop filtering sections and their application to multifunc-                     no. 12, pp. 68–86, Dec. 2020.
+     tional components,” IEEE Trans. Microw. Theory Techn., vol. 64, no.                      [33] R. Gómez-Garcı́a, J.-M. Muñoz-Ferreras, and D. Psychogiou, “High-
+     12, pp. 4405–4418, Dec. 2016.                                                                 order input-reflectionless bandpass/bandstop filters and multiplexers,”
+[12] G. Macchiarella and S. Tamiazzo, “Design techniques for dual-passband                         IEEE Trans. Microw. Theory Techn., vol. 67, no. 9, pp. 3683–3695,
+     filters,” IEEE Trans. Microw. Theory Techn., vol. 53, no. 11, pp. 3265–                       Sep. 2019.
+     3271, Dec. 2005.                                                                         [34] J. Lee, J. Lee, and N.-S. Barker, “Rigorous design of input-reflectionless
+[13] A. Garcı́a-Lampérez and M. Salazar-Palma, “Single-band to multiband                          filter with Chebyshev response and exact approach to increase reflec-
+     frequency transformation for multiband filters,” IEEE Trans. Microw.                          tionless range,” IEEE Trans. Microw. Theory Techn., vol. 69, no. 10, pp.
+     Theory Techn., vol. 59, no. 11, pp. 3048–3058, Dec. 2011.                                     4460–4475, Oct. 2021.
+[14] R. Gómez-Garcı́a and A. C. Guyette, “Reconfigurable multi-band mi-                      [35] Y. Yang, M. Yu, X. Yin, and Q. Wu, “On the singly terminated and
+     crowave filters,” IEEE Trans. Microw. Theory Techn., vol. 63, no. 4, pp.                      complementary networks,” IEEE Trans. Microw. Theory Techn., vol. 67,
+     1294–1307, Apr. 2015.                                                                         no. 3, pp. 988–996, Mar. 2019.
+[15] R. Gómez-Garcı́a, J.-M. Muñoz-Ferreras, and D. Psychogiou, “Adaptive                   [36] R. Gómez-Garcı́a, J.-M. Muñoz-Ferreras, and D. Psychogiou, “Split-type
+     multi-band negative-group-delay microwave circuits with low reflec-                           input-reflectionless multiband filters,” IEEE Microw. Wireless Compon.
+     tion,” IEEE Trans. Circuits Syst. I, Reg. Papers, vol. 68, no. 5, pp.                         Lett., vol. 28, no. 11, pp. 981–983, Nov. 2018.
+     2196–2209, May 2021.                                                                     [37] R. Gómez-Garcı́a, R. Loeches-Sánchez, D. Psychogiou, and D. Per-
+[16] Y. Wu and K. Ma, “Synthesis design of multiband bandpass filters                              oulis, “Single/multi-band Wilkinson-type power dividers with embed-
+     employing multimode bandstop resonators with star-like topology,”                             ded transversal filtering sections and application to channelized filters,”
+     IEEE Trans. Circuits Syst. I, Reg. Papers, vol. 70, no. 6, pp. 2612–2624,                     IEEE Trans. Circuits Syst. I, Reg. Papers, vol. 62, no. 6, pp. 1518–1527,
+     Jun. 2023                                                                                     Jun. 2015.
+
+
+                    © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+                     This article has been accepted for publication in IEEE Transactions on Circuits and Systems--I: Regular Papers. This is the author's version which has not been fully edited and
+                                               content may change prior to final publication. Citation information: DOI 10.1109/TCSI.2024.3382094
+
+
+
+
+[38] B. Lee, S. Nam, and J. Lee, “Optimization-free design equations for                                                  Li Yang (Senior Member, IEEE) received the M.Sc.
+     narrowband equal-division filtering power divider with pre-specified                                                 degree in electrical and electronics engineering and
+     filtering response and wideband isolation,” IEEE Trans. Circuits Syst.                                               Ph.D. degree in electrical and computer engineer-
+     I, Reg. Papers, vol. 66, no. 7, pp. 2496–2507, Jul. 2019.                                                            ing from the University of Macau (UM), Macau
+[39] G. Zhang, S. Liu, W. Chen, Z. Zhang, and J. Yang, “Design method for                                                 SAR, China, in 2013 and 2018, respectively. In
+     compact multifunctional reconfigurable filtering power divider on a new                                              2018, he was a Postdoctoral Fellow with the De-
+     tunable three-port multi-mode topology,” IEEE Trans. Circuits Syst. I,                                               partment of Electrical and Computer Engineering,
+     Reg. Papers, vol. 67, no. 4, pp. 4580–4592, Dec. 2020.                                                               UM. Since 2018, he joined as a Postdoctoral Re-
+[40] J.-X. Xu, M. Huang, W.-L. Zhan, and X. Y. Zhang, “Reconfigurable                                                     searcher with the Department of Signal Theory
+     filtering power divider with arbitrary operating channels based on                                                   and Communications, University of Alcalá, Alcalá
+     external quality factor control,” IEEE Trans. Circuits Syst. I, Reg. Papers,                                         de Henares, Spain, where he worked as a GOT
+     vol. 69, no. 11, pp. 4395–4403, Nov. 2022.                                                ENERGY TALENT (GET)-COFUND MSCA Fellow during 2020-2022,
+[41] R. Gómez-Garcı́a, J.-M. Muñoz-Ferreras, and D. Psychogiou, “RF                          and now he is a Senior Research Scientist. His current research interests
+     reflectionless filtering power dividers,” IEEE Trans. Circuits Syst. II,                  include the synthesis and design of RF/microwave planar and multilayered
+     Exp. Briefs, vol. 66, no. 6, pp. 933–937, Jun. 2019.                                      passive filters, reconfigurable filters, reflectionless filters, filtering antennas,
+[42] B. Lee, J. Lee, G. Lee, and J. Lee, “All-port-reflectionless narrowband                   and multifunctional circuits and systems. He has authored/co-authored 53
+     filtering power divider topology with generic equations,” IEEE Trans.                     papers in international journals and 38 papers in international conferences.
+     Circuits Syst. I, Reg. Papers, vol. 69, no. 4, pp. 1417–1426, Apr. 2022.                     Dr. Yang serves as a Technical Reviewer for several prestigious IEEE
+[43] I. C. Hunter, Theory and Design of Microwave Filters. London, U.K.:                       journals (e.g., TMTT, MWCL, TCAS-I, and TCAS-II) and Technical Program
+     IEE Press, 2001.                                                                          Committer Member for several IEEE and EuMA conferences. He is also a
+[44] J.-S. Hong, Microstrip Filters for RF/Microwave Applications, 2nd ed.                     Young-Professional Affiliate Member of the IEEE MTT-S Microwave Passive
+     New York, NY, USA: Wiley, 2011.                                                           Components and Transmission Line Structures (MTT-4) and the IEEE MTT-S
+[45] R. Gómez-Garcı́a, M.-A. Sánchez-Soriano, M. Sánchez-Renedo, G.                         Filters (MTT-5) Technical Committees. He currently is an Associate Editor
+     Torregrosa-Penalva, and E. Bronchalo, “Low-pass and bandpass filters                      of IEEE T RANSACTIONS ON C IRCUITS AND S YSTEMS -II: E XPRESS B RIEFS
+     with ultra-broad stopband bandwidth based on directional couplers,”                       and IEEE ACCESS. He was a recipient of the Best Student Paper Award of
+     IEEE Trans. Microw. Theory Techn., vol. 61, no. 12, pp. 4365–4375,                        the International Symposium on Antennas and Propagation 2010 in Macau
+     Dec. 2013.                                                                                and the Second Prize of Macau Natural Science Award in 2020.
+[46] A. Morini, G. Venanzoni, P. Martı́n-Iglesias, C. Ernst, N. Sidiropoulus,
+     A. Di Donato, and M. Farina, “Systematic evaluation of spikes due
+     to interference between cascaded filters,” IEEE Trans. Microw. Theory
+     Techn., vol. 66, no. 11, pp. 4814–4819, Nov. 2018.
+[47] H. Ghali and T. A. Moselhy, “Miniaturized fractal rat-race, branch-line
+     and coupled-line hybrids,” IEEE Trans. Microw. Theory Techn., vol. 52,
+     no. 11, pp. 2513–2520, Nov. 2004.
+[48] P. Jarry and J. Beneat, Design and Realizations of Miniaturized Fractal
+     Microwave and RF Filters. New York, NY, USA: Wiley, 2009.
+                                                                                                                       Mohamed Malki (Graduate Student Member, IEEE)
+                                                                                                                       received the B.Sc. degree in telecommunication en-
+                                                                                                                       gineering and M.Sc. degree in Telecommunication
+                                                                                                                       Engineering in the specialized area of Space and
+                           Roberto Gómez-Garcı́a (Fellow, IEEE) is a Full                                             Defense Technologies from the University of Alcalá,
+                           Professor with the Department of Signal Theory                                              Madrid, Spain, in 2020 and 2022, respectively. In
+                           and Communications, University of Alcalá, Al-                                              2022, he joined the Department of Signal The-
+                           calá de Henares, Spain. His current research in-                                           ory and Communications at University of Alcalá,
+                           terests include the design of fixed/tunable high-                                           Alcalá de Henares, Madrid, Spain, as a Research
+                           frequency filters and multiplexers in planar, hy-                                           Assistant where he is currently working toward the
+                           brid, and monolithic microwave-integrated circuit                                           Ph.D. degree in Information and Communication
+                           technologies, multifunction circuits and systems,                   Technologies. His main research interests include the analysis, design, and
+                           software-defined radio and radar architectures for                  construction of microwave filters and multiplexers.
+                           telecommunications, remote sensing, and biomedical
+                           applications, and displacement RF sensors. In these
+topics, he has authored/co-authored about 145 papers in international journals
+and 180 papers in international conferences.
+   Dr. Gómez-Garcı́a serves as a member for the Technical Review Board
+for several IEEE and EuMA conferences. He is also a member of the
+IEEE MTT-S Filters (MTT-5), the IEEE MTT-S RF MEMS and Microwave
+Acoustics (MTT-6), the IEEE MTT-S Wireless Communications (MTT-23),
+the IEEE MTT-S Biological Effects and Medical Applications of RF and
+Microwave (MTT-28), and the IEEE CAS-S Analog Signal Processing                                                          José-Marı́a Muñoz-Ferreras (Member, IEEE) re-
+Technical Committees. He was a recipient of the 2016 IEEE Microwave                                                      ceived the degree in telecommunication engineer-
+Theory and Techniques Society (MTT-S) Outstanding Young Engineer Award.                                                  ing and the Ph.D. degree in electrical and elec-
+He was an IEEE CAS-S Distinguished Lecturer (2020-2022). He was an                                                       tronic engineering from the Polytechnic University
+Associate Editor of IEEE T RANSACTIONS ON M ICROWAVE T HEORY AND                                                         of Madrid, Spain, in 2004 and 2008, respectively.
+T ECHNIQUES from 2012 to 2016, IEEE T RANSACTIONS ON C IRCUITS AND                                                       He is currently an Associate Professor with the
+S YSTEMS -I: R EGULAR PAPERS from 2012 to 2015, IEEE M ICROWAVE AND                                                      Department of Signal Theory and Communications,
+W IRELESS C OMPONENTS L ETTERS from 2018 to 2020, as well as other                                                       University of Alcalá, Alcalá de Henares, Spain.
+journals such as IEEE ACCESS, IET Microwaves, Antennas, and Propagation,                                                 His current research interests include radar signal
+and the International Journal of Microwave and Wireless Technologies. He                                                 processing, advanced radar systems and concepts,
+was a Senior Editor of the IEEE J OURNAL ON E MERGING AND S ELECTED                                                      and microwave/RF circuits and systems.
+T OPICS IN C IRCUITS AND SYSTEMS from 2016 to 2017 and the MTT-S                               Dr. Muñoz-Ferreras is a member of the IEEE MTT-S Biological Effects and
+Newsletter Working Group Chair from 2019 to 2021. He was a Guest Editor                        Medical Applications of RF and Microwave (MTT-28) Technical Committee
+for several special/Focus issues and sections in IEEE and IET journals.                        and a reviewer for several IEEE and IET publications. He serves as a member
+Currently, he is the Editor-in-Chief of the IEEE M ICROWAVE AND W IRELESS                      of the Technical Review Board of several IEEE and EuMA conferences.
+T ECHNOLOGY L ETTERS, an Associate Editor of IEEE T RANSACTIONS ON
+C IRCUITS AND S YSTEMS -I: R EGULAR PAPERS and the IEEE J OURNAL OF
+E LECTROMAGNETICS , RF AND M ICROWAVES IN M EDICINE AND B IOLOGY,
+a TC-5 Topic Editor of the IEEE J OURNAL OF M ICROWAVES, and an
+Editorial Board Member of Electromagnetic Science.
+
+
+                     © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.See https://www.ieee.org/publications/rights/index.html for more information.
+

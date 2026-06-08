@@ -1,0 +1,409 @@
+LLC Resonant Converter With Reconfigurable Secondary-
+Side for Output Voltage Regulation
+Citation for published version (APA):
+Queiroz, S. S., & Costa, L. F. (2025). LLC Resonant Converter With Reconfigurable Secondary-Side for Output
+Voltage Regulation. IEEE Transactions on Circuits and Systems II: Express Briefs, 72(12), 2047-2051. Article
+11216413. https://doi.org/10.1109/TCSII.2025.3625415
+
+
+
+
+Document license:
+TAVERNE
+
+
+DOI:
+10.1109/TCSII.2025.3625415
+
+
+Document status and date:
+Published: 01/12/2025
+
+
+Document Version:
+Publisher’s PDF, also known as Version of Record (includes final page, issue and volume numbers)
+
+
+Please check the document version of this publication:
+• A submitted manuscript is the version of the article upon submission and before peer-review. There can be
+important differences between the submitted version and the official published version of record. People
+interested in the research are advised to contact the author for the final version of the publication, or visit the
+DOI to the publisher's website.
+• The final author version and the galley proof are versions of the publication after peer review.
+• The final published version features the final layout of the paper including the volume, issue and page
+numbers.
+Link to publication
+
+
+
+
+General rights
+Copyright and moral rights for the publications made accessible in the public portal are retained by the authors and/or other copyright owners
+and it is a condition of accessing publications that users recognise and abide by the legal requirements associated with these rights.
+
+       • Users may download and print one copy of any publication from the public portal for the purpose of private study or research.
+       • You may not further distribute the material or use it for any profit-making activity or commercial gain
+       • You may freely distribute the URL identifying the publication in the public portal.
+
+If the publication is distributed under the terms of Article 25fa of the Dutch Copyright Act, indicated by the “Taverne” license above, please
+follow below link for the End User Agreement:
+www.tue.nl/taverne
+
+Take down policy
+If you believe that this document breaches copyright please contact us at:
+openaccess@tue.nl
+providing details and we will investigate your claim.
+
+
+
+
+Download date: 04. Jun. 2026
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS–II: EXPRESS BRIEFS, VOL. 72, NO. 12, DECEMBER 2025                                                              2047
+
+
+
+
+        LLC Resonant Converter With Reconfigurable
+        Secondary-Side for Output Voltage Regulation
+              Samuel S. Queiroz , Graduate Student Member, IEEE, and Levy F. Costa , Member, IEEE
+
+
+   Abstract—This brief proposes a reconfigurable LLC resonant
+converter that enables the regulation of a tailored portion of the
+output voltage through a novel adaptive transformer turns ratio
+scheme implemented on the secondary rectifier. The converter
+employs a center-tapped transformer and a switch to reconfigure
+the secondary rectifier and adjust the effective turns ratio. Using
+the proposed concept, voltage regulation is achieved with a
+reduced number of switches and devices in the current’s path, no
+modification to the primary side, and fixed-frequency operation.
+A laboratory prototype rated at 4 kW with a 1 kV input
+voltage is implemented and tested to validate the feasibility and                Fig. 1. Architecture of the proposed LLC resonant converter.
+performance of the proposed converter.
+  Index Terms—DC, transformer, LLC resonant converter, out-
+put voltage regulation, reconfigurable rectifier.                                range. It is capable of doubling or quadrupling the output
+                                                                                 voltage, depending on the rectifier configuration. However, the
+                       I. I NTRODUCTION                                          main drawback of these solutions is the large step in the output
+                                                                                 voltage variation (twice or four times the base voltage), besides
+T     HE LLC resonant DC/DC converter is widely used
+      in several applications due to its high efficiency, soft-
+switching capability, and simple implementation [1], [2]. It
+                                                                                 the need for additional hardware, such as an active switch
+                                                                                 and multiple capacitors. Similarly, a reconfigurable converter
+has become a popular choice for solid-state transformer (SST)                    capable of modifying the primary bridge operation and the
+and electric vehicles (EVs) charging applications [3], [4],                      secondary side rectifier is proposed in [13]. This converter
+especially when operating as a DC transformer, i.e., constant                    also has the drawback of using additional hardware (e.g., bidi-
+voltage gain and output voltage [5], [6]. In this operating                      rectional switch), fixed step voltage variation, and increased
+mode, the converter achieves high efficiency, as demonstrated                    current stress on the primary side devices, which compromises
+in [7], but it inherently lacks output voltage regulation.                       efficiency. Finally, in [14] and [15], reconfigurable rectifiers
+   In SSTs, only limited output regulation (around 5-20%) is                     are proposed based on modifications to the transformer struc-
+typically required to compensate for potential input voltage                     ture, requiring additional components such as bidirectional
+sags, whereas EV charging stations require a wide voltage                        switches, diodes and capacitors. The extra hardware and higher
+range (e.g., 400–800 V). To regulate the output voltage of                       number of devices in the path of the current (compromising
+the LLC resonant converter as a DC transformer, different                        the efficiency) are remarkable drawbacks.
+techniques have been discussed in the literature, including                         In this context, this brief proposes a novel LLC resonant
+modulation strategies and topological reconfiguration.                           converter using a reconfigurable rectifier with an adjustable
+   Modulation-based approaches, such as phase-shift mod-                         transformer turns ratio, as shown in Fig. 1. Different from
+ulation and pulse-width modulation (PWM) [8], [9], [10],                         previous solutions presented in the literature, the proposed
+will increase switching losses, which significantly reduce effi-                 converter enables regulation of a tailored portion of the out-
+ciency, mainly in high-power applications, which is not desired                  put voltage by adjusting the transformer turns ratio through
+in SST systems. Another approach is the topological recon-                       the reconfigurable secondary-side rectifier. Unlike doubler
+figuration techniques, which are based on the modification                       or quadrupler converters, the voltage step in the proposed
+of the circuit configuration on the primary and/or secondary                     topology is not constrained to fixed values. Instead, it can
+side to achieve output voltage adjustment. For instance, in                      be tailored according to the application, enabling small steps
+[11] and [12], reconfigurable voltage quadrupler rectifiers are                  (e.g., 5-20%) suitable for SST systems, or larger steps such
+proposed for applications requiring a wide output voltage                        as output voltage doubling for EV charging stations, which
+                                                                                 typically require voltage regulation between 400-800 V. In
+   Received 28 July 2025; revised 13 September 2025 and 13 October 2025;         other words, the output voltage step is a design choice. Even
+accepted 21 October 2025. Date of publication 24 October 2025; date of
+current version 26 November 2025. This brief was recommended by Associate        though the proposed converter introduces an additional switch
+Editor E. Moisello. (Corresponding author: Samuel S. Queiroz.)                   on the secondary side (denoted as S R,1 in Fig. 1), the overall
+   The authors are with the Department of Electrical Engineering, Eindhoven      hardware remains simpler compared to other solutions, leading
+University of Technology, 5612 AP Eindhoven, The Netherlands (e-mail:
+s.soares.queiroz@tue.nl).                                                        to a reduced number of active components in the current path.
+   Digital Object Identifier 10.1109/TCSII.2025.3625415                          Moreover, the switch S R,1 is unidirectional, which simplifies
+             1549-7747 © 2025 IEEE. All rights reserved, including rights for text and data mining, and training of artificial intelligence and
+                       similar technologies. Personal use is permitted, but republication/redistribution requires IEEE permission.
+                                     See https://www.ieee.org/publications/rights/index.html for more information.
+ Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on February 20,2026 at 08:49:02 UTC from IEEE Xplore. Restrictions apply.
+2048                                              IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS–II: EXPRESS BRIEFS, VOL. 72, NO. 12, DECEMBER 2025
+
+
+
+
+Fig. 2. Generalized architecture of the proposed LLC resonant converter.
+
+the gate driver circuitry and reduces conduction losses, unlike
+previous solutions that require bidirectional switches. Further-
+more, when the switch S R,1 is turned on, only one additional
+                                                                                 Fig. 3. Operation modes of the proposed reconfigurable LLC resonant
+semiconductor is added in the current path, with no extra                        converter: (a) - (b) LV mode; (c) - (d) HV mode.
+diodes. In this brief, the operating principle of the proposed
+topology is presented in Section II, followed by the theoretical
+analysis and design details in Section III. Experimental results
+are then provided in Section IV to demonstrate the effective-
+ness of the proposed converter.
+
+       II. P ROPOSED R ECONFIGURABLE LLC R ESONANT
+            C ONVERTER AND O PERATING P RINCIPLE
+   The proposed reconfigurable LLC resonant converter is
+depicted in Fig. 1 and can be generalized to offer more output
+voltage steps, as illustrated in Fig. 2. The converter comprises                 Fig. 4. Key waveforms of the reconfigurable LLC resonant converter in LV
+                                                                                 and HV modes.
+a three-level (3L) half-bridge (HB) on the primary side [16],
+[17], a resonant tank (resonant inductor Lr , resonant capacitor
+                                                                                 converter operates in two distinct modes: low voltage (LV)
+Cr and magnetizing inductor Lm ), a center-tapped medium-
+                                                                                 mode and high voltage (HV) mode, as depicted in Fig. 3.
+frequency transformer (MFT) with reconfigurable rectifier on
+                                                                                    1) LV Mode: In this mode, the switch S R,1 is permanently
+the secondary side. The proposed secondary bridge consists
+                                                                                 off, consequently the diodes D3 and D4 are reverse-biased and
+of the center-tapped windings n s , 2k auxiliary windings nt,k ,
+                                                                                 remain blocked, as illustrated in Fig. 3(a) and (b). During the
+2k diodes and (k-1) unidirectional active switches, where k
+                                                                                 positive half-cycle of the resonant current iLr , the primary
+represents the number of output voltage steps. In the gener-
+                                                                                 voltage v p is +Vi . The secondary current i s flows through
+alized topology, each auxiliary winding adds a voltage step
+                                                                                 the upper half of the secondary winding and the diode D1 ,
+∆Vo,k when its corresponding active switch SR,k is turned
+                                                                                 while the diode D2 is reversed-biased, as shown in Fig. 3(a).
+on. The added voltage is defined by ∆Vo,k = (Vi /2)(nt,k /n p ).
+                                                                                 The output voltage Vo is reflected to the primary side and
+Therefore, the generalized output voltage of the proposed
+                                                                                 Lm is clamped to Vo /nT r , where nT r is the transformer turns
+converter expressed as
+                                                                                 ratio. During the negative half-cycle of iLr , vp becomes zero.
+                                          k                                      The current i s flows through lower half of secondary winding
+                               n s Vi X Vi nt,k
+                      Vo,t =         +          .                        (1)     and the diode D2 , as can be observed in Fig. 3(b). In LV mode,
+                               np 2     2 np
+                                         i=1                                     the nTr is given by ns /np , resulting a voltage Vo(LV) = Vi ·ns /np .
+The auxiliary windings affect the overall transformer size                       The main waveforms for the LV mode are shown in Fig. 4.
+and must be carefully considered during the MFT design.                             2) HV Mode: In this mode, the switch S R,1 is permanently
+Their effect on the converter’s operation is discussed in the                    on, and the diodes D1 and D2 are reverse-biased (i.e., out of
+next section. The output voltage behavior is illustrated in the                  the circuit). Therefore, the secondary rectifier operates using
+diagram of Fig. 2, where each switch SR,k increases the output                   diodes D3 and D4 , as shown in Fig. 3(c) and (d). With S R
+voltage by ∆Vo,k , synthesizing the tailored steps and Vo,t . The                conducting, the entire secondary winding of the MFT becomes
+LLC resonant converter operates as a DC transformer, with                        active, increasing the number of secondary turns. During the
+the switching frequency fs set equal to or slightly below the                    positive half-cycle of iLr , diode D3 is forward-biased, and i s
+resonant frequency fo . The duty cycle of the primary switches                   flows through the full upper secondary winding, as depicted in
+driving signals is fixed at 0.5 [5]. The operation principle of                  Fig. 3(c). In this case, the Vo is given by v s1 + v s3 . Similarly,
+the converter, shown in Fig. 1, is described in Fig. 3. The                      for the negative half-cycle, diode D4 conducts and i s flows
+
+ Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on February 20,2026 at 08:49:02 UTC from IEEE Xplore. Restrictions apply.
+QUEIROZ AND COSTA: LLC RESONANT CONVERTER WITH RECONFIGURABLE SECONDARY-SIDE                                                                              2049
+
+
+
+through the lower secondary winding, resulting in an Vo of
+v s2 + v s4 , as shown in Fig. 3(d). In HV mode, nTr is (ns +
+nt,1 )/np , and Vo(HV) = Vi ·(ns + nt,1 )/np . The main waveforms
+for the HV mode are shown in Fig. 4.
+
+  III. A NALYSIS AND D ESIGN OF THE R ECONFIGURABLE
+              LLC R ESONANT C ONVERTER
+     The LLC resonant converter is designed to operate in
+discontinuous conduction mode (DCM) within the inductive
+region. The switching frequency is set at or slightly below
+the resonant frequency (i.e., f s ≤ fo ). When operating near                    Fig. 5. (a) Equivalent model of the MFT in the reconfigurable LLC resonant
+ fo , the converter achieves its highest efficiency, with zero-                  converter; (b) normalized voltage gain of the converter.
+voltage switching (ZVS) for the primary side switches and
+zero current switching (ZCS) for the secondary-side diodes,
+while also minimizing the circulating current. The resonant                      secondary windings are active, and the total secondary leakage
+tank is composed of Lr , C√                                                      inductance is given by LS ,eq(HV) = Ll,s1 + Ll,s2 + Ll,s3 +
+                                r and Lm , which define the resonant
+frequency as fo = 1/(2π · Lr Cr ). As shown in Fig. 4, the 3L                    Ll,s4 . Therefore, the equivalent resonant inductance referred
+HB converter generates v p with two levels: 0 and +Vi . Thus,                    to the primary is Lr(LV) = Ll,p + LS ,eq(LV) /(n2T r(LV) ), for LV
+the maximum MFT primary voltage is Vi /2. However, a dc                          mode, and Lr(HV) = Ll,p + LS ,eq(HV) /(n2T r(HV) ), for HV mode.
+offset of Vi /2 appears across Cr . The sinusoidal current iLr                   It is important to note that the turns ratio in the HV mode
+is defined as ILr,peak ·sin(ωo t), where the peak current ILr,peak               is higher than LV mode (nT r(HV) > nT r(LV) ), resulting in a
+is determined by 4 f VnT r√PLo C , with Po representing the nominal              lower equivalent resonant inductance in HV mode compared
+                     s o      r r
+power. The secondary current in the diode is derived from iLr                    to LV mode (Lr(HV) < Lr(LV) ). In contrast, the capacitance
+and its peak value is given by ILr,peak /nT r (see Fig. 4).                      Cr remains the same in both modes, since the capacitor bank
+                                                                                 does not change. Note also that Lm is independent of the MFT
+                                                                                 configuration. The rated power of the converter is the same
+A. Voltage Gain                                                                  regardless the operation mode, resulting in the output load in
+  To determine the voltage gain Mv , the first harmonic                          LV and HV modes being Ro(LV) < Ro(HV) . Based on these
+approximation can be used, as described in detail in [5]. The                    parameters, the quality factor for each mode can be derived
+normalized Mv of the LLC resonant converter is given by                          as
+                                     fn2 Ln                                                         π nT r(LV)
+                                                                                                  8 2 2             r
+        M v = q                                           2 ,          (2)                                          Lr(LV)
+                                                                                                                 ·           , LV Mode
+                                    2                                                           ˆ
+                                                                                                  ˆ
+                     fn2 (Ln +1) − 1 + fn Ln Qe ( fn2 − 1)                                           8Ro(LV)
+                                                                                                  <
+                                                                                                                       Cr
+                                                                                            Qe =                                                 (3)
+                                                                                                    π2 n2T r(HV)
+                                                                                                                    r
+                                                                                                                      Lr(HV)
+where Mv is determined in termsqof the inductor ratio Ln =                                                                    , HV Mode.
+                                                                                                  ˆ
+                                                                                                  ˆ
+                                                                                                  :               ·
+                                     π2 n2                                                           8Ro(HV)            Cr
+Lm /Lr , quality factor Qe = 8RTo r · CLrr and relative frequency
+ fn = f s / fo . In the proposed topology, the effective nTr changes                In the design of the LLC resonant converter, a higher Qe
+according to the operation mode. In the LV mode, only part                       narrows the resonance peak of the Mv curve. Considering the
+of the secondary winding is active. The effective turns ratio                    converter parameters, we find Qe(LV) > Qe(HV) . As a result, the
+                         V
+is nT r(LV) = nnps = Vo,LV i /2
+                                . For the HV mode, the full secondary            resonant tank must be designed based on the LV mode, as it
+winding is active and the effective turns ratio is nT r(HV) = nsn+np
+                                                                     t           presents the highest quality factor and lowest inductor ratio,
+  V
+= Vo(HV) . Therefore, the corresponding voltage gain is described                which significantly influences the converter’s operation and
+    i /2
+as Gv(LV) = nT r(LV) · Mv for LV mode and Gv(HV) = nT r(HV) · Mv                 soft-switching performance, representing the worst-case sce-
+for HV mode.                                                                     nario. Accordingly, the capacitor Cr is calculated using Lr(LV)
+                                                                                 by means of 1/(4π2 fo2 Lr(LV) ). As the converter is designed
+                                                                                 based on the LV mode configuration (Lr = Lr(LV) ), it operates
+B. Design Methodology and Effect of the Topological                              at point I within region 1, as depicted in Fig. 5(b). When
+Reconfiguration                                                                  it switches from LV to HV mode, the resonant inductance
+   In the LLC resonant converter design, Lr is often realized                    decreases to Lr(HV) , increasing fo . Consequently, the fn drops
+using the MFT leakage inductance, typically referred to the                      below unity and the converter shifts to operation point II,
+primary side [6]. However, in the proposed converter, the                        which also lies in region 1, as shown in Fig. 5(b). Thus, the
+leakage inductance varies according to the operating mode. To                    converter maintains full soft switching and inductive. If instead
+clarify this phenomenon, a simplified MFT model is derived                       the design were based on HV mode parameters, switching
+and shown in Fig. 5(a), where the primary and secondary                          to LV mode would decrease fo , resulting in fn > 1, and the
+leakages are represented by Ll,p and Ll,s , respectively. In                     operation in region 2 (see Fig. 5(b)), where soft switching on
+LV mode, only the secondary windings n s,1 and n s,2 are                         the secondary side would be lost. This behavior is an intrinsic
+connected, resulting in a total secondary leakage inductance                     characteristic of the proposed reconfigurable topology and is
+of LS ,eq(LV) = Ll,s1 + Ll,s2 . In contrast, in HV mode, all four                critical for both the converter design and operation.
+
+ Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on February 20,2026 at 08:49:02 UTC from IEEE Xplore. Restrictions apply.
+2050                                              IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS–II: EXPRESS BRIEFS, VOL. 72, NO. 12, DECEMBER 2025
+
+
+
+
+Fig. 6. Picture of the implemented prototype.
+
+                                TABLE I
+       S PECIFICATIONS AND C OMPONENTS OF THE R ECONFIGURABLE
+                       LLC R ESONANT C ONVERTER
+
+
+
+
+                  IV. E XPERIMENTAL R ESULTS
+
+     A prototype was built to verify the effectiveness and per-                  Fig. 7. Experimental waveforms: (a)-(d) LV mode - Vo(LV) = 350 V;
+formance of the proposed converter, with the specifications                      (e)-(h) HV mode - Vo(HV) = 620 V.
+listed in Table I. Fig. 6 shows a picture of the experimental
+prototype. As explained in the last section, the converter is
+designed based on the LV mode. As the converter is designed
+to operate as a DC transformer, the f s is defined slightly below
+ fo , thus f s = 49 kHz and fo = 50 kHz. From the capacitor
+equation, it is found Cr = 0.7 nF.
+     Fig. 7(a)-(d) presents the main steady-state waveforms of
+the proposed reconfigurable LLC resonant converter in the
+LV mode. The current iLr and voltages Vo , V p and vcr are                       Fig. 8. Dynamic waveforms of the proposed converter: (a) transition from
+presented in Fig. 7(a). The waveforms behave as expected                         LV to HV mode; (b) transition from HV to LV mode.
+and the converter regulates Vo at 350 V. The behavior of the
+voltage VS 1 over S 1 and the current iS 1 through it are presented              design methodology ensures soft-switching in the primary and
+in Fig. 7(b), where it is demonstrated the ZVS operation in                      secondary bridges in both operation modes.
+the primary bridge. The waveforms of the currents iD1 and                           The transition mode waveforms at Po = 2 kW are presented
+iD2 are shown in Fig. 7(c), whereas the voltage over D1 and                      in Fig. 8. Fig. 8(a) shows the behavior of iLr , Vo , iD3 and V p
+D2 are presented in Fig. 7(d). As can be seen, the diodes in                     in the dynamic transition from LV to HV mode. It is clear that
+the LV mode handle the voltage Vo(LV) + v s1 and the ZCS is                      Vo changes from 350 V to 600 V with a transient duration of
+achieved. Similarly, Fig. 8(f)-(h) shows the main steady-state                   approximately 50 ms. Fig. 8(b) illustrates the waveforms in
+waveforms of the converter in the HV mode, with iLr , iD3 and                    the transition from HV to LV mode, where Vo changes from
+iD4 in Fig. 8(g) and iD3 alongside the voltages over D1 , D3                     600 V to 350 V with a transient duration of about 35 ms. The
+and D4 in Fig. 8(h). It is important to note that the voltage                    current iLr is constant, indicating the constant power operation.
+Vo is regulated at 600 V and VD1 remains negative throughout                        The efficiency of the proposed LLC resonant converter was
+HV mode, indicating that diode D1 is continuously reverse-                       evaluated in both modes. As shown in Fig. 9(a), the converter
+biased. Furthermore, the diodes in HV mode withstand the                         achieves 96.7% in LV mode and 97.6% in HV mode at Po
+voltage 2Vo(HV) . The experimental results of the reconfigurable                 = 4 kW. Overall, the converter demonstrates higher efficiency
+LLC resonant converter are consistent with the theoretical                       in HV mode. Fig. 9(b) shows the loss breakdown at Po =
+waveforms, validating the operation of the proposed converter                    4 kW. Primary-side losses remain constant, as the primary
+in both modes. Additionally, it demonstrates that the developed                  current does not depend on Vo . The total losses are dominated
+
+ Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on February 20,2026 at 08:49:02 UTC from IEEE Xplore. Restrictions apply.
+QUEIROZ AND COSTA: LLC RESONANT CONVERTER WITH RECONFIGURABLE SECONDARY-SIDE                                                                              2051
+
+
+
+                                                                                 semiconductor losses are reduced due to the lower current
+                                                                                 stress on the secondary side.
+                                                                                                               R EFERENCES
+                                                                                 [1]  B. Yang, F. C. Lee, A. J. Zhang, and G. Huang, “LLC resonant converter
+                                                                                      for front end DC/DC conversion,” in Proc. APEC. 17th Annu. IEEE
+                                                                                      Appl. Power Electron. Conf. Expo., vol. 2, Dallas, TX, USA, Sep. 2002,
+                                                                                      pp. 1108–1112, doi: 10.1109/APEC.2002.989382.
+                                                                                 [2] Y. Wei, Q. Luo, Z. Wang, and H. A. Mantooth, “A complete step-by-
+Fig. 9. (a) Measured efficiency in function of the output power; (b) power            step optimal design for LLC resonant converter,” IEEE Trans. Power
+losses breakdown in LV and HV modes.                                                  Electron., vol. 36, no. 4, pp. 3674–3691, Apr. 2021, doi: 10.1109/
+                                TABLE II                                              TPEL.2020.3015094.
+                                                                                 [3] M. Liserre, G. Buticchi, M. Andresen, G. De Carne, L. F. Costa,
+                C OMPARISON W ITH S TATE - OF - THE -A RT                             and Z.-X. Zou, “The smart transformer: Impact on the electric grid
+                                                                                      and technology challenges,” IEEE Ind. Electron. Mag., vol. 10, no. 2,
+                                                                                      pp. 46–58, Jun. 2016, doi: 10.1109/MIE.2016.2551418.
+                                                                                 [4] J. E. Huber and J. W. Kolar, “Solid-state transformers: On the origins
+                                                                                      and evolution of key concepts,” IEEE Ind. Electron. Mag., vol. 10, no. 3,
+                                                                                      pp. 19–28, Sep. 2016, doi: 10.1109/MIE.2016.2588878.
+                                                                                 [5] J. Jiao, X. Guo, C. Wang, and X. You, “Time-domain analysis
+                                                                                      and optimal design of LLC-DC transformers (LLC-DCXs) con-
+                                                                                      sidering discontinuous conduction modes,” IEEE Trans. Transport.
+                                                                                      Electrific., vol. 9, no. 2, pp. 2308–2323, Jun. 2023, doi: 10.1109/
+                                                                                      TTE.2022.3205954.
+                                                                                 [6] T. Yuan, F. Jin, Z. Li, and Q. Li, “High frequency high power integrated
+                                                                                      transformer design for resonant converters with SiC devices,” in Proc.
+                                                                                      IEEE 9th Workshop Wide Bandgap Power Devices Appl. (WiPDA),
+                                                                                      Redondo Beach, CA, USA, Nov. 2022, pp. 170–175.
+                                                                                 [7] S. S. Queiroz and L. F. Costa, “Comparative evaluation of a multilevel
+                                                                                      LLC resonant converter for a modular DC/DC stage in a electrolyzer
+                                                                                      power supply,” in Proc. IEEE Appl. Power Electron. Conf. Expo.
+                                                                                      (APEC), Atlanta, GA, USA, Mar. 2025, pp. 1334–1340, doi: 10.1109/
+                                                                                      APEC48143.2025.10977183.
+                                                                                 [8] Y. Wei, Q. Luo, and A. Mantooth, “Overview of modulation strategies
+                                                                                      for LLC resonant converter,” IEEE Trans. Power Electron., vol. 35,
+by secondary conduction losses. The efficiency difference is                          no. 10, pp. 10423–10443, Oct. 2020, doi: 10.1109/TPEL.2020.2975392.
+                                                                                 [9] J.-H. Kim, C.-E. Kim, J.-K. Kim, J.-B. Lee, and G.-W. Moon, “Analysis
+mainly due to higher secondary current in LV mode, leading to                         on load-adaptive phase-shift control for high efficiency full-bridge
+increased conduction losses in diodes and windings. Moreover,                         LLC resonant converter under light-load conditions,” IEEE Trans.
+in HV mode, the losses of the switch S R1 are very low (around                        Power Electron., vol. 31, no. 7, pp. 4942–4955, Jul. 2016, doi: 10.1109/
+                                                                                      TPEL.2015.2462077.
+1.3%) and have a minor impact on the efficiency.                                 [10] W. Liu, B. Wang, W. Yao, Z. Lu, and X. Xu, “Steady-state analy-
+   Table II compares the proposed converter with existing                             sis of the phase shift modulated LLC resonant converter,” in Proc.
+solutions. It achieves fixed frequency soft-switching operation                       IEEE Energy Convers. Congr. Expo. (ECCE), Milwaukee, WI, USA,
+                                                                                      Sep. 2016, pp. 1–5, doi: 10.1109/ECCE.2016.7855471.
+over a wide output voltage range, while requiring fewer                          [11] M. Shang and H. Wang, “A voltage quadrupler rectifier based pulsewidth
+devices overall and the lowest number of active elements in                           modulated LLC converter with wide output range,” IEEE Trans.
+the current path. Unlike prior designs with fixed output voltage                      Ind. Appl., vol. 54, no. 6, pp. 6159–6168, Nov. 2018, doi: 10.1109/
+                                                                                      TIA.2018.2850033.
+steps, the proposed topology is inherently scalable, allowing                    [12] M. Abbasi, R. Emamalipour, K. Kanathipan, M. A. M. Cheema,
+tailored step magnitudes in the output voltage defined by the                         and J. Lam, “A step-up reconfigurable multimode LLC converter
+secondary-side auxiliary windings. With only one additional                           module with extended high-efficiency range for wide voltage gain
+                                                                                      application in medium voltage DC grid systems,” IEEE Trans. Power
+secondary switch, it offers a good trade-off between simplicity,                      Electron., vol. 37, no. 7, pp. 8118–8132, Jul. 2022, doi: 10.1109/
+scalability, and functionality, reaching a competitive efficiency                     TPEL.2022.3149294.
+of 97.6%.                                                                        [13] Y. Zuo, X. Shen, and W. Martinez, “Reconfigurable LLC resonant
+                                                                                      converter for wide voltage range and reduced voltage stress in DC-
+                                                                                      connected EV charging stations,” IEEE Trans. Power Electron., vol. 40,
+                                                                                      no. 3, pp. 3838–3843, Mar. 2025, doi: 10.1109/TPEL.2024.3502548.
+                           V. C ONCLUSION                                        [14] X. Tang, Y. Xing, H. Wu, and J. Zhao, “An improved LLC resonant
+   This brief proposed a novel reconfigurable LLC resonant                            converter with reconfigurable hybrid voltage multiplier and PWM-plus-
+                                                                                      PFM hybrid control for wide output range applications,” IEEE Trans.
+converter using a center-tapped transformer and a secondary-                          Power Electron., vol. 35, no. 1, pp. 185–197, Jan. 2020, doi: 10.1109/
+side reconfigurable rectifier. The converter delivers fixed                           TPEL.2019.2914945.
+output voltage steps through a secondary-side active switch                      [15] D. Shu and H. Wang, “An ultrawide output range LLC resonant
+                                                                                      converter based on adjustable turns ratio transformer and reconfigurable
+while maintaining constant switching frequency. Experimental                          bridge,” IEEE Trans. Ind. Electron., vol. 68, no. 8, pp. 7115–7124, Aug.
+results from a 1 kV / 4 kW prototype confirm the feasibility,                         2021, doi: 10.1109/TIE.2020.3009588.
+effective voltage regulation, and turns ratio adaptation of the                  [16] S. S. Queiroz and L. F. Costa, “Optimal design of a LLC resonant
+                                                                                      DC–DC converter based on the stacked half-bridge concept for solid-
+design. The converter also shows good dynamic performance                             state transformer,” IEEE Trans. Power Electron., early access, Jun. 27,
+in the transition between the LV and HV modes and high                                2025, doi: 10.1109/TPEL.2025.3583941.
+efficiency in both modes. Furthermore, the converter attains a                   [17] C. Lu, W. Hu, and F. C. Lee, “Neutral-point voltage balancing methods
+                                                                                      of series-half-bridge LLC converter for solid state transformer,” IEEE
+peak efficiency of 97.6% in HV mode at 4 kW. Despite the                              Trans. Power Electron., vol. 36, no. 6, pp. 7060–7073, Jun. 2021, doi:
+extra losses from the active switch in the HV mode, the overall                       10.1109/TPEL.2020.3035150.
+
+ Authorized licensed use limited to: Eindhoven University of Technology. Downloaded on February 20,2026 at 08:49:02 UTC from IEEE Xplore. Restrictions apply.
+

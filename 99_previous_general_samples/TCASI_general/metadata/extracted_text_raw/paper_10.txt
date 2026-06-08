@@ -1,0 +1,1220 @@
+IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS 1
+A 0.4–0.9 V Supply Voltage-Flexible Third-Order
+Passive ΔΣ Modulator With Switched-Capacitor
+Loop Filter Achieving 71.9 dB Peak SNDR
+at 4 MHz Bandwidth
+Jeroen Ponte , Graduate Student Member, IEEE, Harijot Singh Bindra , Member, IEEE,
+and Bram Nauta , Fellow, IEEE
+Abstract— This paper describes the design and implementation
+of a 4 MHz bandwidth 3rd-order Discrete-Time (DT) Passive
+Delta-Sigma Modulator (PΔΣM), which avoids the use of supply
+voltage-sensitive linear amplifiers. The Switched-Capacitor (SC)
+operation and amplifier-less nature of its loop filter render the
+proposed modulator highly supply voltage- and clock frequency-
+flexible. To explain our design choices, we investigate two key
+design challenges unique to PΔΣMs. Firstly, the noise criticality
+of the quantizer ADC due to the lack of (voltage) gain in
+the loop filter preceding it. Secondly, the inaccessibility of the
+readily synthesizable and highly frequency-selective loop filter
+frequency responses typically employed in ΔΣMs, caused by
+the absence of linear amplifiers. We show that the noise-power
+trade-off of the quantizer ADC in 1 bit P16Ms is the same
+as that of the first integrator amplifier in Active ΔΣM. Next,
+we cover the suitability of several passive filters for use in
+PΔΣM loops. This leads to the selection of the voltage-sampled
+Charge-Rotating IIR (CR-IIR) filter, for which we show ΔΣM-
+oriented design equations, on which we base the design of
+our 3rd-order DT PΔΣM. Measurement results on the resulting
+prototype PΔΣM, implemented in GlobalFoundries 22 nm FD-
+SOI CMOS, demonstrate that it achieves a 71.9 dB peak SNDR
+and 4 MHz bandwidth while consuming 4.4 mW from a 0.9 V
+supply and occupying 0.076mm2 of silicon area. The prototype
+PΔΣM continues to operate at a 2.25× reduced supply voltage
+of 0.4 V, albeit at a reduced bandwidth of 156.25 kHz, where it
+achieves a peak SNDR of 62 dB while consuming 37.8 µW.
+Index Terms— Analog-to-digital converter (ADC), discrete-
+time delta-sigma (ΔΣ) modulation, passive switched-capacitor
+filter, opampless, clock frequency-flexible, supply voltage-flexible,
+CMOS, 22 nm FD-SOI.
+I. INTRODUCTION
+THE design of linear amplifiers has become increasingly
+difficult in modern CMOS technologies due to the
+reducing supply voltage [1]. New amplifier architectures, such
+Received 1 September 2024; revised 5 December 2024 and 22 January
+2025; accepted 26 January 2025. This work was supported in part by European
+Research Council (ERC) under European Union’s Horizon 2020 Research and
+Innovation Program under Grant 834389 and in part by the National Growth
+Fund through the Dutch 6G Flagship Project “Future Network Services.” This
+article was recommended by Associate Editor R. Maurino. (Corresponding
+author: Jeroen Ponte.)
+The authors are with the Integrated Circuit Design Group, University of
+Twente, 7522 NB Enschede, The Netherlands (e-mail: j.ponte@utwente.nl).
+Digital Object Identifier 10.1109/TCSI.2025.3536610
+Fig. 1. Generalized model of an N bit 16 Modulator with HFF( f ) and
+HFB( f ) representing the (Continous- or Discrete-Time) frequency-dependent
+input and feedback signal transfers of the loop filter. As shown for a multibit
+example, the quantizer can be modeled by its linearized approximation,
+replacing its true transfer function (red) with a linear approximation (blue) [4].
+Quantizer input-referred and filter output-referred thermal noise are modeled
+by en,ADC and en,filt, respectively.
+as e.g. the ring amplifier [2], have been proposed to solve
+this problem. However, an alternative solution is the total
+elimination of these linear amplifiers from the analog signal
+chain, as proposed in [3]. This leaves the designer with
+switches, capacitors, resistors and non-linear gain blocks such
+as comparators. In our first attempt at this “no gain” approach,
+we focus our attention on the ADC.
+While linear amplifierless Nyquist-rate ADCs (such as e.g.
+SAR ADCs) are abundant in literature, they require highly
+frequency-selective active anti-alias filters, which typically
+employ the linear amplifiers we aim to avoid. Contrarily,
+the oversampled nature of noise-shaping ADCs relaxes the
+selectivity requirements on their anti-alias filters, potentially
+enabling the omission of amplifiers from the latter. Although
+amplifierless Passive Noise-Shaping SAR ADCs have been
+presented in literature, the demands on their anti-alias filters
+are not significantly relaxed due to their low OverSample
+Ratios (OSRs) [5]. Delta-Sigma Modulators (16Ms), on the
+other hand, commonly utilize high OSRs and are thus a
+more promising candidate architecture. We therefore wish to
+© 2025 The Authors. This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License.
+For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+2 IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS
+investigate the design and on-chip implementation of a 16M
+following the no gain approach from [3]. While such Passive
+16Ms (P16Ms) exist in literature, their low bandwidth of
+100kHz [6] limits their application scope. We wish to extend
+their bandwidth to several MHz, enabling P16Ms for new
+applications.
+A special benefit of P16Ms is that due to the absence of
+supply-sensitive linear amplifiers, they continue to operate at
+severely lowered supply voltages, albeit at reduced bandwidth
+(speed), as we will demonstrate. This could have applications
+in e.g. IoT sensor nodes, where a MHz bandwidth-enabled
+supply-flexible ADC could (consecutively) serve a dual role
+as both radio quantization back-end at full supply voltage, and
+low-power sensor ADC at reduced supply voltage.
+This work discusses the design and implementation of
+an integrated supply voltage-flexible 3rd-order Discrete-Time
+(DT) Low-Pass P16M achieving a 4 MHz bandwidth and
+71.9 dB peak SNDR while consuming 4.43 mW from a 0.9 V
+supply. By scaling all core supply voltage down to 0.4 V, its
+power consumption reduces to 37.8 µW with an associated
+156.25 kHz bandwidth and 62 dB peak SNDR. With these
+specifications, a single one of our P16M can be applied for a
+range of applications in low-power IoT sensors. Additionally,
+the 62 dB SNDR demonstrated at 0.4 V operation allow
+optimizing our P16M for use in energy harvesting-powered
+ICs [7].
+The text is organized as follows. We begin by discussing
+two key design challenges that arise in the design of
+P16Ms, related to the quantizer and loop filter, in Section II.
+Continuing, Section III goes more in-depth on the quantizer,
+and Section IV explores loop filter design in P16Ms,
+culminating in the selection of a filter architecture. Section V
+derives two design equations to assist in the design of
+the selected filter, oriented towards P16Ms. Some unique
+properties of the filter allow our relatively simple equations
+to cover arbitrary-order (loop) filters. Continuing, Section VI
+treats the on-chip implementation of our 3rd-order P16M.
+We apply time-interleaving to the loop filter to increase
+P16M bandwidth, accepting the SN(D)R performance
+penalty resulting from finite filter component mismatch.
+Standard calibration techniques could reduce the penalty,
+but this is beyond the scope of this exploratory work.
+Next, Section VII demonstrates measurement results on our
+prototype supply-flexible P16M. Its performance at several
+reduced supply voltages is reported, and far-out-of-band large-
+signal two-tone measurements are shown. Finally, conclusions
+are drawn in Section VIII.
+II. KEY CHALLENGES IN THE DESIGN OF PASSIVE 16MS
+The design of P16Ms presents two key challenges
+not found in Active 16Ms. We begin our discussion by
+considering Fig. 1, which shows a generalized model of
+an N bit 16M. The loop filter is represented by two
+(Continuous- or Discrete-Time) frequency-dependent transfer
+functions HFF( f ) and HFB( f ). Typically, (different) HFF( f )
+and HFB( f ) are implemented by (differently) coupling the
+input and DAC feedback signals into a single, shared loop
+filter. It can be demonstrated that a large (in-band) HFF( f )
+magnitude, as typically present in active 16Ms, suppresses
+the input-referred thermal noise contribution of the quantizer
+ADC en,ADC [4].
+Unfortunately, achieving such large voltage gain in a passive
+(low-pass) loop filter is challenging. Techniques such as e.g.
+capacitor stacking can be applied, but this requires additional
+clock phases and the achievable voltage gain is limited by
+parasitic loading [8]. Although the quantizer with its (implicit)
+gain can compensate for the lack of gain in the loop filter,
+it becomes a key input-referred P16M noise contributor.
+As a result, the noise-power trade-off of the quantizer ADC
+is the first key challenge in the design of P16M. We will
+first discuss modeling of the (implicit) quantizer gain in
+Section III-A. Continuing, Section III-B treats the fundamental
+noise-power trade-off of a 1 bit quantizer ADC in a P16M,
+and compares it with that of the first linear (integrator)
+amplifier in Active 16M, which plays an analogous role.
+We show that criticality of quantizer input noise in P16M is
+not a direct bottleneck in achieving energy efficiencies similar
+to their active counterparts.
+The second key challenge involves achieving a high
+modulator resolution in P16M, which requires high quantizer
+gain, being related to the frequency-selectivity of their loop
+filter as will be discussed in Section III. In Section IV we treat
+how the omission of linear amplifiers constrains the loop filter
+design space, disallowing the implementation of the highly-
+selective frequency responses typically employed in Active
+16M.
+III. QUANTIZER CONSIDERATIONS FOR PASSIVE 16MS
+A. Quantizer Gain Estimation
+In order to maximize quantization noise suppression,
+we must maximize quantizer gain AQ. To conceptually
+understand how to do this, we will first model the quantizer
+using a linear approximation, as illustrated in Fig. 1. Several
+approaches exist in literature [4], [9]. In this work we will
+utilize one previously applied in P16Ms, which uses the
+ratio of the RMS levels of the quantizer output and input
+signals [9]. We will initially neglect thermal noise, focusing
+exclusively on quantization noise. This approach allows the
+designer to sufficiently lower the quantization noise level to
+achieve a Signal-to-Quantization Noise Ratio (SNQR) greater
+than their SNR target [4]. This ensures that when thermal noise
+is introduced, the 16M noise floor is dominated by the latter
+as is typical for energy-efficient designs [4]. Later in the text
+we will introduce thermal noise considerations. The spectral
+energy in the quantizer output signal of a typical correctly-
+operating 16M with zero input is primarily concentrated
+around fs/2. Because the quantizer input signal y equals its
+output signal v filtered by the loop filter feedback response
+HFB( f ), a coarse simplification can be applied [9]
+AQ ≈
+RMS{v}
+RMS{y}
+≈
+1
+|HFB( fs/2)|
+(1)
+where |HFB( fs/2)| is the magnitude of the loop filter’s
+feedback response HFB( f ) at fs/2. This indicates that the
+(RMS level of the) quantizer input signal y must be minimized
+in order to achieve a large AQ, which can be achieved by
+maximizing the high-frequency rejection of HFB( f ). This can
+be done either by increasing the order of HFB( f ) (i.e. of the
+loop filter), or by reducing its −3 dB frequency. The latter
+This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+PONTE et al.: 0.4–0.9 V SUPPLY VOLTAGE-FLEXIBLE THIRD-ORDER PASSIVE ΔΣ MODULATOR 3
+choice has an impact on the noise contribution of the quantizer
+ADC, which will be discussed in Section V.
+Besides increasing AQ, another method of reducing in-
+band quantization noise is to increase the resolution of the
+quantizer. However, effective multi-bit quantization of such
+small y requires closely-spaced levels (i.e. a steep transfer
+in Fig. 1), which is challenging to implement. Single-bit
+quantizers, having only two quantization levels, do not suffer
+from this issue and are thus a more practical choice for
+P16Ms.
+B. Quantizer ADC Noise-Power Trade-Off
+As discussed, quantizer (input) thermal noise (en,ADC in
+Fig. 1) is a key contributor to the input-referred noise
+of P16M, warranting an investigation into its fundamen-
+tal noise-power consumption trade-off. In the following,
+we assume that both the loop filter feedback and feedfoward
+responses HFB( f ) and HFF( f ) have a 0 dB in-band gain for
+the P16M, in which case the quantizer ADC’s input-referred
+noise and its contribution to modulator input noise are the
+same. A situation which is similar for many other conventional
+ADCs, such as e.g. SAR, pipeline and flash ADCs. The
+transfer function of this noise contribution to the P16M
+output equals its Signal Transfer Function (STF), and noise
+outside the P16M bandwidth is rejected by the decimation
+filter. Because the same argument holds for the input-referred
+noise of the first integrator amplifier in Active 16Ms [10],
+it serves as our point of comparison. Finally, we ignore
+additional power consumption from e.g. clock power in SC
+filters for the sake of insight.
+Due to the impracticality of multi-bit quantization in
+P16M, we only consider the single-bit case, simplifying
+the quantizer ADC in Fig. 1 to a comparator. For the
+first integrator amplifier in an Active 16M, we make two
+simplifying assumptions. First, we take a simple differential
+pair to represent its input stage, neglecting noise and power
+contributions from its (intermediate and) output stage(s).
+And second, we will not consider the noise contributions
+of the additional (passive) elements typically surrounding
+this amplifier, a detailed discussion of which can be found
+in [11]. Finally, because the supply voltage VDD does not
+factor into any of the following equations, we will use current
+consumption as a proxy for power consumption.
+We start with the first integrator amplifier, being noise-
+critical in Active 16Ms [10]. It was shown in [3] that the
+supply (tail) current Itail required in a differential pair, consist-
+ing of MOS Transistors (MOSTs) operating in weak inversion,
+for a certain input-referred noise v2
+n,amp,in,in−band integrated
+across the 16M bandwidth BW16M = fclk/(2·OSR) is given
+by
+Itail =
+8(nkBT )2
+v2
+n,amp,in,in−band · q
+· BW16M (2)
+where OSR is the OverSample Ratio, n is the MOST
+subthreshold slope factor, kB is Boltzmann’s constant, T is
+the absolute temperature in Kelvin and q is the charge of a
+single electron.
+We move on to consider comparators, which are similarly
+noise critical in 1 bit P16Ms. In them, a preamplifier with
+sufficient gain is typically applied before the latch stage,
+designed to suppress the latter’s noise [12], [13]. We consider
+here the dynamic comparator and its analysis from [13],
+because we utilize its higher-speed variant from [14] in the
+P16M design in this work (shown in Fig. 5), which presents
+a comparable noise-power trade-off. As the noise contribution
+of the latch is suppressed by the gain of the preamplifier, the
+latter dominates overall comparator input-referred noise and
+current consumption [12], [13]. Because the comparator draws
+charge packets QDD from its supply in the reset phase, its
+average current consumption (over an integer number of clock
+cycles) can be found as Icomp. = QDD · fclk, where fclk is the
+comparator clock frequency. Using this, the average current
+consumption of the dynamic comparator from [13] was shown
+to be related to its total input-referred noise v2
+n,comp,in,total
+(integrated from DC to fclk/2) by [3]
+Icomp. = QDD · fclk =
+4(nkBT )2
+v2
+n,comp,in,total · q
+· fclk. (3)
+Because the digital decimation filter following the P16M
+rejects (the majority of) the noise beyond its bandwidth,
+only the in-band fraction v2
+n,comp,in,in−band is relevant to our
+discussion. Assuming that the total noise is white from DC to
+fclk/2, it follows that this fraction equals
+v2
+n,comp,in,in−band =
+v2
+n,comp,in,total
+OSR
+. (4)
+With this result, we can rewrite (3) as
+Icomp. =
+4(nkBT )2
+v2
+n,comp,in,total · q
+· fclk
+=
+8(nkBT )2
+v2
+n,in,comp,in−band · q
+· BW16M (5)
+which is identical to (2), showing that while the quantizer
+is a key noise contributor in P16M, this does not present
+a fundamental bottleneck in achieving energy-efficiencies
+similar to their active counterparts.
+IV. P16M LOOP FILTER TOPOLOGY SELECTION
+The relatively low quality factor and large area of on-
+chip CMOS inductors at baseband frequencies [15] practically
+limits the choice of practical passive filter elements to
+Resistors (R), Capacitors (C) and Switched-Capacitors (SC),
+thus constraining the set of available filter responses. The
+omission of linear amplifiers (and linear transconductors)
+means high-Q complex poles cannot be implemented on-
+chip, prohibiting the use of high-Q resonator-based loop filter
+responses which are typically employed in Active 16M [4].
+Further restrictions, on which we elaborate in Section V,
+additionally render impractical the implementation of pure
+integrator-based loop filter responses. As indicated by (1), our
+aim in selecting a filter topology using the available passive
+circuit elements should be to maximize its high-frequency
+rejection.
+This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+4 IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS
+Fig. 2. Comparison of (a) third-order Resistor-Capacitor (RC), Switched-Capacitor-Capacitor (SC-C) and Charge-Rotating IIR (CR-IIR) filters and (b) their
+associated (sampled PAC) simulated magnitude responses for equal-size integration capacitors (CI,1 = CI,2 = CI,3), equal size resistors (R1 = R2 = R3),
+equal size SC-C switching capacitors (CR1,1 = CR1,3 = CR1,3) and equal −3 dB bandwidths (achieved by setting CR ̸= CR1,1). The CR-IIR filter exhibits
+significantly higher rejection beyond the -3 dB frequency than the SC-C (and RC) filter(s), as indicated by the translucent red area.
+A. RC and SC-C Cascade Filters
+When cascading RC or Switched-Capacitor-C (SC-C) stages
+(as illustrated in Fig. 2a), the frequency-dependent input
+impedance of each added stage loads the previous sections.
+For the RC filter, this can be understood by noting that the
+voltage on CI,1 is influenced not only by the input voltage Vin
+through resistor R1, but also by the voltage on CI,2 through
+resistor R2, which is a low-pass filtered version of Vin. As a
+result, CI,1 experiences frequency-dependent loading. In SC-
+C cascade filters, a similar effect occurs where the voltage on
+CI,1 is not only influenced (during ϕ2) by the input voltage Vin
+(sampled onto CR1,1 at the end of ϕ1), but also (during ϕ1) by
+the voltage on CR1,2 (a sample of the voltage on CI,2 from the
+end of ϕ2). As a result, the (magnitude) response of these filters
+exhibits a shallow initial roll-off beyond their −3 dB frequency
+f−3 dB, thus yielding poor out-of-band frequency selectivity as
+can be seen in Fig. 2b. Consequently, the use of such filters
+in 16M loops yields poor noise-shaping performance [16],
+as indicated by (1).
+B. The CR-IIR Filter
+Because the inter-stage loading effect in SC-C cascade
+filters only occurs in ϕ1 between sections, eliminating this
+phase would avoid the effect. The fully-passive voltage-
+sampling variant of the active Charge-Rotating IIR (CR-IIR)
+filter [17] achieves this by utilizing a single switching capacitor
+(CR in Fig. 2a), which samples the input voltage Vin at
+the end of ϕA. After sampling the input, CR consecutively
+charge-shares with integration capacitors CI,1, CI,2 and CI,3.
+The (history) charge on CR, carried over from the previous
+clock cycle, is dissipated during ϕA. Therefore, the voltage
+on CI,1 is only influenced by Vin, and not by the voltages on
+CI,2 and CI,3, and the inter-stage loading effect is eliminated.
+Additionally, the separate reset phase, implemented in [17] as
+required by its active CR-IIR filter mode, is not needed here.
+The resulting improved frequency selectivity that this filter
+offers, illustrated in Fig. 2a, grants an increased quantizer gain
+as per (1) and thereby improved noise-shaping. This makes it a
+strong candidate for use in P16Ms, and it is therefore applied
+in this work. Finally, we note a further benefit of the CR-IIR
+filter: its DT nature renders its transfer function readily flexible
+with clock frequency.
+V. CR-IIR LOOP FILTER DESIGN FOR P16MS
+After establishing the filter architecture around which we
+will construct our P16M loop filter, we must determine
+its component values. To do this, we begin by determining
+the pole location(s) as a function of the P16M bandwidth
+BW16M = fclk/(2 · OSR), which we use as a primary design
+variable, followed by the noise level of the filter, and give
+design equations for both.
+Dimensioning the loop filter poles such that its cut-off
+frequency f−3 dB is far below the modulator bandwidth
+BW16M (as would be the case in a typical active 16M
+utilizing active integrators with high DC gain) results in a high
+quantizer gain AQ as per (1). However, it also incurs significant
+in-band attenuation in HFB( f ), thus increasing demands on the
+thermal noise performance of the quantizer ADC. Contrarily,
+setting the poles such that f−3 dB ≫ BW16M yields a
+HFB( f ) with poor rejection of out-of-band quantization noise
+(including at fs/2), resulting in low quantizer gain and thus
+poor noise-shaping performance. A practical compromise is to
+set f−3 dB = BW16M, as is done in this work.
+In SC filters, bandwidth (relative to the clock frequency) is
+set by the ratio between the switching- and integrating capac-
+itors [17] (CR and CI, respectively, from Fig. 2a). Under the
+established filter bandwidth constraint ( f−3 dB = BW16M),
+this capacitor ratio is linked to the OSR of the P16M in
+This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+PONTE et al.: 0.4–0.9 V SUPPLY VOLTAGE-FLEXIBLE THIRD-ORDER PASSIVE ΔΣ MODULATOR 5
+which the filter is applied. Unequal filter poles (integration
+capacitors) result in a shallow initial magnitude response roll-
+off beyond f−3 dB, similar to the effect caused by inter-stage
+loading. Coinciding the loop filter poles grants maximal out-
+of-band rejection and is thus the logical choice for a 16M as
+per (1). The transfer function of such an Nth-order coincident-
+pole CR-IIR filter is given in [17] as
+Vout(z)
+Vin(z)
+= z
+−
+
+N
+N+1
+
+·
+1
+(CI/CR)+1
+1 − (CI/CR)
+(CI/CR)+1 · z−1
+!N
+(6)
+which can be used to derive the ratio between the (N
+equal-size) integration capacitor(s) CI and switching capacitor
+required to achieve f−3 dB = fclk/(2 · OSR) as
+CI
+CR
+=
+s
+1
+4
++
+N
+√
+2 − 1
+2 − 2 cos π
+OSR
+ −
+1
+2
+. (7)
+After constraining the ratio between CR and CI via the OSR,
+we must determine the noise (and thus impedance) level of
+the filter. Using (3.37) from [18], it can be shown that the
+integrated in-band, sampled output-referred noise contribution
+of an arbitrary-order charge-rotating IIR filter with f−3 dB =
+fclk/(2 · OSR), can be written as
+v2
+n,out,in−band ≈
+2kBT
+CR · OSR
+(8)
+where kB is Boltzmann’s constant, T is the absolute
+temperature in Kelvin. The 2kBT/CR term accounts for the
+kBT/C noise (samples) produced in the sampling (first) phase
+and last charge-sharing phase, with the noise contribution from
+the other charge-sharing phases being negligible [18]. The
+factor 1/OSR represents the fraction of this total kBT/C noise
+that is present in-band.
+These two equations provide a basis for our P16M
+design approach. A discussion on switch design follows in
+Section VI-D.
+VI. CIRCUIT IMPLEMENTATION
+This section discusses the circuit-level implementation of
+the passive third-order 1 bit 16M implemented in this work.
+Although we have utilized GlobalFoundries’ 22 nm FD-SOI
+process, our design techniques are also applicable to standard
+CMOS technologies. A simplified schematic representation of
+the positive half of the proposed differential design, along with
+its capacitor values, is shown in Fig. 3a. Its timing diagram is
+shown in Fig. 3b. DAC1 forms the primary feedback path,
+with DAC2 and DAC3 serving to stabilize the modulator,
+as will be discussed later. Equal-size capacitors CR,IN and
+CR,DAC sample the input and DAC voltage, respectively.
+They combine in parallel from the first-charge-sharing phase
+onward, to simultaneously achieve feedback summation and
+charge-sharing with integration capacitor CI,1. Afterwards,
+they consecutively charge-share with integration capacitors
+CI,2 and CI,3, resulting in a loop filter exhibiting a third-order
+roll-off. Numerical simulations (without mismatch) indicated
+that achieving the performance targets of 80 dB SNDR and
+4 MHz bandwidth required a third-order loop filter and OSR
+of 256×. The resulting NTF, STF, and loop filter responses
+HFF( f ) and HFB( f ) are shown in Fig. 4. Initially assuming
+a Maximum Stable Amplitude (MSA) equal to the DAC full-
+scale and white quantization noise, the 60 dB in-band NTF
+suppression and OSR grant a SNQR of more than 91 dB. Even
+with a slightly lower practical MSA, the margin between the
+SNQR and SNDR is well over 6 dB. Because the loop filter
+and comparator (thermal) noise contribute similarly to overall
+P16M input noise, the thermal noise budget was split equally
+among them.
+A. Loop Filter
+The previously mentioned equal-size capacitors CR,DAC and
+CR,IN in Fig. 3 together make up the switching capacitor
+CR, with their combined value of 560 fF chosen using (8).
+An inversion in the 1 bit DAC signal ensures negative
+feedback. Four slices each containing one CR,DAC and one
+CR,IN are time-interleaved, allowing each individual slice to
+utilize a larger portion of Tclk for input signal tracking and
+sampling, thereby relaxing the challenge of achieving high-
+linearity. Thanks to this time-interleaving, the filter performs
+the sampling and all charge-sharing clock subphases during
+each Tclk, analogous to the CR-IIR circuit in Fig. 2a. As such,
+the output-referred result of (8) still holds for our loop
+filter. However, the (approximately) 6 dB attenuation in both
+HFF( f ) and HFB( f ) results in an equally increased input-
+referred contribution from both the loop filter noise and
+the quantizer ADC noise. Additionally, mismatch between
+the interleaved switching capacitor slices introduces time-
+variance, which frequency-translates quantization noise around
+fclk/2 and fclk/4 in-band, resulting in an increased noise floor.
+This effect is discussed in Section VI-F.
+As can be seen in Fig. 3a, the comparator produces a 1 bit
+decision from the loop filter output voltage, at the top-plates of
+integration capacitors CI,3, during the time that the latter are
+not charge-sharing with CR,DAC and CR,IN. This ensures that
+only settled loop filter output voltage samples are processed
+by the 16 loop.
+To understand the purpose of each DAC in Fig. 3, let us
+first consider the transfer function towards the loop filter output
+(quantizer input) of each individual DAC. The global feedback
+path via DAC1, through its associated switching capacitor
+CR,DAC, exhibits a third-order DT frequency response (similar
+to HFF( f ) in Fig. 4). Moreover, the DAC1 sample from phase
+ϕA only affects the loop filter output voltage in phase ϕD, three
+clock cycles later. Together, this results in a large phase lag
+near fclk/2, which would destabilize the 16M if not properly
+compensated. The local feedback path via DAC3, through
+its associated switching capacitor CZ,2, couples directly into
+the top-plates of CI,3 within one clock cycle, granting it
+a first-order magnitude response and low phase lag. This
+is analogous to coupling a switched-capacitor DAC (in DT
+16Ms) or a resistor or current-steering DAC (in CT 16Ms)
+into the last integrator in Active 16Ms. The DAC1 and
+DAC3 paths combine at the top-plates of CI,3, and the ratio
+of CZ,2 to CR,DAC sets the frequency at which the response
+of HFB( f ) transitions from third- to first-order. However,
+because the difference in phase lag between the two paths
+is approximately 180◦, a finite anti-resonance occurs around
+this transition frequency. The absence of this anti-resonance
+in the response of HFF( f ) causes the STF of the 16M to
+exhibit a resonance (peaking). To reduce this, the quasi-local
+This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+6 IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS
+Fig. 3. a) Simplified schematic of the positive half of the pseudo-differential loop filter with all capacitor values, b) timing diagram and c) tristate inverter
+DAC implementation. The DAC (reference) supply voltage VREF is provided off-chip.
+Fig. 4. Simulated (linearized, sampled PAC) NTF, STF, HFF( f ) and HFB( f )
+of the implemented Passive 16M with OSR = 256 without mismatch-induced
+degradation due to time-interleaving in the loop filter.
+feedback path via DAC2, through its associated switching
+capacitor CZ,1, couples into top-plates of CI,2 (analogous
+to a DAC coupling into the second-last integrator in Active
+16Ms), thus exhibiting a second-order response. As a result,
+the combined phase response of DAC1 and DAC2 reduces to
+second-order before the transition frequency, thereby damping
+the anti-resonance. The result is a Cascade of Integrators with
+FeedBack (CIFB) type compensation [4].
+Achieving large in-band NTF suppression requires high
+quantizer gain, which result from maximizing the high-
+frequency rejection of HFB( f ) as indicated by (1). While the
+removal of DAC2 and DAC3 would achieve this, the resulting
+modulator would be unstable. Thus, there must exist some
+(near-)optimal transition frequency, with associated coupling
+strength ratio between DAC1 and DAC3, which maximizes
+rejection while simultaneously avoiding instability. In active
+16M, this coupling ratio can be achieved by applying voltage
+gain in the first and second integrators. However, in our
+proposed passive 16M, this is instead achieved by the
+large ratio between CR,DAC and CZ,2 given in Fig. 3. The
+values of CZ,1 and CZ,2 chosen to achieve the desired CIFB
+compensation for the 3rd-order CR-IIR filter (shown in Fig. 3)
+were found through extensive numerical simulations.
+In contrast to our approach, which only uses two small
+switching capacitors (CZ,1 and CZ,2) to achieve CIFB
+compensation, the 2nd-order P16M in [16] contains an
+additional large capacitor, equal in size to the integration
+capacitors, which introduces a zero in the loop filter response
+for stability. Decreasing the size of this large capacitor would
+shift this zero to a lower frequency, reducing the high-
+frequency rejection of the loop filter and thereby the (in-band)
+quantization noise suppression of the P16M in [16], as per
+our (1).
+B. 1 bit Quantizer ADC
+Because the quantizer is 1 bit, a single comparator is
+sufficient to implement its ADC, for which a modified version
+of the high-speed dynamic design from [14], shown here
+in Fig. 5, is utilized. Capacitive neutralization of the latch
+stage using capacitors CNeut., along with a tail charge pump
+which increases the overdrive of the input pair (M1 and
+M2), enhances its speed over previous dynamic comparator
+designs [13]. The negative excursion of the voltage at
+the top plate of Ctail is limited to 160 mV. Because the
+preamplifier gain is approximately 10×, the (input-referred)
+noise contribution of the latch is minimized. As a result of
+the charge pump, its input pair MOSTs M1 and M2 operate
+in strong inversion to achieve high speed operation. Despite
+this, the comparator’s noise-power trade-off is similar to that
+given by (5), which was derived for weak inversion, due to its
+similar dynamic architecture.
+Because the original comparator design from [14] was
+limited to operation at 1 GHz, modifications were made to
+increase its speed and enable its use in the 2.048 GHz
+P16M in this work. Specifically, equations (3) and (5) from
+Section III-B indicate that achieving a given comparator input
+noise level only requires the consumption of a given charge
+packet from the power supply, but is independent of pream-
+plifier integration time. Thus, we maximized preamplifier
+This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+PONTE et al.: 0.4–0.9 V SUPPLY VOLTAGE-FLEXIBLE THIRD-ORDER PASSIVE ΔΣ MODULATOR 7
+Fig. 5. Simplified schematic of the (modified) high-speed dynamic
+comparator from [14] used this work. Neutralization capacitors CNeut. used
+to enhance comparator speed are highlighted red. Preamplifier integration
+capacitors CP (grey) consist purely of MOST and layout parasitics to
+maximize speed.
+Fig. 6. Simulated Clock-to-Out (CLK-OUT) delay versus differential input
+voltage 1Vin of both the comparator from [14] at 0.8 V and the modified
+design used here at 0.9 V, showing a nearly halved CLK-OUT delay for small
+input signals.
+Fig. 7. Simulated Clock-to-Out (CLK-OUT) delay versus differential input
+voltage 1Vin the proposed comparator (modified from [14]) at 0.9 V and
+several (lowered) supply voltages of 0.8, 0.7, 0.6, 0.5 and 0.4 V. The input
+common-mode voltage for each curve is VDD/2.
+speed in this work by modifying its integration capacitors
+CP to consist purely of (MOST and layout) parasitics. This
+maximizes transistor width for a given (parasitic) CP, allowing
+M1 and M2 to rapidly conduct the charge needed to obtain
+the input-referred voltage noise of 120 µ V required in
+our modulator. Additionally, its supply voltage was raised
+from 0.8 V to 0.9 V. Together these measures enable it to
+achieve the required speed of operation, which is illustrated
+by comparison of its simulated Clock-Out (CLK-OUT) delay
+versus differential input voltage 1Vin to that of the design
+from [14] in Fig. 6.
+To verify the supply-scalability of this comparator design,
+we also simulated the CLK-OUT delay at reduced supply
+voltages of 0.8, 0.7, 0.6, 0.5 and 0.4 V, with the input common-
+mode voltage set to VDD/2. The resulting CLK-OUT delay
+versus 1Vin is shown in Fig. 7.
+C. 1 bit Quantizer DAC
+As the loop filter is switched-capacitor-based, switched-
+capacitor DACs with their jitter insensitivity are a natural
+choice [4]. As shown schematically in Fig. 3c, they are
+implemented as tri-state inverters, which sample a 1 bit voltage
+on switching capacitor CR,DAC, CZ,1 or CZ,2. Clock-driven
+AND and NAND gates ensure that the DAC inverters are in
+their high-Z state (i.e. both n- and pMOST are off) when
+their associated switching capacitor (CR,DAC, CZ,1 or CZ,2)
+charge-shares with an integration capacitor. This is critical,
+as otherwise the latter would be shorted to one of the DAC
+inverter supplies, destroying loop filter selectivity.
+D. Switch Implementation
+Due to the fact that DAC1 couples into the loop filter much
+more strongly than DAC2 and DAC3, its output contains a
+near-complement of the input signal. Therefore, signal swing
+reduces substantially, approximately 20 dB, after CR,DAC and
+CR,IN charge-share with CI,1. Further reduction occurs when
+DAC2 and DAC3 couple into CI,2 and CI,3, respectively.
+This relaxes linearity requirements on later charge-sharing
+switches, allowing the second be smaller than the first, and the
+third smaller still, reducing clock power. The charge-sharing
+switches are implemented as transmission gates.
+Contrary to the charge-sharing switches, the input sample
+switch must sample the full-scale continuous-time input signal
+with sufficiently high (< −80 dB THD) linearity in the allotted
+Tclk/2 sample window. Because the on-resistance (Ron) of a
+MOST switch is non-linear, significant distortion is produced
+unless the sampler settles to a given degree before the input
+sample is taken by opening the switch [20]. With increasing
+clock frequency, an increasingly wider (i.e. lower Ron) MOST
+switch is required to achieve the same degree of settling in the
+decreasing sample time window. Unfortunately, this increases
+the magnitude of the (non-linear) channel charge injected into
+the sampling capacitor when the MOST switch is opened [20].
+As a result, there exists a minimum combined distortion power
+from both effects for a given MOST switch width for each
+distinct clock frequency. Additionally, this minimum distortion
+power increases with clock frequency, thereby limiting the
+maximum possible speed of operation for a given linearity
+demand. However, the minimum distortion power can still
+be improved by making both switch Ron and (non-linear)
+charge-injection less dependent on the input signal by standard
+bootstrap techniques [20] such as the one from [21] applied
+in this work. Still, the increasing minimum distortion power
+with increasing clock frequency produced by the input sample
+switch presented a bottleneck to the maximum speed of
+operation of our design.
+E. Loop Filter Clock Phase Generation
+There are several key requirements on the 16M clock
+phases. Firstly, it is of critical importance that there exists
+This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+8 IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS
+Fig. 8. Simplified schematic diagram of the timing generation circuitry. The 16-phase clock divider (based on [19]) utilizes both edges of the differential
+input clock (CLK+, CLK−). Reset logic allows presetting of the clock divider states to ensure that only a single output phase of the clock divider is high
+at any given time. Recombination and non-overlap logic (not shown) recombines the 16 phases from the clock divider into the non-overlapping clock phases
+from Fig. 3.
+no overlap between the clock waveforms of the sampling-
+and charge-sharing switches. Secondly, to ensure predictable
+DT behavior, the comparator should only operate after filter
+charge-sharing has settled. Finally, DAC3 should couple into
+the loop filter during each clock cycle, to avoid excess loop
+delay. The timing generation circuitry shown in Fig. 8 was
+designed to meet these requirements.
+A 16-phase clock divider, based on [19] for its ability
+to utilize both edges of the incoming differential clock,
+was implemented. Its outputs are combined into the needed
+P16M clock phases using conventional recombination and
+non-overlap logic.
+To understand its operation, let us assume that the divider is
+working correctly and only a single output pulse (Q1 . . . Q16)
+is high at any given time. We first consider the clock divider
+core and its truth table illustrated in Inset 1. of Fig. 8. A NOR
+gate receiving a CLK and E(nable) signal produces an output
+Q, which equals the inverted CLK signal when Enable is low,
+being always low otherwise. This Enable signal is generated
+by a NOR latch. By using the previous divider output phase
+to set Enable low, and the next divider output phase to set it
+high again, only a single CLK pulse is passed to the divider
+output Q, as illustrated in the timing diagram.
+Although we assumed that only a single output phase Q was
+active at any time, this may not be the case if the NOR latches
+are not properly initialized. This would allow more than one
+divider output phase to be high at a given time, disrupting
+proper operation of the P16M loop filter. To force correct
+initialization, the reset logic shown in Inset 2. of Fig. 8 was
+added to each clock divider core block’s NOR latch. When
+RST is high, the reset logic forces the NOR latch in the X unit
+block into the enable low state (i.e. invert CLK), regardless
+of the state of its two divider phase inputs Q. By the same
+principle, but flipping the control logic with respect to unit
+block X, all NOR latches in the Y unit blocks are forced into
+their enable high state (i.e. force low). When RST is returned
+low, the reset logic becomes transparant from its Q inputs to
+its 'Q outputs, and clock divider operation continues as if the
+reset logic was not present.
+F. SNR Degradation Due to Mismatch-Induced Interleaving
+Mixing
+Capacitor mismatch between the four interleaved switched-
+capacitor slices in Fig. 3a, each containing a CR,DAC and
+a CR,IN, results in Linear Periodically Time-Variant (LPTV)
+behavior with a periodicity of 4 × Tclk in the step response
+of the loop filter. As a result, a fraction (related to the
+degree of mismatch) of the quantization noise in the DAC
+signal around fclk/4 and fclk/2 frequency-translates back
+into the modulator bandwidth [22]. Due to the noise-shaping
+action of the 16M, there is significantly more noise power
+around these frequencies than there is in-band. Thus, even
+a small fraction of this noise power frequency-translating
+down leads to a significant SN(D)R degradation, resulting
+in a high sensitivity to mismatch. The incurred performance
+degradations are present in the measurements discussed in the
+following section.
+This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+PONTE et al.: 0.4–0.9 V SUPPLY VOLTAGE-FLEXIBLE THIRD-ORDER PASSIVE ΔΣ MODULATOR 9
+VII. MEASUREMENT RESULTS
+Fig. 9 shows a die photograph of the passive 16M
+implemented in GlobalFoundries 22 nm FD-SOI CMOS.
+The packaged passive 16M sample is mounted in an
+Ironwood ZIF socket on a test PCB. Clock and input signals
+are provided by an R&S SGS100A and two Keysight 33600A
+generators, respectively. Differential output bit data is captured
+using a Tektronix MSO64B oscilloscope. The bit data is loaded
+into MATLAB, where it is re-timed and re-quantized, after
+which the first 217 bits are Hann-windowed and processed
+using an FFT. To obtain reduced bin variance, the shown
+FFT spectra are the result of magnitude-averaging 10 FFTs,
+each produced from consecutively captured bitstreams. All
+reported measurements were taken at fclk = 2.048 GHz,
+unless otherwise mentioned, resulting in an FFT Resolution
+BandWidth (RBW) of 15.625 kHz. The OSR of 256× yields
+a 4 MHz modulator bandwidth. Fig. 10 shows the peak SNDR
+and peak SNR for all nine measured samples, exhibiting
+spread originating from the matching-sensitive folding of
+spectral content around fclk/2 and fclk/4. All remaining
+shown measurements were performed on sample #4, with its
+roughly average performance among all measured samples.
+We intentionally did not select the sample with the highest
+SN(D)R.
+Fig. 11 shows the output spectrum of the 16M for a 0 dBFS
+input tone placed one RBW below one-third of the modulator’s
+4 MHz bandwidth, so that the upper bin of the HD3 is at the
+band edge, in blue. The resulting HD2 and HD3 magnitudes
+are -81.3 dBFS and -77.1 dBFS, respectively. These measured
+linearity results exhibit a reasonable match to numerical Monte
+Carlo simulations which included mismatch between the time-
+interleaved CR-IIR loop filter slices, suggesting that this
+mismatch does not have a significant impact on linearity. This
+is reasonable in light of Section VI-F, where the discussed
+impact of mismatch among the time-interleaved CR-IIR loop
+filter slices is in principle LPTV. The tone at fclk/4, related
+to the interleaved operation of the loop filter could be easily
+removed by a (sinc) notch in the frequency response of
+the digital decimation filter. The NTF from Fig. 4 can be
+recognized in the shape of the noise floor. The measured
+SNDR and SNR versus input signal level is shown in Fig. 12,
+reaching a maximum of 71.9 dB and 72.6 dB, respectively.
+Additionally, an idle measurement (zero differential input
+signal applied) showed no visible idle tones. The presented
+one-tone measurement does not give an adequate indication
+of modulator linearity at full bandwidth, as it was performed
+with an input signal slightly below BW/3 to ensure an in-band
+HD3. Therefore, a two-tone measurement with two −6 dBFS
+tones, the first at the modulator bandwidth of 4 MHz and
+the second 1 RBW above 4.5 MHz, respectively, was carried
+out. The resulting magnitude-averaged spectrum in Fig. 13
+shows the two −6 dBFS input tones and resulting IM2, IM3
+and IM4 products at −80.8 dBFS -83 dBFS and −88.8 dBFS,
+respectively. This indicates that the modulator maintains good
+linearity, even at the band-edge.
+To investigate the intermodulation behavior of the imple-
+mented modulator, we performed a far out-of-band two-tone
+measurement test. Such a situation can be found in e.g. radio
+applications, where large far out-of-band interfering signals
+may be present. The two −6 dBFS input tones were placed
+Fig. 9. Die photograph of the prototype Passive 16M implemented in
+GlobalFoundries 22 nm FD-SOI technology.
+Fig. 10. Peak SNDR and peak SNR for all nine measured samples.
+Intermediate-performing sample #4 was selected for all further measurements.
+at 40 MHz (i.e. 10×BW) and at one RBW above 76.5 MHz,
+ensuring that the resulting IM3 product ends up in-band and
+at the same frequency as for the previous band-edge two-tone
+test. The measured spectrum along with the STF of is shown
+in Fig. 14. Although one of the input tones was placed at the
+STF resonance frequency, where the loop is most sensitive to
+overload, the resulting IM3 product is barely visible above the
+noise floor at -92.4 dBFS. Even a trivial (passive) first-order
+filter with its cut-off at the modulator band-edge would reduce
+the lowest of the two interfering input tones by nearly 20 dB.
+The prototype modulator consumes 4.43 mW at 4 MHz
+bandwidth, of which 3.15 mW (71.1%) is clock power,
+0.94 mW (21.2%) is comparator power (including local
+clock buffer power) and 0.34 mW (7.7%) is DAC power.
+Consumption of the clock divider and non-overlap recom-
+bination logic are included in the reported clock power.
+Comparator power consumption is higher than predicted by the
+fundamental limit given in Section III-B, due to optimization
+of its design for high speed operation.
+We can estimate the impact of input common-mode voltage
+variations by noting that when the input common-mode
+voltage is raised or lowered away from VDD/2 by some
+amount, a signal amplitude reduction of equal magnitude
+is required to avoid clipping the modulator. This limitation
+arises due to the finite DAC full-scale, and is present in
+all ADC designs. An additional performance degradation can
+arise due to an imbalance in the differential input signals
+presented to the 16M, resulting in an input common-mode
+This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+10 IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS
+Fig. 11. Measured one-tone FFT averaged magnitude spectrum with one
+0 dBFS input tone band placed one RBW below BW/3 so all three HD3
+bins fall inside the 4 MHz bandwidth, showing a −81.3 dBFS HD2 and
+−77.1 dBFS HD3. The translucent spectrum is one of the ten raw FFT
+magnitude spectra used to produce the 10× averaged magnitude spectrum.
+Fig. 12. Measured SNDR and SNR versus input signal magnitude using one
+input tone at a frequency slightly below BW/3 as in Fig. 11, showing a peak
+SNDR of 71.9 dB and a peak SNR of 72.6 dB.
+TABLE I
+MEASURED SNDR, POWER CONSUMPTION AND BANDWIDTH AT
+SEVERAL (LOWERED) SUPPLY VOLTAGES. THE SAME LOWERED VDD
+IS APPLIED TO ALL 16M CORE SUPPLIES: CLOCK,
+COMPARATOR AND DAC
+voltage variation at the signal frequency. The presence of
+this AC common-mode voltage reduces the effective full-
+scale by the mechanism described above. Additionally, it also
+causes the AC signals in each pseudo-differential half of the
+circuit to be unequal in amplitude. As a result, even-order
+distortion terms with unequal amplitudes are produced in
+Fig. 13. Measured magnitude spectrum with two −6 dBFS input test tones,
+showing a −80.8 dBFS IM2, −83 dBFS IM3 and −88.8 dBFS IM4. The lower
+test tone is at the band-edge (4 MHz) and the upper test tone (1 RBW above
+4.5 MHz) is placed to ensure that both the IM2 and IM3 products fall in-band
+at distinct frequencies.
+Fig. 14. Measured magnitude spectrum with two −6 dBFS input tones,
+showing an IM3 product which is barely visible above the noise floor at
+−92.4 dBFS. The lower tone is at 10 times the modulator bandwidth (40 MHz)
+and the upper tone (1 RBW above 76.5 MHz) is placed to ensure the IM3
+product falls in-band. The modulator’s measured STF, reduced by 6 dB,
+is shown to indicate the expected output signal magnitude due to the −6 dBFS
+test tones.
+the two halves of the circuit. This creates differential even-
+order distortion terms, which may degrade the linearity of the
+16M. Numerical simulations without mismatch indicate that
+an AC input common-mode voltage signal does indeed reduce
+the effective full-scale of our 16M and thereby its peak
+SNDR. However, even a 200 mVpkpk common-mode voltage
+(with an input window of 1.6 Vpkpk) at the signal frequency,
+slightly below BW/3, does not impact the SNDR by more
+than 0.1 dB for (reduced) signals within the (reduced) full-
+scale. Further Monte Carlo simulations including mismatch,
+with the same 200 mVpkpk common-mode voltage signal and
+associated reduced full-scale, show that further degradation
+of the peak SNDR remain within 1 dB, even in the face of
+mismatch.
+A key advantage of P16Ms over their active counterparts
+is the absence of (highly) supply voltage-sensitive linear
+amplifiers, allowing them to continue operating even at
+significantly lowered supply voltages, albeit at reduced
+bandwidth (speed). The DT nature of our P16M readily
+This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+PONTE et al.: 0.4–0.9 V SUPPLY VOLTAGE-FLEXIBLE THIRD-ORDER PASSIVE ΔΣ MODULATOR 11
+TABLE II
+PERFORMANCE COMPARISON WITH STATE-OF-THE-ART SINGLE-LOOP, 1 BIT PASSIVE 16MS AND SIMILAR-PERFORMING SINGLE-LOOP,
+1 BIT ACTIVE 16MS MEASURED IN LITERATURE
+TABLE III
+PERFORMANCE COMPARISON WITH SUPPLY VOLTAGE-FLEXIBLE ADCS MEASURED IN LITERATURE
+allows the bandwidth to be reduced by lowering its clock
+frequency. To verify this, we measured the prototype P16M
+with all its (core) supplies (clock, comparator and DAC)
+at reduced voltages of 0.8, 0.7, 0.6, 0.5 and 0.4 V, while
+the threshold voltage of the MOSTs used in our design
+is approximately 250 mV. The OSR was kept constant at
+256×, but each lowered VDD required a reduction in clock
+frequency due to the resulting reduction in comparator speed.
+The measured maximum bandwidth was defined by the
+highest clock frequency beyond which the modulator either
+began operating at a lower limit cycle, sharply degrading
+performance, or ceased producing bits altogether. Table I
+shows the resulting maximum bandwidth, power consumption,
+peak SNDR and FoMSchreier versus VDD. Although the
+modulator’s supply voltage was gradually reduced by a
+factor 2.25, it continues to operate, albeit at reduced speed,
+demonstrating the supply voltage-flexibility granted by the
+absence of linear amplifiers. Moreover, lowering the supply
+voltage from 0.9 V to 0.5 V (1.8×) reduces the maximum
+bandwidth by only a factor 6.4. Upon lowering the supply
+voltage further down to 0.4 V, the bandwidth reduced by
+another factor 4. Numerical simulations indicate that a
+reduction in clock frequency (even at a fixed supply voltage)
+increases the impact of non-linear leakage in the first charge-
+sharing switch inside the CR-IIR loop filter, to the point
+that this effect significantly degrades overall SNDR. Because
+the modulator speed reduces when VDD is lowered, the
+clock frequency must also be lowered, thereby resulting
+in a degradation of modulator SNDR. Additionally, as the
+input common-mode voltage was lowered proportionally along
+This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+12 IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—I: REGULAR PAPERS
+with the supply voltage (VCM = VDD/2), the overdrive
+voltage of the comparator preamplifier MOSTs is reduced.
+This decreases the total charge consumption of the dynamic
+comparator, increasing its noise contribution (as discussed in
+Section VI-B), which together with the reduction in full-scale
+input swing due to the reduced DAC voltage, is responsible
+for the degradation in SNR.
+Table II shows a comparison between the intermediate-
+performing sample #4 of our P16M and other passive
+single-loop 1 bit 16Ms measured in literature. We achieve
+a 40 times improvement in bandwidth over the state-of-the-
+art while maintaining a competitive FoMSchreier. While the
+P16M in [16] also utilizes a time-interleaved CR-IIR loop
+filter and achieves a superior FoMSchreier, it is experimentally
+verified at a 50× lower (clock) frequency than our work,
+and only across a ±20% variation around their nominal
+supply voltage, while we have experimentally validated our
+P16M over a range of (low) supply voltages covering 0.9,
+0.8, 0.7, 0.6, 0.5 and 0.4V. We additionally compare with
+three recent single-loop 1 bit Active 16Ms with roughly
+similar specifications, being the DT design from [23] and
+the Continuous-Time (CT) designs from [24] and [25]. While
+these designs exhibit superior FoMSchreier, they likely possess
+severely restricted supply voltage-flexibility due to their use
+of linear amplifiers, although measurements are not shown by
+their authors. We note that [25] is implemented in a mature and
+FoM-friendly 180 nm CMOS technology with a high supply
+voltage of 1.8 V [3]. Additionally, although Passive Noise-
+Shaping SAR (PNS-SAR) ADCs with excellent FoMSchreier
+have been demonstrated in literature, their relatively low
+OSR [5] demands application of relatively selective anti-alias
+filters. As our work specifically targets avoiding the need for
+such selective anti-alias filters, we do not include PNS-SAR
+ADCs in our comparison Table II. Finally, it can be seen
+that P16Ms have relatively large area consumption compared
+to active 16Ms. Table III benchmarks our prototype supply
+voltage-flexible P16M against other flexible ADCs operating
+at or below 0.5 V in literature. While [26] and [27] operate over
+a similar supply voltage range at slightly superior FoMSchreier,
+their Nyquist-rate architectures require a steep anti-alias filter
+which most likely demands the use of linear amplifiers.
+Additionally, contrary to our calibration-free design, [27]
+utilizes off-chip calibration to improve their SNDR by
+approximately 4 dB and their SFDR by over 13 dB.
+VIII. CONCLUSION
+In this work, we extended the bandwidth of Passive 16Ms
+(P16Ms) towards 4 MHz. Two key challenges unique to
+the design of P16Ms not found in their active counterparts
+were discussed. These involved the input noise criticality of
+the quantizer and poor selectivity of passive on-chip (loop)
+filters. It was shown that for the 1 bit quantizer case, the
+noise versus power consumption trade-off of its comparator
+is identical to that of the first amplifier in Active 16Ms.
+Because the absence of amplifiers disallows the use of
+traditional 16M loop filter synthesis methods, we discussed
+the selection of a suitable passive loop filter architecture. This
+lead to the selection of the voltage-sampling Charge-Rotating
+IIR (CR-IIR) filter, for which we derived 16M-oriented
+design equations. Measurements on the prototype 3rd-order
+passive 16M implemented in GlobalFoundries 22 nm FD-
+SOI in 0.076 mm2 show that it achieves a peak SNDR of
+71.9 dB in a 4 MHz bandwidth while consuming 4.4 mW
+from a 0.9 V supply, resulting in a 161.7 dB Schreier FoM.
+Its 4 MHz bandwidth is a 40 times improvement over state-
+of-the-art Passive 16Ms (P16Ms) in literature, which
+demonstrate similar Schreier FoMs. The prototype P16M
+continues to operate as low as 0.4 V, where it achieves
+a reduced bandwidth of 156.25 kHz and a 62 dB peak
+SNDR. This allows for use of (an optimized version of)
+our P16M in energy harvesting-powered ICs [7]. Moreover,
+large-signal out-of-band measurements show that the prototype
+modulator’s in-band spectrum is not severely corrupted
+by such unwanted signals even a full decade beyond its
+bandwidth. This demonstrates rudimentary suitability for radio
+applications.
+ACKNOWLEDGMENT
+The authors would like to thank GlobalFoundries for
+providing silicon fabrication through the 22FDX University
+Program, Erwin Hardeveld and Klaas de Haan for assistance
+during layout, Alexander Delke and Gerard Wienk for CAD
+support, and Anne-Johan Annema for help in preparing the
+manuscript.
+REFERENCES
+[1] A. -J. Annema, “Analog circuit performance and process scaling,” IEEE
+Trans. Circuits Syst. II, Analog Digit. Signal Process., vol. 46, no. 6,
+pp. 711–725, Jun. 1999.
+[2] B. Hershberg, S. Weaver, K. Sobue, S. Takeuchi, K. Hamashita,
+and U.-K. Moon, “Ring amplifiers for switched capacitor circuits,”
+IEEE J. Solid-State Circuits, vol. 47, no. 12, pp. 2928–2942, Dec. 2012.
+[3] B. Nauta, “1.2 racing down the slopes of Moore’s law,” in IEEE
+Int. Solid-State Circuits Conf. (ISSCC) Dig. Tech. Papers, Feb. 2024,
+pp. 16–23.
+[4] S. Pavan, R. Schreier, and G. C. Temes, Understanding Delta-Sigma
+Data Converters, 2nd ed., Hoboken, NJ, USA: Wiley, 2017.
+[5] L. Jie et al., “An overview of noise-shaping SAR ADC: From
+fundamentals to the frontier,” IEEE Open J. Solid-State Circuits Soc.,
+vol. 1, pp. 149–161, 2021.
+[6] F. Chen, S. Ramaswamy, and B. Bakkaloglu, “A 1.5 V 1 mA 80 dB
+passive 61 ADC in 0.13µm digital CMOS process,” in IEEE Int.
+Solid-State Circuits Conf. (ISSCC) Dig. Tech. Papers, vol. 1, Feb. 2003,
+pp. 54–477.
+[7] M. Alioto, “From less batteries to battery-less: Enabling a greener world
+through ultra-wide power-performance adaptation down to pWs,” in
+Proc. ESSCIRC, Sep. 2022, pp. 33–40.
+[8] A. F. Yeknami, F. Qazi, and A. Alvandpour, “Low-power DT 16
+modulators using SC passive filters in 65 nm CMOS,” IEEE Trans.
+Circuits Syst. I, Reg. Papers, vol. 61, no. 2, pp. 358–370, Feb. 2014.
+[9] F. Chen and B. Leung, “A 0.25-mW low-pass passive sigma-delta
+modulator with built-in mixer for a 10-MHz IF input,” IEEE J. Solid-
+State Circuits, vol. 32, no. 6, pp. 774–782, Jun. 1997.
+[10] H. Chandrakumar and D. Markovic, “A 15.2-ENOB 5-kHz BW 4.5-µW
+chopped CT 16-ADC for artifact-tolerant neural recording front ends,”
+IEEE J. Solid State Circuits, vol. 53, no. 12, pp. 3470–3483, Dec. 2018.
+[11] B. Gönen, “The zoom ADC–An energy efficient ADC for high
+resolution,” Ph.D. thesis, Dept. Electron. Instrum. Lab., Delft Univ.
+Technol., Delft, The Netherlands, 2021, doi: 10.4233/uuid:5bea521a-
+d6ac-4f6a-b45f-d2a87fec53ed.
+[12] M. van Elzakker, E. van Tuijl, P. Geraedts, D. Schinkel,
+E. A. M. Klumperink, and B. Nauta, “A 10-bit charge-redistribution
+ADC consuming 1.9 µW at 1 MS/s,” IEEE J. Solid-State Circuits,
+vol. 45, no. 5, pp. 1007–1015, May 2010.
+[13] H. S. Bindra, C. E. Lokin, D. Schinkel, A. Annema, and B. Nauta,
+“A 1.2-V dynamic bias latch-type comparator in 65-nm CMOS with
+0.4-mV input noise,” IEEE J. Solid-State Circuits, vol. 53, no. 7,
+pp. 1902–1912, Jul. 2018.
+This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+PONTE et al.: 0.4–0.9 V SUPPLY VOLTAGE-FLEXIBLE THIRD-ORDER PASSIVE ΔΣ MODULATOR 13
+[14] H. S. Bindra, J. Ponte, and B. Nauta, “A 174µVRMS input noise,
+1 GS/s comparator in 22nm FDSOI with a dynamic-bias preamplifier
+using tail charge pump and capacitive neutralization across the latch,” in
+Proc. IEEE Int. Solid- State Circuits Conf. (ISSCC), vol. 65, Feb. 2022,
+pp. 1–3.
+[15] J. R. Long and M. A. Copeland, “The modeling, characterization, and
+design of monolithic inductors for silicon RF IC’s,” IEEE J. Solid-State
+Circuits, vol. 32, no. 3, pp. 357–369, Mar. 1997.
+[16] H. Wang, F. Schembari, and R. B. Staszewski, “Passive SC 16
+modulator based on pipelined charge-sharing rotation in 28-nm CMOS,”
+IEEE Trans. Circuits Syst. I, Reg. Papers, vol. 67, no. 2, pp. 578–589,
+Feb. 2020.
+[17] M. Tohidian, I. Madadi, and R. B. Staszewski, “Analysis and design of a
+high-order discrete-time passive IIR low-pass filter,” IEEE J. Solid-State
+Circuits, vol. 49, no. 11, pp. 2575–2587, Nov. 2014.
+[18] M. Tohidian, “Fully integrated discrete-time superheterodyne receiver
+in nano-scale CMOS,” Ph.D. thesis, Dept. Electron. Instrum. Lab.,
+Delft Univ. Technol., Delft, The Netherlands, Sep. 2015, doi: 10.4233/
+uuid:3c0da5c3-0ca8-490e-80d5-c942f05cc3a1.
+[19] B. J. Thijssen, E. A. M. Klumperink, P. Quinlan, and B. Nauta,
+“A 370µW 5.5dB-NF BLE/BT5.0/IEEE 802.15.4-compliant receiver
+with >63 dB adjacent channel rejection at >2 channels offset in 22nm
+FDSOI,” in IEEE Int. Solid-State Circuits Conf. (ISSCC) Dig. Tech.
+Papers, Feb. 2020, pp. 466–468.
+[20] T. Iizuka, T. Ito, and A. A. Abidi, “Comprehensive analy-
+sis of distortion in the passive FET sample-and-hold circuit,”
+IEEE Trans. Circuits Syst. I, Reg. Papers, vol. 65, no. 4, pp. 1157–1173,
+Apr. 2018.
+[21] M. Dessouky and A. Kaiser, “Input switch configuration suitable forrail-
+to-rail operation of switched opamp circuits,” Electron. Lett., vol. 35,
+no. 1, pp. 8–10, Jan. 1999.
+[22] R. Khoini-Poorfard, L. B. Lim, and D. A. Johns, “Time-interleaved
+oversampling A/D converters: Theory and practice,” IEEE Trans.
+Circuits Syst. II, Analog Digit. Signal Process., vol. 44, no. 8,
+pp. 634–645, Aug. 1997.
+[23] D. Jiang, L. Qi, S.-W. Sin, F. Maloberti, and R. P. Martins,
+“A time-interleaved 2nd-order 16 modulator achieving 5-MHz
+bandwidth and 86.1-dB SNDR using digital feed-forward extrapola-
+tion,” IEEE J. Solid-State Circuits, vol. 56, no. 8, pp. 2375–2387,
+Aug. 2021.
+[24] A. Baluni and S. Pavan, “Analysis and design of a 20-MHz bandwidth
+continuous-time delta-sigma modulator with time-interleaved virtual-
+ground-switched FIR feedback,” IEEE J. Solid-State Circuits, vol. 56,
+no. 3, pp. 729–738, Mar. 2021.
+[25] H. Wang, D. Basak, Y. Zhang, and K.-P. Pun, “A 0.59-mW 78.7-dB
+SNDR 2-MHz bandwidth active-RC delta-sigma modulator with relaxed
+and reduced amplifiers,” IEEE Trans. Circuits Syst. I, Reg. Papers,
+vol. 68, no. 3, pp. 1114–1122, Mar. 2021.
+[26] Z. Ding, X. Zhou, and Q. Li, “A 0.5–1.1-V adaptive bypassing
+SAR ADC utilizing the oscillation-cycle information of a VCO-based
+comparator,” IEEE J. Solid-State Circuits, vol. 54, no. 4, pp. 968–977,
+Apr. 2019.
+[27] S. Lee, A. P. Chandrakasan, and H. Lee, “A 12 b 5-to-50 MS/s
+0.5-to-1 V voltage scalable zero-crossing based pipelined ADC,”
+IEEE J. Solid-State Circuits, vol. 47, no. 7, pp. 1603–1614,
+Jul. 2012.
+[28] L. Somappa and M. S. Baghini, “A 300-mV auto shutdown
+comparator-based continuous time 16 modulator,” IEEE Trans. Very
+Large Scale Integr. (VLSI) Syst., vol. 28, no. 8, pp. 1920–1924,
+Aug. 2020.
+[29] L. Somappa and M. S. Baghini, “A compact fully passive loop filter-
+based continuous time 16 modulator for multi-channel biomedical
+applications,” IEEE Trans. Circuits Syst. I, Reg. Papers, vol. 67, no. 2,
+pp. 590–599, Feb. 2020.
+[30] M. ElAnsary et al., “50nW opamp-less 16-modulated bioimpedance
+spectrum analyzer for electrochemical brain interfacing,”
+IEEE J. Solid-State Circuits, vol. 55, no. 7, pp. 1971–1983,
+Jul. 2020.
+[31] M. ElAnsary et al., “Bidirectional peripheral nerve interface with
+64 second-order opamp-less 16 ADCs and fully integrated wireless
+power/data transmission,” IEEE J. Solid-State Circuits, vol. 56, no. 11,
+pp. 3247–3262, Nov. 2021.
+[32] J.-E. Park, Y.-H. Hwang, and D.-K. Jeong, “A 0.4-to-1 V voltage scalable
+16 ADC with two-step hybrid integrator for IoT sensor applications in
+65-nm LP CMOS,” IEEE Trans. Circuits Syst. II, Exp. Briefs, vol. 64,
+no. 12, pp. 1417–1421, Dec. 2017.
+Jeroen Ponte (Graduate Student Member, IEEE)
+was born in Harlingen, The Netherlands. He received
+the B.Sc. and M.Sc. (cum laude) degrees in
+electrical engineering from the University of Twente,
+The Netherlands, in 2018 and 2020, respectively,
+where he is currently pursuing the Ph.D. degree
+with the Integrated Circuit Design Group. His
+research interests include but are not limited
+to, passive switched-capacitor filters, analog-to-
+digital conversion with a focus on noise-shaping
+architectures, and radio frequency circuits.
+Harijot Singh Bindra (Member, IEEE) received
+the Master of Technology degree in VLSI design
+from Indian Institute of Technology (IIT), Delhi,
+in 2010, and the Ph.D. degree (cum laude) from
+the University of Twente, in 2019. He was a
+Scientist with Indian Space Research Organization
+(ISRO) from 2008 to 2010 and a Senior Design
+Engineer with Cadence Design Systems, India,
+from 2012 to 2014. His research interests include
+low-energy circuit design techniques, high-speed
+serial links, data converters, sensor readout circuitry,
+and low-power radio front-ends. He is a Technical Program Committee
+Member of European Solid-State Electronics Research Conference (ESSERC).
+He was recently awarded the VENI-2023 granted by the Dutch Research
+Council (NWO). He was an Associate Editor of IEEE TRANSACTIONS ON
+CIRCUITS AND SYSTEMS—I: REGULAR PAPERS from 2021 to 2023. He was
+also part of the 4TU Interdisciplinary Plantenna Consortium investigating RF
+sensing principles for plant health monitoring.
+Bram Nauta (Fellow, IEEE) was born in Hengelo,
+The Netherlands. He received the M.Sc. degree
+(cum laude) in electrical engineering and the Ph.D.
+degree, with a focus on analog CMOS filters for
+very high frequencies from the University of Twente,
+Enschede, The Netherlands, in 1987 and 1991,
+respectively.
+In 1991, he joined the Mixed-Signal Circuits and
+Systems Department, Philips Research, Eindhoven,
+The Netherlands. In 1998, he returned to the
+University of Twente as a Full Professor heading the
+new IC Design Group. In 2014, he was nominated as a Distinguished Professor
+and from 2016 to 2020, he was the Chair of the Electrical Engineering
+Department. In 2022, he co-founded “ChipTechTwente,” a local ecosystem
+initiative with 50 semiconductor-related companies, partners, and knowledge
+institutions. His research interests include analog and radio frequency CMOS
+circuits.
+Dr. Nauta is a member of the Royal Netherlands Academy of Arts
+and Sciences (KNAW). In 2014, he received the “Simon Stevin Meester”
+Award (500,000 Euros), the largest national prize in The Netherlands
+for achievements in engineering sciences. In 2019, he received the ERC
+(European Research Council) Advanced Grant (2.5 Million Euros, personal
+grant). He was a co-recipient of the ISSCC 2002 and 2009 “Van Vessem
+Outstanding Paper Award” and in 2023, he received the ISSCC Author-
+Recognition Award for its first 70 years, as a top ten contributor. In 2023,
+he received the inaugural “Dutch Innovation Award” and the NWO Stevin
+Prize (1.5 Million Euros), the largest national science prize in The Netherlands
+for “exceptional success in knowledge exchange and impact for society.”
+He was the 2013 Program Chair of the International Solid-State Circuits
+Conference (ISSCC). He served as the Editor-in-Chief for IEEE JOURNAL
+OF SOLID-STATE CIRCUITS (JSSC) from 2007 to 2010. Also, he served
+as an Associate Editor for IEEE TRANSACTIONS ON CIRCUITS AND
+SYSTEMS—II: EXPRESS BRIEFS from 1997 to 1999 and IEEE JOURNAL
+OF SOLID-STATE CIRCUITS from 2001 to 2006. He was on the Technical
+Program Committee of the Symposium on VLSI Circuits from 2009 to
+2013 and served on the steering committee and program committee of
+European Solid-State Circuit Conference (ESSCIRC) from 1999 to 2017.
+He served on the program committee from 2003 to 2013 and the executive
+committee of ISSCC from 2007 to 2015 and since 2022. In 2023, he joined
+the program committee of the Advances in Analog Circuit Design Workshop
+Series (AACD). He was the President of the IEEE Solid-State Circuits Society
+from 2018 to 2019. He served two terms as a Distinguished Lecturer for the
+IEEE Solid-State Circuits Society.
+This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+

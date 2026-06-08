@@ -1,0 +1,1235 @@
+                                                                                                                                                                                       1
+
+
+
+
+                                        Unlimited Vector Processing for Wireless Baseband
+                                                   Based on RISC-V Extension
+                                                                Limin Jiang, Yi Shi, Yihao Shen, Shan Cao, Zhiyuan Jiang, and Sheng Zhou
+
+
+
+
+                                           Abstract—Wireless baseband processing (WBP) serves as an                   leverages data-level parallelism to achieve higher throughput
+                                        ideal scenario for utilizing vector processing, which excels in               compared to scalar processing.
+                                        managing data-parallel operations due to its parallel structure.                 A notable advancement in the field is the RISC-V Vector
+                                        However, conventional vector architectures face certain con-
+                                        straints such as limited vector register sizes, reliance on power-of-         “V” (RVV) extension [4], which introduces a flexible and
+                                                                                                                      extensible approach to vector processing. Unlike traditional
+arXiv:2504.10832v2 [cs.AR] 6 Sep 2025
+
+
+
+
+                                        two vector length multipliers, and vector permutation capabilities
+                                        tied to specific architectures. To address these challenges, we have          fixed-width vector architectures, the RVV allows dynamic vec-
+                                        introduced an instruction set extension (ISE) based on RISC-                  tor lengths (VLs), enabling a more scalable and adaptable ex-
+                                        V known as unlimited vector processing (UVP). This extension                  ecution model. One of its key innovations is register grouping
+                                        enhances both the flexibility and efficiency of vector computa-
+                                        tions. UVP employs a novel programming model that supports                    (RG), also referred to as vector length multipliers (LMULs).
+                                        non-power-of-two register groupings and hardware strip-mining,                This mechanism enables the combination of multiple vector
+                                        thus enabling smooth handling of vectors of varying lengths while             registers to form larger logical registers, allowing efficient op-
+                                        reducing the software strip-mining burden. Vector instructions                erations on wider vectors. Conversely, it also supports splitting
+                                        are categorized into symmetric and asymmetric classes, comple-                a register into smaller segments for finer-grained operations on
+                                        mented by specialized load/store strategies to optimize execu-
+                                        tion. Moreover, we present a hardware implementation of UVP                   narrow data. By accommodating various data widths dynami-
+                                        featuring sophisticated hazard detection mechanisms, optimized                cally, register grouping ensures efficient resource utilization
+                                        pipelines for symmetric tasks such as fixed-point multiplication              across diverse workloads. Combined with its extensive set
+                                        and division, and a robust permutation engine for effective                   of arithmetic, logical, and data manipulation instructions, the
+                                        asymmetric operations. Comprehensive evaluations demonstrate                  RVV represents a significant leap in flexibility and capability.
+                                        that UVP significantly enhances performance, achieving up to
+                                        3.0× and 2.1× speedups in matrix multiplication and fast Fourier              Moreover, as an open standard, it fosters widespread adoption
+                                        transform (FFT) tasks, respectively, when measured against lane-              and drives innovation within the computational community.
+                                        based vector architectures. Our synthesized RTL for a 16-lane                    Despite its advantages, vector processing faces several chal-
+                                        configuration using SMIC 40nm technology spans 0.94 mm2 and                   lenges that limit its efficiency and applicability. One funda-
+                                        achieves an area efficiency of 21.2 GOPS/mm2 .                                mental drawback of traditional vector architectures is the size
+                                          Index Terms—Vector processor, strip-mining, RISC-V, pro-                    constraint of vector registers, which determines the maximum
+                                        gramming model, hardware implementation.                                      data width that can be processed in a single operation. This
+                                                                                                                      limitation necessitates fragmenting larger datasets into smaller
+                                                                                                                      segments, incurring control overhead due to additional branch
+                                                                 I. I NTRODUCTION                                     instructions and loop iterations. Such control dependencies can
+                                                                                                                      degrade performance, especially for workloads with irregular
+                                        V     ECTOR processing has been a cornerstone of high-
+                                              performance computing for decades, offering a spe-
+                                        cialized approach to handling data-parallel tasks efficiently.
+                                                                                                                      or large data sizes. Additionally, power-of-two constraints in
+                                                                                                                      some architectures, including the RVV’s reliance on power-
+                                        By employing a single-instruction-multiple-data (SIMD) tech-                  of-two LMULs, can lead to under-utilization of hardware re-
+                                        nique, vector processing can dramatically improve perfor-                     sources. Workloads requiring non-power-of-two vector lengths
+                                        mance in applications such as scientific computing [1], image                 may experience wasted computation and energy inefficiencies,
+                                        processing [2], and machine learning [3]. These advantages                    as hardware resources are left idle or misaligned with data
+                                        are enabled by vector processors that utilize vector registers to             requirements.
+                                        execute operations on arrays of data in parallel. This paradigm                  Another challenge lies in the implementation of versatile
+                                                                                                                      vector permutations, which are operations that rearrange data
+                                           This work was supported in part by the National Natural Science Foun-      within vectors. Such permutations are frequently required in
+                                        dation of China (NSFC) under Grants 62271300 and 12141107, in part by         domains like cryptography [5], [6] and wireless signal process-
+                                        the Shanghai Municipal Science and Technology Commission under grants
+                                        24DP1501100 and 24DP1500600. The corresponding authors are Shan Cao           ing [7]. However, the ability to perform arbitrary permutations
+                                        and Zhiyuan Jiang.                                                            efficiently is implementation-specific, varying across architec-
+                                           L. Jiang, Y. Shi, Y. Shen, S. Cao, and Z. Jiang are with Shanghai Key      tures. This lack of uniformity creates complexity in developing
+                                        Laboratory of Chips and Systems for Intelligent Connected Vehicle and
+                                        School of Communication and Information Engineering, Shanghai University,     portable and optimized software solutions.
+                                        Shanghai 200444, China. E-mails: {jianglimin, yishi1996, shenyihao, cshan,       Just as importantly, wireless baseband processing (WBP)
+                                        jiangzhiyuan}@shu.edu.cn                                                      demands a more domain-specific architecture [8]. The com-
+                                           S. Zhou is with Beijing National Research Center for Information Science
+                                        and Technology, Department of Electronic Engineering, Tsinghua University,    putation tasks involved in WBP can be broadly categorized
+                                        Beijing 100084, China. E-mail: sheng.zhou@tsinghua.edu.cn                     into two types. On one hand, tasks such as channel equal-
+                                                                                                                                   2
+
+
+
+ization [9] and demodulation [10] are computation-intensive,            synthesize and implement the UVP RTL design and
+requiring successive arithmetic operations. On the other hand,          compare it with state-of-the-art architectures, showing
+tasks like rate-matching [11] involve irregular VLs and per-            superior normalized integer area efficiency. We also an-
+mutations, for which mainstream architectures offer limited             alyze UVP performance across different configurations,
+optimization. Moreover, WBP exhibits a high tolerance for               highlighting its adaptability to varying workloads.
+quantization error [12], enabling signal processing with fixed-      The remainder of this paper is organized as follows. Section
+point arithmetic. This allows the large silicon area typically    II reviews and categorizes existing vector processing method-
+allocated to floating-point units to be repurposed for more       ologies, introducing the fundamental strip-mining approach
+domain-specific fixed-point datapaths tailored to WBP, such       across different instruction set architectures (ISAs). In Section
+as complex number computations and saturation logic, which        III, we introduce the design principles of UVP. Section IV
+will be discussed in the following sections. The question now     details the implementation techniques used to address vector
+is how to design a reasonable instruction set extension for       length constraints and permutation challenges. In Section V,
+WBP.                                                              we evaluate the performance of the proposed system through
+   To address these challenges, we propose unlimited vector       benchmarks and case studies. Finally, Section VI summarizes
+processing (UVP), a novel approach that removes the de-           the conclusions of the paper.
+pendence on fixed vector register sizes and enables seam-
+less handling of arbitrarily long vectors. This paradigm also               II. R ELATED W ORK AND BACKGROUND
+standardizes vector permutations to improve portability and
+                                                                  A. Existing Vector Processing Techniques
+performance across diverse computational fields. We propose
+an unlimited vector programming model to RISC-V instruction          1) RVV-based Vector Processors: A significant body of
+set extension (ISE), Xuvp, based on insights from software pro-   work focuses on RVV-based vector processors. Both indus-
+gramming. The programming model is implemented at register        trial and academic designs have adopted RVV for various
+transfer level (RTL), and we detail the corresponding hardware    applications, from embedded systems to high-performance
+design. We also analyze the bottlenecks of existing vector        computing, due to its simplicity and open-source nature. In
+processing approaches using benchmark kernels commonly            industry, T-Head and SiFive have developed their own RVV-
+employed in WBP. The key contributions of our work are as         compatible cores, named XuanTie 910 [13] and X280 [14], re-
+follows:                                                          spectively. Both vector function units are supported by Linux-
+                                                                  ready out-of-order cores. However, at the micro-architecture
+  • Formalization of UVP: We present the ISE encoding             level, XuanTie 910 [13] integrates the vector function unit
+    as well as programming model for UVP. In essence,             directly into the core pipeline, while X280 [14] uses a rather
+    UVP supports non-power-of-two register grouping and           decoupled approach with a dedicated private interface. Addi-
+    leverages larger physical register files to handle vectors    tionally, AndesCore supports additional data formats beyond
+    of arbitrary length. This model reduces strip-mining in-      the RVV-specified ones [15], and Semidynamics introduces a
+    structions, improving efficiency for large data sets. To      fully customizable vector processing unit [16].
+    further enhance flexibility, we categorize vector instruc-       In academia, the Ara vector processor continues to evolve
+    tions into two groups: symmetric instructions, where          in alignment with the RVV specification [17]–[19] and is
+    source and destination operands have the same length,         increasingly becoming a blueprint for other works [20]–[22].
+    and asymmetric instructions, which handle operands with       Data-level parallelism is achieved through scalable lanes,
+    differing lengths. We detail distinct load/store approaches   with the register files divided into banks to acquire higher
+    tailored for each category and demonstrate the benefits       frequencies and reduce read/write conflicts. In contrast to
+    of this model through two frequently used computational       lane-based designs, other RVV-compliant works implement
+    kernels.                                                      monolithic register files, allowing each execution unit to access
+  • Hardware implementation of UVP: We design hardware            all vector elements within the register files [23], [24]. However,
+    to support the UVP programming model with a new               while the ISA strives to address diverse domain requirements,
+    hazard detection logic optimized for the register grouping    it may fall short in specific scenarios such as time-critical
+    strategy. For symmetric instructions, we enhance the          processing in wireless baseband and handling massive data
+    data pipeline to efficiently handle complex multiplication    loads in AI applications.
+    and division for fixed-point computation. For asymmetric         2) Customizations for Domain-Specific Computations: In
+    instructions, we introduce a universal permutation en-        this approach, researchers define specialized instructions on
+    gine capable of shuffling any elements to any position,       the RISC-V Base ISA, extending it to meet the needs of spe-
+    accommodating arbitrary vector lengths. This hardware         cific computation tasks. This customization allows for highly
+    design ensures seamless execution of the UVP model,           efficient hardware implementations tailored to particular work-
+    maximizing performance and resource utilization.              loads. Non-standardized vector processing accelerates data
+  • Evaluation of UVP: We comprehensively evaluate UVP            processing in specific domains by customizing critical instruc-
+    to demonstrate its performance and efficiency. First, we      tions and implementing dedicated hardware logic for domain-
+    compare two frequently used kernels with a lane-based         specific tasks [25], [26]. In edge artificial intelligence (AI)
+    vector processing architecture, achieving up to 3.0× and      applications, processors are often small to conserve power, and
+    2.1× performance improvements, respectively. Next, we         models for inference use low-precision data formats to reduce
+                                                                                                                                                                                                     3
+
+
+
+memory usage. Under these constraints, vector processing              VA    VB                VC
+                                                                                                                                                            AVX: Software Only
+in edge AI processors is typically designed in a packed-                           f
+
+
+
+
+                                                                                                                                for(i=0; i<AVL; i+=strip)
+                                                                                                                                                            strip = sizeof({XMM,YMM,ZMM})
+SIMD style, with additional arithmetic logic units (ALUs)                              tail
+
+
+
+
+                                                                                              Application Vector Length (AVL)
+and control logic that enable parallel computation of low-
+                                                                                                                                                            SVE: Software + Hardware
+precision operands within a scalar register [27], [28]. For more                   f
+                                                                                                                                                            incd Xi
+demanding applications, such as convolutional neural networks                                                                                               ; Xi  Xi + ElemPerVecReg()
+(CNNs), additional execution units, like tensor units or systolic                                                                                                         Implementation Defined
+arrays, are incorporated to boost throughput [29], [30]. Simi-                     f
+larly, in wireless communications, the complexity of massive-                                                                                               RVV: Software + Hardware
+                                                                                                                                                             strip = vsetli(_strip)
+input massive-output (MIMO) systems scales exponentially
+with the number of antennas, leading to the development of                         f                                                                         target                          legal
+                                                                                                                                                                      Load Balancing Unit
+                                                                                    strip                                                                   _strip                          strip
+vector processors specialized for matrix decomposition [31].
+   Apart from the need at the ISA-level, customization can
+also be applied at the micro-architectural level. Both RISC-V2       Fig. 1. The concept of strip-mining and its implementation in mainstream
+                                                                     ISAs.
+[32] and Lazo et al. [33] emphasize register file organization,
+                                                                     issued simultaneously in a single long instruction word by
+implementing dedicated hardware for remapping between the
+                                                                     the compiler [40], [41]. The hardware is greatly simplified
+logical vector register allocated by the compiler and the
+                                                                     compared to superscalar or vector designs, since scheduling,
+physical register specified by the hardware implementation.
+                                                                     hazard avoidance, and resource allocation are all handled
+While this alleviates the complexity of register allocation
+                                                                     by the compiler. This makes VLIW especially attractive in
+algorithms for the compiler, it incurs not only increased chip
+                                                                     domain-specific scenarios with predictable workloads and tight
+area but also additional execution clock cycles per instruction
+                                                                     power constraints, namely computer vision tasks [42] and
+at the hardware level. Furthermore, UVE [34], [35] presents
+                                                                     WBP [43], [44].
+data streaming support and an emulation platform. These
+                                                                        While VLIW DSPs offer high efficiency under regular
+modifications are based on existing scalar core architectures
+                                                                     and static analyzable workloads, they suffer from several
+to support various memory access patterns. Nonetheless, data
+                                                                     limitations. First, the burden of complex scheduling and reg-
+streaming with indirect patterns suffers from complicated
+                                                                     ister allocation falls entirely on the compiler, which demands
+descriptors and limited parallelism.
+                                                                     deep expertise in the target architecture to achieve optimal
+   3) Leveraging Scalar Cores for Vector Processing: In
+                                                                     performance – thereby reducing portability and increasing
+contrast to dedicated vector processors, some research has
+                                                                     development effort. Second, static instruction bundling lacks
+focused on modifying commercial-off-the-shelf scalar cores
+                                                                     flexibility in handling dynamic workloads or irregular data
+to function as vector processors. Multiple scalar cores are
+                                                                     patterns, often resulting in suboptimal hardware utilization.
+used in parallel, where each core processes a part of the
+vector in lockstep, with the instruction fetch pipeline of most
+cores disabled. Essentially, the scalar cores operate together to    B. Vector Strip-mining
+mimic vector processing by distributing vector elements across          One of the key techniques in vector processing is strip-
+the cores and executing the same instruction on multiple data        mining, which is used to handle data exceeding the capacity
+elements simultaneously. This approach is often considered an        of a vector register. Fig. 1 illustrates the concept of strip-
+extension or additional feature of manycore architectures [36]–      mining. Essentially, strip-mining divides the data into smaller
+[38], where a set of scalar cores is utilized to handle vector       strips that fit within the available vector register length. These
+workloads, rather than relying on specialized vector units.          strips are processed sequentially in a loop until all the data is
+   While this approach can leverage existing scalar cores to         covered. For data sizes that are not a multiple of the vector
+perform vector-like operations, it tends to have lower computa-      register length, additional tail processing is required. Given
+tional efficiency compared to dedicated vector processors. This      two source vectors, VA and VB, with a vector length of AVL, a
+is because, although the scalar cores are working in parallel,       complete strip-mining procedure for an operation f to compute
+the underlying hardware was not initially designed to handle         VC involves first calculating T = ⌊ AV    L
+                                                                                                           strip ⌋ iterations of parallel
+vectorized tasks. As a result, there is often significant overhead   computation fully utilizing the hardware. Subsequently, an
+from logic that is only useful for scalar processing, such as        additional computation is performed for the AV L(1−strip·T )
+complex control logic and instruction fetch mechanisms that          elements that remain.
+need to be reconfigured for lockstep execution. Furthermore,            Fig. 1 also illustrates three mainstream implementations of
+this approach lacks the dedicated vector units and optimiza-         vector processing, highlighting their approaches to handling
+tions found in true vector processors, leading to suboptimal         strip increments. In AVX programming, the strip size is fixed
+performance in terms of throughput and energy efficiency.            to the capacity of vector registers in the micro-architecture,
+   4) Digital Signal Processors for WBP: Very long instruc-          such as XMM, YMM, or ZMM. Here, hardware does not partici-
+tion word (VLIW) architectures have been widely adopted              pate in strip-mining control; instead, programmers calculate
+in digital signal processors (DSP) for their ability to exploit      the strip size manually, often using the sizeof function.
+instruction-level parallelism (ILP) through static scheduling.       Both SVE and RVV adopt vector-length agnostic approaches,
+In VLIW processors, multiple operations – including scalar,          requiring hardware feedback to report the current micro-
+vector, and even tensor [39] instructions – are bundled and          architectural attributes. SVE uses the incd assembly to incre-
+                                                                                                                                              4
+
+
+
+                                                               TABLE I
+                                                   I NSTRUCTION E NCODING FOR UVP
+
+                Bit field         Name                     Description
+
+                 [31:25]          funct7[6:0]              Operations under the category.
+                 [24:23]          vew[1:0]                 Element width of the vector.
+                    [22]          vmask                    Whether to read predicate registers before computation.
+            [63:52], [21]         vd head[12:0]            Starting number of destination vector register.
+         [51:42], [20:18]         vs2 head[12:0]           Starting number of the second source vector register.
+         [41:32], [17:15]         vs1 head[12:0]           Starting number of the first source vector register or scalar register number.
+                 [14:12]          funct3[2:0]              Categories of vector instructions.
+                  [11:7]          rs avl[4:0]              Scalar register number storing AVL.
+                    [6:0]         opcode[6:0]              Operation code of current instruction.
+
+ment a counter based on the register size, which can vary by          A. ISE Specifications
+hardware implementation, typically ranging from 128 to 2048              Table I presents one possible instruction format of UVP.
+bits. Combined with the whilelt and branch assemblies with            The UVP instruction bit width is 64 bits to accommodate
+predication, strip-mining loops can be implemented through            the expanded physical vector register files (VRFs). While
+compiler auto-vectorization, eliminating the need for detailed        the instruction fetch may require additional clock cycles, this
+micro-architectural knowledge. Additionally, RVV enforces             overhead can be offset by the SIMD nature. Details of the
+VL constraints via a load balancing unit controlled by the            instruction formats are as follows.
+vsetvli instruction. Programmers specify a desired level of
+                                                                         1) Operation Code: The UVP ISE is designed based on
+parallelism, and then the load balancing unit adjusts it to suit
+                                                                      the RISC-V ISA, which provides custom operation codes that
+the current architecture. Finally, the adjusted strip size is used
+                                                                      allow developers to add new instructions while maintaining
+to update the strip counter.
+                                                                      compatibility with the standard set. Our ISE utilizes custom-1
+   Strip-mining arises as a trade-off among data parallelism,
+                                                                      and custom-2 for this purpose.
+hardware utilization, and software feasibility. However, when
+                                                                         2) AVL Register: A general-purpose scalar register is used
+applied to long vector processing, it encounters two primary
+                                                                      to store the VL, with the register number encoded in the
+challenges. Firstly, the strip size is constrained by the capacity
+                                                                      instruction. Unlike vsetvli, we simply reuse the add or
+of vector registers. Although RVV employs power-of-two reg-
+                                                                      addi instructions to inform hardware of the AVL for the
+ister group multipliers to mitigate this limitation, the overhead
+                                                                      entire vector. For example, prior to executing a uvp_add
+of strip-mining – such as increment/decrement, comparisons,
+                                                                      instruction with a0 as the AVL register, the compiler emits
+and branching – is not negligible in long vector scenarios.
+                                                                      configuration assembly as shown below:
+Furthermore, an improper strip size can lead to fragmented
+memory access patterns. Secondly, vector processing is limited                        addi a0, a0, <immediates>
+by the number of available vector registers, especially when                                                                                (1)
+                                                                                            uvp_add v0, v0, v1, a0.
+configuring a bloated LMUL. When multiple operations are
+bundled within a strip-mining loop, frequent register spilling        Here, v* represents vector registers. Furthermore, the compiler
+and filling can occur. These two challenges not only increase         can also optimize the live interval of scalar registers when the
+memory traffic but also degrade overall throughput, further           VL remains constant or is modified by basic operations across
+exacerbating inefficiencies in long vector processing. Com-           instructions.
+pared to conventional vector programming, UVP leverages its              3) Instruction Categories: The instructions can be catego-
+support for non-power-of-two RG, effectively alleviating the          rized based on the types of source and destination vectors.
+issues of register under-utilization and excessive strip-mining       For source operands, one operand can be either a vector or
+instructions. Even when the VL is a power of two, UVP                 a scalar. For destination operands, results can be written to
+still demonstrates advantages due to reduced instruction fetch        either VRFs or dedicated predication registers.
+overhead and fewer pipeline stalls.                                      4) Predication Registers: For hardware efficiency, the ISE
+                                                                      only supports one predication register. This design eliminates
+           III. U NLIMITED V ECTOR P ROCESSING                        the need for complicated data widening and narrowing logic in
+   The formalization of the proposed ISE is divided into three        the data pipeline, which can arise from bit-width differences
+subsections. First, we present the instruction encoding of the        between vector and mask elements. The predication register
+ISE, and introduce new instructions tailored to the unique            length matches the total number of bytes that all VRFs can
+demands of WBP. Next, we describe our new programming                 process.
+model and the organization of RG. Finally, we illustrate                 5) Vector Element Width: The ISE currently supports only
+the practicality of our approach through two representative           char and short data types, as their bit widths are sufficient
+kernels in WBP, showcasing the effectiveness of the ISE and           for quantization in WBP. Silicon previously allocated to less
+programming model.                                                    frequently used units, such as floating-point units and high
+                                                                                                                                             5
+
+
+
+                                                                                                       TABLE II
+  Vector Register Files                            Mask Register Files                RG ORGANIZATION OF ASYMMETRIC INSTRUCTIONS
+  V0 ~                                             vm
+  V(RG-1)                                     RG
+                                                                                               vd                 vs1                vs2
+  VRG ~
+                                                     1)vdf(vs1,vs2,vm)        uvp_gather      VN −RG−2           VN −RG ∼ VN −1     VN −RG−1
+  V(2RG-1)                                           2)vmf(vs1,vs2)
+  V2RG ~
+                                                                              uvp_scatter      VN −RG ∼ VN −1     VN −RG−2           VN −RG−1
+                                                     3)vmf(vs1,vs2,vm)
+  V(3RG-1)                                           4)vm!vm
+                                                                             offers greater flexibility in vector register grouping, allowing
+                                            Mask R/W
+                          ...
+
+
+
+
+                                                                ...
+                                                                             for non-power-of-two groupings. This enables programmers
+  V(N-RG-2)
+  V(N-RG-1)                                                                  to access arbitrary consecutive vector registers within a single
+  V(N-RG)~                                                                   instruction, thereby reducing the execution overhead of strip-
+  V(N-1)                                                                     mining loops. Additionally, UVP shifts strip-mining from soft-
+                                                              VLEN/8
+                       VLEN                                                  ware to hardware by leveraging the AVL register in instruction
+                DMA             L/S
+                                                                             encoding, which reduces the frequency of memory accesses
+                                                                             through finer-grained register management. However, UVP
+   Execution         Memory           Instruction Interface
+     Units          Interface         CSRs: vshamt    vsglen vrextra
+                                                                             introduces challenges for compiler implementation. While
+                                                                             mainstream ISAs exhaust registers and sub-registers with
+Fig. 2. The programming model of our proposed unlimited vector processing    relatively low complexity, UVP’s flexibility necessitates more
+(VLEN: Vector length of a single vector register).                           sophisticated handling. Although we have implemented several
+bit-width multipliers, can be redirected to enhance data paral-              passes in an LLVM compiler to address these challenges, the
+lelism.                                                                      details lie beyond the scope of this study and will be explored
+   6) Supported Operations: In addition to basic fixed-point                 in future work.
+arithmetic, mask and reduction instructions, the proposed                       An overview of the proposed programming model is illus-
+ISE allows different VLs between source and destination                      trated in Fig. 2. The key features of the programming model
+vectors through two new instructions: uvp_gather and                         are detailed as follows.
+uvp_scatter. Unlike vrgather in RVV, which operates                             1) Vector Register Files: The VRF usage of UVP offers
+under the same VL and can lead to low VRF utilization in                     greater flexibility, with RGs dynamically adjusted based on
+certain LMUL configurations, these asymmetric instructions                   different instructions. RG is determined offline by two fac-
+maximize VRF efficiency when there is a substantial VL dif-                  tors: the starting register number, RGhead , allocated by RA
+ference between source and destination registers. For instance,              algorithms of the compiler, and the vector data type, defined
+scattering often results in longer vectors:                                  as RGtype = L · V EW , where L is the VL specified by the
+                                                                             programmer through high-level language. At compile time,
+                   vd[vs2[i]] ← vs1[i].                                (2)   RGs are allocated by calculating its range from RGhead to
+                                                                             RGtail = RGhead + RGtype /V LEN . During runtime, the
+The uvp_scatter instruction eliminates the need to pad
+                                                                             hardware accesses vector registers based on the AVL register
+vector registers associated with vs1 and vs2 to match the VL
+                                                                             specified in the instruction encoding, which allows for cases
+of vd. Conversely, gathering often results in shorter vectors:
+                                                                             where the user-defined size exceeds the actual runtime vector
+                   vd[i] ← vs1[vs2[i]].                                (3)   size. This design introduces additional complexity in hardware
+                                                                             implementation, as UVP requires managing two degrees of
+In this case, registers related to vd and vs2 are cropped to a
+                                                                             freedom (RGhead and RGtype ), in contrast to traditional ISAs,
+shorter VL.
+                                                                             which typically rely on only one (RGhead ).
+   7) Vector Registers: For hardware implementation, single-
+                                                                                RG organization varies depending on the instruction type.
+port static RAMs (SRAMs) can be used instead of registers or
+                                                                             Symmetric instructions execute element-wise computations,
+register files due to their advantages: (i) SRAMs offer higher
+                                                                             where the destination registers have the same length as
+cell density, saving silicon area when the number of physical
+                                                                             the source registers. Operands in symmetric instructions are
+registers is large; and (ii) it is unlikely that more than two
+                                                                             densely arranged, making them well-suited for direct memory
+read/write requests will occur on an SRAM in a single clock
+                                                                             access (DMA). This dense arrangement allows efficient vector
+cycle. In case of burst requests, implementing a request queue
+                                                                             load/store operations, typically performed before or after strip-
+with back-pressure is more efficient. The depth of VRFs is up
+                                                                             mining. As illustrated in Fig. 2, the source and destination RG
+to 213 as specified in Table I, but it can be further expanded
+                                                                             in symmetric instructions occupy the same number of vector
+by using uvp_vsetcsr instruction to write extra bits into
+                                                                             registers. In contrast, asymmetric instructions involve differing
+control and status registers (CSRs).
+                                                                             lengths between source and destination registers. The source
+                                                                             operands to be gathered or scattered are sparsely arranged. In
+B. Programming Model                                                         such scenarios, scalar load/store instructions from the scalar
+   To address the issue outlined in Section II-B, we propose                 core are more efficient than vector load/store operations.
+a programming model for UVP that is tailored for high-                       Table II presents the possible RG organizations for asymmetric
+throughput vector processing. UVP is achieved by addressing                  instructions, aligned with Fig. 2.
+two key constraints: the granularity of vector register grouping                2) Mask Register Files: Mask register files (MRFs) store
+and the hardware strip-mining. Unlike traditional ISAs, UVP                  predication results, with a size one-eighth that of the VRF,
+                                                                                                                                                                             6
+
+
+
+               Aidx      k      Bidx      k         A         n
+                                                                         B              k
+                       0 0 0           0 1 2            a11       a12
+                                                                               b11     b12     b13
+                   m 3 3 3       m 0 1 2            m   a21       a22    n
+                                                                               b21     b22     b23                     unsigned avl = m * k;
+                       6 6 6           0 1 2            a31       a32                                                  A      = uvp_load(&A,     m * n);
+   i=0                                                                                                                 B      = uvp_load(&B,     n * k);
+         Aidxtmp      Bidxtmp          Ashuffle               Bshuffle                         Result
+                                                                                                                     ❶ A_idx = uvp_load(&A_idx, m * k);
+         0 0 0        0 1 2      a11     a11      a11   b11       b12    b13         a11b11    a11b12    a11b13        B_idx = uvp_load(&B_idx, m * k);
+                                                                                                                       result = uvp_broadcast(0, avl);
+         3 3 3        0 1 2      a21     a21      a21   b11       b12    b13         a21b11    a21b12    a21b13
+                                                                                                                       for (int i = 0; i < n; i++) {
+         6 6 6        0 1 2      a31     a31      a31   b11       b12    b13         a31b11    a31b12    a31b13      ❷     A_idx_tmp = uvp_add(A_idx, i,      avl);
+   i=1                                                                                                                     B_idx_tmp = uvp_add(B_idx, i * k, avl);
+         Aidxtmp      Bidxtmp          Ashuffle               Bshuffle                         Result                ❸     A_shuffle = uvp_gather(A, A_idx_tmp, avl);
+         1 1 1        3 4 5      a12     a12      a12   b21       b22    b23         a11b11+   a11b12+     a11b13+         B_shuffle = uvp_gather(B, B_idx_tmp, avl);
+                                                                                     a12b21    a12b22      a12b23    ❹     result    = uvp_muladd(result, A_shuffle,
+         4 4 4        3 4 5      a22     a22      a22   b21       b22    b23     a21b11+       a21b12+     a21b13+                                B_shuffle, avl);
+         7 7 7        3 4 5      a32     a32      a32   b21       b22    b23     a22b21         a22b22      a22b23     }
+                                                                                 a31b11+       a31b12+     a31b13+     uvp_store(result, avl);
+                                                                                 a32b21         a32b22      a32b23
+
+Fig. 3. A matmul kernel multiplying a 3 × 2 matrix by a 2 × 3 matrix, requiring two iterations.
+
+holding mask content in bits. For implementation simplicity,                                                   rewritten to achieve greater efficiency and improved perfor-
+there is a single mask register, vm, which holds the latest pred-                                              mance.
+ication result. MRF contents are inaccessible via the memory                                                     1) Matrix Multiplication: Let ai denote the i-th column
+interface and can only be modified by specific instructions. For                                               vector of the matrix Am×n , and bj denote the j-th row vector
+example, a compare instruction (e.g. uvp_seq) can operate                                                      of the matrix B n×k . The resulting matrix C m×k from their
+with or without input from mask registers, and its result can be                                               multiplication can be expressed as
+written back to either the VRF or MRF. Additionally, the mask                                                                                            
+                                                                                                                                           n
+                                                                                                                                                          bi 
+register can reverse predications using the vmnot instruction,                                                                                       { bi 
+                                                                                                                                                              
+                                                                                                                             X   z       }|                   
+enabling efficient handling of vector if-else conditions.                                                              C=
+                                                                                                                                  
+                                                                                                                                 ai ai · · · ai ⊙  ..  n  ,
+                                                                                                                                                               
+                                                                                                                                                                         (7)
+   3) Control and Status Registers: Control and status regis-                                                                 i
+                                                                                                                                                         . 
+                                                                                                                                                              
+                                                                                                                                                              
+                                                                                                                                                                  
+ters (CSR) provide additional information for UVP through a                                                                                               bi
+                                                                                                                                                              
+dedicated instruction interface. For instance, vsglen specifies
+                                                                                                               where ⊙ is the Hadamard product.
+the vector length of destination registers in scatter and gather
+                                                                                                                  As shown in Fig. 3, matrix multiplication (matmul) on UVP
+instructions, addressing the asymmetric nature of these instruc-
+                                                                                                               can be performed in the following steps. ❶ Permutation ma-
+tions. The vrextra register extends instruction encoding
+                                                                                                               trix generation. Two permutation matrices can be generated
+space to accommodate the indices of vector registers when the
+                                                                                                               as follows:
+current instruction format cannot specify a sufficient number
+                                                                                                                                                  n
+of vector registers. For computation, vshamt denotes the shift                                                                      z            }|           {
+amount of operands to be applied to operands before or after                                                                    ΠA = πA      πA        ···   πA ,          (8)
+the computation, a feature which will be further clarified in                                                                                     n                T
+Section IV-C. Although CSR configuration instructions might                                                                        z           }|                {
+be required prior to each vector instruction, the overhead is                                                                  ΠB = πB       πB       ···    πB        ,   (9)
+minimal and easily amortized due to the efficiency of long
+                                                                                                               where πA and πB represent the column vector and row vector
+vector processing.
+                                                                                                               of matrices ΠA and ΠB , respectively:
+   In summary, we define the syntax of the proposed program-
+                                                                                                                                                       T
+ming model in the C programming language as follows:                                                                        πA = 0 n · · · (m − 1)n ,                (10)
+              [Vdest =]fuvp1 (Vsrc |Addr, [Br , ]AV L),                                              (4)
+                                                                                                                                                     
+                                                                                                                              πB = 0 1 · · · k − 1 .                 (11)
+    [Vdest =]fuvp2 (Vsrc1 , Vsrc2 , [Vsrc3 , Br , Bw , ]AV L),                                       (5)       The permutation matrices can either be stored in advance
+ fuvp3 (Vdest1 , [Vdest2 , ]Vsrc1 , Vsrc2 , [Vsrc3 , Vsrc4 , Br , ]AV L).                                      or generated dynamically by a sequence of fundamental
+                                                                       (6)                                     instructions, given their simplicity. ❷ Permutation matrix
+Here, the three types of fuvp correspond to load/store opera-                                                  update. Within the calculation loop, the permutation matrices
+tions, normal arithmetic instructions, and complex/asymmetric                                                  are updated by adding scalar values corresponding to the
+instructions, respectively. The optional boolean flags Br and                                                  iteration variables. ❸ Element shuffling. Gather instructions
+Bw indicate whether the hardware should read from or write                                                     are utilized alongside the updated permutation matrices to
+to MRFs.                                                                                                       extract specific elements from the original data matrices.
+                                                                                                               These extracted elements are reorganized to form new matrices
+                                                                                                               aligned for the subsequent computation. ❹ Resulting matrix
+C. Kernel Examples                                                                                             accumulation. At the end of each computation loop, the
+  To showcase the advantages of UVP, we present two kernel                                                     resulting matrix is updated by accumulating the products of
+examples commonly used in WBP. Leveraging large vector                                                         the shuffled matrices. Notably, the permutation matrix and the
+registers and flexible vector organizations, these kernels are                                                 shuffled matrix in steps ❸ and ❹ can be reduced into a vector
+                                                                                                                                                       7
+
+
+
+            A                   B                        // DIF Upper Half: A_upper + A_lower
+                                                         Br_upper = uvp_sadd(Ar_upper, Ar_lower, Nfft/2);
+          𝑥[0]                                    𝑋[0]   Bi_upper = uvp_sadd(Ar_upper, Ai_lower, Nfft/2);
+                                                         Br_upper = uvp_sra(Br_upper, shamt, Nfft/2);
+                                                         Bi_upper = uvp_sra(Bi_upper, shamt, Nfft/2);
+                                                         // DIF Lower Half: (A_upper - A_lower) * Twiddle
+          𝑥[1]                                    𝑋[2]   sub_r = uvp_ssub(Ar, Ar_lower, Nfft/2);
+                                                         sub_i = uvp_ssub(Ai, Ai_lower, Nfft/2);
+                                                         uvp_setcsr(vshamt);
+                                                         uvp_cplxmul(Br_lower, Bi_lower, sub_r, sub_i, Twd_r, Twd_i, Nfft/2);
+          𝑥[2]                                    𝑋[1]   // Shuffle to upper and lower vector for next stage calculation
+                                                         uvp_scatter(Ar_upper, Br_lower, PermLower, MaskLower, Nfft/2);
+                                                         uvp_scatter(Ai_upper, Bi_lower, PermLower, MaskLower, Nfft/2);
+                                                         uvp_scatter(Ar_lower, Br_upper, PermUpper, MaskUpper, Nfft/2);
+          𝑥[3]                                    𝑋[3]   uvp_scatter(Ai_lower, Br_upper, PermUpper, MaskUpper, Nfft/2);
+
+Fig. 4. A DIF fft kernel featuring saturation and complex multiplication instructions within each stage of the dataflow. Variables in red denote prepared
+permutation vectors for gather and scatter operations.
+
+due to their identical row-wise or column-wise structure. This                signal into one single vector. During the calculation, a spe-
+further reduces the kernel runtime.                                           cialized complex multiplication instruction, uvp_cplxmul,
+   In this case, UVP demonstrates a more flexible approach                    reduces the instruction count from six (four multiplications and
+to data computation. The size of the RG is directly in-                       two add/subtract instructions) to a single instruction, stream-
+fluenced by the programmer-specified vector length (avl),                     lining the computation and enhancing dataflow efficiency.
+provided the total number of source and destination vector                    Moreover, the vshamt register can be pre-configured using
+registers remains within the overall VRF capacity. Compared                   the uvp_setcsr instruction to handle data overflow during
+to traditional matmul [45], [46], which has time and space                    calculations, which eliminates the need for additional overflow
+complexities of O(N 2 ) and O(N ), respectively, UVP achieves                 management operations.
+higher throughput by utilizing large VRFs. This optimization
+effectively reverses the time and space complexity trade-off,                               IV. OVERALL M ICROARCHITECTURE
+significantly enhancing performance in scenarios that require
+intensive vector operations.                                                     Building upon the proposed programming model, we design
+   2) Fast Fourier Transform: Existing kernel implementa-                     an architecture that addresses both hardware strip-mining and
+tions of fast Fourier transform (fft) [46] have already optimized             WBP requirements. As shown in Fig. 5(a), the microarchitec-
+the computation process by calculating stage by stage, em-                    ture is divided into four components. (i) The main sequencer
+ploying a “shuffle-butterfly-shuffle” strategy within each stage              is responsible for routing instructions to the appropriate execu-
+instead of recursively calling a half-point fft. However, these               tion units and stalling the pipeline when there are RG conflicts.
+implementations face several limitations:                                     (ii) The memory-map-to-lane conversion module contains
+                                                                              address generation logic, converting between VRF SRAM
+  • Vector Register Size Constraints. The limited size of                     addresses and the memory-mapped address organization. A
+    existing vector registers restricts the maximum FFT point                 configurable bus interface, compliant with the Advanced eX-
+    size. In wireless communication, where FFT size are                       tensible Interface (AXI), allows the design to access memories
+    often large (Nf f t ≥ 2048), this becomes a significant                   actively or passively. (iii) Scalable lanes are dedicated to
+    bottleneck.                                                               element-wise computations with the ALUs accessing in-situ
+  • Complex Number Representation. Signal processing
+                                                                              VRFs and MRFs. (iv) The element exchange engine (EXE)
+    relies heavily on data represented as complex numbers,                    enables efficient permutations of vector elements across the
+    which necessitates efficient complex multiplication. The                  lanes.
+    current implementations lack the ability to reduce instruc-
+    tion counts and efficiently chain the dataflow for such
+    operations.                                                               A. Control Path for UVP
+  • Data Saturation Needs. Signal processing frequently                          The control path of the UVP begins at the main sequencer,
+    requires data to saturate to the maximum and minimum                      traverses the execution units within lanes and the EXE, and
+    values representable in small data types to minimize sys-                 concludes at VRFs, as depicted by the blue lines in Fig. 5(a).
+    tem error. This demands tailored operations for saturation                Unlike traditional strip-mining techniques, where the instruc-
+    arithmetic apart from addition and subtraction.                           tion decoder determines the maximum number of vector ele-
+   Fig. 4 illustrates a decimation-in-frequency (DIF) fft kernel              ments to process per instruction based on the size of physical
+with several enhancements. The expanded VRFs allow for                        registers, vector element type, and the LMUL (if applicable)
+the computation of larger-point FFTs. Scatter instructions,                   [17], UVP achieves hardware strip-mining by pipelining the
+combined with permutation vectors and mask flags (marked                      AVL, decoded from the general-purpose register index in the
+in red), are employed to re-organize vectors after the butterfly              RISC-V ISA, within the main sequencer. Afterwards, the AVL
+calculation for the next stage of computation. These vectors                  is further divided within the lane sequencer, with the VL
+can either be pre-stored or calculated at runtime, depending                  for each lane i calculated directly using the pipelined AVL
+on throughput requirements. The instruction count is further                  register:
+optimized by combining the real and imaginary parts of the                                    V Li = ⌊AV L/Nlane ⌋ + Ntail,i ,          (12)
+                                                                                                                                                                                                          8
+
+
+
+                                                                                                𝑁
+  UVP Extension                                                                                                                                     valid   One-Hot Inst. ID    Log-2 OR Tree
+         Element Exchange Engine                                                                     𝑅𝐺ℎ𝑒𝑎𝑑             In-Range Detect #𝑖
+                                                                                                                                                     0      0    0    1     0
+           FSM        PE   PE    PE                      ...        PE                                             ≤
+                                                                                                       𝑖                                             0      0    0    0     1
+               Seq.                                                                                                                                  1      1    0    0     1
+                                                                                                     𝑅𝐺𝑡𝑎𝑖𝑙        ≤
+  Inst. Path                                                                                                                                         1      1    0    0     0      ID Vec. = 1001
+                                     Lane #0                                                                                                  (b)
+       Main
+                                     Lane                                                   Plus/Minus &
+     Sequencer                                                                                                                             A={vs1,vs1.real}
+                       ...
+
+
+
+
+                                                                                              Datapath
+                                   Sequencer                                                   Control        Uop Decoder
+                                                                                                                                           B={vs2,vs1.imag}
+     UVP Hazard Det.                                                                                                                       C={vd,vs2.real}
+                                                                                              Pipeline
+                                                                                                                                           D={vs2.imag}
+                                                                                                                                                                sign(vs1)            ovf
+                                       R/W Ctrl.
+
+
+
+
+                                                                          Lane #(N-1)
+  Data Path                                                                                                                                                     sign(vs2)
+                                                                                        A                                            A±B                        sign(res)
+
+
+
+
+                                                          Lane #1
+     MMap-Lane
+                                     Vector
+                                     Vector
+                                    Vector
+                                    Vector
+                                    Register
+                                    Register
+                                                                    ...                 B              +                         (A±B)×C
+                                   Register
+                       ...
+
+
+
+
+         Conv.                     Register
+                                       File
+   Bus Intf.                          File
+                                      File                                                                                        A×B±C                               NEG_MAX                   01
+                                     Files                                              C                               C×(A-B)+B×(C-D)                               POS_MAX                        vd
+                                                                                                                                               Shifter                                          11
+                                    vs1            vs2                                                                  D×(A+B)+B×(C-D)
+          Mask                                                                          D              +                     +                                  vs1       <<
+                                                                                                                                                                                Divider
+                                                                                                                                                                                           res 10
+
+         Register       vm         ALU                                                                                                                                                          00
+                                                                                                                                                                vs2
+          Files        R/W Ctrl.    Sat. Comp.                                                                                       A×B
+                                                                                                                                                CSR
+                                    vd
+
+                                       (a)                                                                             (c)                                                         (d)
+Fig. 5. The overall top view of the UVP microarchitecture and key subdesigns. (a) The overall top view of the UVP microarchitecture, depicting the
+arrangement and interaction of core modules. (b) Hazard detection scheme of within the main sequencer, focusing on handling vector operand dependencies.
+(c) Complex arithmetic unit within the ALU, equipped with a final-stage shifter for precise operations. (d) Peripheral logic design surrounding a divider,
+dedicated to overflow detection and calculation.
+
+where Nlane denotes the number of lanes in the UVP exten-                                                         B. Hazard Detection Logic for UVP
+sion, and Ntail,i is defined as:                                                                                     Another challenge, apart from hardware strip-mining, is
+                                                                                                                  hazard detection. Hazards arise when operands are repeatedly
+                                   (                                                                              accessed in consecutive instructions, requiring hardware to
+                                       0     (AV L       mod Nlane ) ≥ i
+               Ntail,i =                                                 .                                 (13)   ensure that the subsequent instructions delay any read or
+                                       1     (AV L       mod Nlane ) < i                                          write operations until the previous instruction finishes its
+                                                                                                                  write-back. Given a total of N physical vector registers, the
+                                                                                                                  sum of available logic  P3registers across different LMULs in
+The calculated result determines the number of micro-
+                                                                                                                  RVV is calculated as nlmul =0 N/2nlmul , since only registers
+operations (uops) each execution unit must perform. This
+                                                                                                                  Vk2nlmul , 0 ≤ k ≤ N/2nlmul − 1 can serve as the head vector
+approach eliminates the VL constraint specified in the RVV
+                                                                                                                  of an RG. However, in UVP, RGs can be arbitrarily assigned,
+specification, enabling UVP to directly execute vector process-
+                                                                                                                  meaning any vectors can act as the head or tail of an RG.
+ing based on the programmer-defined AVL.
+                                                                                                                  This flexibility results in a total of 2N −1 possible logic register
+   The control signals proceed to fetch operands for both the                                                     configurations.
+lanes and the EXE for V Li iterations. Within each lane, the                                                         In UVP, hazard detection complexity surpasses that of
+lane sequencer requests operands from the VRFs and MRFs.                                                          power-of-two RG configuration. As shown in Fig. 5(b), each
+The request logic utilizes a multiple-input-single-output ar-                                                     physical register is examined to verify whether it falls within
+biter, which handles requests from the in-situ lane as well                                                       the specified range, defined by the head and tail of an RG.
+as the processing elements (PEs) in the EXE. Along with                                                           Validity information is stored in a table along with a one-
+the fetched data, the control signals are further broken down                                                     hot encoded instruction identity (Inst. ID) assigned by an
+into smaller uops for multi-pipeline execution units. Upon                                                        instruction monitor, which manages up to NID = 8 concurrent
+execution, the control signals direct the results back to the                                                     instructions. This table feeds into a log2 N -level OR tree, using
+VRFs or MRFs. Similarly, for EXE, a finite state machine                                                          a validity mask to condense information into an ID vector that
+(FSM) is triggered by the internal sequencer, which itself is                                                     flags instruction occupation. The ID vector then updates an
+activated by the main sequencer. The PEs within the EXE                                                           NID × NID hazard table, which informs subsequent modules
+request and write back operands through the same arbiter,                                                         of potential pipeline stalls. Validity and IDs clear automatically
+ensuring efficient operand management across lanes.                                                               when the instruction completes. This approach requires 2N
+   Control signals also facilitate the coordination of lanes and                                                  more comparators than the traditional data hazard recording
+the EXE to execute reduction operations, which are carried                                                        methods [17], but it enables a more adaptable RG strategy.
+out in two stages. In the first stage, intra-lane reduction is
+performed, where each lane reduces its V Li elements as part
+of normal symmetric operations. In the second stage, the EXE                                                      C. Computation within Lanes
+handles inter-lane reduction over log2 Nlane iterations. During                                                      A lane operates as a subordinate packed-SIMD core, con-
+iteration n (where n = 0, 1, ..., log2 Nlane − 1), the EXE                                                        sisting of a lane sequencer that issues uops, temporary storage
+fetches operands from lane (m2n+1 + 2n ) and writes back                                                          for operands within mask and vector register files, and an
+to lane m2n+1 , m = 0, 1, ..., Nlane /2n+1 . After completing                                                     ALU that executes parallel computations. Execution units
+these steps, the final reduction result is written back to the                                                    are further enhanced to support complex multiplication and
+VRFs in lane 0.                                                                                                   saturation division, specifically tailored for WBP. As depicted
+                                                                                                                                              9
+
+
+
+in Fig. 5(c), a complex arithmetic unit (CAU) includes multiple
+datapaths designed to handle multiplication-related operations.                           S0
+                                                                       Inst. Commit             New Inst.
+A uop decoder interprets the instructions and generates control
+signals for adders and datapath multiplexers. Supported in-                 S6             P            S1            State Names
+structions include addition/subtraction, multiplication followed                                                       P : Pending
+by addition/subtraction, addition/subtraction followed by mul-       Cnt. = Thres.                                     S0: Idle
+tiplication, and dedicated complex multiplication. To improve                                                          S1: Inst. Decode
+                                                                               P                                       S2: Set Counter
+timing performance, two pipeline registers are placed before           S5          Cnt. < Thres. Config. S2                  & Threshold
+and after the multipliers. Calculations are performed in full                                                          S3: Read Index
+                                                                                     P          P
+precision by default. A configurable truncate module, managed          Lockstep                                        S4: Read Data
+via vshamt CSR, allows operations in fixed-point formats to                                                            S5: Write Data
+                                                                                   S4              S3                  S6: End of Execution
+meet precision and application-specific requirements.
+   Fix-point division requires careful consideration of two          Data Movement      Lockstep
+issues: (i) Direct division can lead to underflow, resulting                                            (a)
+in imprecise number representation and loss of fractional                             From/To Sequencer & FSM     From PE Crossbar
+details; and (ii) the quotient may overflow when the div-                                                     ①
+
+idend is sufficiently small. For a number represented with                  Data Buf.                   PE Control
+an m-bit integer part and an n-bit fractional part, noted as                                       Counter Threshold
+                                                                            Addr Buf.
+mQn, the full-precision calculation of between a divisor of         To PE
+                                                                                                                                     ③
+                                                                    Crossbar
+aQb and a dividend of cQd produces a quotient format of
+(a + d + 1)Q(b + c). To mitigate underflow, an additional left                        Idx2WAddr         Cnt2RAddr
+shift of s can be applied to the divisor using vshamt CSR.                                                    ②
+This shift increases the fractional precision of the quotient at
+the cost of reducing its integer precision, yielding a quotient                         Read Channel                 Write Channel
+format of (a + d + 1 − s)Q(b + c + s). As illustrated in
+                                                                         PE                             VRF Intf.
+5(d), a configurable left shift logic is implemented before the
+divisor input. To handle overflow, a detection mechanism is
+implemented using an XOR gate. The gate takes the sign bits                                             (b)
+of the divisor, dividend, and unsaturated quotient as inputs.      Fig. 6. Details inside EXE. (a) A finite state machine that controls the EXE.
+Based on the sign of the unsaturated quotient, the output is       (b) Hardware design of shuffle processing elements.
+saturated to its minimum or maximum value accordingly.             guides the data to the appropriate PEs. While receiving and
+                                                                   writing back the shuffled data into the VRF, the FSM ensures
+D. Element Exchange Engine                                         all the PEs operate in lockstep before advancing. Finally, in
+                                                                   the instruction commit stage, a complete signal is sent to the
+   The EXE in the UVP extension enables element gather and         main sequencer, which updates the instruction monitor and
+scatter operations without requiring memory access. While          data hazard table.
+some vector processing microarchitectures support only lim-           Based on the FSM design, each PE is implemented to fetch
+ited shuffling of vector elements – often at the granularity       and write back vector elements in a cyclic ①→ ②→ ③→ ①
+of a physical register to keep hardware design simpler –           procedure, as illustrated in Fig. 6(b). A PE control with a
+this limitation can lead to frequent memory access as the          counter and a threshold register is included to manage all
+VL increases. In such cases, vectors must first be stored to       subsequent modules according to the FSM specifications. The
+memory and then reloaded using memory-based gather/scatter         write and read channel interface with vector operands, with
+instructions. In contrast, the EXE can gather and scatter          operand requests managed by an arbiter within each lane.
+elements to any positions within VRFs, facilitating efficient      Additionally, a counter-to-read-address (Cnt2RAddr) module
+data manipulation across elements without engaging memory.         is included to sequentially read elements from both the index
+   Highlighted in Fig. 5(a), the EXE consists of an EXE            and target vector, beginning from the first element of an RG.
+sequencer, an FSM, PEs for data shuffling, and an intercon-        Addressing differs between VRF SRAMs and the index vector
+nect. Fig. 6 further details the processing sequence, where the    contents: VRF SRAMs are accessed within the lane, while
+FSM oversees the EXE’s operations, prioritizing data integrity     index vectors pertain to the RG and span multiple lanes.
+over throughput to mitigate hazards compared to a pipelined        Therefore, two conversion modules, Idx2PE and Idx2WAddr,
+approach. The FSM, depicted in Fig. 6(a), comprises three          are implemented to direct data to the correct PE and to
+main stages: configuration, data movement, and instruction         compute the SRAM address within the corresponding lane,
+commit. In the configuration stage, the FSM decodes instruc-       respectively.
+tions and determines the number of data movements per PE
+as the EXE sequencer receives a new command. Counter and
+threshold values are reset and loaded into the PEs. During data                         V. E XPERIMENT R ESULTS
+movement, each PE loads indices and elements for shuffling           In this section, we evaluate our extension at both the
+and transmits them to the interconnect module, which then          software and hardware levels. At the software level, we
+                                                                                                                                                                                                                 10
+
+
+
+                         Ara with 2 lanes                  Ara with 4 lanes              Ara with 8 lanes                    Ara with 16 lanes     the increased DLP of Ara. Clock cycles are measured using
+                         UVP with 8 lanes                  UVP with 16 lanes             UVP with 32 lanes                   UVP with 64 lanes
+                                   4                                                           4
+                                                                                                                                                   Synopsys VCS and QuestaSim, respectively. Fig. 7 shows
+                             ×10       1.9x
+                                                                                         ×10       2.1x
+                                                                                   2.5                                                             the kernel speedup across four lane configurations. matmul
+               1.25
+                                                                                   2.0                                                             (m,n,k) represents an Am×n × B n×k matrix multiplication,
+               1.00                                2.1x
+                                                                                                                                                   fftN represents a N -point FFT, and redsumM indicates a
+Clock Cycles
+
+
+
+
+                                                                                   1.5                            1.5x
+               0.75                                                                                                                                reduction summation over M elements. For MMSE estimation,
+                                                               1.8x      3.0x      1.0
+               0.50                                                                                                           1.4x                 we adopt a 32 × 32 window size, consistent with [47].
+               0.25                                                                0.5                                                      1.3x      1) Matrix Multiplication: The speedup for matmul ranges
+               0.00                                                                0.0                                                             from 1.1× to 3.0×, with the greatest improvements observed
+                             ×10   4          matmul (33,9,129)                        ×104                        fft512
+                                       1.4x                                          6             2.0x                                            when the matrix dimensions are not powers of two, achieving
+                   3.0
+                                                                                    5                                                              at least 1.4× speedup. In the proposed matmul kernel example,
+                   2.5
+                                                                                    4                                                              RGs under different AVL (m × k) configurations are more
+    Clock Cycles
+
+
+
+
+                   2.0                                                                                            1.7x
+                                                   1.5x
+                   1.5                                         2.1x
+                                                                                    3                                                              compact compared to the power-of-two RGs. This results in
+                                                                         2.2x
+
+                   1.0                                                              2                                         1.6x                 fewer strip-mining loops and switches, as well as register
+                   0.5                                                              1                                                       1.9x   vacancies. An additional source of speedup lies in the loop
+                   0.0                                                              0                                                              iteration strategies: Ara’s kernel operates at a complexity of
+                             ×104             matmul (112,11,112)                        ×105                      fft1024
+                                       1.1x                                                        1.8x                                            O(m×k/b2 ), while the UVP kernel achieves O(n) by trading
+                         8                                                         1.2                                                             off increased space complexity to store matrix elements.
+                                                                                   1.0
+                         6                                                                                                                         Here, b denotes the block size used to configure vsetvli
+          Clock Cycles
+
+
+
+
+                                                                                   0.8                            1.7x
+                                                   1.2x                                                                                            instructions.
+                         4                                                         0.6
+                                                                                                                              1.8x                    2) Fast Fourier Transform: For the fft kernel, flexible RGs
+                                                               1.2x                0.4
+                         2                                               1.9x                                                               2.0x   and larger VRFs enable UVP to achieve a performance im-
+                                                                                   0.2
+                  0                                                                0.0
+                                                                                                                                                   provement ranging from 1.3× to 2.1×. The performance gap
+                        3                     matmul (64,32,256)                           3                       fft2048
+               1.50 ×10                                                           1.50 ×10         1.4x                                            becomes more significant when the input data for the butterfly
+               1.25                                                               1.25                                                             computation in a stage exceeds the capacity of vector registers
+                                       1.3x
+               1.00                                                               1.00                                                             in Ara. In such cases, a potential solution would be to call the
+Clock Cycles
+
+
+
+
+               0.75                                                               0.75                            1.3x                             most suitable kernel for the current hardware configuration
+               0.50
+                                                   1.3x
+                                                                                  0.50
+                                                                                                                                                   and recursively calculate the FFT for larger points. However,
+                                                                                                                              1.2x
+               0.25
+                                                               1.4x
+                                                                         1.7x     0.25                                                      1.5x   this divide-and-conquer approach would introduce additional
+                                                                                                                                                   memory accesses. Under UVP, more data can be loaded into
+               0.00                                                               0.00
+                             ×105                redsum6144                                                      redsum8192                        registers and grouped beyond the RVV specification, mitigat-
+                                                    2.0x
+                   1.0                                                                                                                             ing the need for excessive memory accesses and strip-mining
+                   0.8                                                                                                                             loops. Additionally, the inclusion of complex multiplication
+    Clock Cycles
+
+
+
+
+                                                                           1.6x
+                   0.6                                                                                                                             instructions further reduces the clock cycles, contributing to
+                                                                                                          1.4x
+                                                                                                                                     1.3x
+                   0.4
+                                                                                                                                                   overall improved performance.
+                                                                                                                                                      3) Reduction Summation: Reduction operations are widely
+                   0.2
+                                                                                                                                                   used in applications such as low-density parity-check (LDPC)
+                   0.0
+                                                                               MMSE 32x32                                                          decoding and signal correlation, and continue to be the subject
+Fig. 7. Comparison of UVP with Ara in the number of clock cycles across                                                                            of performance optimization efforts [48], [49]. The fourth
+various configurations and kernels. Note that we compare the L-lane Ara with                                                                       row of Fig. 7 shows the performance of reduction summation
+the 4L-lane UVP (as shown in the legend, with pairs organized in columns)
+to ensure a fair comparison, given the equal number of execution units.                                                                            for both power-of-two and non-power-of-two input lengths.
+                                                                                                                                                   Despite having four times the number of lanes compared to
+compare kernels and instruction counts introduced in Section                                                                                       Ara – requiring two additional stages of element permutation
+III-C with the open-source RVV processor Ara [17] under                                                                                            – UVP consistently achieves at least a 1.2× speedup. This im-
+various configurations. At the hardware level, we compare                                                                                          provement is attributed to less strip-mining and configuration
+our proposed architecture with other state-of-the-art vector                                                                                       instructions, as well as the elimination of scalar reductions
+processors, providing a detailed architectural breakdown to                                                                                        across vector instructions.
+highlight specific design benefits.                                                                                                                   4) MMSE Estimation: The complexity of matrix inversion
+                                                                                                                                                   has prompted extensive optimization efforts across platforms
+A. Kernel Comparison                                                                                                                               [50], [51], with Cholesky decomposition being the most com-
+   We select imatmul, fft, and redsum kernels from [46] as                                                                                         monly adopted method. The bottom row of Fig. 7 compares
+benchmarks to compare with our design. In addition, a mini-                                                                                        the performance of our implementation with that of [47], using
+mum mean square error (MMSE) kernel was implemented to                                                                                             a 32 × 32 matrix window for a 2 × 2 MIMO system. To
+compare with [47] in multiple-input, multiple-output (MIMO)                                                                                        avoid under-utilization of the VRF, multiple MMSE kernels
+systems. To align with the execution unit configurations, we                                                                                       are executed in parallel under larger lane configurations. UVP
+modified the element type of the vectors to int16 in each                                                                                          still outperforms the Ara implementation, owing to its flexible
+kernel. At the hardware level, the number of lanes in UVP is                                                                                       element reorganization for matrix operations and enhanced
+set to be four times that of Ara, due to the wider SRAMs and                                                                                       support for complex multiplications.
+                                                                                                                                                           11
+
+
+
+                                                                TABLE III
+           I MPLEMENTATION R ESULTS OF THE P ROPOSED V ECTOR E XTENSION C OMPARED WITH S TATE - OF - THE -A RT V ECTOR P ROCESSORS
+
+                                          This work              TC’24†           ICCAD’22‡    TCASII’23†        TCASI’23         TVLSI’23       TVLSI’24
+                                         Lane16 Reg32             [19]               [52]         [53]             [38]             [54]           [29]
+
+             ISA Base & Extensions           Xuvp                GCV1.0            Zve32x        GCV0.9         IMFAC×16         IMA+Vec/Mtx    V1.0+Tensor
+                     Technology (nm)           40                   22                22            65               65              28              28
+                       Result Source        Synthesis             Layout            Layout        Silicon         Silicon          Silicon        Synthesis
+                    Frequency (MHz)           400                  1350              594           280              205             1000            1050
+                            Supply (V)         1.1                 0.8               0.8           1.2              1.2             1.125            0.9
+                    Core Area (mm2 )          0.94                 0.95              20.1           6                10              72              1.2
+                  Int. Formats (bit)         8, 16             8, 16, 32, 64       8, 16, 32   8, 16, 32, 64   2, 4, 8, 16, 32        8        4, 8, 16, 32, 64
+      Best Int. Perf. (GOPS@I NT 8)          19.9                   83.5              285           22.9          58@I NT 2         13000        737.9@I NT 4
+   Best Int. Area Eff. (GOPS/mm2 )           21.2                  87.9               14.2           3.8         5.8@I NT 2         180.6       614.6@I NT 4
+   Best Int. Energy Eff. (GOPS/W)            250.5                 376.0              266          100.5        1152@I NT 2          630        1383.4@I NT 4
+                                                                    Normalized to 40nm technology∗
+                   Norm. Area (mm2 )          0.94                  3.1             66.4            2.3             3.8             146.9            2.4
+   Norm. Int. Perf. (GOPS@I NT 8)             19.9                 45.9             156.8          37.2         94.3@I NT 2         9100        516.5@I NT 4
+ Norm. Int. Area Eff. (GOPS/mm2 )             21.2                 14.8              2.4           16.2         24.8@I NT 2         61.9        215.2@I NT 4
+ † A 4-lane configuration.
+ ‡ A Mempool Spatz configuration.
+                64     4
+ ∗ All results are normalized to 40nm based on: frequency ∝ s, area ∝ s−2 , where s is the scaling factor.
+
+
+                                                                                      on the SMIC 40nm technology. Throughput performance is
+ RVV                                                                                  evaluated by issuing randomly generated instructions (with
+                                                                                      varied RGs and AVLs) to the extension using Synopsys VCS.
+                                                                                      Timing and power analyses are carried out under typical
+                                                     Spilling/Filling Inst.
+                                                     Config. Inst.                    process, voltage, and temperature conditions (TT, 1.1V, 25°C).
+ UVP                                                 Normal Inst.                     We label each configuration of our work as Lanel Regr , where
+                                                                                      l denotes the number of lanes and r represents the depth of
+       0     250      500     750    1000    1250       1500      1750     2000
+                                                                                      SRAM.
+Fig. 8. Fraction of instructions over the dynamic instruction count for the              1) Comparison with the State-of-the-Arts: Table III
+2048-point FFT kernel.                                                                presents a comprehensive performance comparison with the
+B. Instruction Breakdown                                                              state-of-the-art vector processors, normalizing performance
+                                                                                      and efficiency across different technologies for consistency.
+   To further assess the impact of UVP, we analyze the                                The proposed architecture is compared with the synthesis
+dynamic instruction count of both RVV and UVP imple-                                  results of other processors to ensure a fair evaluation of com-
+mentations. SystemVerilog Assertions (SVA) are integrated                             putational capability. In Ara2 [19] and Yun [53], lane-based
+at the RTL level to track register spilling/filling and strip-                        vector processors supporting ratified RVV extensions with
+mining-related instructions. As shown in Fig. 8, UVP re-                              high-performance scalar cores are implemented and fabricated.
+duces the dynamic instruction count for the 2048-point FFT                            Both Spatz [52] and Dustin [38] address the Von Neumann
+kernel to 38% of that observed in RVV, underscoring three                             bottleneck by reducing the impact of instruction fetching in
+notable improvements in the proposed design. First, UVP                               multi-core architectures but at different scales: the former
+reduces arithmetic instruction count by 1.6×, attributed to                           integrates a tightly coupled vector processing unit within
+the introduction of dedicated complex multiplication instruc-                         each lightweight core, while the latter synchronizes all cores
+tions, which streamline computation. Second, configuration                            in lockstep by disabling individual instruction fetch units.
+instructions — such as vsetvl in RVV and uvp_vsetcsr                                  To accommodate the intensive demands of AI workloads,
+in UVP — are significantly reduced due to UVP’s flexible                              HIPU [54] and SPEED [29] introduce dedicated matrix/tensor
+register grouping mechanism, which accommodates longer                                computation units.
+vectors and minimizes status switching overhead. Finally, UVP
+considerably decreases register spilling and filling instructions,                       UVP falls short of achieving the maximum frequency due
+owing to its asymmetric gather/scatter instructions and the                           to two primary factors. First, each lane incorporates densely
+kernel design that departs from the conventional divide-and-                          packed arithmetic units which introduce high fan-in logic,
+conquer approach, further enhancing computational efficiency.                         often implemented using dense and-or-invert (AOI) cells. This
+                                                                                      leads to significant local routing congestion. Second, the
+                                                                                      centralized EXE must maintain datapath connectivity with
+C. Implementation Result                                                              all surrounding lanes, resulting in placement contention and
+  We implement our proposed architecture at the RTL level                             increased routing complexity.
+and synthesize the design using Synopsys Design Compiler                                 To align with the execution unit configurations of Ara2
+                                                                                                                                                                                                                                12
+
+
+
+                         MRFs
+                                      Lane seq.                               VRFs
+      Op. queue
+                                                                                                                                                   22
+                          3.8% 7.2%               VRFs
+                                                                                   32.9%                                                                                       Largest
+               15.4%                                                                                                                               20                           VRFs
+
+
+
+
+                                                                                                                      Area Efficiency (GOPS/mm2)
+                                         13.3%                                                   EXE
+                                                                                             2.8%
+                                                            Lane seq. 4.5%                     9.4% Main sequencer                                 18
+Op. req.   8.3%                           4.1% EXE                                                                                                               Smallest
+                                          2.2% Main sequencer
+                                          0.8% Others                                           1.3% Others                                                       VRFs
+                      92.9%
+                  16 Lanes
+                                                                              86.5%
+                                                              MRFs 7.1% 16 Lanes                    5.6%                                           16
+                                            9.4%                                                         Divider
+             11.1%
+                                                                         8.9%
+                                                                                                                                                                                                               Core Area: 7.2 mm2
+                                                   Divider                                                                                         14
+     ALU                                                                                     14.7%
+                            24.5%                               Op. queue 5.4% 7.3%                                                                     Lane8Regr                         Better Throughput
+                                                                                                  CAU                                              12   Lane16Regr                         Better Efficiency
+                                                                         Op. req.                                                                       Lane32Regr
+                                                                                      ALU
+                                CAU
+                                                                                                                                                   10   Lane64Regr
+                         Lane seq.                                                                                                                      Lane64Reg1024 w/ varying RGs
+                  MRFs
+                                           VRFs
+                                                                                    VRFs                                                            8
+                                                                                                                                                        20        40         60          80       100          120       140
+  Op. queue           4.6% 6.4%       12.7%
+                                                                                     34.2%                                                                                    Throughput (GOPS)
+             15.1%                                                                                                    Fig. 10. Comparsion of throughput and area efficiency under varying VRF
+                                                             Lane seq.
+                                          9.6% EXE                     4.5%                   6.7% EXE                and RG configurations. (r: Number of vector registers)
+                                           0.3% Main equencer
+                                           1.4% Others                                         1.0% Main
+                                                                                               2.5%       sequencer
+                                                                                                     Others
+ Op. req. 7.5% 64 Lanes
+                   88.7%                                      MRFs 8.0%           89.9%            5.7%
+                                              8.8%                            64 Lanes                   Divider
+              10.3%                                 Divider               9.1%                                        9. Generally, the lanes occupy the largest area proportion, with
+                                                                                             15.3%
+                                23.2%                           Op. queue 5.5% 7.7%                                   minimal overhead from the main sequencer and EXE. When
+       ALU
+                                                                                                  CAU
+                                                                        Op. req.                                      r is small, the main sequencer, which includes the proposed
+                                  CAU                                                ALU
+                                                                                                                      UVP detection, has a negligible area share. However, as r
+Fig. 9. Area breakdown of vector extension under different configura-                                                 increases, the area contribution of the sequencer grows due to
+tions. Upper left: Lane16 Reg32 ; Upper right: Lane16 Reg1024 ; Bottom left:                                          additional compare logic. Additionally, the number of PEs in
+Lane64 Reg32 ; Bottom right: Lane64 Reg1024 . The operand requester (Op.                                              EXE scales with l, resulting in a larger EXE area as the lane
+req.) and operand queue (Op. queue) within each lane handle operand fetching
+and temporary storage prior to the execution, respectively.                                                           count increases.
+                                                                                                                         The lane breakdown is depicted around the internal pie
+[19] and Yun [53], we employ a 16-lane setup with 32 vector
+                                                                                                                      chart, revealing how the SRAM footprint significantly impacts
+registers for comparison. In terms of throughput, Ara2 [19] and
+                                                                                                                      the distribution. When r is small, the computation logic –
+Yun [53] achieve at least 1.87× speedup in peak throughput
+                                                                                                                      including the ALU, CAU, and divider – accounts for roughly
+under normalized conditions compared to our work. This
+                                                                                                                      45% of the lane area, while SRAMs contribute around 13%.
+advantage is likely due to their higher normalized frequency
+                                                                                                                      However, as r increases, the computation logic proportion
+and better utilization across all execution units. However, our
+                                                                                                                      drops to 28%, a shift that partly explains the decreased area
+extension demonstrates superior area efficiency, outperforming
+                                                                                                                      efficiency at higher r values. This insight suggests that adding
+these lane-based designs by 43.2% and 30.9%, respectively.
+                                                                                                                      more execution units within each lane could help improve area
+This improvement arises from focusing on integer arith-
+                                                                                                                      efficiency.
+metic computation and vector permutation while eliminating
+floating-point units, resulting in a more compact core area.                                                             3) Design Space Exploration: To further assess the benefit
+   Our design is further compared with other micro-                                                                   of UVP, we examine register spilling and filling impacts. Our
+architectures. While Dustin [38] achieves peak throughput                                                             extension is tested with various lane counts and VRF SRAM
+with 2-bit quantization, our extension potentially surpasses                                                          configurations, with l ranging from 8 to 64 and r from 32
+multi-core architectures in terms of area and efficiency. This                                                        to 1024. Additionally, we set AVL to the maximum value
+outcome stems from the fact that, despite efforts to equip                                                            r = 1024 can support without spilling. Fig. 10 illustrates
+scalar cores with vector capabilities, some datapaths within                                                          that as lane count rises, throughput increases, though area effi-
+the pipeline remain idle during vector processing, resulting                                                          ciency declines slightly due to the significant non-computation
+in significant silicon waste. However, a substantial gap ex-                                                          logic discussed in Section V-C2. In the first four scatter
+ists between our design and AI-focused extensions, namely,                                                            plots, throughput generally improves as r increases, with area
+SPEED [29] and HIPU [54]. The high throughput of these                                                                efficiency remaining steady. Excluding r = 1024, there is
+architectures is driven by the numerous PEs in their systolic                                                         a 1.27× speedup when comparing the smallest VRFs (gray
+arrays, optimized for tensor computations, and the minimal                                                            circles, r = 32) and configurations with one spill (r = 512).
+control overhead. Although the addition of execution units                                                            The largest VRFs (gray squares) deliver optimal throughput
+increases silicon area, the resulting area efficiencies still                                                         by avoiding register spilling and filling, achieving a 1.79×
+outperform our design due to the overwhelming throughput                                                              speedup.
+achieved by concurrently operating PEs, which effectively                                                                To showcase the advantages of the large RGs, an ad-
+amortizes the silicon overhead. Nonetheless, it is worth noting                                                       ditional evaluation is conducted with a fixed configuration,
+that both SPEED and HIPU are specifically tailored for tensor                                                         Lane64 Reg1024 , featuring a core area of 7.2 mm2 . The purple
+computing in AI workloads and lack evaluation results in the                                                          scatter plots in Fig. 10 illustrate the throughput increase as the
+domain of wireless signal processing.                                                                                 size of the RG grows. Due to the reduced likelihood of data
+  2) Area Breakdown: The area breakdown of the proposed                                                               hazards and read/write conflicts , the maximum throughput is
+extension across different configurations is illustrated in Fig.                                                      1.38× higher than that of the r = 32 configuration.
+                                                                                                                                                            13
+
+
+
+             VI. C ONCLUSION AND F UTURE W ORK                                  [11] K. C. Behera, “An efficient low-latency algorithm and implementation
+                                                                                     for rate-matching and bit-interleaving in 5G NR,” in 2020 IEEE 3rd 5G
+   We introduce Unlimited Vector Processing (UVP), a                                 World Forum (5GWF), pp. 565–571, IEEE, 2020.
+methodology that enables efficient and flexible vector process-                 [12] J. Janhunen, T. Pitkanen, O. Silven, and M. Juntti, “Fixed-and floating-
+ing for wireless baseband processing. UVP presents a novel                           point processor comparison for mimo-ofdm detector,” IEEE Journal of
+                                                                                     Selected Topics in Signal Processing, vol. 5, no. 8, pp. 1588–1598, 2011.
+architecture that supports non-power-of-two register grouping                   [13] C. Chen, X. Xiang, C. Liu, Y. Shang, R. Guo, D. Liu, Y. Lu, Z. Hao,
+and hardware strip-mining. A programming model is proposed                           J. Luo, Z. Chen, et al., “Xuantie-910: A commercial multi-core 12-stage
+to seamlessly handle vectors of arbitrary lengths, signifi-                          pipeline out-of-order 64-bit high performance RISC-V processor with
+                                                                                     vector extension: Industrial product,” in 2020 ACM/IEEE 47th Annual
+cantly reducing strip-mining overhead and improving overall                          International Symposium on Computer Architecture (ISCA), pp. 52–64,
+throughput. Additionally, UVP categorizes vector instructions                        IEEE, 2020.
+into symmetric and asymmetric types, employing tailored                         [14] SiFive, “SiFive intelligence X280,” 2022.                [Online]. Avail-
+                                                                                     able: https://sifive.cdn.prismic.io/sifive/70445cba-0549-475e-a538-5c09
+load/store strategies that optimize execution across a wide                          a402efbc x280-datasheet-22G1.pdf.
+range of workloads. The hardware implementation features                        [15] Andes technology, “AndesCore™ NX27V Processor,” 2021. [Online].
+hazard detection logic and optimized data pipelines, ensuring                        Available: https://www.andestech.com/wp-content/uploads/AndesCore
+                                                                                     NX27V Product Package PB156 V1.2.pdf.
+efficient execution of complex operations, particularly in fixed-               [16] Semidynamics, “Semidynamics Vector Unit - Only 100% customisable
+point computations.                                                                  RISC-V Vector Unit,” 2024. [Online]. Available: https://semidynamics
+   The experimental results demonstrate the effectiveness of                         .com/en/technology/vector-unit.
+                                                                                [17] M. Cavalcante, F. Schuiki, F. Zaruba, M. Schaffner, and L. Benini,
+UVP, achieving remarkable performance improvements with                              “Ara: A 1-GHz+ scalable and energy-efficient RISC-V vector processor
+speedups of up to 3.0× in matrix multiplication and 2.1×                             with multiprecision floating-point support in 22-nm FD-SOI,” IEEE
+in FFT kernels compared to traditional lane-based vector                             Transactions on Very Large Scale Integration (VLSI) Systems, vol. 28,
+                                                                                     no. 2, pp. 530–543, 2019.
+architectures. The synthesized RTL for a 16-lane configuration                  [18] M. Perotti, M. Cavalcante, N. Wistoff, R. Andri, L. Cavigelli, and
+under SMIC 40nm technology occupies only 0.94 mm2 , deliv-                           L. Benini, “A ‘New Ara’ for vector computing: An open source highly
+ering an impressive area efficiency of 21.2 GOPS/mm2 . Future                        efficient RISC-V V 1.0 vector processor design,” in 2022 IEEE 33rd
+                                                                                     International Conference on Application-specific Systems, Architectures
+work will focus on enhancing overall throughput by optimizing                        and Processors (ASAP), pp. 43–51, IEEE, 2022.
+the EXE micro-architecture and incorporating multiple EXEs                      [19] M. Perotti, M. Cavalcante, R. Andri, L. Cavigelli, and L. Benini, “Ara2:
+within the extension to mitigate pipeline stalling caused by                         Exploring single-and multi-core vector processing with an efficient RVV
+                                                                                     1.0 compliant open-source processor,” IEEE Transactions on Computers,
+limited execution units.                                                             2024.
+                                                                                [20] E. Humblet, T. Dupuis, Y. Fournier, M. H. AskariHemmat, F. Leduc-
+                             R EFERENCES                                             Primeau, J. P. David, and Y. Savaria, “MSPARQ: A RISC-V vector
+                                                                                     processor array optimized for low-resolution neural networks,” in 2024
+ [1] L. Oliker, A. Canning, J. Carter, J. Shalf, and S. Ethier, “Scientific          IEEE 67th International Midwest Symposium on Circuits and Systems
+     computations on modern parallel vector systems,” in SC’04: Proceedings          (MWSCAS), pp. 464–468, IEEE, 2024.
+     of the 2004 ACM/IEEE Conference on Supercomputing, pp. 10–10,              [21] Y. Wang, M. Yang, C.-P. Lo, and J. P. Kulkarni, “30.6 Vecim: A 289.13
+     IEEE, 2004.                                                                     GOPS/W RISC-V vector co-processor with compute-in-memory vector
+ [2] L. Ferreira, S. Malkowsky, P. Persson, S. Karlsson, K. Åström, and            register file for efficient high-performance computing,” in 2024 IEEE
+     L. Liu, “Design of an application-specific VLIW vector processor for            International Solid-State Circuits Conference (ISSCC), vol. 67, pp. 492–
+     ORB feature extraction,” Journal of Signal Processing Systems, vol. 95,         494, IEEE, 2024.
+     no. 7, pp. 863–875, 2023.                                                  [22] F. Minervini, O. Palomar, O. Unsal, E. Reggiani, J. Quiroga, J. Marimon,
+ [3] N. Jouppi, G. Kurian, S. Li, P. Ma, R. Nagarajan, L. Nai, N. Patil,             C. Rojas, R. Figueras, A. Ruiz, A. Gonzalez, et al., “Vitruvius+: An area-
+     S. Subramanian, A. Swing, B. Towles, et al., “Tpu v4: An optically              efficient RISC-V decoupled vector coprocessor for high performance
+     reconfigurable supercomputer for machine learning with hardware sup-            computing applications,” ACM Transactions on Architecture and Code
+     port for embeddings,” in Proceedings of the 50th Annual International           Optimization, vol. 20, no. 2, pp. 1–25, 2023.
+     Symposium on Computer Architecture, pp. 1–14, 2023.                        [23] M. Platzer and P. Puschner, “Vicuna: A timing-predictable RISC-V
+ [4] RISC-V, “riscv-v-spec,” 2021. [Online]. Available: https://github.com/r         vector coprocessor for scalable parallel computation,” in 33rd euromicro
+     iscvarchive/riscv-v-spec.                                                       conference on real-time systems (ECRTS 2021), Schloss Dagstuhl-
+ [5] P. Nannipieri, S. Di Matteo, L. Zulberti, F. Albicocchi, S. Saponara,           Leibniz-Zentrum für Informatik, 2021.
+     and L. Fanucci, “A RISC-V post quantum cryptography instruction            [24] I. A. Assir, M. E. Iskandarani, H. R. A. Sandid, and M. A. Saghir,
+     set extension for number theoretic transform to speed-up CRYSTALS               “Arrow: A RISC-V vector accelerator for machine learning inference,”
+     algorithms,” IEEE Access, vol. 9, pp. 150798–150808, 2021.                      arXiv preprint arXiv:2107.07169, 2021.
+ [6] Y.-M. Kuo, F. Garcı́a-Herrero, O. Ruano, and J. A. Maestro, “RISC-         [25] Y. Lee, A. Waterman, R. Avizienis, H. Cook, C. Sun, V. Stojanović,
+     V galois field ISA extension for non-binary error-correction codes              and K. Asanović, “A 45nm 1.3 GHz 16.7 double-precision GFLOPS/W
+     and classical and post-quantum cryptography,” IEEE Transactions on              RISC-V processor with vector accelerators,” in ESSCIRC 2014-40th
+     Computers, vol. 72, no. 3, pp. 682–692, 2022.                                   European Solid State Circuits Conference (ESSCIRC), pp. 199–202,
+ [7] M. Gautschi, P. D. Schiavone, A. Traber, I. Loi, A. Pullini, D. Rossi,          IEEE, 2014.
+     E. Flamand, F. K. Gürkaynak, and L. Benini, “Near-threshold RISC-         [26] C. Schmidt, J. Wright, Z. Wang, E. Chang, A. Ou, W. Bae, S. Huang,
+     V core with DSP extensions for scalable iot endpoint devices,” IEEE             V. Milovanović, A. Flynn, B. Richards, et al., “An eight-core 1.44-GHz
+     transactions on very large scale integration (VLSI) systems, vol. 25,           RISC-V vector processor in 16-nm FinFET,” IEEE Journal of Solid-
+     no. 10, pp. 2700–2713, 2017.                                                    State Circuits, vol. 57, no. 1, pp. 140–152, 2021.
+ [8] L. Jiang, Y. Shi, Y. Liu, Q. Deng, S. Xu, Y. Shen, F. Ye, S. Cao, and      [27] M. Johns and T. J. Kazmierski, “A minimal RISC-V vector processor
+     Z. Jiang, “A hierarchical dataflow-driven heterogeneous architecture for        for embedded systems,” in 2020 Forum for Specification and Design
+     wireless baseband processing,” in Proceedings of the 30th Asia and              Languages (FDL), pp. 1–4, IEEE, 2020.
+     South Pacific Design Automation Conference, pp. 587–593, 2025.             [28] G. Ottavi, A. Garofalo, G. Tagliavini, F. Conti, L. Benini, and D. Rossi,
+ [9] Q. Spencer, A. Swindlehurst, and M. Haardt, “Zero-forcing methods               “A mixed-precision RISC-V processor for extreme-edge DNN infer-
+     for downlink spatial multiplexing in multiuser mimo channels,” IEEE             ence,” in 2020 IEEE Computer Society Annual Symposium on VLSI
+     Transactions on Signal Processing, vol. 52, no. 2, pp. 461–471, 2004.           (ISVLSI), pp. 512–517, IEEE, 2020.
+[10] F. Tosato and P. Bisaglia, “Simplified soft-output demapper for binary     [29] C. Wang, C. Fang, X. Wu, Z. Wang, and J. Lin, “SPEED: A scal-
+     interleaved COFDM with application to HIPERLAN/2,” in 2002 IEEE                 able RISC-V vector processor enabling efficient multiprecision DNN
+     International Conference on Communications. Conference Proceedings.             inference,” IEEE Transactions on Very Large Scale Integration (VLSI)
+     ICC 2002 (Cat. No. 02CH37333), vol. 2, pp. 664–668, IEEE, 2002.                 Systems, 2024.
+                                                                                                                                                               14
+
+
+
+[30] K. Li, J. Zhou, Y. Wang, J. Luo, Z. Yang, S. Yang, W. Mao,                         in 2023 Design, Automation & Test in Europe Conference & Exhibition
+     M. Huang, and H. Yu, “A precision-scalable energy-efficient bit-split-             (DATE), pp. 1–6, IEEE, 2023.
+     and-combination vector systolic accelerator for NAS-optimized DNNs            [52] M. Cavalcante, D. Wüthrich, M. Perotti, S. Riedel, and L. Benini, “Spatz:
+     on edge,” in 2022 Design, Automation & Test in Europe Conference &                 A compact vector processing unit for high-performance and energy-
+     Exhibition (DATE), pp. 730–735, IEEE, 2022.                                        efficient shared-L1 clusters,” in Proceedings of the 41st IEEE/ACM
+[31] M. Attari, L. Ferreira, L. Liu, and S. Malkowsky, “An application                  International Conference on Computer-Aided Design, pp. 1–9, 2022.
+     specific vector processor for efficient massive MIMO processing,” IEEE        [53] M. Perotti, M. Cavalcante, A. Ottaviano, J. Liu, and L. Benini, “Yun: An
+     Transactions on Circuits and Systems I: Regular Papers, vol. 69, no. 9,            open-source, 64-bit RISC-V-based vector processor with multi-precision
+     pp. 3804–3815, 2022.                                                               integer and floating-point support in 65-nm CMOS,” IEEE Transactions
+[32] K. Patsidis, C. Nicopoulos, G. C. Sirakoulis, and G. Dimitrakopoulos,              on Circuits and Systems II: Express Briefs, 2023.
+     “RISC-V2 : a scalable RISC-V vector processor,” in 2020 IEEE Inter-           [54] W. Zhao, G. Yang, T. Xia, F. Chen, N. Zheng, and P. Ren, “HIPU:
+     national Symposium on Circuits and Systems (ISCAS), pp. 1–5, IEEE,                 A hybrid intelligent processing unit with fine-grained ISA for real-time
+     2020.                                                                              deep neural network inference applications,” IEEE Transactions on Very
+[33] C. R. Lazo, E. Reggiani, C. R. Morales, R. F. Bagué, L. A. V. Vargas,             Large Scale Integration (VLSI) Systems, vol. 31, no. 12, pp. 1980–1993,
+     M. A. R. Salinas, M. V. Cortés, O. S. Ünsal, and A. Cristal, “Adaptable          2023.
+     register file organization for vector processors,” in 2022 IEEE Interna-
+     tional Symposium on High-Performance Computer Architecture (HPCA),
+     pp. 786–799, IEEE, 2022.
+[34] J. M. Domingos, N. Neves, N. Roma, and P. Tomás, “Unlimited vector
+     extension with data streaming support,” in 2021 ACM/IEEE 48th Annual
+     International Symposium on Computer Architecture (ISCA), pp. 209–
+     222, IEEE, 2021.
+[35] A. Fernandes, L. Crespo, N. Neves, P. Tomás, N. Roma, and G. Falcao,
+     “Functional validation of the RISC-V unlimited vector extension,” IEEE
+     Embedded Systems Letters, 2024.
+[36] T. Ta, K. Al-Hawaj, N. Cebry, Y. Ou, E. Hall, C. Golden, and C. Bat-
+     ten, “Big.VLITTLE: On-demand data-parallel acceleration for mobile
+     systems on chip,” in 2022 55th IEEE/ACM International Symposium on
+     Microarchitecture (MICRO), pp. 181–198, IEEE, 2022.
+[37] P. Bedoukian, N. Adit, E. Peguero, and A. Sampson, “Software-defined
+     vector processing on manycore fabrics,” in MICRO-54: 54th Annual
+     IEEE/ACM International Symposium on Microarchitecture, pp. 392–406,
+     2021.
+[38] G. Ottavi, A. Garofalo, G. Tagliavini, F. Conti, A. Di Mauro, L. Benini,
+     and D. Rossi, “Dustin: A 16-cores parallel ultra-low-power cluster
+     with 2b-to-32b fully flexible bit-precision and vector lockstep execution
+     mode,” IEEE Transactions on Circuits and Systems I: Regular Papers,
+     vol. 70, no. 6, pp. 2450–2463, 2023.
+[39] E. Mahurin, “Qualcomm® hexagon™ NPU,” in 2023 IEEE Hot Chips
+     35 Symposium (HCS), pp. 1–19, IEEE Computer Society, 2023.
+[40] Y.-C. Lin, Y.-P. You, and J.-K. Lee, “PALF: compiler supports for
+     irregular register files in clustered VLIW DSP processors,” Concurrency
+     and computation: practice and experience, vol. 19, no. 18, pp. 2391–
+     2406, 2007.
+[41] C.-B. Kuan and J. K. Lee, “Compiler supports for VLIW DSP processors
+     with SIMD intrinsics,” Concurrency and Computation: Practice and
+     Experience, vol. 24, no. 5, pp. 517–532, 2012.
+[42] M.-S. Yu, H.-C. Chang, C.-T. Wang, Y.-W. Tien, T.-L. Chen, and J.-
+     K. Lee, “Optimizing computer vision algorithms with TVM on VLIW
+     architecture based on RVV,” The Journal of Supercomputing, vol. 81,
+     no. 1, p. 172, 2025.
+[43] L. Codrescu, W. Anderson, S. Venkumanhanti, M. Zeng, E. Plondke,
+     C. Koob, A. Ingle, C. Tabony, and R. Maule, “Hexagon DSP: An
+     architecture optimized for mobile multimedia and communications,”
+     IEEE Micro, vol. 34, no. 2, pp. 34–43, 2014.
+[44] CEVA Inc., “Introducing CEVA-XC16,” 2020.                [Online]. Avail-
+     able: https://www.ceva-dsp.com/wp-content/uploads/2020/03/CEVA-X
+     C16 introduction non nda public-v2.pdf.
+[45] ARM, “Learn the architecture - Optimizing C code with Neon intrin-
+     sics,” 2025. [Online]. Available: https://developer.arm.com/documentat
+     ion/102467/0201.
+[46] Pulp-platform, “Ara Apps,” 2021. [Online]. Available: https://github.c
+     om/pulp-platform/ara/tree/main/apps.
+[47] J. Acevedo, F. H. Fitzek, and P. Seeling, “5G channel estimation kernels
+     on RISC-V vector digital signal processors,” in 2024 International
+     Conference on Microelectronics (ICM), pp. 1–8, IEEE, 2024.
+[48] S. Sengupta, M. Harris, Y. Zhang, and J. D. Owens, “Scan Primitives for
+     GPU Computing,” in SIGGRAPH/Eurographics Workshop on Graphics
+     Hardware (M. Segal and T. Aila, eds.), 2007.
+[49] H.-M. Lai and J.-K. Lee, “Efficient support of the scan vector model
+     for RISC-V vector extension,” in Workshop Proceedings of the 51st
+     International Conference on Parallel Processing, pp. 1–8, 2022.
+[50] C.-H. Chang, C.-C. Yang, J.-K. Lee, and Y.-C. Lin, “Case study: Support
+     OpenCL complex class for baseband computing,” in Proceedings of the
+     International Workshop on OpenCL, pp. 1–2, 2019.
+[51] M. Bertuletti, Y. Zhang, A. Vanelli-Coralli, and L. Benini, “Efficient par-
+     allelization of 5G-PUSCH on a scalable RISC-V many-core processor,”
+
