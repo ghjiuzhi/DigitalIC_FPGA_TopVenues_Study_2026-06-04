@@ -1,0 +1,28 @@
+﻿sentence_id,section_id,citation_anchor,citation_function,sentence_function,claim_type,claim_strength,issue
+INTRODUCTION.P1.S1,Introduction,"[Sunar_2007,Fischer_2008,Wold_2009]",definition source,INTERPRETATION,descriptive,medium,none
+BACKGROUND_AND_MEASUREMENT_GAP.P1.S1,Background and Measurement Gap,"[Sunar_2007,Fischer_2008,Wold_2009,Bochard_2009]",prior limitation,SETUP,limitation,low,none
+BACKGROUND_AND_MEASUREMENT_GAP.P1.S2,Background and Measurement Gap,"[Baudet_2011,Bochard_2010]",background support,BG,causal/generalization,medium,none
+BACKGROUND_AND_MEASUREMENT_GAP.P1.S3,Background and Measurement Gap,"[Turan_2018,Lubicz_2015,Lubicz_2024]",background support,BG,limitation,medium,none
+BACKGROUND_AND_MEASUREMENT_GAP.P1.S4,Background and Measurement Gap,"[Markettos_2009,Fischer_2008]",prior limitation,RESULT,method,medium,result_sentence_citation_check
+BACKGROUND_AND_MEASUREMENT_GAP.P2.S2,Background and Measurement Gap,"[Nannipieri_2021,RojasMunoz_2022,Frustaci_2023]",prior limitation,SETUP,method,low,none
+BACKGROUND_AND_MEASUREMENT_GAP.P3.S5,Background and Measurement Gap,[Turan_2018],prior limitation,INTERPRETATION,measurement,medium,none
+BACKGROUND_AND_MEASUREMENT_GAP.P4.S2,Background and Measurement Gap,"[Jian_Song_2006,Wu_2009,Wu_2012,Wang_2017]",prior limitation,SETUP,measurement,low,none
+DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1,Design and Measurement Workflow,[t],prior method,METHOD,measurement,low,none
+DESIGN_AND_MEASUREMENT_WORKFLOW.P5.S1,Design and Measurement Workflow,[t],standard/test reference,SETUP,comparative,low,none
+EXPERIMENTAL_SETUP_AND_ANALYSIS_RULES.P2.S1,Experimental Setup and Analysis Rules,[t],standard/test reference,SETUP,method,low,none
+PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P3.S1,Placement-Sensitive Continuous-Stream Characterization,[t],standard/test reference,SETUP,descriptive,none,none
+RESTART_AND_WARMUP_CHARACTERIZATION.P3.S1,Restart and Warmup Characterization,[t],comparison baseline,RESULT,limitation,low,none
+RESTART_AND_WARMUP_CHARACTERIZATION.P5.S1,Restart and Warmup Characterization,[t],comparison baseline,RESULT,descriptive,low,none
+SAMPLER_SIDE_COUNTERFACTUALS.P2.S1,Sampler-Side Counterfactuals,[t],comparison baseline,RESULT,descriptive,none,none
+SAMPLER_SIDE_COUNTERFACTUALS.P3.S1,Sampler-Side Counterfactuals,[t],comparison baseline,RESULT,descriptive,low,none
+SAMPLER_SIDE_COUNTERFACTUALS.P4.S1,Sampler-Side Counterfactuals,[t],comparison baseline,RESULT,descriptive,none,none
+SAMPLER_SIDE_COUNTERFACTUALS.P10.S1,Sampler-Side Counterfactuals,[t],standard/test reference,SETUP,causal/generalization,low,none
+SAMPLER_SIDE_COUNTERFACTUALS.P12.S1,Sampler-Side Counterfactuals,[t],comparison baseline,RESULT,descriptive,none,none
+SAMPLER_SIDE_COUNTERFACTUALS.P13.S2,Sampler-Side Counterfactuals,[1];[7],background support,BG,causal/generalization,low,none
+SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,Sampler-Side Counterfactuals,[t];[1];[7];[1];[7],standard/test reference,SETUP,descriptive,low,none
+TDC_ASSISTED_MECHANISM_DIAGNOSIS.P3.S1,TDC-Assisted Mechanism Diagnosis,[t],comparison baseline,RESULT,descriptive,none,none
+REDUCED_XOR_COUNTERFACTUALS.P1.S1,Reduced-XOR Counterfactuals,[Sato_2021],standard/test reference,SETUP,comparative,medium,none
+REDUCED_XOR_COUNTERFACTUALS.P2.S1,Reduced-XOR Counterfactuals,[t],comparison baseline,RESULT,comparative,low,none
+REDUCED_XOR_COUNTERFACTUALS.P5.S1,Reduced-XOR Counterfactuals,[t];[right];[above];[left],comparison baseline,RESULT,comparative,low,none
+REDUCED_XOR_COUNTERFACTUALS.P11.S1,Reduced-XOR Counterfactuals,[t],comparison baseline,RESULT,descriptive,low,none
+REDUCED_XOR_COUNTERFACTUALS.P13.S1,Reduced-XOR Counterfactuals,[t],comparison baseline,RESULT,descriptive,none,none
