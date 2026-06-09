@@ -21,7 +21,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=2`
 - 问题类型：`role_mismatch`
-- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）
 
 ### ABS.S2
 
@@ -35,7 +35,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=3; colon_count=1`
 - 问题类型：`sentence_jump;unsupported_claim;role_mismatch`
-- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;REFUNCTION_SENTENCE;REORDER_SENTENCE`（ADD_BRIDGE；补证据锚点；REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;REFUNCTION_SENTENCE;REORDER_SENTENCE`（补桥接句/桥接短语；补证据锚点；重写句子功能；调整句子顺序）
 
 ### ABS.S3
 
@@ -49,7 +49,7 @@
 - 风险词：`large`
 - 标点模式：`hyphen_count=4; comma_count=1`
 - 问题类型：`risk_word;role_mismatch`
-- 建议动作：`REPLACE_RISK_VERB;REFUNCTION_SENTENCE;REORDER_SENTENCE`（替换高风险动词/泛词；REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`REPLACE_RISK_VERB;REFUNCTION_SENTENCE;REORDER_SENTENCE`（替换高风险动词/泛词；重写句子功能；调整句子顺序）
 
 ### ABS.S4
 
@@ -63,7 +63,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=2; colon_count=1; comma_count=3`
 - 问题类型：`role_mismatch`
-- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）
 
 ### ABS.S5
 
@@ -77,7 +77,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=5; colon_count=1; comma_count=2`
 - 问题类型：`role_mismatch`
-- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）
 
 ### ABS.S6
 
@@ -91,7 +91,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=5; comma_count=2`
 - 问题类型：`role_mismatch`
-- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）
 
 ### ABS.S7
 
@@ -105,7 +105,7 @@
 - 风险词：`small`
 - 标点模式：`OK`
 - 问题类型：`sentence_jump;unsupported_claim;risk_word;role_mismatch`
-- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;REPLACE_RISK_VERB;REFUNCTION_SENTENCE;REORDER_SENTENCE`（ADD_BRIDGE；补证据锚点；替换高风险动词/泛词；REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;REPLACE_RISK_VERB;REFUNCTION_SENTENCE;REORDER_SENTENCE`（补桥接句/桥接短语；补证据锚点；替换高风险动词/泛词；重写句子功能；调整句子顺序）
 
 ### ABS.S8
 
@@ -119,7 +119,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=10; colon_count=1; slash_count=1; comma_count=5`
 - 问题类型：`sentence_jump;unsupported_claim;punctuation_issue;role_mismatch`
-- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;SPLIT_SENTENCE;REFUNCTION_SENTENCE;REORDER_SENTENCE`（ADD_BRIDGE；补证据锚点；SPLIT_SENTENCE；REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;SPLIT_SENTENCE;REFUNCTION_SENTENCE;REORDER_SENTENCE`（补桥接句/桥接短语；补证据锚点；拆句；重写句子功能；调整句子顺序）
 
 ### ABS.S9
 
@@ -133,7 +133,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=2; colon_count=1`
 - 问题类型：`role_mismatch`
-- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）
 
 ### INTRODUCTION.P1.S3
 
@@ -147,7 +147,7 @@
 - 风险词：`无`
 - 标点模式：`comma_count=5`
 - 问题类型：`sentence_jump;unsupported_claim;punctuation_issue`
-- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;SPLIT_SENTENCE`（ADD_BRIDGE；补证据锚点；SPLIT_SENTENCE）
+- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;SPLIT_SENTENCE`（补桥接句/桥接短语；补证据锚点；拆句）
 
 ### INTRODUCTION.P1.S5
 
@@ -161,7 +161,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=1`
 - 问题类型：`sentence_jump`
-- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+- 建议动作：`ADD_BRIDGE`（补桥接句/桥接短语）
 
 ### INTRODUCTION.P3.S2
 
@@ -175,7 +175,7 @@
 - 风险词：`无`
 - 标点模式：`comma_count=1`
 - 问题类型：`sentence_jump`
-- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+- 建议动作：`ADD_BRIDGE`（补桥接句/桥接短语）
 
 ### INTRODUCTION.P3.S3
 
@@ -189,7 +189,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=2; comma_count=1`
 - 问题类型：`sentence_jump`
-- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+- 建议动作：`ADD_BRIDGE`（补桥接句/桥接短语）
 
 ### INTRODUCTION.P3.S4
 
@@ -231,7 +231,7 @@
 - 风险词：`无`
 - 标点模式：`comma_count=1`
 - 问题类型：`sentence_jump`
-- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+- 建议动作：`ADD_BRIDGE`（补桥接句/桥接短语）
 
 ### INTRODUCTION.P6.S3
 
@@ -259,7 +259,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=2`
 - 问题类型：`sentence_jump`
-- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+- 建议动作：`ADD_BRIDGE`（补桥接句/桥接短语）
 
 ### INTRODUCTION.P6.S5
 
@@ -273,7 +273,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=7; slash_count=1; comma_count=4`
 - 问题类型：`sentence_jump;punctuation_issue`
-- 建议动作：`ADD_BRIDGE;SPLIT_SENTENCE`（ADD_BRIDGE；SPLIT_SENTENCE）
+- 建议动作：`ADD_BRIDGE;SPLIT_SENTENCE`（补桥接句/桥接短语；拆句）
 
 ### INTRODUCTION.P7.S2
 
@@ -287,7 +287,7 @@
 - 风险词：`无`
 - 标点模式：`OK`
 - 问题类型：`sentence_jump`
-- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+- 建议动作：`ADD_BRIDGE`（补桥接句/桥接短语）
 
 ### INTRODUCTION.P7.S5
 
@@ -301,7 +301,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=4; comma_count=4`
 - 问题类型：`sentence_jump;punctuation_issue`
-- 建议动作：`ADD_BRIDGE;SPLIT_SENTENCE`（ADD_BRIDGE；SPLIT_SENTENCE）
+- 建议动作：`ADD_BRIDGE;SPLIT_SENTENCE`（补桥接句/桥接短语；拆句）
 
 ### INTRODUCTION.P7.S6
 
@@ -315,7 +315,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=1; comma_count=2`
 - 问题类型：`sentence_jump`
-- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+- 建议动作：`ADD_BRIDGE`（补桥接句/桥接短语）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P1.S1
 
@@ -329,7 +329,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=1; comma_count=5`
 - 问题类型：`punctuation_issue`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P1.S3
 
@@ -343,7 +343,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=1; comma_count=6`
 - 问题类型：`sentence_jump;punctuation_issue`
-- 建议动作：`ADD_BRIDGE;SPLIT_SENTENCE`（ADD_BRIDGE；SPLIT_SENTENCE）
+- 建议动作：`ADD_BRIDGE;SPLIT_SENTENCE`（补桥接句/桥接短语；拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P1.S4
 
@@ -357,7 +357,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=2; comma_count=2`
 - 问题类型：`sentence_jump`
-- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+- 建议动作：`ADD_BRIDGE`（补桥接句/桥接短语）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P2.S2
 
@@ -371,7 +371,7 @@
 - 风险词：`some`
 - 标点模式：`hyphen_count=4; slash_count=2; comma_count=8`
 - 问题类型：`sentence_jump;risk_word;punctuation_issue`
-- 建议动作：`ADD_BRIDGE;REPLACE_RISK_VERB;SPLIT_SENTENCE`（ADD_BRIDGE；替换高风险动词/泛词；SPLIT_SENTENCE）
+- 建议动作：`ADD_BRIDGE;REPLACE_RISK_VERB;SPLIT_SENTENCE`（补桥接句/桥接短语；替换高风险动词/泛词；拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P2.S3
 
@@ -385,7 +385,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=1; comma_count=3`
 - 问题类型：`sentence_jump`
-- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+- 建议动作：`ADD_BRIDGE`（补桥接句/桥接短语）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P3.S1
 
@@ -399,7 +399,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=2; comma_count=4`
 - 问题类型：`punctuation_issue`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P3.S2
 
@@ -413,7 +413,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=1; comma_count=2`
 - 问题类型：`sentence_jump`
-- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+- 建议动作：`ADD_BRIDGE`（补桥接句/桥接短语）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P3.S3
 
@@ -427,7 +427,7 @@
 - 风险词：`无`
 - 标点模式：`semicolon_count=1; comma_count=3`
 - 问题类型：`punctuation_issue`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P3.S4
 
@@ -455,7 +455,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=2`
 - 问题类型：`sentence_jump`
-- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+- 建议动作：`ADD_BRIDGE`（补桥接句/桥接短语）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P4.S2
 
@@ -469,7 +469,7 @@
 - 风险词：`substantial`
 - 标点模式：`comma_count=4`
 - 问题类型：`risk_word;punctuation_issue`
-- 建议动作：`REPLACE_RISK_VERB;SPLIT_SENTENCE`（替换高风险动词/泛词；SPLIT_SENTENCE）
+- 建议动作：`REPLACE_RISK_VERB;SPLIT_SENTENCE`（替换高风险动词/泛词；拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P4.S3
 
@@ -483,7 +483,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=1; colon_count=1; comma_count=3`
 - 问题类型：`sentence_jump`
-- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+- 建议动作：`ADD_BRIDGE`（补桥接句/桥接短语）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P5.S2
 
@@ -511,7 +511,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=2; comma_count=3`
 - 问题类型：`sentence_jump`
-- 建议动作：`ADD_BRIDGE`（ADD_BRIDGE）
+- 建议动作：`ADD_BRIDGE`（补桥接句/桥接短语）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P1.S3
 
@@ -525,7 +525,7 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=2; semicolon_count=1; comma_count=2`
 - 问题类型：`punctuation_issue`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P2.S1
 
@@ -553,7 +553,7 @@
 - 风险词：`无`
 - 标点模式：`semicolon_count=1; comma_count=1`
 - 问题类型：`punctuation_issue`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P2.S4
 
@@ -567,4 +567,4 @@
 - 风险词：`无`
 - 标点模式：`hyphen_count=2; slash_count=2; comma_count=4`
 - 问题类型：`sentence_jump;punctuation_issue`
-- 建议动作：`ADD_BRIDGE;SPLIT_SENTENCE`（ADD_BRIDGE；SPLIT_SENTENCE）
+- 建议动作：`ADD_BRIDGE;SPLIT_SENTENCE`（补桥接句/桥接短语；拆句）

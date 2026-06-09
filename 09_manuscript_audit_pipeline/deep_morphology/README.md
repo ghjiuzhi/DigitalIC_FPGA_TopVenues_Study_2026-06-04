@@ -28,7 +28,8 @@ python 09_manuscript_audit_pipeline\deep_morphology\audit_deep_morphology.py
 - `manuscript/manuscript_clause_morphology.csv`：当前稿件从句级 claim 风险数据库。
 - `manuscript/figure_table_inventory.csv`：图表元素级审计清单。
 - `manuscript/citation_function_matrix.csv`：引用和句子功能绑定表。
-- `calibration/gold_sentence_labels_template.csv`：50 句人工 gold-label 校准模板。
+- `calibration/gold_sentence_labels_template.csv`：100 条人工 gold-label 校准模板。
+- `submission_morphology_packet/`：最终投稿形态学对齐包，集中输出 dashboard、全文章节形态、句子/从句矩阵、图表叙事、citation 支撑、micro-style lint、revision priority plan、minimal patch plan 和 calibration 文件。
 - `reports/deep_morphology_alignment_report.md`：当前稿件和顶刊形态的对齐报告。
 - `reports/abstract_deep_sentence_morphology.md`：摘要逐句专项报告。
 - `reports/results_deep_paragraph_morphology.md`：Results 段落专项报告。

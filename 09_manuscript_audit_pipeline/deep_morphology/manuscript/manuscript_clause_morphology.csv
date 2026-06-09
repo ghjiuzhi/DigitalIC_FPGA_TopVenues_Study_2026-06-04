@@ -288,7 +288,7 @@ SAMPLER_SIDE_COUNTERFACTUALS.P12.S3,51,";  broader physical perturbation, not lo
 SAMPLER_SIDE_COUNTERFACTUALS.P13.S1,1,Figure fig,main_clause,RESULT,descriptive,none,Figure,,multi_claim_sentence,SPLIT_SENTENCE
 SAMPLER_SIDE_COUNTERFACTUALS.P13.S1,2,: samplerlock shows the locked sample-RO assignments used for the physical perturbation.,colon_clause,RESULT,measurement,medium,None,,multi_claim_sentence;implication_without_evidence;colon_sentence_split_check,SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR
 SAMPLER_SIDE_COUNTERFACTUALS.P13.S2,1,The archived XDC and passband notes list three changed sample-RO LUT assignments,main_clause,BG,causal/generalization,low,None,,none,KEEP
-SAMPLER_SIDE_COUNTERFACTUALS.P13.S2,2,":  {RO\_SAMPLE\_NAND}, {RO\_SAMPLE\_LOOP[1]}, and {RO\_SAMPLE\_LOOP[7]}.",colon_clause,BG,descriptive,none,Citation,,colon_sentence_split_check,SPLIT_SENTENCE
+SAMPLER_SIDE_COUNTERFACTUALS.P13.S2,2,":  {RO\_SAMPLE\_NAND}, {RO\_SAMPLE\_LOOP[1]}, and {RO\_SAMPLE\_LOOP[7]}.",colon_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
 SAMPLER_SIDE_COUNTERFACTUALS.P13.S3,1,"The build manifests record the target top module, part, placement XDC, warmup parameter, and Vivado 2023.2 flow",main_clause,SETUP,descriptive,low,None,,none,KEEP
 SAMPLER_SIDE_COUNTERFACTUALS.P13.S3,2,";  routed-status, timing, utilization, and power reports are the source for Table tab",appositive_or_coordinate_clause,RESULT,descriptive,low,Table,,colon_sentence_split_check,SPLIT_SENTENCE
 SAMPLER_SIDE_COUNTERFACTUALS.P13.S3,3,: implsummary.,colon_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
@@ -304,15 +304,15 @@ SAMPLER_SIDE_COUNTERFACTUALS.P14.S5,1,It is not evidence,main_clause,BG,descript
 SAMPLER_SIDE_COUNTERFACTUALS.P14.S5,2,that  the entire bitstream should be included inside the entropy-source boundary.,relative_clause,BG,descriptive,low,None,,none,KEEP
 SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,1,"{figure}[t] { }{!}{ {tikzpicture}[ font= , cell/.style={draw, rounded corners=1pt, minimum width=31mm, minimum height=7mm, align=center}, arr/.style={-{Stealth[length=2mm]}, thick} ] (f1) { {}\",main_clause,RESULT,descriptive,low,None,,none,KEEP
 SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,2,:  X47Y33/A6},colon_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
-SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,3,;  (f2) {loop[1],appositive_or_coordinate_clause,BG,descriptive,none,Citation,,colon_sentence_split_check,SPLIT_SENTENCE
+SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,3,;  (f2) {loop[1],appositive_or_coordinate_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
 SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,4,:  X46Y32/B6},colon_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
-SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,5,;  (f3) {loop[7],appositive_or_coordinate_clause,BG,descriptive,none,Citation,,colon_sentence_split_check,SPLIT_SENTENCE
+SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,5,;  (f3) {loop[7],appositive_or_coordinate_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
 SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,6,:  X49Y45/B6},colon_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
 SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,7,;  (c1) { {}\,appositive_or_coordinate_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
 SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,8,:  X46Y34/B6},colon_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
-SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,9,;  (c2) {loop[1],appositive_or_coordinate_clause,BG,descriptive,none,Citation,,colon_sentence_split_check,SPLIT_SENTENCE
+SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,9,;  (c2) {loop[1],appositive_or_coordinate_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
 SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,10,:  X47Y33/A6},colon_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
-SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,11,;  (c3) {loop[7],appositive_or_coordinate_clause,BG,descriptive,none,Citation,,colon_sentence_split_check,SPLIT_SENTENCE
+SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,11,;  (c3) {loop[7],appositive_or_coordinate_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
 SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,12,:  X49Y45/A6},colon_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
 SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,13,";  ($(f1.east)+(0,0)$) -- (c1.west)",parenthetical_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE
 SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,14,";  ($(f2.east)+(0,0)$) -- (c2.west)",parenthetical_clause,BG,descriptive,none,None,,colon_sentence_split_check,SPLIT_SENTENCE

@@ -4,7 +4,7 @@
 
 ## 总览
 
-- 模板句子数：50 条。
+- 模板句子数：100 条。
 - 已填写 gold 的句子数：0 条。
 - function accuracy：待标注
 - claim_type accuracy：待标注

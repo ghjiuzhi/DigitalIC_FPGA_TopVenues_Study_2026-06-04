@@ -210,6 +210,10 @@ class DeepMorphologyTests(unittest.TestCase):
         module = load_module()
         anchor = module.anchors(r"\begin{figure}[t]\includegraphics[width=.9\linewidth]{x}\end{figure}")
         self.assertFalse(anchor["has_citation"])
+        numeric_anchor = module.anchors("The range [1;7] and values [1, 7] are not citation keys.")
+        self.assertFalse(numeric_anchor["has_citation"])
+        keyed_anchor = module.anchors("Prior work [Sunar_2007,Fischer_2008] motivates the design.")
+        self.assertTrue(keyed_anchor["has_citation"])
         self.assertEqual(anchor["citation_anchor"], "None")
 
     def test_clause_records_flag_overloaded_sentence(self):
@@ -261,7 +265,7 @@ class DeepMorphologyTests(unittest.TestCase):
         self.assertEqual(fig["first_mention_sentence_id"], "INTRO.P1.S1")
         self.assertIn("OBJECT", fig["caption_function_sequence"])
 
-    def test_gold_label_template_samples_50_sentences(self):
+    def test_gold_label_template_samples_100_sentences(self):
         module = load_module()
         manuscript = [
             {
@@ -272,14 +276,108 @@ class DeepMorphologyTests(unittest.TestCase):
                 "claim_type": "measurement",
                 "revision_operation": "ADD_EVIDENCE_ANCHOR",
             }
-            for i in range(60)
+            for i in range(120)
         ]
 
         rows = module.gold_label_template_records(manuscript, [])
 
-        self.assertEqual(len(rows), 50)
+        self.assertEqual(len(rows), 100)
         self.assertIn("gold_function", rows[0])
         self.assertEqual(rows[0]["gold_action"], "")
+
+    def test_submission_packet_contains_required_files_and_chinese_reports(self):
+        module = load_module()
+        manuscript = [
+            {
+                "sentence_id": "ABS.S1",
+                "section_id": "Abstract",
+                "paragraph_id": "ABS.P1",
+                "sentence_text": "The proposed audit evaluates sampler-side entropy boundaries.",
+                "dominant_function": "METHOD",
+                "secondary_function": "",
+                "previous_sentence_relation": "none",
+                "next_sentence_relation": "",
+                "claim_type": "method",
+                "claim_strength": "medium",
+                "evidence_anchor": "None",
+                "citation_anchor": "None",
+                "figure_table_anchor": "None",
+                "risk_words": "",
+                "punctuation_pattern": "comma_count=0",
+                "expected_topvenue_role": "BG",
+                "mismatch_type": "unsupported_claim;role_mismatch",
+                "revision_operation": "ADD_EVIDENCE_ANCHOR;REFUNCTION_SENTENCE",
+            }
+        ]
+        clauses = [
+            {
+                "sentence_id": "ABS.S1",
+                "clause_index": 1,
+                "clause_text": "The proposed audit evaluates sampler-side entropy boundaries.",
+                "clause_type": "main_clause",
+                "function": "METHOD",
+                "claim_type": "method",
+                "claim_strength": "medium",
+                "evidence_support": "None",
+                "risk_words": "",
+                "issue": "implication_without_evidence",
+                "recommended_action": "ADD_EVIDENCE_ANCHOR",
+            }
+        ]
+        figures = [
+            {
+                "id": "fig:workflow",
+                "kind": "figure",
+                "caption": "Audit workflow under controlled conditions.",
+                "caption_function_sequence": "OBJECT -> CONDITION",
+                "first_mention_sentence_id": "ABS.S1",
+                "body_claim_linked": "yes",
+                "body_explains_what_to_look_for": "no",
+                "body_quantifies_after_reference": "no",
+                "caption_body_consistency": "consistent",
+                "table_note_needed": "no",
+                "unit_or_abbreviation_issue": "none",
+                "role": "workflow",
+            }
+        ]
+        citations = [
+            {
+                "sentence_id": "ABS.S1",
+                "section_id": "Abstract",
+                "citation_anchor": "nist-sp800-90b",
+                "citation_function": "标准/测试依据",
+                "issue": "none",
+            }
+        ]
+        corpus = [{"section_type": "Abstract", "sentence_function": "METHOD", "venue": "TCAS-I", "paper_id": "p1"}]
+        packet = module.build_submission_packet_files(corpus, manuscript, clauses, figures, citations, [], {})
+
+        required = {
+            "00_dashboard.md",
+            "01_corpus_style_fingerprint.md",
+            "02_whole_paper_shape_report.md",
+            "03_section_function_alignment.md",
+            "04_sentence_clause_morphology_matrix.csv",
+            "05_abstract_intro_deep_report.md",
+            "06_results_discussion_deep_report.md",
+            "07_figure_table_storyline_report.md",
+            "08_citation_reference_support_report.md",
+            "09_micro_style_lint_report.md",
+            "10_revision_priority_plan.md",
+            "11_patch_plan_minimal_diff.md",
+            "calibration/gold_labels.csv",
+            "calibration/annotation_accuracy_report.md",
+        }
+        self.assertTrue(required.issubset(packet))
+        self.assertIn("必须修改", packet["00_dashboard.md"])
+        self.assertIn("ADD_EVIDENCE_ANCHOR（补证据锚点）", packet["00_dashboard.md"])
+        self.assertIn("# 引用与参考文献支撑报告", packet["08_citation_reference_support_report.md"])
+        self.assertIn("# 微观风格检查报告", packet["09_micro_style_lint_report.md"])
+        self.assertIn("# 最小差异补丁计划", packet["11_patch_plan_minimal_diff.md"])
+        self.assertIn("首次正文提及", packet["07_figure_table_storyline_report.md"])
+        self.assertIn("sentence_id,section_id,paragraph_id", packet["04_sentence_clause_morphology_matrix.csv"])
+        self.assertGreaterEqual(len(packet["calibration/gold_labels.csv"].splitlines()), 101)
+        self.assertNotIn("# Dashboard", packet["00_dashboard.md"])
 
 
 if __name__ == "__main__":

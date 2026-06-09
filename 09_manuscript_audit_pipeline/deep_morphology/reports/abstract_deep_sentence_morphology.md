@@ -13,7 +13,7 @@
 - claim：`method`（方法 claim） / `low`（低）
 - 证据锚点：`None`（无）
 - 风险词：`无`
-- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）
 
 ## ABS.S2
 
@@ -24,7 +24,7 @@
 - claim：`method`（方法 claim） / `medium`（中）
 - 证据锚点：`None`（无）
 - 风险词：`无`
-- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;REFUNCTION_SENTENCE;REORDER_SENTENCE`（ADD_BRIDGE；补证据锚点；REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;REFUNCTION_SENTENCE;REORDER_SENTENCE`（补桥接句/桥接短语；补证据锚点；重写句子功能；调整句子顺序）
 
 ## ABS.S3
 
@@ -35,7 +35,7 @@
 - claim：`method`（方法 claim） / `low`（低）
 - 证据锚点：`Experiment setup`（实验设置）
 - 风险词：`large`
-- 建议动作：`REPLACE_RISK_VERB;REFUNCTION_SENTENCE;REORDER_SENTENCE`（替换高风险动词/泛词；REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`REPLACE_RISK_VERB;REFUNCTION_SENTENCE;REORDER_SENTENCE`（替换高风险动词/泛词；重写句子功能；调整句子顺序）
 
 ## ABS.S4
 
@@ -46,7 +46,7 @@
 - claim：`measurement`（测量/结果 claim） / `medium`（中）
 - 证据锚点：`Experiment setup`（实验设置）
 - 风险词：`无`
-- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）
 
 ## ABS.S5
 
@@ -57,7 +57,7 @@
 - claim：`causal/generalization`（因果/泛化 claim） / `low`（低）
 - 证据锚点：`None`（无）
 - 风险词：`无`
-- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）
 
 ## ABS.S6
 
@@ -68,7 +68,7 @@
 - claim：`descriptive`（描述性 claim） / `low`（低）
 - 证据锚点：`None`（无）
 - 风险词：`无`
-- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）
 
 ## ABS.S7
 
@@ -79,7 +79,7 @@
 - claim：`measurement`（测量/结果 claim） / `medium`（中）
 - 证据锚点：`None`（无）
 - 风险词：`small`
-- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;REPLACE_RISK_VERB;REFUNCTION_SENTENCE;REORDER_SENTENCE`（ADD_BRIDGE；补证据锚点；替换高风险动词/泛词；REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;REPLACE_RISK_VERB;REFUNCTION_SENTENCE;REORDER_SENTENCE`（补桥接句/桥接短语；补证据锚点；替换高风险动词/泛词；重写句子功能；调整句子顺序）
 
 ## ABS.S8
 
@@ -90,7 +90,7 @@
 - claim：`causal/generalization`（因果/泛化 claim） / `medium`（中）
 - 证据锚点：`None`（无）
 - 风险词：`无`
-- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;SPLIT_SENTENCE;REFUNCTION_SENTENCE;REORDER_SENTENCE`（ADD_BRIDGE；补证据锚点；SPLIT_SENTENCE；REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;SPLIT_SENTENCE;REFUNCTION_SENTENCE;REORDER_SENTENCE`（补桥接句/桥接短语；补证据锚点；拆句；重写句子功能；调整句子顺序）
 
 ## ABS.S9
 
@@ -101,7 +101,7 @@
 - claim：`method`（方法 claim） / `medium`（中）
 - 证据锚点：`Experiment setup`（实验设置）
 - 风险词：`无`
-- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（REFUNCTION_SENTENCE；REORDER_SENTENCE）
+- 建议动作：`REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）
 
 ## 改写前的功能计划
 

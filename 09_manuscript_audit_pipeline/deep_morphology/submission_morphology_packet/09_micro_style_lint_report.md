@@ -1,0 +1,85 @@
+# 微观风格检查报告
+
+本报告审计 hyphen（连字符）/ en dash（范围连接号）/ em dash（破折号）、问号、分号、冒号、图表引用格式、数字单位、缩写、术语一致性和 AI-like（模板化）表达。
+
+- 触发标点或风险词 revision 的句子：195 条。
+- `ABS.S1` 标点 `hyphen_count=2`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `ABS.S2` 标点 `hyphen_count=3; colon_count=1`，风险词 `无`，操作 `ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;REFUNCTION_SENTENCE;REORDER_SENTENCE`（补桥接句/桥接短语；补证据锚点；重写句子功能；调整句子顺序）。
+- `ABS.S3` 标点 `hyphen_count=4; comma_count=1`，风险词 `large`，操作 `REPLACE_RISK_VERB;REFUNCTION_SENTENCE;REORDER_SENTENCE`（替换高风险动词/泛词；重写句子功能；调整句子顺序）。
+- `ABS.S4` 标点 `hyphen_count=2; colon_count=1; comma_count=3`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `ABS.S5` 标点 `hyphen_count=5; colon_count=1; comma_count=2`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `ABS.S6` 标点 `hyphen_count=5; comma_count=2`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `ABS.S8` 标点 `hyphen_count=10; colon_count=1; slash_count=1; comma_count=5`，风险词 `无`，操作 `ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;SPLIT_SENTENCE;REFUNCTION_SENTENCE;REORDER_SENTENCE`（补桥接句/桥接短语；补证据锚点；拆句；重写句子功能；调整句子顺序）。
+- `ABS.S9` 标点 `hyphen_count=2; colon_count=1`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `INTRODUCTION.P1.S3` 标点 `comma_count=5`，风险词 `无`，操作 `ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;SPLIT_SENTENCE`（补桥接句/桥接短语；补证据锚点；拆句）。
+- `INTRODUCTION.P1.S5` 标点 `hyphen_count=1`，风险词 `无`，操作 `ADD_BRIDGE`（补桥接句/桥接短语）。
+- `INTRODUCTION.P3.S2` 标点 `comma_count=1`，风险词 `无`，操作 `ADD_BRIDGE`（补桥接句/桥接短语）。
+- `INTRODUCTION.P3.S3` 标点 `hyphen_count=2; comma_count=1`，风险词 `无`，操作 `ADD_BRIDGE`（补桥接句/桥接短语）。
+- `INTRODUCTION.P3.S4` 标点 `hyphen_count=4; colon_count=1; comma_count=2`，风险词 `small`，操作 `REPLACE_RISK_VERB`（替换高风险动词/泛词）。
+- `INTRODUCTION.P4.S1` 标点 `hyphen_count=2; question_mark_count=1; comma_count=1`，风险词 `无`，操作 `CHANGE_PUNCTUATION`（调整标点）。
+- `INTRODUCTION.P5.S2` 标点 `comma_count=1`，风险词 `无`，操作 `ADD_BRIDGE`（补桥接句/桥接短语）。
+- `INTRODUCTION.P6.S3` 标点 `hyphen_count=6; comma_count=2`，风险词 `无`，操作 `ADD_EVIDENCE_ANCHOR`（补证据锚点）。
+- `INTRODUCTION.P6.S4` 标点 `hyphen_count=2`，风险词 `无`，操作 `ADD_BRIDGE`（补桥接句/桥接短语）。
+- `INTRODUCTION.P6.S5` 标点 `hyphen_count=7; slash_count=1; comma_count=4`，风险词 `无`，操作 `ADD_BRIDGE;SPLIT_SENTENCE`（补桥接句/桥接短语；拆句）。
+- `INTRODUCTION.P7.S5` 标点 `hyphen_count=4; comma_count=4`，风险词 `无`，操作 `ADD_BRIDGE;SPLIT_SENTENCE`（补桥接句/桥接短语；拆句）。
+- `INTRODUCTION.P7.S6` 标点 `hyphen_count=1; comma_count=2`，风险词 `无`，操作 `ADD_BRIDGE`（补桥接句/桥接短语）。
+- `BACKGROUND_AND_MEASUREMENT_GAP.P1.S1` 标点 `hyphen_count=1; comma_count=5`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `BACKGROUND_AND_MEASUREMENT_GAP.P1.S3` 标点 `hyphen_count=1; comma_count=6`，风险词 `无`，操作 `ADD_BRIDGE;SPLIT_SENTENCE`（补桥接句/桥接短语；拆句）。
+- `BACKGROUND_AND_MEASUREMENT_GAP.P1.S4` 标点 `hyphen_count=2; comma_count=2`，风险词 `无`，操作 `ADD_BRIDGE`（补桥接句/桥接短语）。
+- `BACKGROUND_AND_MEASUREMENT_GAP.P2.S2` 标点 `hyphen_count=4; slash_count=2; comma_count=8`，风险词 `some`，操作 `ADD_BRIDGE;REPLACE_RISK_VERB;SPLIT_SENTENCE`（补桥接句/桥接短语；替换高风险动词/泛词；拆句）。
+- `BACKGROUND_AND_MEASUREMENT_GAP.P2.S3` 标点 `hyphen_count=1; comma_count=3`，风险词 `无`，操作 `ADD_BRIDGE`（补桥接句/桥接短语）。
+- `BACKGROUND_AND_MEASUREMENT_GAP.P3.S1` 标点 `hyphen_count=2; comma_count=4`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `BACKGROUND_AND_MEASUREMENT_GAP.P3.S2` 标点 `hyphen_count=1; comma_count=2`，风险词 `无`，操作 `ADD_BRIDGE`（补桥接句/桥接短语）。
+- `BACKGROUND_AND_MEASUREMENT_GAP.P3.S3` 标点 `semicolon_count=1; comma_count=3`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `BACKGROUND_AND_MEASUREMENT_GAP.P3.S4` 标点 `comma_count=1`，风险词 `无`，操作 `ADD_EVIDENCE_ANCHOR`（补证据锚点）。
+- `BACKGROUND_AND_MEASUREMENT_GAP.P3.S5` 标点 `hyphen_count=2`，风险词 `无`，操作 `ADD_BRIDGE`（补桥接句/桥接短语）。
+- `BACKGROUND_AND_MEASUREMENT_GAP.P4.S2` 标点 `comma_count=4`，风险词 `substantial`，操作 `REPLACE_RISK_VERB;SPLIT_SENTENCE`（替换高风险动词/泛词；拆句）。
+- `BACKGROUND_AND_MEASUREMENT_GAP.P4.S3` 标点 `hyphen_count=1; colon_count=1; comma_count=3`，风险词 `无`，操作 `ADD_BRIDGE`（补桥接句/桥接短语）。
+- `BACKGROUND_AND_MEASUREMENT_GAP.P5.S2` 标点 `hyphen_count=1; comma_count=3`，风险词 `无`，操作 `ADD_EVIDENCE_ANCHOR`（补证据锚点）。
+- `DESIGN_AND_MEASUREMENT_WORKFLOW.P1.S2` 标点 `hyphen_count=2; comma_count=3`，风险词 `无`，操作 `ADD_BRIDGE`（补桥接句/桥接短语）。
+- `DESIGN_AND_MEASUREMENT_WORKFLOW.P1.S3` 标点 `hyphen_count=2; semicolon_count=1; comma_count=2`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `DESIGN_AND_MEASUREMENT_WORKFLOW.P2.S1` 标点 `hyphen_count=1; comma_count=1`，风险词 `无`，操作 `ADD_EVIDENCE_ANCHOR`（补证据锚点）。
+- `DESIGN_AND_MEASUREMENT_WORKFLOW.P2.S2` 标点 `semicolon_count=1; comma_count=1`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `DESIGN_AND_MEASUREMENT_WORKFLOW.P2.S4` 标点 `hyphen_count=2; slash_count=2; comma_count=4`，风险词 `无`，操作 `ADD_BRIDGE;SPLIT_SENTENCE`（补桥接句/桥接短语；拆句）。
+- `DESIGN_AND_MEASUREMENT_WORKFLOW.P2.S5` 标点 `hyphen_count=1; comma_count=4`，风险词 `无`，操作 `ADD_BRIDGE;SPLIT_SENTENCE`（补桥接句/桥接短语；拆句）。
+- `DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1` 标点 `hyphen_count=16; semicolon_count=19; colon_count=2; parentheses_count=68; slash_count=10; comma_count=23`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S2` 标点 `hyphen_count=2; semicolon_count=1; colon_count=1; slash_count=3; comma_count=5`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `DESIGN_AND_MEASUREMENT_WORKFLOW.P4.S2` 标点 `hyphen_count=6; semicolon_count=4; colon_count=2`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `DESIGN_AND_MEASUREMENT_WORKFLOW.P5.S1` 标点 `hyphen_count=8; semicolon_count=11; parentheses_count=32; slash_count=3; comma_count=8`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `DESIGN_AND_MEASUREMENT_WORKFLOW.P5.S2` 标点 `hyphen_count=2; semicolon_count=1; colon_count=1; comma_count=2`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `EXPERIMENTAL_SETUP_AND_ANALYSIS_RULES.P2.S1` 标点 `hyphen_count=15; semicolon_count=4; colon_count=1; slash_count=2; comma_count=10`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `EXPERIMENTAL_SETUP_AND_ANALYSIS_RULES.P3.S1` 标点 `colon_count=1`，风险词 `无`，操作 `ADD_BOUNDARY`（补边界条件）。
+- `EXPERIMENTAL_SETUP_AND_ANALYSIS_RULES.P3.S3` 标点 `hyphen_count=1; comma_count=1`，风险词 `无`，操作 `ADD_BRIDGE`（补桥接句/桥接短语）。
+- `EXPERIMENTAL_SETUP_AND_ANALYSIS_RULES.P4.S4` 标点 `hyphen_count=1; semicolon_count=1; colon_count=1; comma_count=2`，风险词 `many`，操作 `REPLACE_RISK_VERB;SPLIT_SENTENCE`（替换高风险动词/泛词；拆句）。
+- `EXPERIMENTAL_SETUP_AND_ANALYSIS_RULES.P4.S6` 标点 `hyphen_count=1; semicolon_count=1; colon_count=1`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `EXPERIMENTAL_SETUP_AND_ANALYSIS_RULES.P4.S7` 标点 `hyphen_count=1; colon_count=1`，风险词 `无`，操作 `ADD_EVIDENCE_ANCHOR`（补证据锚点）。
+- `EXPERIMENTAL_SETUP_AND_ANALYSIS_RULES.P5.S2` 标点 `hyphen_count=1; semicolon_count=1`，风险词 `无`，操作 `ADD_EVIDENCE_ANCHOR;SPLIT_SENTENCE`（补证据锚点；拆句）。
+- `PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P1.S1` 标点 `hyphen_count=1; colon_count=1`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P1.S3` 标点 `hyphen_count=1; comma_count=3`，风险词 `无`，操作 `ADD_BRIDGE;REFUNCTION_SENTENCE;REORDER_SENTENCE`（补桥接句/桥接短语；重写句子功能；调整句子顺序）。
+- `PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P1.S4` 标点 `hyphen_count=2; comma_count=3`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P2.S2` 标点 `hyphen_count=3; comma_count=1`，风险词 `无`，操作 `ADD_BRIDGE;REFUNCTION_SENTENCE;REORDER_SENTENCE`（补桥接句/桥接短语；重写句子功能；调整句子顺序）。
+- `PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P2.S3` 标点 `hyphen_count=2; colon_count=1`，风险词 `无`，操作 `ADD_BRIDGE;REFUNCTION_SENTENCE;REORDER_SENTENCE`（补桥接句/桥接短语；重写句子功能；调整句子顺序）。
+- `PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P3.S1` 标点 `hyphen_count=1`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P3.S2` 标点 `hyphen_count=3; colon_count=1`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P4.S1` 标点 `hyphen_count=1`，风险词 `无`，操作 `ADD_EVIDENCE_ANCHOR;REFUNCTION_SENTENCE;REORDER_SENTENCE`（补证据锚点；重写句子功能；调整句子顺序）。
+- `PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P4.S2` 标点 `hyphen_count=2; slash_count=1`，风险词 `无`，操作 `ADD_BRIDGE;REFUNCTION_SENTENCE;REORDER_SENTENCE`（补桥接句/桥接短语；重写句子功能；调整句子顺序）。
+- `PLACEMENT_SENSITIVE_CONTINUOUS_STREAM_CHARACTERIZATION.P4.S3` 标点 `hyphen_count=3; comma_count=1`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `RESTART_AND_WARMUP_CHARACTERIZATION.P1.S1` 标点 `hyphen_count=1`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `RESTART_AND_WARMUP_CHARACTERIZATION.P2.S2` 标点 `hyphen_count=2; comma_count=1`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `RESTART_AND_WARMUP_CHARACTERIZATION.P2.S3` 标点 `comma_count=1`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `RESTART_AND_WARMUP_CHARACTERIZATION.P3.S1` 标点 `hyphen_count=2; colon_count=1; comma_count=6`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `RESTART_AND_WARMUP_CHARACTERIZATION.P4.S2` 标点 `hyphen_count=3; comma_count=8`，风险词 `无`，操作 `SPLIT_SENTENCE;REFUNCTION_SENTENCE;REORDER_SENTENCE`（拆句；重写句子功能；调整句子顺序）。
+- `RESTART_AND_WARMUP_CHARACTERIZATION.P4.S3` 标点 `hyphen_count=1; comma_count=1`，风险词 `large`，操作 `REPLACE_RISK_VERB`（替换高风险动词/泛词）。
+- `RESTART_AND_WARMUP_CHARACTERIZATION.P5.S1` 标点 `hyphen_count=2; semicolon_count=1; colon_count=1`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `RESTART_AND_WARMUP_CHARACTERIZATION.P6.S1` 标点 `hyphen_count=1; comma_count=1`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `RESTART_AND_WARMUP_CHARACTERIZATION.P6.S2` 标点 `semicolon_count=1; comma_count=1`，风险词 `无`，操作 `SPLIT_SENTENCE;REFUNCTION_SENTENCE;REORDER_SENTENCE`（拆句；重写句子功能；调整句子顺序）。
+- `RESTART_AND_WARMUP_CHARACTERIZATION.P6.S3` 标点 `hyphen_count=3; comma_count=4`，风险词 `universal`，操作 `ADD_BRIDGE;ADD_EVIDENCE_ANCHOR;WEAKEN_CLAIM;REPLACE_RISK_VERB;SPLIT_SENTENCE`（补桥接句/桥接短语；补证据锚点；削弱 claim；替换高风险动词/泛词；拆句）。
+- `SAMPLER_SIDE_COUNTERFACTUALS.P1.S3` 标点 `hyphen_count=2`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `SAMPLER_SIDE_COUNTERFACTUALS.P1.S4` 标点 `hyphen_count=4; colon_count=1; slash_count=1`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `SAMPLER_SIDE_COUNTERFACTUALS.P1.S5` 标点 `hyphen_count=1; comma_count=1`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `SAMPLER_SIDE_COUNTERFACTUALS.P2.S2` 标点 `hyphen_count=4; semicolon_count=1; colon_count=1`，风险词 `无`，操作 `SPLIT_SENTENCE;REFUNCTION_SENTENCE;REORDER_SENTENCE`（拆句；重写句子功能；调整句子顺序）。
+- `SAMPLER_SIDE_COUNTERFACTUALS.P3.S2` 标点 `hyphen_count=1; semicolon_count=1; colon_count=1`，风险词 `无`，操作 `SPLIT_SENTENCE`（拆句）。
+- `SAMPLER_SIDE_COUNTERFACTUALS.P3.S3` 标点 `hyphen_count=2; colon_count=1`，风险词 `无`，操作 `REFUNCTION_SENTENCE;REORDER_SENTENCE`（重写句子功能；调整句子顺序）。
+- `SAMPLER_SIDE_COUNTERFACTUALS.P4.S2` 标点 `hyphen_count=1; semicolon_count=1; colon_count=1; comma_count=1`，风险词 `无`，操作 `ADD_BRIDGE;SPLIT_SENTENCE;ADD_BOUNDARY`（补桥接句/桥接短语；拆句；补边界条件）。
+- `SAMPLER_SIDE_COUNTERFACTUALS.P4.S3` 标点 `hyphen_count=2; comma_count=1`，风险词 `high`，操作 `REPLACE_RISK_VERB`（替换高风险动词/泛词）。
+- `SAMPLER_SIDE_COUNTERFACTUALS.P5.S3` 标点 `hyphen_count=1; colon_count=2; comma_count=1`，风险词 `无`，操作 `CHANGE_PUNCTUATION`（调整标点）。

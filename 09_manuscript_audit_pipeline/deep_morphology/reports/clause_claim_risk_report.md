@@ -27,7 +27,7 @@
 - claim：`measurement` / `low`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### ABS.S2 C2
 
@@ -38,7 +38,7 @@
 - claim：`descriptive` / `medium`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;implication_without_evidence;colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（SPLIT_SENTENCE；补证据锚点）
+- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（拆句；补证据锚点）
 
 ### ABS.S2 C3
 
@@ -49,7 +49,7 @@
 - claim：`method` / `medium`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;implication_without_evidence;colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（SPLIT_SENTENCE；补证据锚点）
+- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（拆句；补证据锚点）
 
 ### ABS.S4 C1
 
@@ -60,7 +60,7 @@
 - claim：`measurement` / `medium`
 - 证据：`Experiment setup`（实验设置）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### ABS.S4 C2
 
@@ -71,7 +71,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### ABS.S4 C3
 
@@ -82,7 +82,7 @@
 - claim：`descriptive` / `low`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### ABS.S4 C4
 
@@ -93,7 +93,7 @@
 - claim：`descriptive` / `low`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### ABS.S5 C2
 
@@ -104,7 +104,7 @@
 - claim：`causal/generalization` / `low`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### ABS.S7 C1
 
@@ -126,7 +126,7 @@
 - claim：`comparative` / `medium`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;implication_without_evidence`
-- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（SPLIT_SENTENCE；补证据锚点）
+- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（拆句；补证据锚点）
 
 ### ABS.S8 C2
 
@@ -137,7 +137,7 @@
 - claim：`descriptive` / `medium`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;implication_without_evidence;colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（SPLIT_SENTENCE；补证据锚点）
+- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（拆句；补证据锚点）
 
 ### ABS.S8 C3
 
@@ -148,7 +148,7 @@
 - claim：`causal/generalization` / `low`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### ABS.S8 C4
 
@@ -159,7 +159,7 @@
 - claim：`descriptive` / `low`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### ABS.S9 C1
 
@@ -170,7 +170,7 @@
 - claim：`measurement` / `medium`
 - 证据：`Experiment setup`（实验设置）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### ABS.S9 C2
 
@@ -181,7 +181,7 @@
 - claim：`method` / `low`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### INTRODUCTION.P1.S3 C1
 
@@ -203,7 +203,7 @@
 - claim：`measurement` / `none`
 - 证据：`Experiment setup`（实验设置）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### INTRODUCTION.P3.S3 C2
 
@@ -214,7 +214,7 @@
 - claim：`measurement` / `medium`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;implication_without_evidence`
-- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（SPLIT_SENTENCE；补证据锚点）
+- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（拆句；补证据锚点）
 
 ### INTRODUCTION.P3.S4 C1
 
@@ -236,7 +236,7 @@
 - claim：`descriptive` / `low`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### INTRODUCTION.P5.S3 C2
 
@@ -247,7 +247,7 @@
 - claim：`method` / `low`
 - 证据：`Experiment setup`（实验设置）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### INTRODUCTION.P5.S3 C3
 
@@ -258,7 +258,7 @@
 - claim：`method` / `low`
 - 证据：`None`（无）
 - issue：`hidden_boundary;colon_sentence_split_check`
-- 建议动作：`ADD_BOUNDARY;SPLIT_SENTENCE`（补边界条件；SPLIT_SENTENCE）
+- 建议动作：`ADD_BOUNDARY;SPLIT_SENTENCE`（补边界条件；拆句）
 
 ### INTRODUCTION.P6.S3 C1
 
@@ -269,7 +269,7 @@
 - claim：`measurement` / `low`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### INTRODUCTION.P6.S3 C2
 
@@ -280,7 +280,7 @@
 - claim：`descriptive` / `medium`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;implication_without_evidence`
-- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（SPLIT_SENTENCE；补证据锚点）
+- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（拆句；补证据锚点）
 
 ### INTRODUCTION.P6.S4 C2
 
@@ -302,7 +302,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P1.S2 C2
 
@@ -313,7 +313,7 @@
 - claim：`causal/generalization` / `medium`
 - 证据：`Citation`（引用）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P1.S4 C1
 
@@ -324,7 +324,7 @@
 - claim：`measurement` / `medium`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;implication_without_evidence`
-- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（SPLIT_SENTENCE；补证据锚点）
+- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（拆句；补证据锚点）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P1.S4 C2
 
@@ -335,7 +335,7 @@
 - claim：`method` / `medium`
 - 证据：`Citation`（引用）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P2.S2 C1
 
@@ -357,7 +357,7 @@
 - claim：`descriptive` / `medium`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;implication_without_evidence`
-- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（SPLIT_SENTENCE；补证据锚点）
+- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（拆句；补证据锚点）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P3.S4 C2
 
@@ -368,7 +368,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P3.S5 C1
 
@@ -379,7 +379,7 @@
 - claim：`measurement` / `medium`
 - 证据：`Experiment setup`（实验设置）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P3.S5 C2
 
@@ -390,7 +390,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P4.S2 C1
 
@@ -412,7 +412,7 @@
 - claim：`descriptive` / `low`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P5.S2 C1
 
@@ -434,7 +434,7 @@
 - claim：`measurement` / `medium`
 - 证据：`Experiment setup`（实验设置）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### BACKGROUND_AND_MEASUREMENT_GAP.P5.S3 C2
 
@@ -445,7 +445,7 @@
 - claim：`method` / `low`
 - 证据：`Experiment setup`（实验设置）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P2.S1 C1
 
@@ -467,7 +467,7 @@
 - claim：`descriptive` / `none`
 - 证据：`Figure`（图）
 - issue：`multi_claim_sentence`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P2.S3 C2
 
@@ -478,7 +478,7 @@
 - claim：`measurement` / `medium`
 - 证据：`None`（无）
 - issue：`multi_claim_sentence;implication_without_evidence;colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（SPLIT_SENTENCE；补证据锚点）
+- 建议动作：`SPLIT_SENTENCE;ADD_EVIDENCE_ANCHOR`（拆句；补证据锚点）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C2
 
@@ -489,7 +489,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C3
 
@@ -500,7 +500,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C4
 
@@ -511,7 +511,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C5
 
@@ -522,7 +522,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C6
 
@@ -533,7 +533,7 @@
 - claim：`limitation` / `none`
 - 证据：`None`（无）
 - issue：`hidden_boundary;colon_sentence_split_check`
-- 建议动作：`ADD_BOUNDARY;SPLIT_SENTENCE`（补边界条件；SPLIT_SENTENCE）
+- 建议动作：`ADD_BOUNDARY;SPLIT_SENTENCE`（补边界条件；拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C7
 
@@ -544,7 +544,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C8
 
@@ -555,7 +555,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C9
 
@@ -566,7 +566,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C10
 
@@ -577,7 +577,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C11
 
@@ -588,7 +588,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C12
 
@@ -599,7 +599,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C13
 
@@ -610,7 +610,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C14
 
@@ -621,7 +621,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C15
 
@@ -632,7 +632,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C16
 
@@ -643,7 +643,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C17
 
@@ -654,7 +654,7 @@
 - claim：`descriptive` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C18
 
@@ -665,7 +665,7 @@
 - claim：`measurement` / `none`
 - 证据：`None`（无）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）
 
 ### DESIGN_AND_MEASUREMENT_WORKFLOW.P3.S1 C19
 
@@ -676,4 +676,4 @@
 - claim：`measurement` / `none`
 - 证据：`Experiment setup`（实验设置）
 - issue：`colon_sentence_split_check`
-- 建议动作：`SPLIT_SENTENCE`（SPLIT_SENTENCE）
+- 建议动作：`SPLIT_SENTENCE`（拆句）

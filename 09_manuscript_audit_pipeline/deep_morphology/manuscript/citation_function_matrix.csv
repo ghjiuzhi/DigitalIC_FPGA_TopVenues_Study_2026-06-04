@@ -6,5 +6,3 @@ BACKGROUND_AND_MEASUREMENT_GAP.P1.S3,Background and Measurement Gap,"Turan_2018,
 BACKGROUND_AND_MEASUREMENT_GAP.P1.S4,Background and Measurement Gap,"Markettos_2009,Fischer_2008",前人限制,RESULT,method,medium,result_sentence_citation_check
 BACKGROUND_AND_MEASUREMENT_GAP.P2.S2,Background and Measurement Gap,"Nannipieri_2021,RojasMunoz_2022,Frustaci_2023",前人限制,SETUP,method,low,none
 BACKGROUND_AND_MEASUREMENT_GAP.P4.S2,Background and Measurement Gap,"Jian_Song_2006,Wu_2009,Wu_2012,Wang_2017",前人限制,SETUP,measurement,low,none
-SAMPLER_SIDE_COUNTERFACTUALS.P13.S2,Sampler-Side Counterfactuals,1;7,背景支撑,BG,causal/generalization,low,none
-SAMPLER_SIDE_COUNTERFACTUALS.P15.S1,Sampler-Side Counterfactuals,1;7;1;7,标准/测试依据,SETUP,descriptive,low,none

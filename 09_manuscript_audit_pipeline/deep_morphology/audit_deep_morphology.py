@@ -234,11 +234,28 @@ STRENGTH_ZH = {
 
 OPERATION_ZH = {
     "KEEP": "保留",
+    "DELETE": "删除",
+    "MERGE_WITH_PREVIOUS": "并入上一句",
+    "SPLIT_SENTENCE": "拆句",
+    "MOVE_BEFORE": "前移",
+    "MOVE_AFTER": "后移",
+    "REFUNCTION_SENTENCE": "重写句子功能",
+    "REORDER_SENTENCE": "调整句子顺序",
+    "ADD_BRIDGE": "补桥接句/桥接短语",
     "ADD_EVIDENCE_ANCHOR": "补证据锚点",
+    "ADD_CITATION": "补引用",
+    "ADD_QUANTIFICATION": "补定量结果",
     "WEAKEN_CLAIM": "削弱 claim",
     "REPLACE_RISK_VERB": "替换高风险动词/泛词",
+    "NORMALIZE_TERM": "统一术语",
     "CHANGE_PUNCTUATION": "调整标点",
+    "ADD_TABLE_NOTE": "补表格 note",
+    "REWRITE_CAPTION": "重写 caption",
+    "MOVE_TO_DISCUSSION": "移到 Discussion",
+    "MOVE_TO_METHOD": "移到 Method",
+    "MOVE_TO_RELATED_WORK": "移到 Related Work",
     "ADD_BOUNDARY": "补边界条件",
+    "CHECK_CAPTION_BODY_LINK": "检查 caption 与正文 claim 绑定",
 }
 
 
@@ -515,8 +532,8 @@ def is_citation_bracket(value):
         return False
     if "=" in text or "\\" in text:
         return False
-    if re.fullmatch(r"\d+(?:\s*[-,]\s*\d+)*", text):
-        return True
+    if re.fullmatch(r"\d+(?:\s*[-,;]\s*\d+)*", text):
+        return False
     if ":" in text or "," in text or re.search(r"\b(?:20\d{2}|19\d{2}|nist|ieee|ches|tcas|tcad|tvlsi)\b", text, re.I):
         return True
     return False
@@ -738,6 +755,94 @@ def active_manuscript_path():
     base = Path(main["path"]) / "manuscript"
     preferred = base / "main.tex"
     return preferred if preferred.exists() else base / "main_eval_boundary_r23.tex"
+
+
+def reference_source_candidates(manuscript_path):
+    manuscript_path = Path(manuscript_path)
+    candidates = [
+        manuscript_path.with_suffix(".bbl"),
+        manuscript_path.with_suffix(".bib"),
+        manuscript_path.parent / "main.bbl",
+        manuscript_path.parent / "main.bib",
+        manuscript_path.parent.parent / "refs" / "references.bib",
+        manuscript_path.parent.parent / "references.bib",
+    ]
+    seen = set()
+    unique = []
+    for path in candidates:
+        key = str(path).lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(path)
+    return unique
+
+
+def classify_reference_venue(entry):
+    text = entry.lower()
+    if re.search(r"\btches\b|ches|cryptographic hardware", text):
+        return "TCHES/CHES"
+    if re.search(r"tcas|circuits and systems", text):
+        return "TCAS"
+    if re.search(r"tvlsi|very large scale integration|vlsi systems", text):
+        return "TVLSI"
+    if re.search(r"tcad|computer-aided design", text):
+        return "TCAD"
+    if re.search(r"\bieee trans|ieee transactions", text):
+        return "IEEE Transactions"
+    if re.search(r"nist|sp\s*800|special publication", text):
+        return "NIST/standard"
+    if re.search(r"\bfpga\b|field-programmable", text):
+        return "FPGA topic/venue"
+    if "arxiv" in text:
+        return "arXiv"
+    if re.search(r"conference|symposium|workshop", text):
+        return "conference/workshop"
+    return "other/unknown"
+
+
+def reference_distribution(manuscript_path):
+    source = ""
+    text = ""
+    for path in reference_source_candidates(manuscript_path):
+        if path.exists() and path.stat().st_size > 0:
+            source = str(path)
+            text = read_text(path)
+            break
+    if not text:
+        return {
+            "source": "未定位到可解析 .bbl/.bib",
+            "reference_count": 0,
+            "year_counts": Counter(),
+            "venue_counts": Counter(),
+            "missing_core_refs": ["NIST/SP800", "FPGA TRNG", "RO-TRNG", "entropy estimation", "sampler implementation"],
+        }
+    if source.lower().endswith(".bib"):
+        entries = [part for part in re.split(r"\n\s*@", text) if part.strip()]
+    else:
+        entries = [part for part in re.split(r"\\bibitem(?:\[[^\]]*\])?\{[^{}]*\}", text) if part.strip()]
+    year_counts = Counter()
+    venue_counts = Counter()
+    for entry in entries:
+        years = re.findall(r"(?:19|20)\d{2}", entry)
+        year_counts[years[-1] if years else "unknown"] += 1
+        venue_counts[classify_reference_venue(entry)] += 1
+    all_refs = text.lower()
+    core_patterns = {
+        "NIST/SP800 随机性或熵估计标准": r"nist|sp\s*800|special publication",
+        "FPGA TRNG 相关实现": r"\bfpga\b|field-programmable",
+        "RO-TRNG / ring oscillator TRNG": r"ring oscillator|ro-?trng|ring-oscillator",
+        "entropy estimation / min-entropy": r"entropy|min-entropy",
+        "sampler / sampling aperture implementation": r"sampler|sampling aperture|sampling",
+    }
+    missing = [name for name, pattern in core_patterns.items() if not re.search(pattern, all_refs)]
+    return {
+        "source": source,
+        "reference_count": len(entries),
+        "year_counts": year_counts,
+        "venue_counts": venue_counts,
+        "missing_core_refs": missing,
+    }
 
 
 def render_csv_text(fields, rows):
@@ -965,7 +1070,7 @@ def figure_table_inventory(tex_text, manuscript):
     return inventory
 
 
-def gold_label_template_records(manuscript, figure_table_rows):
+def gold_label_template_records(manuscript, figure_table_rows, target_count=100):
     selected = []
 
     def add_from(predicate, limit):
@@ -975,9 +1080,9 @@ def gold_label_template_records(manuscript, figure_table_rows):
             if predicate(row) and row not in selected:
                 selected.append(row)
 
-    add_from(lambda row: row.get("section_id") in {"Abstract", "Introduction"}, 20)
-    add_from(lambda row: any(token in row.get("section_id", "").lower() for token in ["result", "discussion", "characterization", "diagnosis", "counterfactual"]), 20)
-    for fig in figure_table_rows[:10]:
+    add_from(lambda row: row.get("section_id") in {"Abstract", "Introduction"}, 30)
+    add_from(lambda row: any(token in row.get("section_id", "").lower() for token in ["result", "discussion", "characterization", "diagnosis", "counterfactual"]), 40)
+    for fig in figure_table_rows[:20]:
         selected.append(
             {
                 "sentence_id": f"CAPTION:{fig.get('id', '')}",
@@ -989,15 +1094,18 @@ def gold_label_template_records(manuscript, figure_table_rows):
             }
         )
     for row in manuscript:
-        if len(selected) >= 50:
+        if len(selected) >= target_count:
             break
         if row not in selected:
             selected.append(row)
     records = []
-    for row in selected[:50]:
+    source = selected or manuscript or [{"sentence_id": "CAL.EMPTY", "sentence_text": "", "dominant_function": "", "claim_type": "", "revision_operation": ""}]
+    while len(source) < target_count:
+        source = source + source
+    for index, row in enumerate(source[:target_count], 1):
         records.append(
             {
-                "sentence_id": row.get("sentence_id", ""),
+                "sentence_id": row.get("sentence_id", "") or f"CAL.S{index}",
                 "sentence_text": row.get("sentence_text", ""),
                 "model_function": row.get("dominant_function", ""),
                 "gold_function": "",
@@ -1771,6 +1879,461 @@ def report_annotation_accuracy(gold_rows):
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def operation_explanation(row_or_operation):
+    if isinstance(row_or_operation, dict):
+        operation = row_or_operation.get("revision_operation") or row_or_operation.get("recommended_action") or "KEEP"
+        sentence_id = row_or_operation.get("sentence_id", "")
+        function = row_or_operation.get("dominant_function") or row_or_operation.get("function", "")
+        expected = row_or_operation.get("expected_topvenue_role", "")
+        evidence = row_or_operation.get("evidence_anchor") or row_or_operation.get("evidence_support", "")
+        strength = row_or_operation.get("claim_strength", "")
+    else:
+        operation = row_or_operation
+        sentence_id = ""
+        function = ""
+        expected = ""
+        evidence = ""
+        strength = ""
+    parts = []
+    for op in [part for part in operation.split(";") if part]:
+        zh = OPERATION_ZH.get(op, op)
+        if op == "ADD_BOUNDARY":
+            reason = "需要补充适用条件、实验边界或不可外推范围。"
+        elif op == "ADD_EVIDENCE_ANCHOR":
+            reason = f"该位置存在 `{strength}` 强度 claim，但证据锚点为 `{evidence or 'None'}`。"
+        elif op == "ADD_BRIDGE":
+            reason = "上下句关系跳跃，需要桥接前后论证。"
+        elif op == "REFUNCTION_SENTENCE":
+            reason = f"当前功能 `{function}` 与顶刊期望 `{expected}` 不一致。"
+        elif op == "REORDER_SENTENCE":
+            reason = "句子顺序不符合目标功能链，需要前移、后移或并入相邻句。"
+        elif op == "SPLIT_SENTENCE":
+            reason = "一句话承载多个 claim 或从句过载，建议拆分。"
+        elif op == "WEAKEN_CLAIM":
+            reason = "claim 语气过强，需要改成受证据约束的表达。"
+        elif op == "REPLACE_RISK_VERB":
+            reason = "存在高风险动词、泛词或 AI 味表达，需要替换成可证实表述。"
+        elif op == "CHANGE_PUNCTUATION":
+            reason = "标点形态影响技术论文语气或句子清晰度。"
+        elif op == "REWRITE_CAPTION":
+            reason = "caption 未清楚承担对象、条件、结论或备注功能。"
+        elif op == "ADD_TABLE_NOTE":
+            reason = "表格中的单位、缩写、bold rule、缺失值或精度规则需要 note。"
+        else:
+            reason = "该操作用于让句子/段落回到顶刊常见功能链。"
+        prefix = f"{sentence_id}: " if sentence_id else ""
+        parts.append(f"{prefix}{op}（{zh}）：{reason}")
+    return "；".join(parts) if parts else "KEEP（保留）：当前记录没有触发强制 revision operation。"
+
+
+def issue_rows(manuscript, clauses, figures, citations):
+    rows = []
+    for row in manuscript:
+        if row.get("revision_operation") and row["revision_operation"] != "KEEP":
+            severity = "must_fix" if any(op in row["revision_operation"] for op in ["ADD_EVIDENCE_ANCHOR", "ADD_BRIDGE", "REFUNCTION_SENTENCE", "WEAKEN_CLAIM"]) else "should_fix"
+            rows.append(
+                {
+                    "id": row["sentence_id"],
+                    "level": "sentence",
+                    "section": row.get("section_id", ""),
+                    "severity": severity,
+                    "issue": row.get("mismatch_type", ""),
+                    "operation": row.get("revision_operation", ""),
+                    "explanation": operation_explanation(row),
+                }
+            )
+    for row in clauses:
+        if row.get("recommended_action") and row["recommended_action"] != "KEEP":
+            rows.append(
+                {
+                    "id": f"{row['sentence_id']}.C{row['clause_index']}",
+                    "level": "clause",
+                    "section": "",
+                    "severity": "must_fix" if "ADD_EVIDENCE_ANCHOR" in row["recommended_action"] else "should_fix",
+                    "issue": row.get("issue", ""),
+                    "operation": row.get("recommended_action", ""),
+                    "explanation": operation_explanation(row),
+                }
+            )
+    for row in figures:
+        ops = []
+        if row.get("first_mention_sentence_id") == "MISSING":
+            ops.append("ADD_BRIDGE")
+        if row.get("body_explains_what_to_look_for") == "no" or row.get("caption_body_consistency") != "consistent":
+            ops.append("REWRITE_CAPTION")
+        if row.get("table_note_needed") == "yes" or row.get("unit_or_abbreviation_issue") != "none":
+            ops.append("ADD_TABLE_NOTE")
+        if ops:
+            operation = ";".join(dict.fromkeys(ops))
+            rows.append(
+                {
+                    "id": row["id"],
+                    "level": row.get("kind", "figure_table"),
+                    "section": "figure/table",
+                    "severity": "should_fix",
+                    "issue": "figure_table_storyline_issue",
+                    "operation": operation,
+                    "explanation": operation_explanation(operation),
+                }
+            )
+    for index, row in enumerate(citations, 1):
+        if row.get("issue") and row["issue"] != "none":
+            rows.append(
+                {
+                    "id": f"CIT.{index}:{row.get('sentence_id', '')}",
+                    "level": "citation",
+                    "section": row.get("section_id", ""),
+                    "severity": "should_fix",
+                    "issue": row.get("issue", ""),
+                    "operation": "ADD_CITATION",
+                    "explanation": "ADD_CITATION（补引用）：该 citation 的功能与句子 claim 类型不完全匹配，需要补充或调整引用支撑。",
+                }
+            )
+    return rows
+
+
+def packet_matrix_csv(manuscript, clauses):
+    fields = [
+        "sentence_id",
+        "section_id",
+        "paragraph_id",
+        "clause_id",
+        "unit_type",
+        "unit_text",
+        "dominant_function",
+        "secondary_function",
+        "expected_function",
+        "previous_sentence_relation",
+        "next_sentence_relation",
+        "claim_type",
+        "claim_strength",
+        "evidence_anchor",
+        "citation_anchor",
+        "figure_table_anchor",
+        "risk_words",
+        "punctuation_pattern",
+        "issue",
+        "revision_operation",
+        "chinese_explanation",
+    ]
+    rows = []
+    for row in manuscript:
+        rows.append(
+            {
+                "sentence_id": row.get("sentence_id", ""),
+                "section_id": row.get("section_id", ""),
+                "paragraph_id": row.get("paragraph_id", ""),
+                "clause_id": "",
+                "unit_type": "sentence",
+                "unit_text": row.get("sentence_text", ""),
+                "dominant_function": row.get("dominant_function", ""),
+                "secondary_function": row.get("secondary_function", ""),
+                "expected_function": row.get("expected_topvenue_role", ""),
+                "previous_sentence_relation": row.get("previous_sentence_relation", ""),
+                "next_sentence_relation": row.get("next_sentence_relation", ""),
+                "claim_type": row.get("claim_type", ""),
+                "claim_strength": row.get("claim_strength", ""),
+                "evidence_anchor": row.get("evidence_anchor", ""),
+                "citation_anchor": row.get("citation_anchor", ""),
+                "figure_table_anchor": row.get("figure_table_anchor", ""),
+                "risk_words": row.get("risk_words", ""),
+                "punctuation_pattern": row.get("punctuation_pattern", ""),
+                "issue": row.get("mismatch_type", ""),
+                "revision_operation": row.get("revision_operation", ""),
+                "chinese_explanation": operation_explanation(row),
+            }
+        )
+    sentence_lookup = {row.get("sentence_id"): row for row in manuscript}
+    for row in clauses:
+        parent = sentence_lookup.get(row.get("sentence_id"), {})
+        rows.append(
+            {
+                "sentence_id": row.get("sentence_id", ""),
+                "section_id": parent.get("section_id", ""),
+                "paragraph_id": parent.get("paragraph_id", ""),
+                "clause_id": f"{row.get('sentence_id')}.C{row.get('clause_index')}",
+                "unit_type": "clause",
+                "unit_text": row.get("clause_text", ""),
+                "dominant_function": row.get("function", ""),
+                "secondary_function": "",
+                "expected_function": parent.get("expected_topvenue_role", ""),
+                "previous_sentence_relation": parent.get("previous_sentence_relation", ""),
+                "next_sentence_relation": "",
+                "claim_type": row.get("claim_type", ""),
+                "claim_strength": row.get("claim_strength", ""),
+                "evidence_anchor": row.get("evidence_support", ""),
+                "citation_anchor": parent.get("citation_anchor", ""),
+                "figure_table_anchor": parent.get("figure_table_anchor", ""),
+                "risk_words": row.get("risk_words", ""),
+                "punctuation_pattern": parent.get("punctuation_pattern", ""),
+                "issue": row.get("issue", ""),
+                "revision_operation": row.get("recommended_action", ""),
+                "chinese_explanation": operation_explanation(row),
+            }
+        )
+    return render_csv_text(fields, rows)
+
+
+def section_counts(manuscript):
+    counts = Counter(row.get("section_id", "") for row in manuscript)
+    total = sum(counts.values()) or 1
+    return [(section, count, count / total) for section, count in counts.most_common()]
+
+
+def build_packet_gold_labels(manuscript, clauses, figures):
+    rows = gold_label_template_records(manuscript, figures, target_count=100)
+    used = len(rows)
+    for clause in clauses:
+        if used >= 100:
+            break
+        rows.append(
+            {
+                "sentence_id": f"{clause.get('sentence_id')}.C{clause.get('clause_index')}",
+                "sentence_text": clause.get("clause_text", ""),
+                "model_function": clause.get("function", ""),
+                "gold_function": "",
+                "model_claim_type": clause.get("claim_type", ""),
+                "gold_claim_type": "",
+                "model_action": clause.get("recommended_action", ""),
+                "gold_action": "",
+                "notes": "",
+            }
+        )
+        used += 1
+    return rows[:100]
+
+
+def build_submission_packet_files(corpus, manuscript, clauses, figures, citations, gold_rows, corpus_quality, reference_meta=None):
+    issues = issue_rows(manuscript, clauses, figures, citations)
+    must = [row for row in issues if row["severity"] == "must_fix"]
+    should = [row for row in issues if row["severity"] == "should_fix"]
+    optional = [row for row in issues if row["severity"] not in {"must_fix", "should_fix"}]
+    section_summary = section_counts(manuscript)
+    function_counts = Counter(row.get("dominant_function", "") for row in manuscript)
+    punctuation_issues = [row for row in manuscript if row.get("punctuation_pattern") and row.get("revision_operation") != "KEEP"]
+    packet_gold = gold_rows if len(gold_rows) >= 100 else build_packet_gold_labels(manuscript, clauses, figures)
+    corpus_quality = corpus_quality or CORPUS_QUALITY or {}
+    reference_meta = reference_meta or {
+        "source": "未提供参考文献源",
+        "reference_count": 0,
+        "year_counts": Counter(),
+        "venue_counts": Counter(),
+        "missing_core_refs": ["NIST/SP800", "FPGA TRNG", "RO-TRNG", "entropy estimation", "sampler implementation"],
+    }
+
+    dashboard_lines = [
+        "# 投稿形态学对齐总览",
+        "",
+        "这个总览汇总当前 manuscript 在全文（paper）、章节（section）、段落（paragraph）、句子（sentence）、从句（clause）、图（figure）、表（table）、引用（citation）和标点（punctuation）层面的顶刊形态偏离。报告只生成 revision packet，不直接重写 manuscript。",
+        "",
+        "## 总体状态",
+        "",
+        f"- 顶刊清洗后 corpus：{len(corpus)} 条功能单元。",
+        f"- manuscript 逐句记录：{len(manuscript)} 条。",
+        f"- 从句记录：{len(clauses)} 条。",
+        f"- 图表记录：{len(figures)} 个。",
+        f"- citation 记录：{len(citations)} 条。",
+        f"- 必须修改：{len(must)} 项；建议修改：{len(should)} 项；可选修改：{len(optional)} 项。",
+        "",
+        "## 必须修改",
+        "",
+    ]
+    for row in must[:20]:
+        dashboard_lines.append(f"- `{row['id']}`：`{row['operation']}`（{zh_operations(row['operation'])}）。{row['explanation']}")
+    if not must:
+        dashboard_lines.append("- 当前没有 must fix 项。")
+    dashboard_lines.extend(["", "## 建议修改", ""])
+    for row in should[:20]:
+        dashboard_lines.append(f"- `{row['id']}`：`{row['operation']}`（{zh_operations(row['operation'])}）。{row['explanation']}")
+    if not should:
+        dashboard_lines.append("- 当前没有 should fix 项。")
+    dashboard_lines.extend(["", "## 可选修改", ""])
+    dashboard_lines.append("- 低风险术语统一、图表微调和局部标点微调可在 must/should 完成后处理。")
+
+    corpus_lines = [
+        "# 顶刊 corpus 风格指纹",
+        "",
+        "本报告来自清洗后的顶刊 corpus，不使用未清洗噪声作为风格依据。",
+        "",
+        "## 清洗质量",
+        "",
+        f"- 原始功能单元：{corpus_quality.get('raw_total', len(corpus))} 条。",
+        f"- 删除噪声：{corpus_quality.get('removed_total', 0)} 条。",
+        f"- 保留功能单元：{corpus_quality.get('retained_total', len(corpus))} 条。",
+        "",
+        "## 顶刊高频功能",
+        "",
+    ]
+    for function, count in Counter(row.get("sentence_function", "") for row in corpus).most_common(12):
+        corpus_lines.append(f"- `{function}`（{zh_function(function)}）：{count} 条。")
+
+    whole_lines = [
+        "# 全文形态报告",
+        "",
+        "本报告检查全文层级形态（paper-level morphology）：章节顺序（section order）、章节长度比例（section length ratios）、图表密度（figure/table density）、贡献数量（contribution count）、视觉节奏（visual rhythm）和参考文献分布（reference distribution）。",
+        "",
+        "## 章节顺序与长度比例",
+        "",
+    ]
+    for section, count, ratio in section_summary:
+        whole_lines.append(f"- `{section}`：{count} 句，占 {ratio:.1%}。")
+    whole_lines.extend(
+        [
+            "",
+            "## 图表密度与视觉节奏",
+            "",
+            f"- 图表数量：{len(figures)} 个；约每 {max(len(manuscript) / max(len(figures), 1), 1):.1f} 句出现一个图表对象。",
+            f"- 图：{sum(1 for row in figures if row.get('kind') == 'figure')} 个；表：{sum(1 for row in figures if row.get('kind') == 'table')} 个。",
+            "",
+            "## 参考文献分布",
+            "",
+            f"- citation anchor 记录：{len(citations)} 条。",
+            f"- 可解析参考文献源：{reference_meta.get('source', '未定位')}。",
+            f"- 可解析参考文献条目：{reference_meta.get('reference_count', 0)} 条。",
+            "- 年份分布：" + ("；".join(f"{year}={count}" for year, count in reference_meta.get("year_counts", Counter()).most_common()) or "未解析到年份。"),
+            "- venue/来源分布：" + ("；".join(f"{venue}={count}" for venue, count in reference_meta.get("venue_counts", Counter()).most_common()) or "未解析到 venue/来源。"),
+        ]
+    )
+
+    section_lines = ["# Section 功能对齐报告", "", "本报告按 section 汇总 dominant function，并判断是否接近顶刊目标功能链。", ""]
+    by_section = defaultdict(list)
+    for row in manuscript:
+        by_section[row.get("section_id", "")].append(row)
+    for section, rows in by_section.items():
+        seq = " -> ".join(row.get("dominant_function", "") for row in rows[:20])
+        mismatches = sum(1 for row in rows if row.get("revision_operation") != "KEEP")
+        section_lines.extend(
+            [
+                f"## {section}",
+                "",
+                f"- 句子数：{len(rows)}。",
+                f"- 前 20 句功能序列：`{seq}`。",
+                f"- 需要 revision operation 的句子：{mismatches}。",
+                "",
+            ]
+        )
+
+    abstract_intro = [row for row in manuscript if row.get("section_id") in {"Abstract", "Introduction"}]
+    abstract_intro_lines = ["# Abstract / Introduction 深度报告", "", "这一部分检查摘要和引言是否按顶刊功能链展开。", ""]
+    for row in abstract_intro:
+        if row.get("revision_operation") != "KEEP":
+            abstract_intro_lines.append(f"- `{row['sentence_id']}` `{row['dominant_function']}`（{zh_function(row['dominant_function'])}）→ `{row['revision_operation']}`（{zh_operations(row['revision_operation'])}）：{operation_explanation(row)}")
+
+    result_discussion = [row for row in manuscript if any(token in row.get("section_id", "").lower() for token in ["result", "discussion", "characterization", "diagnosis", "counterfactual"])]
+    result_lines = ["# Results / Discussion 深度报告", "", "这一部分检查结果段是否具备 QUESTION / FIGURE-TABLE / OBSERVATION / QUANTIFICATION / INTERPRETATION / BOUNDARY 链条。", ""]
+    for row in result_discussion:
+        if row.get("revision_operation") != "KEEP":
+            result_lines.append(f"- `{row['sentence_id']}`：`{row['revision_operation']}`（{zh_operations(row['revision_operation'])}）。{operation_explanation(row)}")
+
+    fig_lines = ["# 图表叙事报告", "", "本报告检查图表的角色、题注功能序列、首次正文提及、正文解释、定量支撑、题注与正文一致性和表格 note 状态。", ""]
+    for row in figures:
+        fig_lines.extend(
+            [
+                f"## {row.get('kind')} `{row.get('id')}`",
+                "",
+                f"- 角色：`{row.get('role')}`。",
+                f"- 题注功能序列：`{row.get('caption_function_sequence')}`。",
+                f"- 首次正文提及：`{row.get('first_mention_sentence_id')}`。",
+                f"- 正文解释：`{row.get('body_explains_what_to_look_for')}`；定量支撑：`{row.get('body_quantifies_after_reference')}`。",
+                f"- 题注与正文一致性：`{row.get('caption_body_consistency')}`。",
+                f"- 表格 note：`{row.get('table_note_needed')}`；单位/缩写/加粗规则：`{row.get('unit_or_abbreviation_issue')}`。",
+                "",
+            ]
+        )
+
+    citation_lines = [
+        "# 引用与参考文献支撑报告",
+        "",
+        "本报告检查 citation（文中引用）在句子里的功能：background（背景支撑）、prior limitation（前人限制）、gap support（缺口支撑）、method support（方法支撑）、standard（标准依据）、comparison（比较基线）、definition（定义来源）、claim support（主张支撑）。",
+        "",
+        "## 文中 citation 功能",
+        "",
+    ]
+    for index, row in enumerate(citations, 1):
+        citation_lines.append(f"- `CIT.{index}` `{row.get('sentence_id')}`：`{row.get('citation_anchor')}` → {row.get('citation_function')}；issue=`{row.get('issue')}`。")
+    citation_lines.extend(
+        [
+            "",
+            "## 参考文献年份与来源分布",
+            "",
+            f"- 解析来源：{reference_meta.get('source', '未定位')}。",
+            f"- 参考文献条目数：{reference_meta.get('reference_count', 0)}。",
+            "- 年份分布：" + ("；".join(f"{year}={count}" for year, count in reference_meta.get("year_counts", Counter()).most_common()) or "未解析到年份。"),
+            "- venue/来源分布：" + ("；".join(f"{venue}={count}" for venue, count in reference_meta.get("venue_counts", Counter()).most_common()) or "未解析到 venue/来源。"),
+            "",
+            "## 缺失核心引用提醒",
+            "",
+        ]
+    )
+    missing_refs = reference_meta.get("missing_core_refs", [])
+    if missing_refs:
+        for item in missing_refs:
+            citation_lines.append(f"- 需要人工确认是否补充：{item}。")
+    else:
+        citation_lines.append("- 自动检查未发现核心引用类别明显缺口；仍需人工结合目标 venue 和 gold labels 复核。")
+
+    micro_lines = ["# 微观风格检查报告", "", "本报告审计 hyphen（连字符）/ en dash（范围连接号）/ em dash（破折号）、问号、分号、冒号、图表引用格式、数字单位、缩写、术语一致性和 AI-like（模板化）表达。", ""]
+    micro_lines.append(f"- 触发标点或风险词 revision 的句子：{len(punctuation_issues)} 条。")
+    for row in punctuation_issues[:80]:
+        micro_lines.append(f"- `{row['sentence_id']}` 标点 `{row.get('punctuation_pattern')}`，风险词 `{row.get('risk_words') or '无'}`，操作 `{row.get('revision_operation')}`（{zh_operations(row.get('revision_operation'))}）。")
+
+    priority_lines = ["# Revision 优先级计划", "", "先处理 must fix，再处理 should fix，最后处理 optional。不要在完成 packet 审计前直接重写 manuscript。", "", "## Must fix", ""]
+    for row in must:
+        priority_lines.append(f"- `{row['id']}`：`{row['operation']}`（{zh_operations(row['operation'])}）。{row['explanation']}")
+    priority_lines.extend(["", "## Should fix", ""])
+    for row in should:
+        priority_lines.append(f"- `{row['id']}`：`{row['operation']}`（{zh_operations(row['operation'])}）。{row['explanation']}")
+
+    patch_lines = ["# 最小差异补丁计划", "", "这是最小改动计划，不直接改写 manuscript。论文正文和 LaTeX patch 仍应保持英文；这里用中文说明每个 patch 应做什么。", ""]
+    for row in (must + should)[:120]:
+        patch_lines.append(f"- 定位 `{row['id']}`：执行 `{row['operation']}`（{zh_operations(row['operation'])}）。中文理由：{row['explanation']}")
+
+    annotation_report = "\n".join(
+        [
+            "# 人工校准报告",
+            "",
+            "请先填写 `gold_labels.csv` 中的 gold 字段，再重新运行 pipeline。没有 gold labels 时，不宣称分类器可靠。",
+            "",
+            f"- gold-label 样本数：{len(packet_gold)} 条。",
+            "- function accuracy：待标注。",
+            "- claim_type accuracy：待标注。",
+            "- confusion patterns：待标注后生成。",
+            "",
+        ]
+    )
+
+    files = {
+        "00_dashboard.md": "\n".join(dashboard_lines) + "\n",
+        "01_corpus_style_fingerprint.md": "\n".join(corpus_lines) + "\n",
+        "02_whole_paper_shape_report.md": "\n".join(whole_lines) + "\n",
+        "03_section_function_alignment.md": "\n".join(section_lines) + "\n",
+        "04_sentence_clause_morphology_matrix.csv": packet_matrix_csv(manuscript, clauses),
+        "05_abstract_intro_deep_report.md": "\n".join(abstract_intro_lines) + "\n",
+        "06_results_discussion_deep_report.md": "\n".join(result_lines) + "\n",
+        "07_figure_table_storyline_report.md": "\n".join(fig_lines) + "\n",
+        "08_citation_reference_support_report.md": "\n".join(citation_lines) + "\n",
+        "09_micro_style_lint_report.md": "\n".join(micro_lines) + "\n",
+        "10_revision_priority_plan.md": "\n".join(priority_lines) + "\n",
+        "11_patch_plan_minimal_diff.md": "\n".join(patch_lines) + "\n",
+        "calibration/gold_labels.csv": render_csv_text(GOLD_LABEL_FIELDS, packet_gold),
+        "calibration/annotation_accuracy_report.md": annotation_report,
+    }
+    return files
+
+
+def write_submission_packet(corpus, manuscript, clauses, figures, citations, gold_rows, corpus_quality, reference_meta=None):
+    packet_dir = MODULE_DIR / "submission_morphology_packet"
+    files = build_submission_packet_files(corpus, manuscript, clauses, figures, citations, gold_rows, corpus_quality, reference_meta)
+    for rel_path, content in files.items():
+        path = packet_dir / rel_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if rel_path.endswith(".csv"):
+            path.write_bytes(content.encode("utf-8-sig"))
+        else:
+            path.write_text(content, encoding="utf-8")
+    return packet_dir
+
+
 def citation_function(row):
     section = row["section_id"].lower()
     function = row["dominant_function"]
@@ -1822,6 +2385,7 @@ def main():
     manuscript_path = active_manuscript_path()
     manuscript_tex = read_text(manuscript_path)
     manuscript = manuscript_records(manuscript_path)
+    ref_meta = reference_distribution(manuscript_path)
     clauses = clause_records(manuscript)
     figure_tables = figure_table_inventory(manuscript_tex, manuscript)
     gold_rows = gold_label_template_records(manuscript, figure_tables)
@@ -1843,6 +2407,7 @@ def main():
     report_clause_claim_risk(clauses)
     report_figure_table_elements(figure_tables)
     report_annotation_accuracy(gold_rows)
+    write_submission_packet(corpus, manuscript, clauses, figure_tables, citation_records(manuscript), gold_rows, CORPUS_QUALITY, ref_meta)
     print(f"topvenue_records={len(corpus)}")
     print(f"manuscript_records={len(manuscript)}")
 
